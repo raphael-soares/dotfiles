@@ -1,0 +1,32 @@
+# Moonfly — https://github.com/bluz71/vim-moonfly-colors
+[colors.primary]
+background = '#080808'
+foreground = '#b2b2b2'
+
+[colors.cursor]
+text   = '#080808'
+cursor = '#b2b2b2'
+
+[colors.selection]
+text       = '#080808'
+background = '#373c4d'
+
+[colors.normal]
+black   = '#323437'
+red     = '#ff5d5d'
+green   = '#8cc85f'
+yellow  = '#e3c78a'
+blue    = '#80a0ff'
+magenta = '#cf87e8'
+cyan    = '#79dac8'
+white   = '#c6c6c6'
+
+[colors.bright]
+black   = '#444444'
+red     = '#ff5d5d'
+green   = '#8cc85f'
+yellow  = '#e3c78a'
+blue    = '#74b2ff'
+magenta = '#cf87e8'
+cyan    = '#79dac8'
+white   = '#e4e4e4'

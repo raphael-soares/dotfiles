@@ -1,0 +1,33 @@
+# name: 'One Half Black'
+
+[colors.primary]
+background = '#000000'
+foreground = '#c8ccd4'
+
+[colors.normal]
+black   = '#282C34'  # palette 0
+red     = '#E06C75'  # palette 1
+green   = '#98C379'  # palette 2
+yellow  = '#E5C07B'  # palette 3
+blue    = '#61AFEF'  # palette 4
+magenta = '#C678DD'  # palette 5
+cyan    = '#56B6C2'  # palette 6
+white   = '#DCDFE4'  # palette 7
+
+[colors.bright]
+black   = '#282C34'  # palette 8
+red     = '#E06C75'  # palette 9
+green   = '#98C379'  # palette 10
+yellow  = '#E5C07B'  # palette 11
+blue    = '#61AFEF'  # palette 12
+magenta = '#C678DD'  # palette 13
+cyan    = '#56B6C2'  # palette 14
+white   = '#DCDFE4'  # palette 15
+
+[colors.cursor]
+text   = '#232326'
+cursor = '#DCDFE4'
+
+[colors.selection]
+background = '#2c3244'
+foreground = '#DCDFE4'

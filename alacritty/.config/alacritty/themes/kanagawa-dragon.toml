@@ -1,0 +1,44 @@
+# Kanagawa Dragon
+[colors.primary]
+background = '#181616'
+foreground = '#c5c9c5'
+
+[colors.cursor]
+text   = '#181616'
+cursor = '#c5c9c5'
+
+[colors.vi_mode_cursor]
+text   = '#181616'
+cursor = '#8ba4b0'
+
+[colors.selection]
+text       = '#181616'
+background = '#2d4f67'
+
+[colors.search.matches]
+foreground = '#181616'
+background = '#a6a69c'
+
+[colors.search.focused_match]
+foreground = '#181616'
+background = '#87a987'
+
+[colors.normal]
+black   = '#0d0c0c'
+red     = '#c4746e'
+green   = '#87a987'
+yellow  = '#c4b28a'
+blue    = '#8ba4b0'
+magenta = '#a292a3'
+cyan    = '#8ea4a2'
+white   = '#c8c093'
+
+[colors.bright]
+black   = '#625e5a'
+red     = '#e46876'
+green   = '#87a987'
+yellow  = '#e6c384'
+blue    = '#7fb4ca'
+magenta = '#938aa9'
+cyan    = '#7aa89f'
+white   = '#c5c9c5'

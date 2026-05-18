@@ -1,0 +1,31 @@
+[colors.primary]
+background = '#1e2122'
+foreground = '#c0b196'
+
+[colors.normal]
+black   = '#1e2122'  # palette 0
+red     = '#ec6b64'  # palette 1
+green   = '#a9b665'  # palette 2
+yellow  = '#e0c080'  # palette 3
+blue    = '#7daea3'  # palette 4
+magenta = '#d3869b'  # palette 5
+cyan    = '#86b17f'  # palette 6
+white   = '#c0b196'  # palette 7
+
+[colors.bright]
+black   = '#404344'  # palette 8
+red     = '#ec6b64'  # palette 9
+green   = '#a9b665'  # palette 10
+yellow  = '#e0c080'  # palette 11
+blue    = '#7daea3'  # palette 12
+magenta = '#d3869b'  # palette 13
+cyan    = '#86b17f'  # palette 14
+white   = '#c7b89d'  # palette 15
+
+[colors.cursor]
+text = '#c0b196'
+cursor = '#d4be98'
+
+[colors.selection]
+background = '#36393a'
+foreground = '#c0b196'
