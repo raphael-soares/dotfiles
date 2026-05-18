@@ -1,0 +1,5 @@
+[tools]
+node = "22"
+python = "3.14"
+java = "corretto-26"
+lua = "5.5"
