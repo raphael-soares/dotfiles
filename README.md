@@ -52,4 +52,4 @@ Requires [JetBrainsMono Nerd Font](https://www.nerdfonts.com/).
 
 ## Neovim
 
-Managed in a separate repo.
+Managed in a separate repo: [Raphael-Soares/nvim](https://github.com/Raphael-Soares/nvim)
