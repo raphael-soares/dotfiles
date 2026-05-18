@@ -1,0 +1,241 @@
+#!/usr/bin/env bash
+# claudecommit — interactive conventional commit helper via Claude Code
+# Install: bash claudecommit.sh --install && source ~/.bashrc
+set -uo pipefail
+
+# ── Colors ─────────────────────────────────────────────────────────────────────
+if [[ -t 1 ]]; then
+  R=$'\033[0m' BOLD=$'\033[1m' DIM=$'\033[2m'
+  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m'
+  MAG=$'\033[35m' CYN=$'\033[36m' WHT=$'\033[37m'
+  HIDE=$'\033[?25l' SHOW=$'\033[?25h'
+  KUP=$'\033[A' KDOWN=$'\033[B'
+else
+  R='' BOLD='' DIM='' RED='' GRN='' YLW='' MAG='' CYN='' WHT=''
+  HIDE='' SHOW='' KUP='' KDOWN=''
+fi
+
+TTY=/dev/tty
+TW=$(tput cols 2>/dev/null || echo 80)
+WRAP=$(( TW > 96 ? 92 : TW - 4 ))
+(( WRAP < 40 )) && WRAP=40 || true
+
+# ── Install ─────────────────────────────────────────────────────────────────────
+if [[ "${1:-}" == "--install" ]]; then
+  B="$HOME/.local/bin"; mkdir -p "$B"; cp "$0" "$B/claudecommit"; chmod +x "$B/claudecommit"
+  if [[ ":$PATH:" != *":$B:"* ]]; then
+    printf '\n# claudecommit\nexport PATH="$HOME/.local/bin:$PATH"\n' >> ~/.bashrc
+    printf '%s✓ Added %s to PATH%s\n' "$GRN" "$B" "$R"
+  fi
+  printf '%s✓ Installed: %s/claudecommit%s\n' "$GRN" "$B" "$R"
+  printf '%ssource ~/.bashrc%s\n' "$YLW" "$R"
+  exit 0
+fi
+
+# ── Deps ────────────────────────────────────────────────────────────────────────
+for _c in git claude jq fold; do
+  if ! command -v "$_c" &>/dev/null; then
+    printf '%sError: %s not found%s\n' "$RED" "$_c" "$R" >&2
+    [[ "$_c" == "claude" ]] && printf '  npm install -g @anthropic-ai/claude-code\n' >&2
+    exit 1
+  fi
+done
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  printf '%sNot a git repository%s\n' "$RED" "$R" >&2; exit 1
+fi
+
+# ── Gather changes ──────────────────────────────────────────────────────────────
+STAGED=$(git diff --staged 2>/dev/null || true)
+UNSTAGED=$(git diff 2>/dev/null || true)
+STATUS=$(git status --short 2>/dev/null || true)
+if [[ -z "$STAGED$UNSTAGED$STATUS" ]]; then
+  printf '%sNo changes.%s\n' "$YLW" "$R"; exit 0
+fi
+
+if   [[ -n "$STAGED" ]];   then DIFF="$STAGED";            DT=staged
+elif [[ -n "$UNSTAGED" ]]; then DIFF="$UNSTAGED";          DT=unstaged
+else                            DIFF="(new/deleted files)"; DT=status; fi
+
+DIFF=$(echo "$DIFF" | head -c 3000)
+REPO=$(basename "$(git rev-parse --show-toplevel)")
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
+RECENT=$(git log --oneline -3 2>/dev/null || true)
+
+# ── Prompt ─────────────────────────────────────────────────────────────────────
+PROMPT="You are a git commit message generator. Respond with ONLY this exact JSON, no other text, no markdown, no backticks:
+{\"options\":[\"<msg1>\",\"<msg2>\",\"<msg3>\"]}
+
+Rules for each message: conventional commit format, ≤68 chars total, imperative mood, lowercase, no trailing period.
+Types: feat fix refactor chore docs style test perf ci build
+
+Context:
+Repo:${REPO} Branch:${BRANCH} (${DT})
+Status:${STATUS}
+Recent commits:${RECENT}
+Diff:${DIFF}"
+
+# ── Call AI ──────────────────────────────────────────────────────────────────
+if [[ -n "${GEMINI_API_KEY:-}" ]]; then
+  printf '\n%s%s⟳  asking gemini-2.5-flash...%s\n' "$DIM" "$CYN" "$R"
+else
+  printf '\n%s%s⟳  asking claude-haiku...%s\n' "$DIM" "$CYN" "$R"
+fi
+if [[ -n "${GEMINI_API_KEY:-}" ]]; then
+  PAYLOAD=$(jq -n --arg p "$PROMPT" \
+    '{"contents":[{"parts":[{"text":$p}]}],"generationConfig":{"maxOutputTokens":512,"temperature":0.2,"responseMimeType":"application/json","thinkingConfig":{"thinkingBudget":0}}}')
+  CURL_OUT=$(curl -s \
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD")
+  RAW=$(echo "$CURL_OUT" | jq -r '.candidates[0].content.parts[0].text' 2>/dev/null || true)
+  if [[ -z "$RAW" || "$RAW" == "null" ]]; then
+    printf '%sGemini error:%s\n%s\n' "$RED" "$R" "$CURL_OUT" >&2; exit 1
+  fi
+else
+  RAW=$(claude -p --model claude-haiku-4-5-20251001 "$PROMPT" 2>/dev/null || true)
+  if [[ -z "$RAW" ]]; then
+    printf '%sno response%s\n' "$RED" "$R" >&2; exit 1
+  fi
+fi
+
+# strip markdown fences if any model ignores instructions
+RAW=$(echo "$RAW" | sed 's/^```[a-z]*//;s/```$//' | tr -d '\r')
+JSON=$(echo "$RAW" | perl -0777 -ne 'print $1 if /(\{[\s\S]*\})/' 2>/dev/null || true)
+if [[ -z "$JSON" ]] || ! echo "$JSON" | jq empty 2>/dev/null; then
+  if [[ -n "$JSON" ]] && ! echo "$JSON" | grep -q '}$'; then
+    printf '%sResponse truncated — increase maxOutputTokens%s\n' "$RED" "$R" >&2
+  else
+    printf '%sparse error:%s\n%s\n' "$RED" "$R" "$RAW" >&2
+  fi
+  exit 1
+fi
+
+O1=$(echo "$JSON" | jq -r '.options[0]')
+O2=$(echo "$JSON" | jq -r '.options[1]')
+O3=$(echo "$JSON" | jq -r '.options[2]')
+
+declare -a ITEMS=("$O1" "$O2" "$O3")
+NI=${#ITEMS[@]}
+
+# ── Helpers ─────────────────────────────────────────────────────────────────────
+_wrap_lines() { echo "$1" | fold -s -w "$2"; }
+
+_item_h() {
+  local w=$(( WRAP - 7 )); (( w < 20 )) && w=20 || true
+  _wrap_lines "${ITEMS[$1]}" "$w" | wc -l
+}
+
+_menu_h() {
+  local h=2  # leading + trailing \n
+  local i
+  for (( i=0; i<NI; i++ )); do
+    h=$(( h + $(_item_h $i) ))
+  done
+  echo $h
+}
+
+_draw() {
+  local sel=$1 w=$(( WRAP - 7 ))
+  (( w < 20 )) && w=20 || true
+  printf '\n'
+  local i
+  for (( i=0; i<NI; i++ )); do
+    local msg="${ITEMS[$i]}"
+    local first=true
+    while IFS= read -r ln; do
+      if $first; then
+        if (( i == sel )); then
+          printf '  %s%s▶ %d) %s%s\n' "$BOLD" "$WHT" $((i+1)) "$ln" "$R"
+        else
+          printf '    %s%d) %s%s\n' "$DIM" $((i+1)) "$ln" "$R"
+        fi
+        first=false
+      else
+        (( i == sel )) \
+          && printf '       %s%s%s\n' "$BOLD" "$ln" "$R" \
+          || printf '       %s%s%s\n' "$DIM"  "$ln" "$R"
+      fi
+    done < <(_wrap_lines "$msg" "$w")
+  done
+  printf '\n'
+}
+
+# ── Interactive menu ────────────────────────────────────────────────────────────
+SEL_IDX=0
+SEL_ACT=""
+
+printf '%s' "$HIDE"
+_draw 0
+CURRENT=0
+
+while true; do
+  k=''
+  IFS= read -rsn1 k <"$TTY"
+  if [[ "$k" == $'\033' ]]; then
+    rest=''
+    IFS= read -rsn2 -t 0.05 rest <"$TTY" 2>/dev/null || true
+    k="${k}${rest}"
+  fi
+
+  prev=$CURRENT
+  case "$k" in
+    "$KUP"|k)
+      if (( CURRENT > 0 )); then CURRENT=$(( CURRENT - 1 )); fi
+      ;;
+    "$KDOWN"|j)
+      if (( CURRENT < NI-1 )); then CURRENT=$(( CURRENT + 1 )); fi
+      ;;
+    $'\n'|$'\r'|'')
+      SEL_IDX=$CURRENT
+      break
+      ;;
+    [1-9])
+      n=$(( k - 1 ))
+      if (( n < NI )); then SEL_IDX=$n; break; fi
+      ;;
+    e|E)
+      SEL_IDX=$CURRENT; SEL_ACT=edit; break
+      ;;
+    q|Q|$'\003')
+      SEL_ACT=quit; break
+      ;;
+  esac
+
+  ph=$(_menu_h)
+  printf '\033[%dA\033[J' "$ph"
+  _draw "$CURRENT"
+done
+
+printf '%s' "$SHOW"
+printf '\033[%dA\033[J' "$(_menu_h)"
+printf '%sSelected:%s %s\n\n' "$DIM" "$R" "${ITEMS[$CURRENT]}"
+
+# ── Post-menu actions ───────────────────────────────────────────────────────────
+if [[ "$SEL_ACT" == "quit" ]]; then
+  printf '%sCancelled.%s\n' "$YLW" "$R"; exit 0
+fi
+
+MSG="${ITEMS[$SEL_IDX]}"
+
+if [[ "$SEL_ACT" == "edit" ]]; then
+  TMP=$(mktemp /tmp/claudecommit_XXXXXX.txt)
+  printf '%s\n' "$MSG" > "$TMP"
+  ${EDITOR:-nano} "$TMP" <"$TTY" >"$TTY"
+  MSG=$(cat "$TMP"); rm -f "$TMP"
+fi
+
+if [[ -z "$MSG" ]]; then
+  printf '%sEmpty — cancelled.%s\n' "$RED" "$R"; exit 1
+fi
+
+if [[ -z "$STAGED" && -n "$STATUS" ]]; then
+  printf '%sNothing staged. git add -A first? [s/N]: %s' "$YLW" "$R"
+  yn=''; read -r yn <"$TTY"
+  if [[ "$yn" =~ ^[sS]$ ]]; then
+    git add -A
+    printf '%s✓ git add -A%s\n' "$GRN" "$R"
+  fi
+fi
+
+git commit -m "$MSG"
+printf '\n%s%s✓%s %s%s%s\n' "$GRN" "$BOLD" "$R" "$CYN" "$MSG" "$R"

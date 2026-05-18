@@ -1,0 +1,30 @@
+#!/bin/bash
+CONFIG="/etc/openfortivpn/unimed.conf"
+
+echo "Connecting to Unimed VPN..."
+
+# Inicia o openfortivpn em background
+sudo openfortivpn -c "$CONFIG" &
+VPN_PID=$!
+
+# Espera o ppp0 estar ativo
+while ! ip link show ppp0 &>/dev/null; do
+    sleep 1
+done
+
+echo "VPN interface ppp0 is up. Configuring full-tunnel DNS..."
+
+sudo resolvectl dns ppp0 10.36.1.15 10.36.1.16
+sudo resolvectl domain ppp0 ~.  
+sudo resolvectl flush-caches
+
+echo "DNS fully configured. Current status:"
+resolvectl status ppp0
+
+wait $VPN_PID
+
+
+echo "VPN disconnected, cleaning up DNS..."
+sudo resolvectl revert ppp0
+
+

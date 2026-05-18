@@ -1,5 +1,0 @@
-# SSH private keys — never commit
-ssh/.ssh/id_*
-ssh/.ssh/pessoal
-ssh/.ssh/known_hosts*
-!ssh/.ssh/*.pub

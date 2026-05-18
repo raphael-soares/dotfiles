@@ -6,18 +6,29 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 | Package | Config |
 |---|---|
+| `bash` | `~/.bashrc` |
 | `tmux` | `~/.config/tmux/` |
 | `alacritty` | `~/.config/alacritty/` |
 | `git` | `~/.gitconfig` + `~/.config/git/` |
 | `starship` | `~/.config/starship.toml` |
 | `fzf` | `~/.config/fzf/fzf.sh` |
+| `local` | `~/.local/bin/claudecommit`, `~/.local/bin/vpn` |
 
 ## Setup
 
 ```bash
 git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
-stow tmux alacritty git starship fzf
+stow bash tmux alacritty git starship fzf local
+```
+
+### Secrets
+
+API keys and secrets are not in this repo. Create `~/.env.local` with any needed exports — it is sourced automatically by `.bashrc`:
+
+```bash
+# ~/.env.local
+export GEMINI_API_KEY="..."
 ```
 
 ### tmux plugins
@@ -32,6 +43,35 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ### Alacritty font
 
 Requires [JetBrainsMono Nerd Font](https://www.nerdfonts.com/).
+
+## Scripts (`~/.local/bin`)
+
+### `claudecommit`
+
+Interactive conventional commit message generator powered by AI.
+
+- Uses `claude-haiku` by default
+- Uses `gemini-2.5-flash` if `GEMINI_API_KEY` is set in `~/.env.local`
+- Generates 3 suggestions from staged/unstaged diff
+- Navigate with `j/k` or arrow keys, pick with Enter or `1/2/3`
+- Press `e` to edit before committing
+
+```bash
+git add -A
+claudecommit
+```
+
+### `vpn`
+
+Connects to the Unimed VPN via `openfortivpn` and configures full-tunnel DNS.
+
+- Requires config at `/etc/openfortivpn/unimed.conf` (not in repo — contains credentials)
+- Waits for `ppp0` interface, then sets DNS servers `10.36.1.15` / `10.36.1.16`
+- Cleans up DNS on disconnect
+
+```bash
+vpn
+```
 
 ## Highlights
 
