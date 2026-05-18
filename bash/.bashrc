@@ -41,15 +41,7 @@ fi
 
 eval "$(starship init bash)"
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+eval "$($HOME/.local/bin/mise activate bash)"
 
 
 [ -f ~/.env.local ] && source ~/.env.local
-. "/home/raphael/.deno/env"
-source /home/raphael/.local/share/bash-completion/completions/deno.bash
-
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
