@@ -19,16 +19,17 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 ```bash
 git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
+cp .env.example ~/.env.local   # fill in your secrets
 stow bash tmux alacritty git starship fzf local
 ```
 
 ### Secrets
 
-API keys and secrets are not in this repo. Create `~/.env.local` with any needed exports — it is sourced automatically by `.bashrc`:
+`~/.env.local` is sourced automatically by `.bashrc`. Copy the example and fill in your values:
 
 ```bash
-# ~/.env.local
-export GEMINI_API_KEY="..."
+cp .env.example ~/.env.local
+# edit ~/.env.local and add your keys
 ```
 
 ### tmux plugins
