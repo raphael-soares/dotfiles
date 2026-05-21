@@ -4,9 +4,8 @@ SEARCH_DIRS=(
     ~/Workspace/Work
     ~/Workspace/Personal
     ~/Workspace/Learning
-    ~/Desktop
-    ~/.config
     ~/
+    ~/.dotfiles/
 )
 
 source ~/.config/fzf/fzf.sh
