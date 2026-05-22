@@ -4,7 +4,6 @@ SEARCH_DIRS=(
     ~/Workspace/Work
     ~/Workspace/Personal
     ~/Workspace/Learning
-    ~/
     ~/.dotfiles/
 )
 
