@@ -3,4 +3,11 @@
 [aws]
 disabled = true
 
+[custom.github]
+command = "grep -A5 'github.com:' ~/.config/gh/hosts.yml | grep '  user:' | head -1 | awk '{print $2}'"
+when = "test -f ~/.config/gh/hosts.yml && git rev-parse --is-inside-work-tree 2>/dev/null"
+symbol = " "
+style = "bold white"
+format = "[$symbol($output)]($style) "
+
 

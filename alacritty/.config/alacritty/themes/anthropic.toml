@@ -1,0 +1,35 @@
+# name: 'Anthropic / Claude'
+# Warm clay-and-cream palette inspired by Anthropic's brand.
+# Signature accent: Claude clay orange (#D97757).
+
+[colors.primary]
+background = '#1A1915'  # warm near-black (swap for '#000000' to match One Half Black)
+foreground = '#E8E4D8'  # warm cream
+
+[colors.normal]
+black   = '#3D3A33'  # palette 0 — warm charcoal
+red     = '#BD5D3A'  # palette 1 — crail / burnt clay
+green   = '#7D8C5C'  # palette 2 — muted olive
+yellow  = '#D9A05B'  # palette 3 — kraft amber
+blue    = '#6A9FB5'  # palette 4 — muted slate blue
+magenta = '#B08AAE'  # palette 5 — dusty mauve
+cyan    = '#5E9B8C'  # palette 6 — muted teal
+white   = '#D6D1C4'  # palette 7 — warm light grey
+
+[colors.bright]
+black   = '#5C584E'  # palette 8
+red     = '#D97757'  # palette 9 — Claude clay orange
+green   = '#94A36A'  # palette 10
+yellow  = '#E0B070'  # palette 11
+blue    = '#7FB4C9'  # palette 12
+magenta = '#C39CBF'  # palette 13
+cyan    = '#72AE9F'  # palette 14
+white   = '#F0EEE6'  # palette 15 — ivory
+
+[colors.cursor]
+text   = '#1A1915'
+cursor = '#D97757'  # Claude clay orange
+
+[colors.selection]
+background = '#3D3A33'
+foreground = '#F0EEE6'

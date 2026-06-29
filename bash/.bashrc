@@ -3,6 +3,7 @@ export HISTFILESIZE=100000
 export HISTCONTROL=ignoreboth:erasedups
 export HISTTIMEFORMAT="%F %T "
 export PROMPT_COMMAND="history -a; history -n; $PROMPT_COMMAND"
+export BROWSER="flatpak run io.github.zen_browser.zen"
 
 shopt -s histappend
 shopt -s cmdhist
@@ -43,5 +44,6 @@ eval "$(starship init bash)"
 
 eval "$($HOME/.local/bin/mise activate bash)"
 
-
 [ -f ~/.env.local ] && source ~/.env.local
+
+export PATH=$PATH:/home/raphael/.spicetify
