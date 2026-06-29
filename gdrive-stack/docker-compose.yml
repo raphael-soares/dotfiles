@@ -14,7 +14,7 @@ services:
       BACKUP_HOST: ${BACKUP_HOST:-arch}
     volumes:
       - ./config:/config
-      - ${SYNC_ROOT}:${SYNC_ROOT}:ro
+      - ${SYNC_ROOT:?defina SYNC_ROOT no .env}:${SYNC_ROOT}:ro
       - restic-cache:/root/.cache/restic
 volumes:
   restic-cache:
