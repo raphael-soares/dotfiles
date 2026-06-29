@@ -1,40 +1,34 @@
 # dotfiles
 
-Managed with [GNU Stow](https://www.gnu.org/software/stow/).
+Arch Linux dotfiles, managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 ## Setup
+
+One command installs every dependency through `yay` (repos + AUR), clones TPM,
+and stows everything:
 
 ```bash
 git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
-cp .env.example ~/.env.local
-stow bash tmux alacritty git starship fzf local mise
+./bootstrap.sh
 ```
 
-### Existing configs conflict?
+`bootstrap.sh` is idempotent and bootstraps `yay` itself if it's missing. It stows
+with `--adopt -R` followed by `git restore .`, so the repo's config wins over any
+config the machine already had (the old local files are discarded). After it runs,
+start tmux and press `prefix + I` to install the tmux plugins.
 
-If a machine already has its own configs (e.g. a default `.bashrc`), plain `stow`
-aborts with conflicts. To force the repo to win over whatever was there before:
+### Manual stow
+
+If you only want to re-link configs without touching packages:
 
 ```bash
-stow --adopt -R bash tmux alacritty git starship fzf local mise
-git restore .
+stow bash tmux alacritty git starship fzf local mise   # or add --adopt -R to override
 ```
 
-`--adopt` pulls each conflicting file into the repo and replaces it with a symlink;
-`git restore .` then resets those files back to the committed versions, so every
-symlink points at the repo's config. Your old local files are discarded.
-
-**Deps:**
-- [TPM](https://github.com/tmux-plugins/tpm) — clone into the XDG path the config
-  expects, then hit `prefix + I` inside tmux to install plugins:
-  ```bash
-  git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
-  ```
-- [JetBrainsMono Nerd Font](https://www.nerdfonts.com/)
-- [mise](https://mise.jdx.dev/) — installed however you like (AUR, `pacman`, or the
-  official installer). `.bashrc` resolves it from `PATH`, so the binary location
-  doesn't matter.
+**Packages installed** (see `bootstrap.sh` for the full list): stow, github-cli,
+tmux, alacritty, starship, fzf, mise, neovim, jq, openfortivpn,
+ttf-jetbrains-mono-nerd, and from the AUR spicetify-cli and claude-code.
 
 ## Scripts
 
