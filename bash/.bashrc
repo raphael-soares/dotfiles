@@ -40,10 +40,12 @@ if [ -d "$HOME/.local/bin" ]; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
-eval "$(starship init bash)"
+command -v starship >/dev/null && eval "$(starship init bash)"
 
-eval "$($HOME/.local/bin/mise activate bash)"
+# mise lives in ~/.local/bin (official installer) or /usr/bin (AUR package);
+# resolve it from PATH instead of hardcoding either location.
+command -v mise >/dev/null && eval "$(mise activate bash)"
 
 [ -f ~/.env.local ] && source ~/.env.local
 
-export PATH=$PATH:/home/raphael/.spicetify
+[ -d "$HOME/.spicetify" ] && export PATH="$PATH:$HOME/.spicetify"
