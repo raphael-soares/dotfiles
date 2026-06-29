@@ -26,17 +26,22 @@ git restore .
 symlink points at the repo's config. Your old local files are discarded.
 
 **Deps:**
-- [TPM](https://github.com/tmux-plugins/tpm) — `prefix + I` to install plugins
+- [TPM](https://github.com/tmux-plugins/tpm) — clone into the XDG path the config
+  expects, then hit `prefix + I` inside tmux to install plugins:
+  ```bash
+  git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
+  ```
 - [JetBrainsMono Nerd Font](https://www.nerdfonts.com/)
-- [mise](https://mise.jdx.dev/) — official installer or `pacman -S mise` (AUR); the
-  `mise` package on Arch is in the official repos. `.bashrc` finds it on `PATH` either way.
+- [mise](https://mise.jdx.dev/) — installed however you like (AUR, `pacman`, or the
+  official installer). `.bashrc` resolves it from `PATH`, so the binary location
+  doesn't matter.
 
 ## Scripts
 
 | Script | Description |
 |---|---|
-| `claudecommit` | AI commit message generator (haiku / gemini-flash) |
-| `vpn` | Connect to Unimed VPN via openfortivpn |
+| `acmit` | AI commit message generator (haiku / gemini-flash) |
+| `vpn` | Connect to Unimed VPN via openfortivpn (work-specific: hardcoded conf + DNS) |
 
 ## Neovim
 
