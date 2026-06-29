@@ -1,0 +1,30 @@
+# Jobs declarativos do gdrive-stack.
+#
+# Cada item de `jobs` tem três campos:
+#   mode -> "sync" (espelho uma-via no Drive) ou "backup" (versionado/restic)
+#   src  -> caminho absoluto no host; precisa estar sob SYNC_ROOT (montado :ro)
+#   dest -> sync:   subpasta sob SYNC_BASE no Drive (<SYNC_BASE>/<dest>).
+#                   Se começar com "/", é caminho absoluto a partir da raiz do
+#                   remote e ignora o SYNC_BASE. Pode ser aninhado.
+#           backup: tag do snapshot no restic (NÃO é pasta; o repo único mora
+#                   em RESTIC_REPO_PATH, definido no .env).
+#
+# Edite à vontade. Pastas que não existem são puladas com aviso.
+# Formate com qualquer ferramenta YAML (prettier, yamlfmt, yamllint).
+
+jobs: []
+  # - mode: sync
+  #   src: /home/raphael/Notes
+  #   dest: notes
+  #
+  # - mode: sync
+  #   src: /home/raphael/Pictures
+  #   dest: /Backups/fotos      # destino absoluto, fora do SYNC_BASE
+  #
+  # - mode: backup
+  #   src: /home/raphael/Workspace
+  #   dest: workspace           # tag do restic
+  #
+  # - mode: backup
+  #   src: /home/raphael/Notes
+  #   dest: notes

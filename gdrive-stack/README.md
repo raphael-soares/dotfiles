@@ -12,8 +12,9 @@ pra qualquer máquina, preenche dois arquivos e sobe.
 
 ## Como funciona
 
-- `config/jobs.conf` — lista de jobs: `modo | origem | destino`. Única superfície
-  pra escolher o que sincroniza/backupa e o destino.
+- `config/jobs.yaml` — lista de jobs (campos `mode`, `src`, `dest`). Única
+  superfície pra escolher o que sincroniza/backupa e o destino. Parseado com
+  `yq` no container, então formate/lint com qualquer ferramenta YAML.
 - `.env` — segredos e config da máquina (gitignored).
 - `config/rclone.conf` — credenciais OAuth do Drive (gitignored).
 - A pasta-raiz dos teus arquivos (`SYNC_ROOT`) é montada **read-only**. O stack
@@ -35,7 +36,7 @@ Agendamento padrão (`config/crontab`): `sync` de hora em hora, `backup` às 03:
 
 2. Edite o `.env`:
    - `SYNC_ROOT` — pasta-raiz dos teus arquivos (ex.: `/home/raphael`). Tudo em
-     `jobs.conf` precisa estar sob ela.
+     `jobs.yaml` precisa estar sob ela.
    - `RESTIC_PASSWORD` — senha forte. **Perdeu a senha = backups irrecuperáveis.**
    - `BACKUP_HOST`, `TZ` — conforme a máquina.
 
@@ -53,11 +54,16 @@ Agendamento padrão (`config/crontab`): `sync` de hora em hora, `backup` às 03:
    docker compose run --rm backup rclone config
    ```
 
-4. Defina teus jobs em `config/jobs.conf`. Exemplo:
+4. Defina teus jobs em `config/jobs.yaml`. Exemplo:
 
-   ```
-   sync   | /home/raphael/Notes      | notes
-   backup | /home/raphael/Workspace  | workspace
+   ```yaml
+   jobs:
+     - mode: sync
+       src: /home/raphael/Notes
+       dest: notes
+     - mode: backup
+       src: /home/raphael/Workspace
+       dest: workspace
    ```
 
 5. Suba:
