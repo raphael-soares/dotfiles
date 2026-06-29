@@ -15,8 +15,14 @@ while IFS='|' read -r jmode src dest || [ -n "${jmode:-}" ]; do
   [ -n "$src" ] && [ -n "$dest" ] || { echo "[$MODE] linha inválida"; continue; }
   if [ ! -e "$src" ]; then echo "[$MODE] PULANDO (não existe): $src"; continue; fi
   if [ "$MODE" = "sync" ]; then
-    echo "[sync] $src -> ${RCLONE_REMOTE}:${SYNC_BASE}/${dest}"
-    rclone sync "$src" "${RCLONE_REMOTE}:${SYNC_BASE}/${dest}" \
+    # destino com "/" no começo = caminho absoluto a partir da raiz do remote
+    # (ignora SYNC_BASE); senão, fica sob <SYNC_BASE>/<destino>.
+    case "$dest" in
+      /*) target="${RCLONE_REMOTE}:${dest#/}" ;;
+      *)  target="${RCLONE_REMOTE}:${SYNC_BASE}/${dest}" ;;
+    esac
+    echo "[sync] $src -> ${target}"
+    rclone sync "$src" "${target}" \
       --create-empty-src-dirs --fast-list --log-level INFO
   else
     export RESTIC_REPOSITORY="rclone:${RCLONE_REMOTE}:${RESTIC_REPO_PATH}"
