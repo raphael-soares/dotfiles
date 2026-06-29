@@ -1,0 +1,6 @@
+# Gere o real com `rclone config` e salve como config/rclone.conf (gitignored).
+# O nome [gdrive] tem que bater com RCLONE_REMOTE.
+[gdrive]
+type = drive
+scope = drive
+token = {"access_token":"...","refresh_token":"...","expiry":"..."}
