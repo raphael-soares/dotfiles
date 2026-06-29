@@ -10,7 +10,6 @@ cd "$DOTFILES"
 PKGS=(
   stow git github-cli tmux alacritty starship fzf mise neovim
   jq curl openfortivpn ttf-jetbrains-mono-nerd
-  spicetify-cli   # AUR — only useful with Spotify installed
   claude-code     # AUR — used by the `acmit` script (skip if you only use GEMINI_API_KEY)
 )
 
