@@ -92,5 +92,10 @@ docker compose exec backup sh -c \
 
 - `sync` é uma via (local → Drive) e **espelha**: arquivos removidos na origem
   somem do destino. Use `backup` pro que precisa de histórico.
+- Tratamento de erros: um job que falha não derruba os outros — cada um roda
+  isolado e no fim sai um resumo (`N ok, M com erro`). O `dispatch.sh` retorna
+  código != 0 se algum job falhou. Casos cobertos com mensagem clara: YAML
+  inválido, remote do rclone inexistente (OAuth não feito), `mode` desconhecido,
+  `src`/`dest` faltando, e `src` fora de `SYNC_ROOT` (não montado).
 - Pastas listadas que não existem são puladas com aviso, não quebram o job.
 - `.env` e `config/rclone.conf` estão no `.gitignore` — nunca commite segredo.
