@@ -1,116 +1,61 @@
 # gdrive-stack
 
-Stack Docker que faz duas coisas, declarativamente, contra o Google Drive:
+Docker stack that mirrors folders to Google Drive (`rclone`) and keeps
+incremental encrypted backups (`restic`, with rclone as backend). Single Alpine
+container, scheduled by busybox cron inside it (no systemd, no host cron).
 
-- **sync** — espelho uma-via de pastas pro Drive, via `rclone sync`.
-- **backup** — backup incremental versionado e encriptado, via `restic`
-  usando o rclone como backend.
-
-Container único (Alpine + rclone + restic). Agendamento por cron do busybox
-**dentro** do container, sem systemd, sem cron no host. Portável: copia a pasta
-pra qualquer máquina, preenche dois arquivos e sobe.
-
-## Como funciona
-
-- `config/jobs.yaml` — lista de jobs (campos `mode`, `src`, `dest`). Única
-  superfície pra escolher o que sincroniza/backupa e o destino. Parseado com
-  `yq` no container, então formate/lint com qualquer ferramenta YAML.
-- `.env` — segredos e config da máquina (gitignored).
-- `config/rclone.conf` — credenciais OAuth do Drive (gitignored).
-- A pasta-raiz dos teus arquivos (`SYNC_ROOT`) é montada **read-only**. O stack
-  nunca escreve nos teus arquivos.
-- `restic`: um repositório só, separado por **tag** (dedup entre pastas, uma
-  senha só). Retenção: 7 diários, 4 semanais, 6 mensais, com `--prune`.
-
-Agendamento padrão (`config/crontab`): `sync` de hora em hora, `backup` às 03:30.
-
-## Setup (um comando)
+## Setup
 
 ```bash
 cd ~/.dotfiles/gdrive-stack
 ./setup.sh
 ```
 
-`setup.sh` é idempotente e faz tudo: checa o docker, gera o `.env` (com
-`SYNC_ROOT`, `BACKUP_HOST`, `TZ` e uma senha forte de restic), abre o OAuth do
-Google Drive no navegador, builda e sobe o container. No fim mostra a senha do
-restic pra você salvar. Rodar de novo não refaz o que já está pronto.
+`setup.sh` is idempotent: checks Docker, generates `.env` (SYNC_ROOT,
+BACKUP_HOST, TZ, a strong restic password), runs the Drive OAuth in the browser,
+then builds and starts the container. It prints the restic password at the end.
+Save it: lose it and the backups are unrecoverable.
 
-Depois, edite `config/jobs.yaml` com o que quer sincronizar/backupar (veja a
-seção abaixo) e rode `./setup.sh` de novo (ou `docker compose up -d`).
+Then edit `config/jobs.yaml` and run `docker compose up -d`.
 
-### Setup manual (se preferir passo a passo)
+## Configuring jobs
 
-1. Copie os templates:
+`config/jobs.yaml` is the only file you edit to choose what runs:
 
-   ```bash
-   cd gdrive-stack
-   cp .env.example .env
-   cp config/rclone.conf.example config/rclone.conf   # será sobrescrito no passo 3
-   ```
+```yaml
+jobs:
+  - mode: sync          # one-way mirror to Drive
+    src: /home/raphael/Notes
+    dest: notes         # lands at <SYNC_BASE>/notes; leading "/" = absolute path
+  - mode: backup        # versioned restic snapshot
+    src: /home/raphael/Workspace
+    dest: workspace     # restic tag (not a folder)
+```
 
-2. Edite o `.env`:
-   - `SYNC_ROOT` — pasta-raiz dos teus arquivos (ex.: `/home/raphael`). Tudo em
-     `jobs.yaml` precisa estar sob ela.
-   - `RESTIC_PASSWORD` — senha forte. **Perdeu a senha = backups irrecuperáveis.**
-   - `BACKUP_HOST`, `TZ` — conforme a máquina.
+- `src` must be under `SYNC_ROOT` (the only path mounted, read-only).
+- Backups go to one restic repo, separated by tag (dedup, one password).
+  Retention: 7 daily, 4 weekly, 6 monthly.
+- Default schedule (`config/crontab`): sync hourly, backup at 03:30.
 
-3. Crie o remote do rclone (passo interativo, abre o navegador):
-
-   ```bash
-   rclone config        # crie um remote chamado igual a RCLONE_REMOTE (ex.: gdrive), type=drive
-   ```
-
-   Copie a seção gerada pra `config/rclone.conf` (o `[gdrive]` tem que bater com
-   `RCLONE_REMOTE`). Se o `rclone` não estiver instalado no host, gere dentro do
-   container depois do `up`:
-
-   ```bash
-   docker compose run --rm backup rclone config
-   ```
-
-4. Defina teus jobs em `config/jobs.yaml`. Exemplo:
-
-   ```yaml
-   jobs:
-     - mode: sync
-       src: /home/raphael/Notes
-       dest: notes
-     - mode: backup
-       src: /home/raphael/Workspace
-       dest: workspace
-   ```
-
-5. Suba:
-
-   ```bash
-   docker compose up -d --build
-   docker compose logs --tail=30 backup
-   ```
-
-## Comandos úteis
+## Commands
 
 ```bash
-docker compose ps                                  # status do container
-docker compose logs -f backup                      # acompanhar logs do cron
-docker compose exec backup /scripts/dispatch.sh sync     # rodar sync agora
-docker compose exec backup /scripts/dispatch.sh backup   # rodar backup agora
+docker compose ps
+docker compose logs -f backup
+docker compose exec backup /scripts/dispatch.sh sync     # run sync now
+docker compose exec backup /scripts/dispatch.sh backup   # run backup now
 
-# inspecionar / restaurar backups (restic):
+# restic snapshots / restore:
 docker compose exec backup sh -c \
   'RESTIC_REPOSITORY=rclone:$RCLONE_REMOTE:$RESTIC_REPO_PATH restic snapshots'
 docker compose exec backup sh -c \
   'RESTIC_REPOSITORY=rclone:$RCLONE_REMOTE:$RESTIC_REPO_PATH restic restore latest --target /tmp/restore --tag notes'
 ```
 
-## Notas
+## Notes
 
-- `sync` é uma via (local → Drive) e **espelha**: arquivos removidos na origem
-  somem do destino. Use `backup` pro que precisa de histórico.
-- Tratamento de erros: um job que falha não derruba os outros — cada um roda
-  isolado e no fim sai um resumo (`N ok, M com erro`). O `dispatch.sh` retorna
-  código != 0 se algum job falhou. Casos cobertos com mensagem clara: YAML
-  inválido, remote do rclone inexistente (OAuth não feito), `mode` desconhecido,
-  `src`/`dest` faltando, e `src` fora de `SYNC_ROOT` (não montado).
-- Pastas listadas que não existem são puladas com aviso, não quebram o job.
-- `.env` e `config/rclone.conf` estão no `.gitignore` — nunca commite segredo.
+- `sync` mirrors: files deleted from `src` are deleted on Drive. Use `backup`
+  for history.
+- A failing job doesn't abort the others; `dispatch.sh` exits non-zero if any
+  failed.
+- `.env` and `config/rclone.conf` are gitignored. Never commit secrets.
