@@ -24,7 +24,22 @@ pra qualquer máquina, preenche dois arquivos e sobe.
 
 Agendamento padrão (`config/crontab`): `sync` de hora em hora, `backup` às 03:30.
 
-## Setup
+## Setup (um comando)
+
+```bash
+cd ~/.dotfiles/gdrive-stack
+./setup.sh
+```
+
+`setup.sh` é idempotente e faz tudo: checa o docker, gera o `.env` (com
+`SYNC_ROOT`, `BACKUP_HOST`, `TZ` e uma senha forte de restic), abre o OAuth do
+Google Drive no navegador, builda e sobe o container. No fim mostra a senha do
+restic pra você salvar. Rodar de novo não refaz o que já está pronto.
+
+Depois, edite `config/jobs.yaml` com o que quer sincronizar/backupar (veja a
+seção abaixo) e rode `./setup.sh` de novo (ou `docker compose up -d`).
+
+### Setup manual (se preferir passo a passo)
 
 1. Copie os templates:
 
