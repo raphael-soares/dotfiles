@@ -47,5 +47,3 @@ command -v starship >/dev/null && eval "$(starship init bash)"
 command -v mise >/dev/null && eval "$(mise activate bash)"
 
 [ -f ~/.env.local ] && source ~/.env.local
-
-[ -d "$HOME/.spicetify" ] && export PATH="$PATH:$HOME/.spicetify"

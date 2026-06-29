@@ -28,7 +28,7 @@ stow bash tmux alacritty git starship fzf local mise   # or add --adopt -R to ov
 
 **Packages installed** (see `bootstrap.sh` for the full list): stow, github-cli,
 tmux, alacritty, starship, fzf, mise, neovim, jq, openfortivpn,
-ttf-jetbrains-mono-nerd, and from the AUR spicetify-cli and claude-code.
+ttf-jetbrains-mono-nerd, and from the AUR claude-code.
 
 ## Scripts
 
