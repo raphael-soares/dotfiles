@@ -1,0 +1,11 @@
+{
+  "name": "One Black",
+  "author": "",
+  "version": "1.0.0",
+  "description": "One Dark palette on a true-black background (ported from the Alacritty \"One Half Black\" theme).",
+  "modes": "dark",
+  "preview": {
+    "light": "#61afef",
+    "dark": "#61afef"
+  }
+}

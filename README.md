@@ -13,10 +13,10 @@ cd ~/.dotfiles
 ./bootstrap.sh
 ```
 
-`bootstrap.sh` is idempotent and bootstraps `yay` itself if it's missing. It stows
-with `--adopt -R` followed by `git restore .`, so the repo's config wins over any
-config the machine already had (the old local files are discarded). After it runs,
-start tmux and press `prefix + I` to install the tmux plugins.
+`bootstrap.sh` is idempotent and bootstraps `yay` if missing. It stows with
+`--adopt -R` then `git restore .`, so the repo wins over existing local config
+(old files discarded). After it runs, open tmux and press `prefix + I` to install
+the plugins.
 
 ### Manual stow
 
