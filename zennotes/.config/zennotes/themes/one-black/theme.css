@@ -1,0 +1,37 @@
+/* One Black — a ZenNotes theme, ported from the "One Half Black" Alacritty theme
+ * (One Dark palette on a true-black background).
+ *
+ * Only this file's CSS is active while the theme is selected, so :root is safe
+ * to use unscoped. Tokens are space-separated RGB triplets, e.g. --z-bg: 255 255 255;
+ */
+
+:root {
+  color-scheme: dark;
+  --z-bg: 0 0 0;
+  --z-bg-softer: 13 13 13;
+  --z-bg-1: 23 23 23;
+  --z-bg-2: 41 41 41;
+  --z-bg-3: 61 61 61;
+  --z-bg-4: 97 97 97;
+  --z-fg: 200 204 212;
+  --z-fg-1: 203 207 215;
+  --z-fg-2: 164 167 174;
+  --z-grey-2: 164 167 174;
+  --z-grey-1: 130 133 138;
+  --z-grey-0: 100 102 106;
+  --z-grey-dim: 64 65 68;
+  --z-accent: 97 175 239;
+  --z-accent-soft: 136 195 243;
+  --z-accent-muted: 63 114 155;
+  --z-red: 224 108 117;
+  --z-green: 152 195 121;
+  --z-yellow: 229 192 123;
+  --z-blue: 97 175 239;
+  --z-purple: 198 120 221;
+  --z-aqua: 86 182 194;
+  --z-shadow: 0 0 0;
+  --z-glass-a1: 0.58;
+  --z-glass-a2: 0.46;
+  --z-glass-a3: 0.32;
+  --z-glass-a4: 0.22;
+}

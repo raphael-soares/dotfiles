@@ -14,7 +14,7 @@ PKGS=(
 )
 
 # Stow packages to deploy (each maps to a top-level dir in this repo).
-STOW_PKGS=(bash tmux alacritty git starship fzf local mise)
+STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes)
 
 # ── Ensure yay is present (bootstrap it from the AUR if not) ─────────────────
 if ! command -v yay >/dev/null; then
@@ -61,4 +61,3 @@ git restore .
 
 echo
 echo "Done. Start tmux and press 'prefix + I' to install the tmux plugins."
-echo "Zen browser (set as \$BROWSER) is a flatpak: flatpak install flathub io.github.zen_browser.zen"
