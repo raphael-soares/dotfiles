@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
 SEARCH_DIRS=(
-    ~/Workspace/Work
-    ~/Workspace/Personal
-    ~/Workspace/Learning
-    ~/.dotfiles/
-    ~/
+    ~/Desktop/Work
+    ~/Desktop/Personal
+    ~/Desktop/Learning
+    ~/Desktop/
 )
 
 source ~/.config/fzf/fzf.sh
