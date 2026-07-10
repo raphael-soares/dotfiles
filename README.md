@@ -28,22 +28,7 @@ stow bash tmux alacritty git starship fzf local mise   # or add --adopt -R to ov
 
 **Packages installed** (see `bootstrap.sh` for the full list): stow, github-cli,
 tmux, alacritty, starship, fzf, mise, neovim, jq, openfortivpn,
-ttf-jetbrains-mono-nerd, docker, docker-compose, rclone, and from the AUR
-claude-code.
-
-## Google Drive sync + backup
-
-Docker stack that mirrors folders to Google Drive and keeps encrypted
-incremental backups (rclone + restic). One-time docker setup per machine:
-`sudo systemctl enable --now docker && sudo usermod -aG docker $USER` (relog).
-Then:
-
-```bash
-cd ~/.dotfiles/gdrive-stack
-./setup.sh
-```
-
-See [`gdrive-stack/README.md`](gdrive-stack/README.md).
+ttf-jetbrains-mono-nerd, and from the AUR claude-code.
 
 ## Scripts
 
@@ -51,7 +36,6 @@ See [`gdrive-stack/README.md`](gdrive-stack/README.md).
 |---|---|
 | `acmit` | AI commit message generator (haiku / gemini-flash) |
 | `vpn` | Connect to Unimed VPN via openfortivpn (work-specific: hardcoded conf + DNS) |
-| `gdrive-stack/setup.sh` | Configure and start the Drive sync/backup stack |
 
 ## Neovim
 

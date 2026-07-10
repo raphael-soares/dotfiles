@@ -10,7 +10,6 @@ cd "$DOTFILES"
 PKGS=(
   stow git github-cli tmux alacritty starship fzf mise neovim
   jq curl openfortivpn ttf-jetbrains-mono-nerd
-  docker docker-compose rclone     # gdrive-stack (see gdrive-stack/setup.sh)
   claude-code     # AUR — used by the `acmit` script (skip if you only use GEMINI_API_KEY)
 )
 
