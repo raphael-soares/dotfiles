@@ -1,3 +1,0 @@
-# min hora dia mês dow  comando   (saída -> stdout do container)
-0  *  * * *   /scripts/dispatch.sh sync   > /proc/1/fd/1 2>&1
-30 3  * * *   /scripts/dispatch.sh backup > /proc/1/fd/1 2>&1
