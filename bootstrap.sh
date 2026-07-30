@@ -14,7 +14,7 @@ PKGS=(
 )
 
 # Stow packages to deploy (each maps to a top-level dir in this repo).
-STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes)
+STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim)
 
 # ── Ensure yay is present (bootstrap it from the AUR if not) ─────────────────
 if ! command -v yay >/dev/null; then
