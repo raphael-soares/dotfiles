@@ -21,6 +21,7 @@ alias l='ls -lah --color=auto'
 alias grep='grep --color=auto'
 alias yayf="yay -Slq | fzf --multi --preview 'yay -Sii {1}' --preview-window=down:55% | xargs -ro yay -S"
 alias pacmanf="pacman -Slq | fzf --multi --preview 'pacman -Sii {1}' --preview-window=down:55% | xargs -ro yay -S"
+alias gemini="agy"
 
 
 alias vim="nvim "
