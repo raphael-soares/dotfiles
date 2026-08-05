@@ -28,6 +28,7 @@ fzf_path = ""  # absolute path to fzf; empty = look on $PATH
 [editor]
 live_preview = false  # hide markdown syntax on inactive lines
 render_tables = true  # render tables as widgets in live preview; off keeps them as plain text
+sync_title_heading_on_rename = true  # renaming a note rewrites its leading '# heading' to match
 markdown_snippets = true  # auto-close markdown delimiters while typing
 auto_pairs = true  # auto-insert matching [] () and {} while typing
 auto_pair_quotes_in_prose = false  # also auto-insert matching quotes outside Markdown code
@@ -61,11 +62,12 @@ content_align = "center"  # center | left
 unified_sidebar = true  # merge the note list into the sidebar tree
 
 [typography]
-interface_font = "JetBrainsMono Nerd Font"  # app chrome font; empty = system default
+interface_font = "Inter"  # app chrome font; empty = system default
 text_font = "JetBrainsMono Nerd Font"  # editor + preview font; empty = system default
 mono_font = "JetBrainsMono Nerd Font"  # code / monospace font; empty = system default
 
 [view]
+workflows_enabled = false  # opt in to the Workflows view, its sidebar row, command, and leader shortcut (off by default)
 asset_sort_order = "name-asc"  # Assets view sort: name | used | type | size | modified, each -asc or -desc
 note_sort_order = "none"  # none | manual | updated-desc | updated-asc | created-desc | created-asc | name-asc | name-desc
 group_by_kind = true  # group notes by kind in the list
@@ -77,9 +79,10 @@ quick_note_title_prefix = "Quick Note"  # prefix for new quick-note titles; empt
 auto_calendar_panel = true  # auto-show the calendar for daily / weekly notes
 calendar_week_start = "monday"  # monday | sunday | locale
 calendar_show_week_numbers = true  # show ISO week numbers in the calendar
-tasks_view_mode = "kanban"  # list | calendar | kanban
+tasks_view_mode = "list"  # list | calendar | kanban
 kanban_group_by = "status"  # status | priority | folder
 kanban_statuses = []  # custom-status Kanban columns, in order — e.g. ["backlog", "in_progress", "review", "done"]
+hidden_workflow_presets = []  # built-in workflow recipes hidden from the gallery, by id — e.g. ["reading-log"]
 
 # Keymap overrides. Add or uncomment "<action.id>" = "<binding>" lines.
 # Binding syntax: "Mod+P" = Cmd/Ctrl+P, "Shift+Mod+K", "Ctrl+W", "Space",
@@ -95,6 +98,7 @@ kanban_statuses = []  # custom-status Kanban columns, in order — e.g. ["backlo
 # "global.searchNotesNonVim" = "Mod+F"  # Search notes in non-Vim mode
 # "global.newQuickNote" = "Shift+Mod+N"  # New quick note
 # "global.openSettings" = "Mod+,"  # Open settings
+# "global.openFile" = "Mod+O"  # Open file
 # "global.toggleSidebar" = "Mod+1"  # Toggle sidebar
 # "global.toggleConnections" = "Mod+2"  # Toggle connections panel
 # "global.toggleOutlinePanel" = "Mod+3"  # Toggle outline panel
@@ -119,6 +123,7 @@ kanban_statuses = []  # custom-status Kanban columns, in order — e.g. ["backlo
 # Vim
 # "vim.leaderPrefix" = "Space"  # Leader key
 # "vim.leaderOpenBuffers" = "o"  # Leader: open buffers
+# "vim.leaderWorkflows" = "a"  # Leader: open workflows
 # "vim.leaderSearchNotes" = "f"  # Leader: search notes
 # "vim.leaderSearchGroup" = "s"  # Leader: search…
 # "vim.leaderSearchVaultText" = "t"  # Leader search: vault text

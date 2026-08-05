@@ -1,6 +1,7 @@
 [general]
 import = [
-  "~/.config/alacritty/themes/anthropic.toml"
+  # "~/.config/alacritty/themes/anthropic.toml"
+  "~/.config/alacritty/themes/onedark.toml"
 ]
 
 
