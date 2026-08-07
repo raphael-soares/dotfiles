@@ -1,6 +1,15 @@
 local servers = {
-  "lua_ls", "html", "cssls", "clangd", "basedpyright",
-  "tailwindcss", "jsonls", "marksman", "terraformls", "vue_ls", "vtsls",
+  "lua_ls",
+  "html",
+  "cssls",
+  "clangd",
+  "basedpyright",
+  "tailwindcss",
+  "jsonls",
+  "marksman",
+  "terraformls",
+  "vue_ls",
+  "vtsls",
 }
 
 return {

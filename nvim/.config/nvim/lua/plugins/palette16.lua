@@ -1,7 +1,6 @@
 return {
   {
-    dir = vim.fn.expand("~/Desktop/Personal/palette16.nvim"),
-    name = "palette16.nvim",
+    "raphael-soares/palette16.nvim",
     lazy = false,
     priority = 999,
     config = function()

@@ -40,7 +40,7 @@ line_height = 1.6  # line-height multiplier
 scroll_off = 0  # vim scrolloff — lines kept above/below the cursor (0 = off)
 time_format = "12h"  # clock format for the @time macro (12h or 24h)
 preview_max_width = 920  # max reading width for the preview (px)
-editor_max_width = 920  # max width of the editor column (px)
+editor_max_width = 1080  # max width of the editor column (px)
 completed_task_style = "none"  # none | strikethrough | gray | gray-strikethrough — style checked-task text
 math_renderer = "katex"  # katex | typst: typesetter for $…$ / $$…$$ math
 typst_tag_preambles = false  # true | false — prepend Typst definitions from notes in a `typst` folder, chosen by a note's tags
