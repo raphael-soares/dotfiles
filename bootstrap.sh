@@ -61,10 +61,11 @@ stow --adopt -R "${STOW_PKGS[@]}"
 git restore .
 
 # ── Reload KDE/KWin config if running in a Plasma session ────────────────────
+# KWin reconfigure also re-registers Krohnkite shortcuts, so no separate
+# kglobalaccel call is needed.
 if [ -n "${KDE_SESSION_VERSION:-}" ]; then
   echo "==> Recarregando configurações do KWin e Atalhos"
   qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || true
-  qdbus org.kde.kglobalaccel /kglobalaccel reloadConfig 2>/dev/null || true
 fi
 
 echo
