@@ -11,10 +11,11 @@ PKGS=(
   stow git github-cli tmux alacritty starship fzf mise neovim
   jq curl openfortivpn ttf-jetbrains-mono-nerd
   claude-code     # AUR — used by the `acmit` script (skip if you only use GEMINI_API_KEY)
+  kwin-scripts-krohnkite  # AUR — tiling window manager script for KWin
 )
 
 # Stow packages to deploy (each maps to a top-level dir in this repo).
-STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim)
+STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim kde)
 
 # ── Ensure yay is present (bootstrap it from the AUR if not) ─────────────────
 if ! command -v yay >/dev/null; then
@@ -58,6 +59,13 @@ fi
 echo "==> Stowing dotfiles"
 stow --adopt -R "${STOW_PKGS[@]}"
 git restore .
+
+# ── Reload KDE/KWin config if running in a Plasma session ────────────────────
+if [ -n "${KDE_SESSION_VERSION:-}" ]; then
+  echo "==> Recarregando configurações do KWin e Atalhos"
+  qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || true
+  qdbus org.kde.kglobalaccel /kglobalaccel reloadConfig 2>/dev/null || true
+fi
 
 echo
 echo "Done. Start tmux and press 'prefix + I' to install the tmux plugins."
