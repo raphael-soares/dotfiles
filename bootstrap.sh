@@ -11,7 +11,7 @@ PKGS=(
   stow git github-cli tmux alacritty starship fzf mise neovim
   jq curl openfortivpn ttf-jetbrains-mono-nerd
   claude-code     # AUR — used by the `acmit` script (skip if you only use GEMINI_API_KEY)
-  kwin-scripts-krohnkite  # AUR — tiling window manager script for KWin
+  kwin-scripts-krohnkite-git  # AUR — tiling window manager script for KWin
 )
 
 # Stow packages to deploy (each maps to a top-level dir in this repo).
