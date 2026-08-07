@@ -64,6 +64,18 @@ return {
     end,
   },
 
+  -- Inline git blame of the current line, as virtual text at the end of it
+  {
+    "lewis6991/gitsigns.nvim",
+    event = { "BufReadPre", "BufNewFile" },
+    opts = {
+      signcolumn = false,
+      current_line_blame = true,
+      current_line_blame_opts = { delay = 300, virt_text_pos = "eol" },
+      current_line_blame_formatter = "  <author>, <author_time:%d/%m/%Y> - <summary>",
+    },
+  },
+
   -- Visual marks: shows mark letters in sign column + virtual text
   {
     "chentoast/marks.nvim",
@@ -79,36 +91,24 @@ return {
 
   -- Shows available keymaps when you pause mid-sequence
   {
-    "echasnovski/mini.clue",
-    version = "*",
+    "folke/which-key.nvim",
     event = "VeryLazy",
-    config = function()
-      local clue = require("mini.clue")
-      clue.setup({
-        triggers = {
-          { mode = "n", keys = "<Leader>" },
-          { mode = "x", keys = "<Leader>" },
-          { mode = "n", keys = "g" },
-          { mode = "x", keys = "g" },
-          { mode = "n", keys = "'" },
-          { mode = "n", keys = "`" },
-          { mode = "n", keys = '"' },
-          { mode = "n", keys = "<C-w>" },
-          { mode = "n", keys = "z" },
-          { mode = "x", keys = "z" },
-          { mode = "i", keys = "<C-x>" },
-        },
-        clues = {
-          clue.gen_clues.builtin_completion(),
-          clue.gen_clues.g(),
-          clue.gen_clues.marks(),
-          clue.gen_clues.registers(),
-          clue.gen_clues.windows(),
-          clue.gen_clues.z(),
-          { mode = "n", keys = "<Leader>b", desc = "+Buffers" },
-          { mode = "n", keys = "<Leader>t", desc = "+Toggle" },
-        },
-      })
-    end,
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      spec = {
+        { "<leader>b", group = "Buffers" },
+        { "<leader>d", group = "Debug" },
+        { "<leader>t", group = "Toggle" },
+      },
+    },
+    keys = {
+      {
+        "<leader>?",
+        function()
+          require("which-key").show({ global = false })
+        end,
+        desc = "Buffer Keymaps",
+      },
+    },
   },
 }
