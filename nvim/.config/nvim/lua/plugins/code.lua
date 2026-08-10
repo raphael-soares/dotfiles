@@ -65,6 +65,8 @@ return {
         -- java has no CLI formatter; "prefer" forces jdtls (LSP) to format it.
         -- This must live here (not in the call site) so it survives opts merge.
         java = { lsp_format = "prefer" },
+        c = { lsp_format = "prefer" },
+        cpp = { lsp_format = "prefer" },
         lua = { "stylua" },
         vue = { "prettier" },
         typescript = { "prettier" },
