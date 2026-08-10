@@ -329,6 +329,7 @@ activate task manager entry 9=none,Meta+9,Activate Task Manager Entry 9
 activate widget 185=none,none,Activate Application Launcher Widget
 activate widget 22=none,none,Activate Application Launcher Widget
 activate widget 233=Meta,none,Activate Application Launcher Widget
+activate widget 302=none,none,Activate Compact Pager Widget
 activate widget 306=none,none,Activate Application Launcher Widget
 activate widget 32=none,none,Activate Application Launcher Widget
 activate widget 348=none,none,Activate Networks Widget
@@ -371,8 +372,6 @@ _launch=none
 _launch=none
 
 [services][org.kde.spectacle.desktop]
-CurrentMonitorScreenShot=none
-OpenWithoutScreenshot=none
 RecordRegion=Meta+Shift+R
 
 [wacomtablet]
