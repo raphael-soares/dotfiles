@@ -133,7 +133,6 @@ ForegroundVisited=195,156,191
 [General]
 ColorScheme=AnthropicBreezeDark
 Name=Anthropic Breeze Dark
-TintFactor=0.04
 shadeSortColumn=true
 
 [KDE]

@@ -27,9 +27,11 @@ fzf_path = ""  # absolute path to fzf; empty = look on $PATH
 
 [editor]
 live_preview = false  # hide markdown syntax on inactive lines
+show_heading_level_labels = false  # show H1 through H6 badges before headings
 render_tables = true  # render tables as widgets in live preview; off keeps them as plain text
 sync_title_heading_on_rename = true  # renaming a note rewrites its leading '# heading' to match
 markdown_snippets = true  # auto-close markdown delimiters while typing
+text_replacements_enabled = true  # expand configured text triggers while typing
 auto_pairs = true  # auto-insert matching [] () and {} while typing
 auto_pair_quotes_in_prose = false  # also auto-insert matching quotes outside Markdown code
 hide_builtin_templates = false  # hide the shipped templates from the pickers
@@ -37,6 +39,8 @@ tabs_enabled = false  # enable tab-based editing
 wrap_tabs = false  # wrap the tab strip instead of scrolling it
 font_size = 16  # editor + preview font size (px)
 line_height = 1.6  # line-height multiplier
+tab_size = 4  # tab width in columns, from 1 through 8
+list_indent_guides = true  # vertical guide lines at each nested list level
 scroll_off = 0  # vim scrolloff — lines kept above/below the cursor (0 = off)
 time_format = "12h"  # clock format for the @time macro (12h or 24h)
 preview_max_width = 920  # max reading width for the preview (px)
@@ -45,6 +49,7 @@ completed_task_style = "none"  # none | strikethrough | gray | gray-strikethroug
 math_renderer = "katex"  # katex | typst: typesetter for $…$ / $$…$$ math
 typst_tag_preambles = false  # true | false — prepend Typst definitions from notes in a `typst` folder, chosen by a note's tags
 loose_math_delimiters = false  # render $$…$$ display math even with text before/after the fences
+default_view_mode = "edit"  # edit | split | preview — the mode a note opens in before it has a remembered one
 line_number_mode = "off"  # off | absolute | relative
 line_number_position = "text"  # text | edge
 word_wrap = true  # wrap long lines vs. scroll horizontally
@@ -80,6 +85,7 @@ auto_calendar_panel = true  # auto-show the calendar for daily / weekly notes
 calendar_week_start = "monday"  # monday | sunday | locale
 calendar_show_week_numbers = true  # show ISO week numbers in the calendar
 tasks_view_mode = "list"  # list | calendar | kanban
+show_archived_tasks = false  # keep tasks from archived notes in the Tasks views
 kanban_group_by = "status"  # status | priority | folder
 kanban_statuses = []  # custom-status Kanban columns, in order — e.g. ["backlog", "in_progress", "review", "done"]
 hidden_workflow_presets = []  # built-in workflow recipes hidden from the gallery, by id — e.g. ["reading-log"]
@@ -120,6 +126,16 @@ hidden_workflow_presets = []  # built-in workflow recipes hidden from the galler
 # "global.zoomReset" = "Mod+0"  # Reset zoom
 # "global.historyBack" = "Alt+ArrowLeft"  # Go back in note history
 # "global.historyForward" = "Alt+ArrowRight"  # Go forward in note history
+# "global.toggleRecentNote" = "Mod+Tab"  # Switch to previous note
+# "tabs.select1" = "Alt+1"  # Go to tab 1
+# "tabs.select2" = "Alt+2"  # Go to tab 2
+# "tabs.select3" = "Alt+3"  # Go to tab 3
+# "tabs.select4" = "Alt+4"  # Go to tab 4
+# "tabs.select5" = "Alt+5"  # Go to tab 5
+# "tabs.select6" = "Alt+6"  # Go to tab 6
+# "tabs.select7" = "Alt+7"  # Go to tab 7
+# "tabs.select8" = "Alt+8"  # Go to tab 8
+# "tabs.select9" = "Alt+9"  # Go to tab 9
 # Vim
 # "vim.leaderPrefix" = "Space"  # Leader key
 # "vim.leaderOpenBuffers" = "o"  # Leader: open buffers
@@ -183,8 +199,11 @@ hidden_workflow_presets = []  # built-in workflow recipes hidden from the galler
 # "tasks.moveTaskDown" = "J"  # Move task down
 # "editor.hopMarkerForward" = "Alt+]"  # Hop past next marker
 # "editor.hopMarkerBackward" = "Alt+["  # Hop before previous marker
+# "editor.foldHeading" = "Alt+Mod+F"  # Fold heading
+# "editor.unfoldHeading" = "Alt+Mod+U"  # Unfold heading
 # "editor.moveLineUp" = "Alt+ArrowUp"  # Move line up
 # "editor.moveLineDown" = "Alt+ArrowDown"  # Move line down
+# "editor.toggleCheckbox" = "Mod+L"  # Toggle checkbox
 # "nav.localEx" = ":"  # Open local ex prompt
 # "nav.newQuickNote" = "n"  # New quick note from Quick Notes view
 # "nav.unarchive" = "u"  # Unarchive selected note
@@ -208,3 +227,7 @@ hidden_workflow_presets = []  # built-in workflow recipes hidden from the galler
 # Example: "accent" = "#ff3b30"
 [tweaks]
 cornerRadius = "square"
+
+# Text replacements expanded while typing, keyed by trigger.
+# Example: "->" = "→"
+[text_replacements]
