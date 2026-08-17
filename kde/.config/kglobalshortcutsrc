@@ -369,9 +369,11 @@ _launch=Meta+D
 _launch=none
 
 [services][org.kde.plasma.emojier.desktop]
-_launch=none
+_launch=Meta+.\tMeta+Shift
 
 [services][org.kde.spectacle.desktop]
+CurrentMonitorScreenShot=none
+OpenWithoutScreenshot=none
 RecordRegion=Meta+Shift+R
 
 [wacomtablet]

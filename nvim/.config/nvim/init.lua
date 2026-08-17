@@ -23,6 +23,7 @@ require('vim._core.ui2').enable()
 require("options")
 require("keymaps")
 require("autocmds")
+require("commands")
 
 require("lazy").setup({
   spec = { { import = "plugins" } },
