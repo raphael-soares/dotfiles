@@ -22,7 +22,7 @@ PKGS=(
   kwin-scripts-krohnkite-git
 )
 
-STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim kde)
+STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim kde claude)
 
 if ! command -v yay >/dev/null; then
   echo "==> yay not found, please install it"
