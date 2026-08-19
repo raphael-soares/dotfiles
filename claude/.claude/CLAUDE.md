@@ -1,5 +1,3 @@
-Always respond in English, regardless of the language used in user messages.
-
 ## Fluxo de trabalho
 
 - Ao terminar um card, faça uma revisão final antes de abrir PR: o card foi
