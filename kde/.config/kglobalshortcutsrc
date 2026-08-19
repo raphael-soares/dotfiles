@@ -372,8 +372,6 @@ _launch=none
 _launch=Meta+.\tMeta+Shift
 
 [services][org.kde.spectacle.desktop]
-CurrentMonitorScreenShot=none
-OpenWithoutScreenshot=none
 RecordRegion=Meta+Shift+R
 
 [wacomtablet]
