@@ -9,7 +9,7 @@ cat <<'EOF'
 Deps:
 
   stow git tmux nvim fzf starship mise alacritty tpm
-  jq curl gh openfortivpn jetbrainsmono-nerd-font fzf
+  jq curl gh openfortivpn jetbrainsmono-nerd-font
 
 EOF
 
