@@ -1,3 +1,11 @@
+# Config de maquina, com chave de API e caminho local. Mora no home; a regra
+# aqui e rede de seguranca para o dia que uma copia cair dentro do repo.
+# O .env.example, esse sim, e versionado.
+.env
+.env.local
+*.env.local
+.bash_profile.local
+
 # Segredos e estado de runtime das ferramentas agenticas.
 # O pacote ai/ versiona so a configuracao: CLAUDE.md, settings.json,
 # guidelines, hooks e a pasta canonica skills/, compartilhada pelo Claude
