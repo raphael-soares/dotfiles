@@ -1,19 +1,15 @@
 #!/usr/bin/env bash
 
-# Diretorios varridos. Para mudar sem editar o script, exporte
-# TMUX_SESSIONIZER_DIRS com os caminhos separados por dois-pontos:
-#   export TMUX_SESSIONIZER_DIRS="$HOME/code:$HOME/work"
+# Os diretorios varridos saem de TMUX_SESSIONIZER_DIRS, no ~/.env.local
+# (veja o .env.example). O tmux chama este script por run-shell, que nao passa
+# pelo .bashrc, entao o arquivo e carregado aqui.
+[[ -f ~/.env.local ]] && source ~/.env.local
+
+SEARCH_DIRS=()
 if [[ -n "${TMUX_SESSIONIZER_DIRS:-}" ]]; then
     IFS=':' read -r -a SEARCH_DIRS <<< "$TMUX_SESSIONIZER_DIRS"
     # ~ so vira $HOME quando o shell expande; vindo de variavel, e literal.
     SEARCH_DIRS=("${SEARCH_DIRS[@]/#\~/$HOME}")
-else
-    SEARCH_DIRS=(
-        ~/Desktop/Work
-        ~/Desktop/Personal
-        ~/Desktop/Learning
-        ~/Desktop/
-    )
 fi
 
 # Ignora os que nao existem: find aborta a varredura inteira num caminho invalido.
@@ -22,6 +18,7 @@ for _d in "${SEARCH_DIRS[@]}"; do
     [[ -d "$_d" ]] && _existentes+=("$_d")
 done
 SEARCH_DIRS=("${_existentes[@]}")
+# Sem a variavel (ou com tudo invalido), varre as pastas do home.
 [[ ${#SEARCH_DIRS[@]} -eq 0 ]] && SEARCH_DIRS=("$HOME")
 
 source ~/.config/fzf/fzf.sh
