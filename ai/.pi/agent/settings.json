@@ -1,0 +1,32 @@
+{
+  "lastChangelogVersion": "0.84.2",
+  "theme": "dark/dark",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-5",
+  "packages": [
+    "npm:pi-claude-auth",
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:context-mode",
+    "npm:pi-rtk-optimizer",
+    "npm:pi-web-access",
+    "npm:pi-powerline-footer"
+  ],
+  "quietStartup": true,
+  "tuiMode": "fullscreen",
+  "images": {
+    "blockImages": true
+  },
+  "editorPaddingX": 1,
+  "terminal": {
+    "showTerminalProgress": true
+  },
+  "followUpMode": "all",
+  "markdown": {
+    "mermaid": "off"
+  },
+  "enableInstallTelemetry": false,
+  "defaultProjectTrust": "always",
+  "warnings": {
+    "anthropicExtraUsage": false
+  }
+}

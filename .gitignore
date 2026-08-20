@@ -1,18 +1,45 @@
-# Segredos e estado de runtime do Claude Code.
-# O pacote claude/ versiona so a configuracao (CLAUDE.md, settings.json,
-# guidelines, hooks, skills). Credencial, historico de sessao e permissoes
-# aprovadas por clique sao de maquina, nunca do repo.
-claude/.claude/.credentials.json
-claude/.claude/settings.local.json
-claude/.claude/projects/
-claude/.claude/sessions/
-claude/.claude/session-env/
-claude/.claude/history.jsonl
-claude/.claude/todos/
-claude/.claude/shell-snapshots/
-claude/.claude/statsig/
-claude/.claude/telemetry/
-claude/.claude/plugins/
-claude/.claude/tasks/
-claude/.claude/cache/
-claude/.claude/backups/
+# Segredos e estado de runtime das ferramentas agenticas.
+# O pacote ai/ versiona so a configuracao: CLAUDE.md, settings.json,
+# guidelines, hooks e a pasta canonica skills/, compartilhada pelo Claude
+# Code e pelo pi. Credencial, historico de sessao, cache de modelo e
+# permissoes aprovadas por clique sao de maquina, nunca do repo.
+
+# Claude Code
+ai/.claude/.credentials.json
+ai/.claude/settings.local.json
+ai/.claude/projects/
+ai/.claude/sessions/
+ai/.claude/session-env/
+ai/.claude/history.jsonl
+ai/.claude/todos/
+ai/.claude/shell-snapshots/
+ai/.claude/statsig/
+ai/.claude/telemetry/
+ai/.claude/plugins/
+ai/.claude/tasks/
+ai/.claude/cache/
+ai/.claude/backups/
+
+# pi
+ai/.pi/agent/auth.json
+ai/.pi/agent/sessions/
+ai/.pi/agent/npm/
+ai/.pi/agent/models-store.json
+ai/.pi/context-mode/
+
+# instalador de skills (estado local, reescrito a cada install)
+ai/.agents/.skill-lock.json
+
+# codex
+ai/.codex/auth.json
+ai/.codex/history.jsonl
+ai/.codex/sessions/
+ai/.codex/models_cache.json
+
+# gemini
+ai/.gemini/google_accounts.json
+ai/.gemini/oauth_creds.json
+ai/.gemini/state.json
+ai/.gemini/projects.json
+ai/.gemini/history/
+ai/.gemini/tmp/

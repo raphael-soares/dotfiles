@@ -19,10 +19,14 @@ PKGS=(
   openfortivpn
   ttf-jetbrains-mono-nerd
   claude-code
+  opencode
   kwin-scripts-krohnkite-git
 )
 
-STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim kde claude)
+# Agentes que nao estao nos repos: instalados via npm global.
+NPM_PKGS=(@earendil-works/pi-coding-agent)
+
+STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim kde ai)
 
 if ! command -v yay >/dev/null; then
   echo "==> yay not found, please install it"
@@ -38,6 +42,13 @@ done
 sudo locale-gen
 [ -f /etc/locale.conf ] && grep -q '^LANG=' /etc/locale.conf \
   || echo 'LANG=en_US.UTF-8' | sudo tee /etc/locale.conf >/dev/null
+
+if command -v npm >/dev/null; then
+  echo "==> Installing agent CLIs via npm"
+  npm install -g "${NPM_PKGS[@]}"
+else
+  echo "==> npm not found, skipping: ${NPM_PKGS[*]}"
+fi
 
 if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
   echo "==> Cloning TPM"
