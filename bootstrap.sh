@@ -1,65 +1,39 @@
 #!/usr/bin/env bash
+# Linka os dotfiles com o stow. Nao instala nada: instalar as dependencias
+# e responsabilidade de quem roda, no gerenciador de pacotes dele.
 set -euo pipefail
 
-DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$DOTFILES"
-
-PKGS=(
-  stow
-  git
-  github-cli
-  tmux
-  alacritty
-  starship
-  fzf
-  mise
-  neovim
-  jq
-  curl
-  openfortivpn
-  ttf-jetbrains-mono-nerd
-  claude-code
-  opencode
-)
-
-# Agentes que nao estao nos repos: instalados via npm global.
-NPM_PKGS=(@earendil-works/pi-coding-agent)
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
 STOW_PKGS=(bash tmux alacritty git starship fzf local mise nvim ai)
 
-if ! command -v yay >/dev/null; then
-  echo "==> yay nao encontrado. Instale o yay antes de rodar o bootstrap." >&2
+cat <<'EOF'
+Dependencias (instale pelo gerenciador de pacotes do seu sistema):
+
+  stow git tmux nvim fzf starship mise alacritty
+  jq curl gh openfortivpn
+
+Fonte JetBrainsMono Nerd para o alacritty, fzf 0.48 ou maior,
+e os locales en_US.UTF-8 e pt_BR.UTF-8 gerados.
+
+TPM, para os plugins do tmux:
+  git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
+
+Chave de API vai em ~/.env.local (veja o .env.example).
+
+EOF
+
+if ! command -v stow >/dev/null || ! command -v git >/dev/null; then
+  echo "Precisa de stow e git para rodar este script." >&2
   exit 1
 fi
 
-echo "==> Installing packages via yay"
-yay -S --needed "${PKGS[@]}"
-
-echo "==> Ensuring locales are generated"
-for loc in en_US.UTF-8 pt_BR.UTF-8; do
-  sudo sed -i "s/^#\s*\(${loc} UTF-8\)/\1/" /etc/locale.gen
-done
-sudo locale-gen
-[ -f /etc/locale.conf ] && grep -q '^LANG=' /etc/locale.conf \
-  || echo 'LANG=en_US.UTF-8' | sudo tee /etc/locale.conf >/dev/null
-
-if command -v npm >/dev/null; then
-  echo "==> Installing agent CLIs via npm"
-  npm install -g "${NPM_PKGS[@]}"
-else
-  echo "==> npm not found, skipping: ${NPM_PKGS[*]}"
-fi
-
-if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
-  echo "==> Cloning TPM"
-  git clone https://github.com/tmux-plugins/tpm "$HOME/.config/tmux/plugins/tpm"
-fi
-
-[ -f "$HOME/.env.local" ] || cp .env.example "$HOME/.env.local"
-
-echo "==> Stowing dotfiles"
+echo "==> Linkando com o stow"
+# --adopt puxa para o repo o arquivo que ja existia no sistema; o restore logo
+# depois descarta esse conteudo e faz valer o do repo. Restrito aos pacotes
+# stowados: `git restore .` apagaria tambem mudanca sua ainda nao commitada.
 stow --adopt -R "${STOW_PKGS[@]}"
-git restore .
+git restore -- "${STOW_PKGS[@]}"
 
 echo
-echo "Done. Start tmux and press 'prefix + I' to install the tmux plugins."
+echo "Pronto. No tmux, aperte prefix + I para instalar os plugins."
