@@ -18,6 +18,14 @@ if ! command -v stow >/dev/null || ! command -v git >/dev/null; then
   exit 1
 fi
 
+# Nunca sobrescreve: o arquivo da maquina tem chave de API e caminho local.
+if [ -f "$HOME/.env.local" ]; then
+  echo "==> ~/.env.local ja existe, mantido"
+else
+  cp .env.example "$HOME/.env.local"
+  echo "==> ~/.env.local criado a partir do .env.example"
+fi
+
 echo "==> Stowing..."
 stow --adopt -R "${STOW_PKGS[@]}"
 git restore -- "${STOW_PKGS[@]}"
