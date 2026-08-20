@@ -9,7 +9,8 @@
     "npm:context-mode",
     "npm:pi-rtk-optimizer",
     "npm:pi-web-access",
-    "npm:pi-powerline-footer"
+    "npm:pi-powerline-footer",
+    "npm:pi-antigravity"
   ],
   "quietStartup": true,
   "tuiMode": "fullscreen",
