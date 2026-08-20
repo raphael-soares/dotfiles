@@ -20,13 +20,12 @@ PKGS=(
   ttf-jetbrains-mono-nerd
   claude-code
   opencode
-  kwin-scripts-krohnkite-git
 )
 
 # Agentes que nao estao nos repos: instalados via npm global.
 NPM_PKGS=(@earendil-works/pi-coding-agent)
 
-STOW_PKGS=(bash tmux alacritty git starship fzf local mise zennotes nvim kde ai)
+STOW_PKGS=(bash tmux alacritty git starship fzf local mise nvim ai)
 
 if ! command -v yay >/dev/null; then
   echo "==> yay not found, please install it"
@@ -60,11 +59,6 @@ fi
 echo "==> Stowing dotfiles"
 stow --adopt -R "${STOW_PKGS[@]}"
 git restore .
-
-if [ -n "${KDE_SESSION_VERSION:-}" ]; then
-  echo "==> Recarregando configurações do KWin e Atalhos"
-  qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || true
-fi
 
 echo
 echo "Done. Start tmux and press 'prefix + I' to install the tmux plugins."
