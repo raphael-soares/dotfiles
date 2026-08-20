@@ -28,7 +28,8 @@ NPM_PKGS=(@earendil-works/pi-coding-agent)
 STOW_PKGS=(bash tmux alacritty git starship fzf local mise nvim ai)
 
 if ! command -v yay >/dev/null; then
-  echo "==> yay not found, please install it"
+  echo "==> yay nao encontrado. Instale o yay antes de rodar o bootstrap." >&2
+  exit 1
 fi
 
 echo "==> Installing packages via yay"
