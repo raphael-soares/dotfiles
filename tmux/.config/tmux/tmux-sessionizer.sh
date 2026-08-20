@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 
-SEARCH_DIRS=(
-    ~/Desktop/Work
-    ~/Desktop/Personal
-    ~/Desktop/Learning
-    ~/Desktop/
-)
+# Diretorios varridos. Para mudar sem editar o script, exporte
+# TMUX_SESSIONIZER_DIRS com os caminhos separados por dois-pontos:
+#   export TMUX_SESSIONIZER_DIRS="$HOME/code:$HOME/work"
+if [[ -n "${TMUX_SESSIONIZER_DIRS:-}" ]]; then
+    IFS=':' read -r -a SEARCH_DIRS <<< "$TMUX_SESSIONIZER_DIRS"
+    # ~ so vira $HOME quando o shell expande; vindo de variavel, e literal.
+    SEARCH_DIRS=("${SEARCH_DIRS[@]/#\~/$HOME}")
+else
+    SEARCH_DIRS=(
+        ~/Desktop/Work
+        ~/Desktop/Personal
+        ~/Desktop/Learning
+        ~/Desktop/
+    )
+fi
+
+# Ignora os que nao existem: find aborta a varredura inteira num caminho invalido.
+_existentes=()
+for _d in "${SEARCH_DIRS[@]}"; do
+    [[ -d "$_d" ]] && _existentes+=("$_d")
+done
+SEARCH_DIRS=("${_existentes[@]}")
+[[ ${#SEARCH_DIRS[@]} -eq 0 ]] && SEARCH_DIRS=("$HOME")
 
 source ~/.config/fzf/fzf.sh
 export FZF_DEFAULT_OPTS="$FZF_BASE_OPTS
