@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# claudecommit — interactive conventional commit helper via Claude Code
-# Install: bash claudecommit.sh --install && source ~/.bashrc
+# acmit: gerador interativo de mensagem de commit (conventional commits) via Claude Code.
+# Instalado pelo stow do pacote local/, em ~/.local/bin/acmit.
 set -uo pipefail
 
 # ── Colors ─────────────────────────────────────────────────────────────────────
@@ -20,20 +20,14 @@ TW=$(tput cols 2>/dev/null || echo 80)
 WRAP=$(( TW > 96 ? 92 : TW - 4 ))
 (( WRAP < 40 )) && WRAP=40 || true
 
-# ── Install ─────────────────────────────────────────────────────────────────────
-if [[ "${1:-}" == "--install" ]]; then
-  B="$HOME/.local/bin"; mkdir -p "$B"; cp "$0" "$B/claudecommit"; chmod +x "$B/claudecommit"
-  if [[ ":$PATH:" != *":$B:"* ]]; then
-    printf '\n# claudecommit\nexport PATH="$HOME/.local/bin:$PATH"\n' >> ~/.bashrc
-    printf '%s✓ Added %s to PATH%s\n' "$GRN" "$B" "$R"
-  fi
-  printf '%s✓ Installed: %s/claudecommit%s\n' "$GRN" "$B" "$R"
-  printf '%ssource ~/.bashrc%s\n' "$YLW" "$R"
-  exit 0
-fi
-
 # ── Deps ────────────────────────────────────────────────────────────────────────
-for _c in git claude jq fold; do
+# Sem GEMINI_API_KEY o fallback e o Claude Code; com a chave, e a API do Gemini via curl.
+if [[ -n "${GEMINI_API_KEY:-}" ]]; then
+  _DEPS=(git jq fold curl)
+else
+  _DEPS=(git jq fold claude)
+fi
+for _c in "${_DEPS[@]}"; do
   if ! command -v "$_c" &>/dev/null; then
     printf '%sError: %s not found%s\n' "$RED" "$_c" "$R" >&2
     [[ "$_c" == "claude" ]] && printf '  npm install -g @anthropic-ai/claude-code\n' >&2
@@ -218,7 +212,7 @@ fi
 MSG="${ITEMS[$SEL_IDX]}"
 
 if [[ "$SEL_ACT" == "edit" ]]; then
-  TMP=$(mktemp /tmp/claudecommit_XXXXXX.txt)
+  TMP=$(mktemp "${TMPDIR:-/tmp}/acmit_XXXXXX.txt")
   printf '%s\n' "$MSG" > "$TMP"
   ${EDITOR:-nano} "$TMP" <"$TTY" >"$TTY"
   MSG=$(cat "$TMP"); rm -f "$TMP"
