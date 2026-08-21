@@ -20,7 +20,14 @@ set -euo pipefail
 
 CONN_NAME="Unimed VPN"
 
-[[ -f ~/.env.local ]] && source ~/.env.local
+# Segundos que o nmcli espera pela aprovacao do push antes de desistir. Sem
+# isso ele espera indefinidamente: uma tentativa esquecida ja ficou 2h39min
+# pendurada, e enquanto ela existe as tentativas seguintes sao recusadas.
+CONNECT_TIMEOUT=90
+
+if [[ -f ~/.env.local ]]; then
+    source ~/.env.local
+fi
 
 require_env() {
     local missing=()
@@ -73,6 +80,22 @@ ensure_connection() {
     nmcli connection modify "$CONN_NAME" vpn.secrets "password=${VPN_UNIMED_PASSWORD}"
 }
 
+# O nmcli so diz "Unknown reason" quando a ativacao falha. A mensagem util
+# (senha recusada, gateway inacessivel, certificado) vem do servico
+# fortisslvpn e so aparece no journal, entao trazemos ela pra ca.
+show_gateway_error() {
+    local since="$1" detail
+    detail=$(journalctl --since "$since" --no-pager 2>/dev/null \
+        | grep -E "NetworkManager\[[0-9]+\]: (ERROR|WARNING):" \
+        | tail -3) || true
+    if [[ -z "$detail" ]]; then
+        return 0
+    fi
+    echo >&2
+    echo "O que o gateway respondeu:" >&2
+    echo "$detail" >&2
+}
+
 cmd="${1:-up}"
 
 case "$cmd" in
@@ -81,7 +104,11 @@ case "$cmd" in
         check_plugin
         ensure_connection
         echo "Conectando na Unimed VPN... aprova a notificacao no celular."
-        nmcli connection up "$CONN_NAME"
+        started_em=$(date "+%Y-%m-%d %H:%M:%S")
+        if ! nmcli --wait "$CONNECT_TIMEOUT" connection up "$CONN_NAME"; then
+            show_gateway_error "$started_em"
+            exit 1
+        fi
         ;;
     down)
         nmcli connection down "$CONN_NAME"
