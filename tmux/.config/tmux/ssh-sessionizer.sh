@@ -11,14 +11,22 @@ export FZF_DEFAULT_OPTS="$FZF_BASE_OPTS
 
 parse_hosts() {
     local config="$1"
-    grep -E '^(Host |Include )' "$config" | while read -r keyword value; do
-        if [[ "$keyword" == "Include" ]]; then
+    grep -Ei '^(Host |Include )' "$config" | while read -r keyword value; do
+        if [[ "${keyword,,}" == "include" ]]; then
             local pattern="${value/#\~/$HOME}"
             for f in $pattern; do
                 [[ -f "$f" ]] && parse_hosts "$f"
             done
         else
-            echo "$value"
+            # 'Host foo bar baz' declara varios aliases na mesma linha; cada
+            # um vira uma entrada propria, senao o fzf mostra "foo bar baz"
+            # como um host so e o ssh subsequente falha. read -ra em vez de
+            # for-in cru pra nao deixar 'Host *' virar glob de arquivo do cwd.
+            local -a aliases
+            read -ra aliases <<< "$value"
+            for alias in "${aliases[@]}"; do
+                echo "$alias"
+            done
         fi
     done
 }
