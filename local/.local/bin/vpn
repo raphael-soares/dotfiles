@@ -1,30 +1,97 @@
-#!/bin/bash
-CONFIG="/etc/openfortivpn/unimed.conf"
+#!/usr/bin/env bash
+# VPN Fortinet da Unimed via NetworkManager (nmcli), portavel entre maquinas.
+#
+# Diferente do openfortivpn direto: usa o plugin networkmanager-fortisslvpn,
+# entao integra com o applet de rede do KDE/GNOME, nao precisa do workaround
+# manual de DNS (resolvectl dns/domain) e evita o bug de rota default que o
+# NM injeta por padrao (ipv4.never-default corrige isso, ver comentario
+# abaixo).
+#
+# Credenciais saem do ~/.env.local (nao versionado). Variaveis esperadas,
+# veja .env.example:
+#   VPN_UNIMED_HOST, VPN_UNIMED_PORT, VPN_UNIMED_USER, VPN_UNIMED_PASSWORD
+#
+# Uso:
+#   vpn           # cria/atualiza a conexao (idempotente) e conecta
+#   vpn down      # desconecta
+#   vpn status    # mostra se esta conectado
 
-echo "Connecting to Unimed VPN..."
+set -euo pipefail
 
-# Inicia o openfortivpn em background
-sudo openfortivpn -c "$CONFIG" &
-VPN_PID=$!
+CONN_NAME="Unimed VPN"
 
-# Espera o ppp0 estar ativo
-while ! ip link show ppp0 &>/dev/null; do
-    sleep 1
-done
+[[ -f ~/.env.local ]] && source ~/.env.local
 
-echo "VPN interface ppp0 is up. Configuring full-tunnel DNS..."
+require_env() {
+    local missing=()
+    for var in VPN_UNIMED_HOST VPN_UNIMED_PORT VPN_UNIMED_USER VPN_UNIMED_PASSWORD; do
+        [[ -z "${!var:-}" ]] && missing+=("$var")
+    done
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        echo "Faltando no ~/.env.local: ${missing[*]}" >&2
+        echo "Veja .env.example no dotfiles pra saber o que preencher." >&2
+        exit 1
+    fi
+}
 
-sudo resolvectl dns ppp0 10.36.1.15 10.36.1.16
-sudo resolvectl domain ppp0 ~.  
-sudo resolvectl flush-caches
+check_plugin() {
+    if ! nmcli -f VPN_TYPES general permissions >/dev/null 2>&1; then
+        : # nmcli sempre responde isso, so um smoke test de que o binario existe
+    fi
+    if [[ ! -f /usr/lib/NetworkManager/VPN/nm-fortisslvpn-service.name ]] \
+        && [[ ! -f /usr/lib64/NetworkManager/VPN/nm-fortisslvpn-service.name ]]; then
+        echo "Falta o plugin do NetworkManager pra Fortinet SSL-VPN." >&2
+        echo "Instala com: yay -S networkmanager-fortisslvpn" >&2
+        echo "(ou o pacote equivalente da sua distro) e roda de novo." >&2
+        exit 1
+    fi
+}
 
-echo "DNS fully configured. Current status:"
-resolvectl status ppp0
+ensure_connection() {
+    if nmcli -g NAME connection show | grep -Fxq "$CONN_NAME"; then
+        nmcli connection modify "$CONN_NAME" \
+            vpn.data "gateway=${VPN_UNIMED_HOST}:${VPN_UNIMED_PORT}, user=${VPN_UNIMED_USER}"
+    else
+        nmcli connection add type vpn vpn-type fortisslvpn con-name "$CONN_NAME" \
+            vpn.data "gateway=${VPN_UNIMED_HOST}:${VPN_UNIMED_PORT}, user=${VPN_UNIMED_USER}"
+    fi
 
-wait $VPN_PID
+    # Sem isso o NetworkManager acrescenta uma rota default extra pela VPN
+    # (alem das rotas internas que o proprio servidor Fortinet empurra),
+    # jogando trafego de internet geral (github.com etc) pra dentro do
+    # tunel, onde o firewall da empresa bloqueia. As rotas internas da
+    # Unimed continuam funcionando normal, isso so tira a rota default
+    # extra que ninguem pediu.
+    nmcli connection modify "$CONN_NAME" ipv4.never-default yes ipv6.never-default yes
 
+    # autoconnect fica desligado de proposito: essa VPN pede aprovacao por
+    # push no celular, autoconnect geraria notificacao sem voce ter pedido.
+    nmcli connection modify "$CONN_NAME" connection.autoconnect no
 
-echo "VPN disconnected, cleaning up DNS..."
-sudo resolvectl revert ppp0
+    # Senha sempre vem fresca do .env.local nesse momento, nao depende do
+    # que estiver cacheado no agente de segredo (KWallet/gnome-keyring).
+    nmcli connection modify "$CONN_NAME" vpn.secrets "password=${VPN_UNIMED_PASSWORD}"
+}
 
+cmd="${1:-up}"
 
+case "$cmd" in
+    up|"")
+        require_env
+        check_plugin
+        ensure_connection
+        echo "Conectando na Unimed VPN... aprova a notificacao no celular."
+        nmcli connection up "$CONN_NAME"
+        ;;
+    down)
+        nmcli connection down "$CONN_NAME"
+        ;;
+    status)
+        nmcli -f NAME,TYPE,STATE connection show --active | grep -F "$CONN_NAME" \
+            || echo "Unimed VPN nao esta conectada."
+        ;;
+    *)
+        echo "Uso: vpn [up|down|status]" >&2
+        exit 1
+        ;;
+esac
