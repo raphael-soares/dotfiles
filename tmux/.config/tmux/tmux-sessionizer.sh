@@ -2,8 +2,10 @@
 
 # Os diretorios varridos saem de TMUX_SESSIONIZER_DIRS, no ~/.env.local
 # (veja o .env.example). O tmux chama este script por run-shell, que nao passa
-# pelo .bashrc, entao o arquivo e carregado aqui.
-[[ -f ~/.env.local ]] && source ~/.env.local
+# pelo .bashrc, entao o arquivo e carregado aqui. Se a variavel ja veio
+# setada no ambiente (ex.: override manual pra teste), respeita ela e nao
+# deixa o .env.local pisar em cima.
+[[ -z "${TMUX_SESSIONIZER_DIRS:-}" && -f ~/.env.local ]] && source ~/.env.local
 
 SEARCH_DIRS=()
 if [[ -n "${TMUX_SESSIONIZER_DIRS:-}" ]]; then
@@ -26,29 +28,40 @@ export FZF_DEFAULT_OPTS="$FZF_BASE_OPTS
   --prompt='SESSIONIZER: '
   --tmux center,50%,40%"
 
-# Build label->path map; handle basename collisions by appending parent dir
-declare -A dir_map
-declare -A seen_names
-while IFS= read -r d; do
+# Build label->path map; quando o mesmo basename aparece em mais de um
+# SEARCH_DIR, desambigua TODAS as ocorrencias com o dir pai (nao so a
+# segunda em diante). Duas passadas: conta ocorrencias de cada basename,
+# depois monta os labels. Evita o bug de colisao tripla (3+ pastas com o
+# mesmo nome perdiam a entrada mais antiga).
+mapfile -t _all_dirs < <(find "${SEARCH_DIRS[@]}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+
+declare -A base_count
+for d in "${_all_dirs[@]}"; do
     base="${d##*/}"
-    if [[ -n "${seen_names[$base]}" ]]; then
-        # Collision: disambiguate both entries with parent dir
-        existing_path="${dir_map[$base]}"
-        existing_label="${existing_path%/*}/${base}"
-        dir_map["$existing_label"]="$existing_path"
-        unset 'dir_map[$base]'
+    base_count["$base"]=$(( ${base_count[$base]:-0} + 1 ))
+done
+
+declare -A dir_map
+for d in "${_all_dirs[@]}"; do
+    base="${d##*/}"
+    if [[ ${base_count[$base]} -gt 1 ]]; then
         label="${d%/*}/${base}"
     else
         label="$base"
-        seen_names["$base"]=1
     fi
     dir_map["$label"]="$d"
-done < <(find "${SEARCH_DIRS[@]}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+done
 
-# Convert display label to safe tmux session name ('.' -> '_', '/' -> '-')
+# Convert display label to safe tmux session name.
+# tmux usa ':' pra separar sessao:janela e '.' pra janela.pane; qualquer um
+# desses caracteres no meio do nome faz o tmux interpretar o alvo errado
+# (ex.: "template.repo" vira janela=template pane=repo). Troca os dois por
+# '_' em qualquer posicao, nao so no inicio. '/' -> '-' pra evitar colisao
+# com o separador de path usado no label de desambiguacao.
 to_session_name() {
     local n="$1"
-    [[ "$n" == .* ]] && n="_${n:1}"
+    n="${n//./_}"
+    n="${n//:/_}"
     echo "${n//\//-}"
 }
 
