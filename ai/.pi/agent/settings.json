@@ -16,7 +16,7 @@
   "quietStartup": true,
   "tuiMode": "fullscreen",
   "images": {
-    "blockImages": true
+    "blockImages": false
   },
   "editorPaddingX": 1,
   "terminal": {
