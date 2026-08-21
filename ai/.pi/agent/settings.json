@@ -6,7 +6,6 @@
   "packages": [
     "npm:pi-claude-auth",
     "npm:@juicesharp/rpiv-ask-user-question",
-    "npm:context-mode",
     "npm:pi-rtk-optimizer",
     "npm:pi-web-access",
     "npm:pi-antigravity",
@@ -37,5 +36,6 @@
     "anthropic/claude-sonnet-5",
     "google/gemini-flash-latest",
     "google/gemini-3.1-pro-preview"
-  ]
+  ],
+  "defaultThinkingLevel": "high"
 }
