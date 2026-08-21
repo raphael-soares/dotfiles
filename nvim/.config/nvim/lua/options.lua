@@ -28,7 +28,7 @@ o.scrolloff = 8
 o.cursorline = true
 o.termguicolors = true
 o.winborder = "single"
-o.cmdheight = 0
+o.cmdheight = 1
 
 -- Splits
 o.splitbelow = true
