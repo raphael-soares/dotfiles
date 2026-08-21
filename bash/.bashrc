@@ -58,7 +58,13 @@ export FZF_CTRL_R_OPTS='--prompt="HISTORY: "'
 export FZF_CTRL_T_OPTS='--prompt="FILES: "'
 export FZF_ALT_C_OPTS='--prompt="JUMP: "'
 
-# fzf >= 0.48 gera keybindings e completion sozinho, sem depender do layout da distro.
+# fd em vez do find padrao do fzf: mais rapido e ja ignora .git/.gitignore.
+if command -v fd >/dev/null; then
+  export FZF_DEFAULT_COMMAND='fd --hidden --strip-cwd-prefix --exclude .git'
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_ALT_C_COMMAND='fd --type d --hidden --strip-cwd-prefix --exclude .git'
+fi
+
 if command -v fzf >/dev/null; then
   if fzf --bash >/dev/null 2>&1; then
     eval "$(fzf --bash)"
