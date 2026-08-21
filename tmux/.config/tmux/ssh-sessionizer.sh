@@ -31,7 +31,8 @@ parse_hosts() {
     done
 }
 
-hosts=$(parse_hosts "$SSH_CONFIG" | grep -v '[*?!]')
+# sort -u: o mesmo alias pode aparecer em mais de um arquivo via Include.
+hosts=$(parse_hosts "$SSH_CONFIG" | grep -v '[*?!]' | sort -u)
 
 if [[ $# -eq 1 ]]; then
     selected=$1
