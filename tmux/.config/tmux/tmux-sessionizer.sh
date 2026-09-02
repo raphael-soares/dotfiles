@@ -68,7 +68,9 @@ to_session_name() {
 if [[ $# -eq 1 ]]; then
     selected=$1
 else
-    sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null || true)
+    # Sessoes popup-* pertencem ao toggle de popup e nao entram na lista.
+    sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null |
+        grep -v '^popup-' || true)
 
     declare -A session_set
     while IFS= read -r s; do [[ -n "$s" ]] && session_set["$s"]=1; done <<< "$sessions"

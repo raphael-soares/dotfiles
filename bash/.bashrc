@@ -1,15 +1,12 @@
-# ── Ambiente: vale para qualquer shell, inclusive `ssh host comando` ───────────
 case ":$PATH:" in
   *":$HOME/.local/bin:"*) ;;
   *) [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
-# mise resolve os runtimes (node, python, java, lua); nao chumbe caminho de versao no PATH.
 command -v mise >/dev/null && eval "$(mise activate bash)"
 
 [ -f ~/.env.local ] && source ~/.env.local
 
-# ── Daqui pra baixo, so shell interativo ──────────────────────────────────────
 case $- in
   *i*) ;;
     *) return ;;
