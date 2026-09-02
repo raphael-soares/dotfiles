@@ -1,7 +1,9 @@
 {
   "permissions": {
-    "defaultMode": "auto",
-"allow": ["Bash(aws secretsmanager get-secret-value:*)"]
+    "allow": [
+      "Bash(aws secretsmanager get-secret-value:*)"
+    ],
+    "defaultMode": "auto"
   },
   "hooks": {
     "SessionStart": [
@@ -50,7 +52,8 @@
     }
   },
   "effortLevel": "high",
-  "theme": "dark-ansi",
   "tui": "fullscreen",
-  "skipWorkflowUsageWarning": true
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark-ansi",
+  "editorMode": "vim"
 }
