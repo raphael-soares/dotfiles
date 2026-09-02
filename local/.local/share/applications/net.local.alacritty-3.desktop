@@ -1,7 +1,0 @@
-[Desktop Entry]
-Exec=alacritty -e ~/.config/tmux/tmux-default.sh
-Name=alacritty -e ~/.config/tmux/tmux-default.sh
-NoDisplay=true
-StartupNotify=false
-Type=Application
-X-KDE-GlobalAccel-CommandShortcut=true
