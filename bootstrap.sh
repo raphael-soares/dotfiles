@@ -3,13 +3,13 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-STOW_PKGS=(bash tmux alacritty git starship fzf local mise nvim ai)
+STOW_PKGS=(bash tmux alacritty git starship fzf local mise nvim ai workmux)
 
 cat <<'EOF'
 Deps:
 
   stow git tmux nvim fzf starship mise alacritty tpm
-  jq curl gh openfortivpn jetbrainsmono-nerd-font
+  jq curl gh openfortivpn jetbrainsmono-nerd-font workmux
 
 EOF
 
@@ -25,6 +25,11 @@ else
   cp .env.example "$HOME/.env.local"
   echo "==> ~/.env.local criado a partir do .env.example"
 fi
+
+# O workmux reescreve o proprio config.yaml (prompt de nerdfont, workmux
+# config edit). Se o diretorio nao existir, o stow dobra ~/.config/workmux
+# num symlink para dentro do repo e essas escritas viram sujeira versionada.
+mkdir -p "$HOME/.config/workmux"
 
 echo "==> Stowing..."
 stow --adopt -R "${STOW_PKGS[@]}"

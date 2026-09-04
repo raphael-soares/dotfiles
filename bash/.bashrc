@@ -49,6 +49,11 @@ fi
 
 command -v nvim >/dev/null && alias vim="nvim"
 
+if command -v workmux >/dev/null; then
+  alias wm='workmux'
+  eval "$(workmux completions bash)"
+fi
+
 [ -f ~/.config/fzf/fzf.sh ] && source ~/.config/fzf/fzf.sh
 export FZF_DEFAULT_OPTS="$FZF_BASE_OPTS"
 export FZF_CTRL_R_OPTS='--prompt="HISTORY: "'

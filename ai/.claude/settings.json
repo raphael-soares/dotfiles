@@ -1,59 +1,98 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(aws secretsmanager get-secret-value:*)"
-    ],
-    "defaultMode": "auto"
+  "editorMode": "vim",
+  "effortLevel": "high",
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "jdtls-lsp@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "repo": "JuliusBrussee/caveman",
+        "source": "github"
+      }
+    }
   },
   "hooks": {
-    "SessionStart": [
+    "Notification": [
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/project-onboard.sh"
+            "command": "workmux set-window-status waiting",
+            "type": "command"
+          }
+        ],
+        "matcher": "permission_prompt|elicitation_dialog"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status working",
+            "type": "command"
           }
         ]
       }
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash",
         "hooks": [
           {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/rtk-rewrite.sh"
+            "command": "$HOME/.claude/hooks/rtk-rewrite.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "$HOME/.claude/hooks/project-onboard.sh",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "workmux register-agent",
+            "type": "command"
+          }
+        ],
+        "matcher": "startup|resume|clear|fork"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status done",
+            "type": "command"
           }
         ]
       }
     ],
-    "PostToolUse": [
+    "UserPromptSubmit": [
       {
-        "matcher": "Skill|Agent",
         "hooks": [
           {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/workflow-conductor.sh"
+            "command": "workmux set-window-status working",
+            "type": "command"
           }
         ]
       }
     ]
   },
-  "enabledPlugins": {
-    "jdtls-lsp@claude-plugins-official": true,
-    "caveman@caveman": true
+  "permissions": {
+    "allow": [
+      "Bash(aws secretsmanager get-secret-value:*)"
+    ],
+    "defaultMode": "auto"
   },
-  "extraKnownMarketplaces": {
-    "caveman": {
-      "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman"
-      }
-    }
-  },
-  "effortLevel": "high",
-  "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark-ansi",
-  "editorMode": "vim"
+  "tui": "fullscreen"
 }
