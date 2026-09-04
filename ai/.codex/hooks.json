@@ -1,57 +1,20 @@
 {
-  "context": {
-    "fileName": [
-      "AGENTS.md",
-      "GEMINI.md"
-    ]
-  },
   "hooks": {
-    "AfterAgent": [
-      {
-        "hooks": [
-          {
-            "command": "workmux set-window-status done",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "AfterTool": [
-      {
-        "hooks": [
-          {
-            "command": "workmux set-window-status working",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "BeforeAgent": [
-      {
-        "hooks": [
-          {
-            "command": "workmux set-window-status working",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "Notification": [
+    "PermissionRequest": [
       {
         "hooks": [
           {
             "command": "workmux set-window-status waiting",
             "type": "command"
           }
-        ],
-        "matcher": "ToolPermission"
+        ]
       }
     ],
-    "SessionEnd": [
+    "PostToolUse": [
       {
         "hooks": [
           {
-            "command": "workmux set-window-status done",
+            "command": "workmux set-window-status working",
             "type": "command"
           }
         ]
@@ -64,16 +27,49 @@
             "command": "workmux register-agent",
             "type": "command"
           }
+        ],
+        "matcher": "startup|resume|clear"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status done",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status working",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status working",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status working",
+            "type": "command"
+          }
         ]
       }
     ]
-  },
-  "security": {
-    "auth": {
-      "selectedType": "oauth-personal"
-    }
-  },
-  "ui": {
-    "theme": "Atom One"
   }
 }
