@@ -29,15 +29,6 @@
       {
         "hooks": [
           {
-            "command": "$HOME/.claude/hooks/workflow-conductor.sh",
-            "type": "command"
-          }
-        ],
-        "matcher": "Skill|Agent"
-      },
-      {
-        "hooks": [
-          {
             "command": "workmux set-window-status working",
             "type": "command"
           }
