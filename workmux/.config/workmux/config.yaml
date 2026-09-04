@@ -1,0 +1,20 @@
+# Config global do workmux. Projeto pode sobrescrever com um .workmux.yaml
+# na raiz. Referencia completa: workmux config reference
+
+agent: claude
+nerdfont: true
+
+# Historico deste e dos outros repos e linear, entao rebase em vez de commit
+# de merge.
+merge_strategy: rebase
+
+# Sem isso, cada repo ganha um irmao <projeto>__worktrees no mesmo diretorio
+# em que o sessionizer varre, e as arvores de trabalho aparecem como se
+# fossem projetos.
+worktree_dir: ~/.workmux/{project}
+
+panes:
+  - command: <agent>
+    focus: true
+  - split: horizontal
+    size: 15
