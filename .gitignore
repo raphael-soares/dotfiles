@@ -27,6 +27,12 @@ ai/.claude/plugins/
 ai/.claude/tasks/
 ai/.claude/cache/
 ai/.claude/backups/
+ai/.claude/file-history/
+ai/.claude/plans/
+ai/.claude/.caveman-active
+ai/.claude/.caveman-mode-log.jsonl
+ai/.claude/.caveman-nudge-shown
+ai/.claude/.last-cleanup
 
 # pi
 ai/.pi/agent/auth.json
