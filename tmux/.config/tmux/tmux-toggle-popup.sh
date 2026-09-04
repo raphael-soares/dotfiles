@@ -39,7 +39,11 @@ if [[ "$current_session" == popup-* ]]; then
 else
     if ! tmux has-session -t "=$popup_session" 2>/dev/null; then
         tmux new-session -d -s "$popup_session"
-        tmux set-option -t "=$popup_session" detach-on-destroy on
+        # Sem isso a sessao do popup herda o 'detach-on-destroy off' global e,
+        # ao matar a ultima janela, o cliente do popup pula pra outra sessao
+        # em vez de fechar. O '=' nao vale aqui: set-option nao aceita o
+        # prefixo de match exato e falha com "no such session".
+        tmux set-option -t "$popup_session" detach-on-destroy on
     fi
     tmux set-option -s "$popup_origin_option" "$current_id"
     tmux popup -d '#{pane_current_path}' -xC -yC -w80% -h80% -E \
