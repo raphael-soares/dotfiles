@@ -11,9 +11,24 @@ set -euo pipefail
 SELF="${HOME}/.config/tmux/tmux-workmux.sh"
 
 # Agentes que o workmux sabe injetar prompt, com a tecla de cada um no submenu.
-# 'c' ja e do claude, entao o codex fica com 'x'.
-declare -A AGENT_KEYS=([claude]=c [codex]=x [gemini]=g [opencode]=o [pi]=p)
+# 'c' ja e do claude, entao codex fica com 'x'. O gemini fica com 'e' porque j,
+# k, g e G sao a navegacao do menu no tmux, e tecla de item passa na frente
+# dela.
+declare -A AGENT_KEYS=([claude]=c [codex]=x [gemini]=e [opencode]=o [pi]=p)
 AGENT_ORDER=(claude codex gemini opencode pi)
+
+# Agente escolhido, guardado numa opcao do servidor tmux. Nao mexe no
+# config.yaml de proposito: ele e versionado, e trocar de modelo nao pode sujar
+# o repositorio. Sem opcao setada, vale o que o config diz.
+current_agent() {
+    local agente
+    agente=$(tmux show-options -sqv @workmux-agent 2>/dev/null || true)
+    if [[ -z "$agente" ]]; then
+        agente=$(sed -n 's/^agent:[[:space:]]*\([^[:space:]#]*\).*/\1/p' \
+            ~/.config/workmux/config.yaml 2>/dev/null | head -1)
+    fi
+    echo "${agente:-claude}"
+}
 
 # O popup nao e um pane, entao display-message responde sobre o pane ativo, que
 # e de onde a tecla foi apertada.
@@ -58,16 +73,19 @@ pause_on_error() {
     read -rsn1 -p "falhou. qualquer tecla fecha."
 }
 
+# j e k navegam no menu (tmux trata as duas), mas tecla de item ganha da tecla
+# de navegacao, entao nenhum item pode usar j nem k. O 'g' aqui custa o atalho
+# de ir pro topo; Home continua fazendo isso.
 cmd_menu() {
     local items=()
-    items+=("agente novo (prompt rapido)" a "$(popup_cmd 80% 12 add)")
-    items+=("agente novo (prompt no editor)" A "$(popup_cmd 80% 80% add-editor)")
-    items+=("agente novo (escolher agente)" g "run-shell '$SELF menu-agents'")
+    items+=("novo agente" a "$(popup_cmd 80% 12 add)")
+    items+=("novo agente (editor)" A "$(popup_cmd 80% 80% add-editor)")
+    items+=("mudar modelo" g "run-shell '$SELF menu-agents'")
     items+=("")
     items+=("abrir worktree" o "run-shell '$SELF open'")
     items+=("dashboard" d "display-popup -w 90% -h 80% -E 'workmux dashboard'")
     items+=("sidebar" s "run-shell 'workmux sidebar'")
-    items+=("pular pro agente pronto" j "run-shell 'workmux last-done'")
+    items+=("pular pro agente pronto" n "run-shell 'workmux last-done'")
 
     if in_worktree; then
         items+=("")
@@ -76,14 +94,18 @@ cmd_menu() {
         items+=("remover este worktree" r "run-shell '$SELF confirm remove'")
     fi
 
-    tmux display-menu -T ' workmux ' -x C -y C "${items[@]}"
+    tmux display-menu -T " workmux · $(current_agent) " -x C -y C "${items[@]}"
 }
 
 cmd_menu_agents() {
-    local items=() agente
+    local items=() agente rotulo atual
+    atual=$(current_agent)
+
     for agente in "${AGENT_ORDER[@]}"; do
         command -v "$agente" >/dev/null || continue
-        items+=("$agente" "${AGENT_KEYS[$agente]}" "$(popup_cmd 80% 12 add "$agente")")
+        rotulo="$agente"
+        [[ "$agente" == "$atual" ]] && rotulo="$agente (atual)"
+        items+=("$rotulo" "${AGENT_KEYS[$agente]}" "run-shell '$SELF set-agent $agente'")
     done
 
     if [[ ${#items[@]} -eq 0 ]]; then
@@ -91,25 +113,28 @@ cmd_menu_agents() {
         return
     fi
 
-    tmux display-menu -T ' agente ' -x C -y C "${items[@]}"
+    tmux display-menu -T ' modelo ' -x C -y C "${items[@]}"
+}
+
+# Trocar de modelo devolve pro menu principal, que ja mostra o novo no titulo.
+cmd_set_agent() {
+    tmux set-option -s @workmux-agent "$1"
+    cmd_menu
 }
 
 cmd_add() {
-    local agente="${1:-}"
     local prompt
 
     read -r -e -p "prompt> " prompt || exit 0
     [[ -z "${prompt//[[:space:]]/}" ]] && exit 0
 
-    local args=(add --auto-name --parent-session "$(origin_session)")
-    [[ -n "$agente" ]] && args+=(--agent "$agente")
-    args+=(--prompt "$prompt")
-
-    workmux "${args[@]}" || pause_on_error
+    workmux add --auto-name \
+        --parent-session "$(origin_session)" \
+        --agent "$(current_agent)" \
+        --prompt "$prompt" || pause_on_error
 }
 
 cmd_add_editor() {
-    local agente="${1:-}"
     PROMPT_FILE=$(mktemp -t workmux-prompt.XXXXXX.md)
 
     "$(pick_editor)" "$PROMPT_FILE"
@@ -117,11 +142,10 @@ cmd_add_editor() {
     # Editor fechado sem salvar nada, ou so com espaco em branco: desiste.
     grep -q '[^[:space:]]' "$PROMPT_FILE" 2>/dev/null || exit 0
 
-    local args=(add --auto-name --parent-session "$(origin_session)")
-    [[ -n "$agente" ]] && args+=(--agent "$agente")
-    args+=(--prompt-file "$PROMPT_FILE")
-
-    workmux "${args[@]}" || pause_on_error
+    workmux add --auto-name \
+        --parent-session "$(origin_session)" \
+        --agent "$(current_agent)" \
+        --prompt-file "$PROMPT_FILE" || pause_on_error
 }
 
 cmd_open() {
@@ -183,13 +207,14 @@ fi
 case "${1:-menu}" in
 menu) cmd_menu ;;
 menu-agents) cmd_menu_agents ;;
-add) cmd_add "${2:-}" ;;
-add-editor) cmd_add_editor "${2:-}" ;;
+set-agent) cmd_set_agent "${2:?falta o agente}" ;;
+add) cmd_add ;;
+add-editor) cmd_add_editor ;;
 open) cmd_open ;;
 confirm) cmd_confirm "${2:?falta a acao}" ;;
 run) cmd_run "${@:2}" ;;
 *)
-    echo "uso: ${0##*/} {menu|menu-agents|add|add-editor|open|confirm|run}" >&2
+    echo "uso: ${0##*/} {menu|menu-agents|set-agent|add|add-editor|open|confirm|run}" >&2
     exit 1
     ;;
 esac
