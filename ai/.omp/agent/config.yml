@@ -1,0 +1,48 @@
+modelRoles:
+  default: anthropic/claude-opus-5:high
+symbolPreset: nerd
+composer:
+  shape: pi
+theme:
+  dark: titanium-minimal
+  light: light
+setupVersion: 2
+statusLine:
+  separator: pipe
+  preset: custom
+  sessionAccent: false
+  transparent: true
+  compactThinkingLevel: false
+  showHookStatus: true
+  leftSegments:
+    - mode
+    - model
+    - path
+  rightSegments:
+    - usage
+    - context_pct
+  segmentOptions:
+    model:
+      showThinkingLevel: true
+terminal:
+  showProgress: true
+hideThinkingBlock: true
+tui:
+  titleState: true
+  tight: true
+display:
+  shimmer: classic
+  showTokenUsage: true
+images:
+  blockImages: false
+github:
+  enabled: true
+computer:
+  enabled: true
+plan:
+  defaultOnStartup: false
+startup:
+  quiet: true
+autoResume: true
+magicKeywords:
+  workflow: true

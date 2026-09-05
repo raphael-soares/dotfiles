@@ -189,9 +189,10 @@ For the full configuration reference with all options documented, run
 
 ### Agent detection
 
-Built-in agents (`claude`, `gemini`, `codex`, `opencode`, `kiro-cli`,
-`vibe`) are auto-detected in pane commands and receive prompt injection
-automatically. The `<agent>` placeholder resolves to the configured agent.
+Built-in agents (`claude`, `gemini`, `agy`, `codex`, `opencode`, `kiro-cli`,
+`vibe`, `pi`, `omp`, `grok`) are auto-detected in pane commands and receive
+prompt injection automatically. The `<agent>` placeholder resolves to the
+configured agent.
 
 ## Common Workflows
 

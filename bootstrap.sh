@@ -31,6 +31,12 @@ fi
 # num symlink para dentro do repo e essas escritas viram sujeira versionada.
 mkdir -p "$HOME/.config/workmux"
 
+# Mesmo caso do workmux, com consequencia pior: o omp guarda credencial, banco
+# de sessao e cache em ~/.omp/agent. Sem os diretorios criados antes, o stow
+# dobra agent/ e extensions/ em symlinks para dentro do repo e tudo isso vira
+# sujeira versionada.
+mkdir -p "$HOME/.omp/agent/extensions"
+
 echo "==> Stowing..."
 stow --adopt -R "${STOW_PKGS[@]}"
 git restore -- "${STOW_PKGS[@]}"

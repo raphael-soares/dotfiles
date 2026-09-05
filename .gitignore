@@ -7,9 +7,9 @@
 .bash_profile.local
 
 # Segredos e estado de runtime das ferramentas agenticas.
-# O pacote ai/ versiona so a configuracao: CLAUDE.md, settings.json,
-# guidelines, hooks e a pasta canonica skills/, compartilhada pelo Claude
-# Code e pelo pi. Credencial, historico de sessao, cache de modelo e
+# O pacote ai/ cobre so o omp e o Claude Code, e versiona so a configuracao:
+# AGENTS.md, settings.json, hooks, extensoes e a pasta canonica skills/,
+# compartilhada pelos dois. Credencial, historico de sessao, cache de modelo e
 # permissoes aprovadas por clique sao de maquina, nunca do repo.
 
 # Claude Code
@@ -34,26 +34,18 @@ ai/.claude/.caveman-mode-log.jsonl
 ai/.claude/.caveman-nudge-shown
 ai/.claude/.last-cleanup
 
-# pi
-ai/.pi/agent/auth.json
-ai/.pi/agent/sessions/
-ai/.pi/agent/npm/
-ai/.pi/agent/models-store.json
-ai/.pi/context-mode/
-
-# instalador de skills (estado local, reescrito a cada install)
-ai/.agents/.skill-lock.json
-
-# codex
-ai/.codex/auth.json
-ai/.codex/history.jsonl
-ai/.codex/sessions/
-ai/.codex/models_cache.json
-
-# gemini
-ai/.gemini/google_accounts.json
-ai/.gemini/oauth_creds.json
-ai/.gemini/state.json
-ai/.gemini/projects.json
-ai/.gemini/history/
-ai/.gemini/tmp/
+# omp: o pacote versiona so AGENTS.md, RULES.md, config.yml, keybindings.yml e
+# as extensoes escritas por mim. Credencial, banco de sessao, transcript, cache
+# e mapa de terminal sao de maquina. As redes abaixo valem para o dia que uma
+# copia cair dentro do repo por stow torto.
+ai/.omp/agent/auth.json
+ai/.omp/agent/sessions/
+ai/.omp/agent/terminal-sessions/
+ai/.omp/agent/blobs/
+ai/.omp/agent/cache/
+ai/.omp/agent/themes/
+ai/.omp/agent/last-changelog-version
+ai/.omp/agent/*.db
+ai/.omp/agent/*.db-shm
+ai/.omp/agent/*.db-wal
+ai/.omp/profiles/
