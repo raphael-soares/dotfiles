@@ -1,5 +1,5 @@
 modelRoles:
-  default: anthropic/claude-opus-5:high
+  {}
 symbolPreset: nerd
 composer:
   shape: pi
