@@ -13,6 +13,41 @@ merge_strategy: rebase
 # fossem projetos.
 worktree_dir: ~/.workmux/{project}
 
+# Spinner braille default do workmux ocupa 2 celulas (a 2a mostra o frame
+# seguinte, efeito de onda) e parece icone duplicado. Override de working
+# com um bullet unico e discreto -- isso desliga a animacao, por design do
+# workmux. waiting/done ficam nos defaults nerdfont (comment / check_circle).
+status_icons:
+  working: "#[fg=colour3]•#[fg=default]"
+
+# Sem isso o workmux seta window-status-format por janela (index:nome+flag),
+# sobrescrevendo o formato global do tmux.conf so nas janelas que ele
+# gerencia.
+status_format: false
+
+# Sem width fixa: usa o default (10% do terminal, clamp 25-50 col).
+# layout: tiles = cards de altura variavel com stripe de status (a barrinha
+# colorida e a coluna de status icon a esquerda sao chrome do renderer, nao
+# do template). sort: window alinha a ordem com os numeros da status bar.
+# 2 linhas por tile, sem token de git/PR pesado:
+#   1) titulo em destaque (azul/negrito) -- {primary} resolve pro nome da
+#      janela tmux, que o agente seta com a descricao da tarefa
+#   1b) agent_icons.omp = pi (mesmo branding que o omp escreve no pane_title;
+#       o default U+2325 "option key" nao se identifica de imediato)
+#   2) dimmed -- glifo de pasta + projeto a esquerda; branch e tempo
+#      decorrido a direita (branch depois do {fill} pra nao deixar
+#      separador orfao quando o repo nao tem branch resolvida)
+sidebar:
+  layout: tiles
+  sort: window
+  agent_icons:
+    omp: "π"
+  templates:
+    compact: "{status_icon} {agent_icon} #[fg=blue,bold]{primary}#[default] {pane_suffix} {fill} {elapsed}"
+    tiles:
+      - "{agent_icon} #[fg=blue,bold]{primary}#[default] {pane_suffix}"
+      - "#[fg=colour244] {project}#[default] {fill} #[fg=colour244]{git_branch}#[default] {elapsed}"
+
 panes:
   - command: <agent>
     focus: true

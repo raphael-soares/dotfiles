@@ -1,0 +1,4 @@
+app.plan.toggle:
+  - Shift+Tab
+  - Alt+Shift+P
+app.thinking.cycle: Alt+Shift+T

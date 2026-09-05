@@ -1,57 +1,118 @@
 # AGENTS.md
 
 Instrucoes globais, compartilhadas por todas as ferramentas agenticas.
-Fonte unica: ~/.dotfiles/ai/AGENTS.md. Nao edite as copias — elas sao symlinks.
+Fonte unica: ~/.dotfiles/ai/AGENTS.md. Nao edite as copias, elas sao symlinks.
 
-## Fluxo de trabalho
+## Fluxo de trabalho: discussão antes de execução
 
-- Ao terminar um card, faça uma revisão final antes de abrir PR: o card foi
-  atendido 100%, sem problemas deixados para trás, sem código morto, sem
-  regressões. Achou algo, já conserte e repita a revisão até não encontrar mais
-  nada. Só então abra a PR.
+Vale quando a instrução vem do usuário na conversa. Instrução recebida de outro
+agente (subagente, orquestrador, hook) é ordem de execução e não passa por aqui.
+
+Mensagem que descreve um incômodo, uma ideia, um problema, um objetivo ou uma
+dúvida de design abre a fase de discussão, não a de execução.
+
+- Investigar é obrigatório, e em leitura: ler o código, medir, rodar comando que
+  só observa, montar loop de reprodução. Diagnóstico sem evidência não vale.
+- Escrever, editar, criar, mover ou apagar arquivo, e rodar comando que muda
+  estado do sistema: fora da fase. Nem "só um ajustinho".
+- O que entregar: o que o problema é de fato e com que evidência, as opções
+  reais com o tradeoff de cada uma, qual você recomenda e por quê, e as
+  perguntas cuja resposta muda a escolha.
+- Uma opção sempre presente na lista: não fazer nada, ou resolver por hábito e
+  configuração em vez de código. Mecanismo novo é dívida, e a discussão existe
+  para descobrir se ela se paga.
+- Como terminar: devolvendo a decisão. A fase acaba com a bola no campo do
+  usuário, nunca com o trabalho já feito.
+
+### Contestar a premissa é parte do trabalho
+
+O usuário costuma trazer o problema já com uma solução em mente. Essa solução
+entra na lista como **uma** das opções, nunca como o default.
+
+- A primeira pergunta é se o problema declarado é o problema real. Sintoma que
+  a pessoa descreve e causa que o código mostra divergem com frequência.
+- Concordar exige evidência. "Sua ideia é boa" sem medição é validação social,
+  não análise. Diga com que evidência você concorda, ou não concorde ainda.
+- Discordar exige alternativa. Aponte o risco, mostre o dado e ponha a opção
+  concorrente na mesa, com o custo dela.
+- Se a sua conclusão for que a ideia do usuário é a melhor, diga isso com a
+  mesma clareza. O objetivo é a decisão certa, não achar defeito.
+
+Para decisão grande ou plano com muitos ramos, rode o protocolo da skill
+`grill-me`: entrevistar até chegar em entendimento compartilhado, resolvendo
+cada ramo da árvore de decisão. Para refinar card antes de implementar, a skill
+`po`. Nenhuma das duas precisa de convite do usuário para ser usada.
+
+### Subagentes
+
+Disparar agente que investiga em leitura (`scout`, `security-reviewer`) é parte
+da fase de discussão e não precisa de autorização: é o jeito de mapear código
+desconhecido em paralelo.
+
+Disparar agente que escreve (`task`, `sonic`, `reviewer`, qualquer um com
+ferramenta de edição) é execução, e vale a mesma regra: só sob ordem direta.
+Delegar não lava a mão. Se você não podia editar o arquivo, também não podia
+mandar outro agente editar.
+
+### O que autoriza e o que não autoriza
+
+Não autorizam execução: "diagnostique", "me ajuda a entender", "quero
+discutir", "vamos ver as opções", "o que você acha", "isso é possível", "por
+que isso acontece", descrição de sintoma e print de erro colado.
+
+Autorizam: "implementa", "pode fazer", "aplica", "vai", "faz", ou a escolha
+explícita de uma das opções apresentadas. Na dúvida entre discutir e executar,
+discuta: perguntar custa uma mensagem, implementar a coisa errada custa o
+trabalho inteiro mais o desfazer.
+
+### Precedência e o que vem depois
+
+A autorização do usuário vence qualquer skill. Skill cujo roteiro termina em
+conserto (`diagnose` e a fase 5 dela, `tdd`, qualquer outra) executa as fases de
+investigação e para na fronteira da mudança, relatando o que faria. Vale também
+para o modo de planejamento: antes de escrever plano, discuta o problema. O
+plano é o fim de uma discussão fechada, não o começo dela.
+
+Autorizado, execute inteiro e sem meias entregas: o comportamento pedido de
+ponta a ponta, com prova de que funciona. A disciplina de discutir antes não
+vira timidez depois.
+
+Ao terminar um card, antes de abrir PR: revisão final. O card foi atendido
+100%, sem problemas deixados para trás, sem código morto, sem regressões. Achou
+algo nessa revisão, já conserte e repita até não encontrar mais nada. Só então
+abra a PR. Isso é dentro de trabalho já autorizado, não licença para começar.
 
 ## Interação e UI
 
-- Ao fazer perguntas ao usuário (escolhas, esclarecimentos), usar sempre o input
-  interativo (AskUserQuestion), nunca pergunta em texto solto.
+- Pergunta ao usuário (escolha, esclarecimento) vai sempre pela ferramenta de
+  pergunta interativa da ferramenta em uso (`ask` no omp, `AskUserQuestion` no
+  Claude Code), nunca em texto solto.
 - UI nova segue os padrões visuais já existentes no sistema (ex.: reusar o mesmo
   padrão de tabs/componentes) em vez de reinventar.
 - Vue/Nuxt + Vuetify: carregue a skill `vue-vuetify` ANTES de criar ou alterar
   qualquer componente, tela ou estilo. Ela é a fonte do design system.
 
-
-
 ---
 
-## RTK - Rust Token Killer
+## RTK, só no Claude Code
 
-**Usage**: Token-optimized CLI proxy (60-90% savings on dev operations)
+`rtk` é um proxy de CLI que corta 60-90% dos tokens em operação de dev. A
+reescrita transparente (`git status` vira `rtk git status`) é feita pelo hook
+`PreToolUse` em `ai/.claude/hooks/rtk-rewrite.sh`, que existe só no Claude Code.
+Em qualquer outra ferramenta, `rtk` é apenas um binário que você pode chamar na
+mão; não espere reescrita automática.
 
-### Meta Commands (always use rtk directly)
-
-```bash
-rtk gain              # Show token savings analytics
-rtk gain --history    # Show command usage history with savings
-rtk discover          # Analyze Claude Code history for missed opportunities
-rtk proxy <cmd>       # Execute raw command without filtering (for debugging)
-```
-
-### Installation Verification
+Comandos que se chamam sempre direto, sem passar pelo proxy:
 
 ```bash
-rtk --version         # Should show: rtk X.Y.Z
-rtk gain              # Should work (not "command not found")
-which rtk             # Verify correct binary
+rtk gain              # analise de economia de token
+rtk gain --history    # historico de uso com economia
+rtk discover          # oportunidades perdidas no historico do Claude Code
+rtk proxy <cmd>       # executa cru, sem filtro (debug)
 ```
 
-⚠️ **Name collision**: If `rtk gain` fails, you may have reachingforthejack/rtk (Rust Type Kit) installed instead.
-
-### Hook-Based Usage
-
-All other commands are automatically rewritten by the Claude Code hook.
-Example: `git status` → `rtk git status` (transparent, 0 tokens overhead)
-
-Refer to CLAUDE.md for full command reference.
+Se `rtk gain` falhar com comando desconhecido, a máquina tem o `rtk` errado
+instalado (Rust Type Kit, de reachingforthejack, em vez do Rust Token Killer).
 
 ---
 

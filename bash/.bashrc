@@ -77,3 +77,9 @@ if command -v fzf >/dev/null; then
 fi
 
 command -v starship >/dev/null && eval "$(starship init bash)"
+
+# >>> omp profile alias: omp-work >>>
+omp-work() {
+    command omp --profile=work "$@"
+}
+# <<< omp profile alias: omp-work <<<
