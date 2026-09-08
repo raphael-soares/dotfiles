@@ -17,12 +17,38 @@ dúvida de design abre a fase de discussão, não a de execução.
   estado do sistema: fora da fase. Nem "só um ajustinho".
 - O que entregar: o que o problema é de fato e com que evidência, as opções
   reais com o tradeoff de cada uma, qual você recomenda e por quê, e as
-  perguntas cuja resposta muda a escolha.
+  perguntas cuja resposta muda a escolha, feitas pela ferramenta interativa.
 - Uma opção sempre presente na lista: não fazer nada, ou resolver por hábito e
   configuração em vez de código. Mecanismo novo é dívida, e a discussão existe
   para descobrir se ela se paga.
 - Como terminar: devolvendo a decisão. A fase acaba com a bola no campo do
-  usuário, nunca com o trabalho já feito.
+  usuário, nunca com o trabalho já feito. Se sobrou pergunta, a última coisa da
+  resposta é a ferramenta interativa com ela, não um parágrafo pedindo retorno.
+
+### Onde escrever diagnóstico, proposta e plano
+
+Entrega longa não vai no corpo do chat. Vai para um arquivo em
+`<raiz-do-projeto>/.omp/planos/`, e o chat recebe só o desfecho em poucas
+linhas mais o caminho do arquivo. Isso vale para diagnóstico com evidência,
+lista de opções com tradeoff, plano de implementação e proposta de desenho.
+
+O fluxo, com o script `plano` (fonte em `~/.dotfiles/local/.local/bin/plano`):
+
+```bash
+plano novo <slug>     # imprime o caminho do próximo arquivo numerado
+plano abrir <arquivo> # abre no pane lateral em nvim, ou recarrega o que já está aberto
+```
+
+Escreva o conteúdo no caminho que o `novo` imprimiu e chame o `abrir` em
+seguida, na mesma resposta. Criar esse arquivo é a entrega da discussão, não
+execução: é a única escrita permitida antes da autorização.
+
+O arquivo é do usuário. Ele edita o plano no nvim enquanto conversa, então
+releia o arquivo do disco antes de agir sobre ele, sempre. O que está lá vence
+o que você escreveu, e vence o que ficou dito no chat.
+
+Chat curto e arquivo completo. Repetir o plano inteiro na resposta anula o
+motivo do arquivo existir.
 
 ### Contestar a premissa é parte do trabalho
 
@@ -84,9 +110,17 @@ abra a PR. Isso é dentro de trabalho já autorizado, não licença para começa
 
 ## Interação e UI
 
-- Pergunta ao usuário (escolha, esclarecimento) vai sempre pela ferramenta de
-  pergunta interativa da ferramenta em uso (`ask` no omp, `AskUserQuestion` no
-  Claude Code), nunca em texto solto.
+- **Toda pergunta ao usuário vai pela ferramenta de pergunta interativa**
+  (`ask` no omp, `AskUserQuestion` no Claude Code), sempre, sem exceção.
+  Escolha entre opções, esclarecimento de escopo, confirmação de premissa,
+  pergunta cuja resposta muda o plano: tudo por lá.
+- Pergunta escrita em texto solto no chat é erro, mesmo no fim de um
+  diagnóstico e mesmo quando é uma só. Pergunta listada em arquivo de plano
+  também não conta: o arquivo registra, a ferramenta é que pergunta.
+- Várias perguntas relacionadas vão juntas na mesma chamada, uma por item, não
+  uma por mensagem. Opção com label curto, o tradeoff na descrição.
+- Nada de perguntar o que ferramenta ou repositório respondem. A regra é sobre
+  decisão do usuário, não sobre economizar investigação.
 - UI nova segue os padrões visuais já existentes no sistema (ex.: reusar o mesmo
   padrão de tabs/componentes) em vez de reinventar.
 - Vue/Nuxt + Vuetify: carregue a skill `vue-vuetify` ANTES de criar ou alterar
