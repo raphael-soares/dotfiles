@@ -2,10 +2,11 @@
 # VPN Fortinet da Unimed via NetworkManager (nmcli), portavel entre maquinas.
 #
 # Diferente do openfortivpn direto: usa o plugin networkmanager-fortisslvpn,
-# entao integra com o applet de rede do KDE/GNOME, nao precisa do workaround
-# manual de DNS (resolvectl dns/domain) e evita o bug de rota default que o
-# NM injeta por padrao (ipv4.never-default corrige isso, ver comentario
-# abaixo).
+# entao integra com o applet de rede do KDE/GNOME e evita o bug de rota
+# default que o NM injeta por padrao (ipv4.never-default corrige isso, ver
+# comentario abaixo). O DNS interno continua declarado na mao aqui, porque o
+# plugin recebe os servidores do gateway e nao os publica no resolver da
+# maquina (ver comentario em ensure_connection).
 #
 # Credenciais saem do ~/.env.local (nao versionado). Variaveis esperadas,
 # veja .env.example:
@@ -70,6 +71,21 @@ ensure_connection() {
     # Unimed continuam funcionando normal, isso so tira a rota default
     # extra que ninguem pediu.
     nmcli connection modify "$CONN_NAME" ipv4.never-default yes ipv6.never-default yes
+
+    # O plugin recebe os servidores DNS do gateway (aparecem em
+    # `nmcli dev show ppp0` como IP4.DNS) e nao os publica no
+    # systemd-resolved: o ppp0 entra como device externo, o NM nunca faz
+    # commit de IP nele e `resolvectl dns ppp0` fica vazio. Sem isso, nome
+    # interno tipo dataflow.unimedsc.coop.br vai pro DNS da sua casa, que nao
+    # conhece nome da Unimed, e a pagina nem abre.
+    #
+    # O til na frente do dominio faz DNS dividido: so esses sufixos vao pro
+    # DNS da Unimed, o resto da navegacao fica no resolver local e nada quebra
+    # quando a VPN cai. O gateway anuncia so o sufixo unimedsc.net, entao o
+    # coop.br precisa estar escrito aqui.
+    nmcli connection modify "$CONN_NAME" \
+        ipv4.dns "10.36.1.14 10.36.1.16" \
+        ipv4.dns-search "~unimedsc.coop.br,~unimedsc.net"
 
     # autoconnect fica desligado de proposito: essa VPN pede aprovacao por
     # push no celular, autoconnect geraria notificacao sem voce ter pedido.
