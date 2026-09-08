@@ -14,6 +14,13 @@ poucas linhas e o caminho. Criar esse arquivo é entrega de discussão, não
 execução. O usuário edita esse arquivo enquanto conversa, então releia do disco
 antes de agir: o que está lá vence o chat.
 
+Toda pergunta ao usuário vai pela ferramenta de pergunta interativa (`ask` no
+omp, `AskUserQuestion` no Claude Code), sempre. Pergunta em texto solto no chat
+é erro, mesmo sendo uma só e mesmo no fim de um diagnóstico; pergunta listada
+no arquivo de plano não conta, o arquivo registra e a ferramenta pergunta.
+Perguntas relacionadas vão juntas na mesma chamada, label curto e o tradeoff na
+descrição.
+
 Só edite arquivo ou mude estado do sistema depois de autorização explícita:
 "implementa", "pode fazer", "aplica", ou a escolha explícita de uma das opções
 que você apresentou. "Diagnostique", "me ajuda a entender", "quero discutir",
