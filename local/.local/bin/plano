@@ -1,0 +1,246 @@
+#!/usr/bin/env bash
+# plano: painel de planos e propostas do agente, aberto no nvim ao lado do chat.
+#
+# O agente escreve diagnostico, proposta e plano em <raiz-do-projeto>/.omp/planos
+# em vez de despejar tudo no corpo do chat, e chama `plano abrir <arquivo>` para
+# mostrar. O arquivo e seu: edite, salve, e continue a conversa no chat.
+#
+# Uso:
+#   plano dir              imprime (criando se precisar) o diretorio de planos
+#   plano novo <slug>      cria o proximo arquivo numerado e imprime o caminho
+#   plano abrir [arquivo]  abre no pane lateral; sem argumento, o plano mais recente
+#   plano toggle           abre o pane lateral, ou fecha se ja estiver aberto
+#   plano listar           lista os planos do projeto, do mais novo para o mais velho
+#   plano onde             mostra qual pane, socket e diretorio ele resolveu
+#
+# O pane lateral e um nvim comum: :w salva, :q fecha o pane, e o diretorio de
+# trabalho dele e o de planos, entao o oil navega entre os arquivos.
+#
+# Fora do tmux, `abrir` e `toggle` caem para um nvim normal no terminal atual.
+#
+# Instalado pelo stow do pacote local/, em ~/.local/bin/plano.
+set -uo pipefail
+
+WIDTH="${PLANO_WIDTH:-90}"
+MIN_HOST_WIDTH=80
+
+command -v nvim >/dev/null || { printf 'plano: nvim nao encontrado\n' >&2; exit 1; }
+
+# De onde sai o projeto. Chamado de dentro de um shell (o agente), o cwd do
+# processo ja e o projeto. Vindo de atalho de teclado nao ha processo nosso: o
+# `run-shell` roda com o cwd do servidor do tmux, que nao tem relacao com o
+# projeto, entao vale o caminho do pane do agente.
+context_base() {
+  local host
+  if [[ -n "${TMUX_PANE:-}" || -z "${TMUX:-}" ]]; then
+    pwd
+    return 0
+  fi
+  host=$(host_pane)
+  printf '%s\n' "${host##*|}"
+}
+
+project_root() {
+  local base
+  base=$(context_base)
+  [[ -d "$base" ]] || base=$PWD
+  git -C "$base" rev-parse --show-toplevel 2>/dev/null || printf '%s\n' "$base"
+}
+
+# Sem criar: um toggle num projeto que nunca teve plano nao deve deixar pasta
+# vazia para tras.
+plan_dir() {
+  printf '%s/.omp/planos\n' "$(project_root)"
+}
+
+plan_dir_ensure() {
+  local dir
+  dir=$(plan_dir)
+  mkdir -p "$dir" || return 1
+  printf '%s\n' "$dir"
+}
+
+# Mais novo primeiro.
+list_plans() {
+  local dir="$1"
+  ls -t "$dir"/*.md 2>/dev/null
+}
+
+# Toda pergunta ao tmux tem que ser ancorada num pane explicito. Sem `-t`, o
+# tmux responde sobre o "atual", que com mais de uma sessao aberta e a que o
+# usuario esta olhando, nao a que fez a chamada: o painel abria por cima de
+# outro trabalho. $TMUX_PANE existe quando quem chama roda dentro do pane (o
+# agente); vindo de atalho de teclado ele nao existe, e ai o pane ativo do
+# cliente e o certo, porque foi nele que a tecla foi apertada.
+tmux_anchor() {
+  if [[ -n "${TMUX_PANE:-}" ]]; then
+    printf '%s\n' "$TMUX_PANE"
+  else
+    tmux display-message -p '#{pane_id}'
+  fi
+}
+
+socket_path() {
+  local id
+  if [[ -n "${TMUX:-}" ]]; then
+    id=$(tmux display-message -p -t "$(tmux_anchor)" '#{session_id}-#{window_id}' | tr -d '$@%')
+  else
+    id="tty$$"
+  fi
+  printf '%s/plano-%s.sock\n' "${TMPDIR:-/tmp}" "$id"
+}
+
+# Pane do painel: o que foi iniciado com este socket. Nada de adivinhar por
+# nome de comando, senao um nvim qualquer da janela vira alvo.
+panel_pane() {
+  local sock="$1"
+  tmux list-panes -t "$(tmux_anchor)" -F '#{pane_id}|#{pane_start_command}' 2>/dev/null \
+    | awk -F'|' -v s="$sock" 'index($2, s) { print $1; exit }'
+}
+
+server_alive() {
+  local sock="$1"
+  [[ -S "$sock" ]] && nvim --server "$sock" --remote-expr '1' >/dev/null 2>&1
+}
+
+# Pane a dividir, no formato id|largura|caminho. Chamada vinda de dentro de um
+# pane (o agente) divide aquele pane, sem adivinhacao nenhuma. Vinda de atalho
+# de teclado nao ha quem chamou, entao procura o agente na janela e, sem achar,
+# usa o pane ativo.
+host_pane() {
+  local anchor host
+  anchor=$(tmux_anchor)
+
+  if [[ -n "${TMUX_PANE:-}" ]]; then
+    tmux display-message -p -t "$TMUX_PANE" '#{pane_id}|#{pane_width}|#{pane_current_path}'
+    return 0
+  fi
+
+  host=$(tmux list-panes -t "$anchor" \
+      -F '#{pane_id}|#{pane_width}|#{pane_current_path}|#{pane_current_command}' 2>/dev/null \
+    | awk -F'|' '$4 == "omp" || $4 == "claude" || $4 == "pi" { print $1"|"$2"|"$3; exit }')
+  [[ -n "$host" ]] || host=$(tmux display-message -p -t "$anchor" '#{pane_id}|#{pane_width}|#{pane_current_path}')
+  printf '%s\n' "$host"
+}
+
+open_panel() {
+  local dir="$1" file="$2" sock pane host host_id host_width width target
+
+  sock=$(socket_path)
+
+  if server_alive "$sock"; then
+    [[ -n "$file" ]] && nvim --server "$sock" --remote "$file"
+    return 0
+  fi
+
+  rm -f "$sock"
+  mkdir -p "$dir" || return 1
+
+  # Sem plano nenhum, abre o proprio diretorio: o oil lista, e da para criar o
+  # primeiro ali. Abrir o nvim sem argumento cairia no dashboard, que nao diz
+  # nada sobre onde voce esta.
+  target=${file:-$dir}
+
+  # Fora do tmux so da para tomar o terminal atual, e so quando existe um. Um
+  # chamador sem terminal (o agente, um hook) ficaria pendurado num nvim que
+  # ninguem ve, entao ali a saida e o caminho do arquivo.
+  if [[ -z "${TMUX:-}" ]]; then
+    if [[ -t 1 && -t 0 ]]; then
+      exec nvim -c "cd $dir" "$target"
+    fi
+    printf 'plano: sem tmux e sem terminal, abra na mao: nvim %s\n' "$target" >&2
+    return 1
+  fi
+
+  pane=$(panel_pane "$sock")
+  [[ -n "$pane" ]] && tmux kill-pane -t "$pane" 2>/dev/null
+
+  host=$(host_pane)
+  host_id=${host%%|*}
+  host_width=${host#*|}
+  host_width=${host_width%%|*}
+
+  width=$WIDTH
+  if (( width > host_width - MIN_HOST_WIDTH )); then
+    width=$(( host_width / 2 ))
+  fi
+  if (( width < 40 )); then
+    tmux display-message "pane estreito demais para o painel de planos"
+    return 1
+  fi
+
+  tmux split-window -h -d -l "$width" -t "$host_id" -c "$dir" \
+    "exec nvim --listen '$sock' \"$target\""
+}
+
+cmd=${1:-toggle}
+shift 2>/dev/null || true
+
+case "$cmd" in
+  dir)
+    plan_dir_ensure
+    ;;
+
+  onde)
+    printf 'diretorio: %s\n' "$(plan_dir)"
+    if [[ -n "${TMUX:-}" ]]; then
+      printf 'chamador:  %s\n' "${TMUX_PANE:-<atalho de teclado, sem pane>}"
+      printf 'ancora:    %s\n' "$(tmux display-message -p -t "$(tmux_anchor)" '#{session_name} / #{window_id} / #{pane_id}')"
+      printf 'host:      %s\n' "$(host_pane)"
+      printf 'socket:    %s\n' "$(socket_path)"
+      printf 'painel:    %s\n' "$(panel_pane "$(socket_path)" || true)"
+    else
+      printf 'tmux:      fora\n'
+    fi
+    ;;
+
+  listar)
+    list_plans "$(plan_dir)"
+    ;;
+
+  novo)
+    slug=${1:-plano}
+    slug=$(printf '%s' "$slug" | tr '[:upper:] ' '[:lower:]-' | tr -cd 'a-z0-9-')
+    [[ -n "$slug" ]] || slug=plano
+    dir=$(plan_dir_ensure) || exit 1
+    last=$(ls "$dir" 2>/dev/null | grep -oE '^[0-9]{3}' | sort -n | tail -n 1)
+    next=$(printf '%03d' $(( 10#${last:-0} + 1 )))
+    file="$dir/$next-$slug.md"
+    : > "$file"
+    printf '%s\n' "$file"
+    ;;
+
+  abrir)
+    dir=$(plan_dir) || exit 1
+    file=${1:-}
+    if [[ -z "$file" ]]; then
+      file=$(list_plans "$dir" | head -n 1)
+    elif [[ "$file" != /* ]]; then
+      [[ -e "$file" ]] || file="$dir/$file"
+    fi
+    open_panel "$dir" "$file"
+    ;;
+
+  toggle)
+    if [[ -n "${TMUX:-}" ]]; then
+      sock=$(socket_path)
+      pane=$(panel_pane "$sock")
+      if [[ -n "$pane" ]]; then
+        tmux kill-pane -t "$pane"
+        rm -f "$sock"
+        exit 0
+      fi
+    fi
+    dir=$(plan_dir) || exit 1
+    open_panel "$dir" "$(list_plans "$dir" | head -n 1)"
+    ;;
+
+  -h|--help|ajuda)
+    sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+    ;;
+
+  *)
+    printf 'plano: comando desconhecido: %s (veja `plano --help`)\n' "$cmd" >&2
+    exit 1
+    ;;
+esac

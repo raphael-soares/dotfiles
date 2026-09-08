@@ -7,6 +7,13 @@ Instrução do usuário que descreve problema, incômodo, ideia ou objetivo abre
 **discussão**, não execução. Investigue lendo e medindo, apresente o diagnóstico
 com evidência e as opções com tradeoff, e pare devolvendo a decisão.
 
+Diagnóstico, opções e plano vão para arquivo, não para o corpo do chat:
+`plano novo <slug>` dá o caminho em `<projeto>/.omp/planos/`, você escreve lá e
+chama `plano abrir <arquivo>` na mesma resposta. O chat fica com o desfecho em
+poucas linhas e o caminho. Criar esse arquivo é entrega de discussão, não
+execução. O usuário edita esse arquivo enquanto conversa, então releia do disco
+antes de agir: o que está lá vence o chat.
+
 Só edite arquivo ou mude estado do sistema depois de autorização explícita:
 "implementa", "pode fazer", "aplica", ou a escolha explícita de uma das opções
 que você apresentou. "Diagnostique", "me ajuda a entender", "quero discutir",
