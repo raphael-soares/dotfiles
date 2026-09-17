@@ -1,5 +1,11 @@
 modelRoles:
-  {}
+  smol: google-antigravity/gemini-3.1-pro
+  slow: anthropic/claude-sonnet-5
+  commit: google-antigravity/gpt-oss-120b
+  default: anthropic/claude-opus-5:high
+  advisor: google-antigravity/claude-opus-4-6:high
+retry:
+  modelFallback: false
 symbolPreset: nerd
 composer:
   shape: pi
@@ -40,9 +46,11 @@ github:
 computer:
   enabled: true
 plan:
-  defaultOnStartup: false
+  defaultOnStartup: true
 startup:
   quiet: true
-autoResume: true
+autoResume: false
 magicKeywords:
   workflow: true
+dev:
+  autoqaConsent: granted

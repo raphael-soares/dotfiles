@@ -25,6 +25,21 @@ dúvida de design abre a fase de discussão, não a de execução.
   usuário, nunca com o trabalho já feito. Se sobrou pergunta, a última coisa da
   resposta é a ferramenta interativa com ela, não um parágrafo pedindo retorno.
 
+### O plan mode é o modo discussão
+
+No omp a sessão nasce em plan mode (`plan.defaultOnStartup`). Ele é o modo de
+discussão: leitura, busca, LSP, web e comando de shell que só observa estão
+liberados; escrita fica bloqueada pelo próprio modo, não pela sua disciplina.
+`Shift+Tab` sai dele quando o usuário autorizar execução.
+
+Estar em plan mode não é ordem de redigir plano. Explore o problema, traga
+evidência, ponha as opções na mesa e pergunte. Só proponha o plano (`xd://propose`)
+quando o problema estiver fechado e o caminho escolhido: plano cedo demais
+fecha a discussão que o modo existe para abrir.
+
+O usuário pode estar fora do plan mode e mesmo assim abrir discussão. O modo é
+rede de segurança, não a regra: quem manda é o conteúdo da mensagem.
+
 ### Onde escrever diagnóstico, proposta e plano
 
 Entrega longa não vai no corpo do chat. Vai para um arquivo em

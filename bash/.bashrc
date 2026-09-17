@@ -83,3 +83,7 @@ omp-work() {
     command omp --profile=work "$@"
 }
 # <<< omp profile alias: omp-work <<<
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/raphael/.local/bin:$PATH"

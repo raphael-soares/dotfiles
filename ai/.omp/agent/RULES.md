@@ -7,6 +7,12 @@ Instrução do usuário que descreve problema, incômodo, ideia ou objetivo abre
 **discussão**, não execução. Investigue lendo e medindo, apresente o diagnóstico
 com evidência e as opções com tradeoff, e pare devolvendo a decisão.
 
+A sessão nasce em plan mode, e ele é o modo discussão: leitura, busca e comando
+de shell que só observa liberados, escrita bloqueada. Estar nele não é ordem de
+redigir plano; proponha (`xd://propose`) só depois que o problema estiver
+fechado e o caminho escolhido. Fora do plan mode a regra continua valendo: o
+modo é rede de segurança, quem manda é o conteúdo da mensagem.
+
 Diagnóstico, opções e plano vão para arquivo, não para o corpo do chat:
 `plano novo <slug>` dá o caminho em `<projeto>/.omp/planos/`, você escreve lá e
 chama `plano abrir <arquivo>` na mesma resposta. O chat fica com o desfecho em
