@@ -356,6 +356,58 @@ mudança real no comportamento quebre o teste, e uma refatoração pura não que
 
 ---
 
+## Comentários: o padrão é zero, e o resto tem orçamento
+
+Vale pra qualquer linguagem. O modelo escreve comentário demais por default, e
+comentário custa três vezes: token em toda leitura do arquivo, ruído pra quem lê
+o código e mentira quando o código muda e ele fica.
+
+Antes de escrever, o teste: **dá pra escrever esse comentário só lendo a linha de
+baixo?** Então ele não existe. Nome melhor e função extraída resolvem o que o
+comentário ia explicar.
+
+Só estas cinco categorias justificam um comentário, e cada uma tem teto:
+
+| Categoria | O que é | Teto |
+|---|---|---|
+| Contrato não-óbvio | Unidade, nulo permitido, limite inclusivo, efeito colateral, ordem obrigatória de chamada, quem fecha o recurso. Só em API que outro módulo consome. | 3 linhas |
+| Workaround | Bug de lib, navegador, banco ou serviço externo, com a causa nomeada e o link quando existir. | 3 linhas |
+| Armadilha | O que a próxima pessoa quebraria "melhorando": iteração reversa, ordem de efeito, cache, corrida. | 2 linhas |
+| Rastreabilidade | Id de requisito, issue ou ADR (`REQ-AUD-08`, `ADR-0012`). Só o id, sem parágrafo junto. | 1 linha |
+| TODO com dono | `TODO(#123): <ação>`. Sem issue não entra: ou faz agora, ou deixa fora. | 1 linha |
+
+Fora da tabela, apaga. Nenhum bloco passa de **cinco linhas**, em lugar nenhum.
+
+**Justificativa longa vira ADR, não bloco no topo do arquivo.** Precisou de mais de
+cinco linhas pra explicar a decisão? O texto vai pra `docs/adr/NNNN-slug.md`
+(contexto, decisão, consequências) e no código fica uma linha apontando. Projeto sem
+`docs/adr/`, crie a pasta com o ADR. O que já está escrito na spec não vira ADR: cita
+o id do requisito e pronto.
+
+Proibido, sempre:
+
+- Faixa que nomeia o que vem abaixo: `<!-- Diálogo de confirmação -->` em cima do
+  `<ConfirmDialog>`, `// ===== Computed =====`, seção numerada.
+- Docstring que repete a assinatura ("Retorna o total" em `obterTotal()`).
+- Narrar o diff ou a conversa: "agora também trata X", "bug corrigido", "novo",
+  referência ao card, ao prompt ou ao agente.
+- Código comentado. Apaga, o git guarda.
+- Parágrafo justificando gambiarra. Conserta o código.
+
+**Antes de abrir PR, revise os comentários que você adicionou.** Na revisão final do
+card, liste as linhas de comentário do diff e passe cada uma pela tabela:
+
+```bash
+git diff <base>...HEAD -U0 | grep -E '^\+[[:space:]]*(//|/\*|\*|#|<!--)'
+```
+
+Não se encaixa numa categoria, apaga. Bloco maior que cinco linhas, vira ADR. Isso é
+dentro do trabalho já autorizado.
+
+Detalhe, exemplo e o caso ruim -> bom: skill `comentarios`.
+
+---
+
 ## Learnings
 
 Lições destiladas do uso real que mudaram como eu trabalho. Cada uma: a regra, o

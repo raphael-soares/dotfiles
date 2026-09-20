@@ -9,7 +9,8 @@ Texto que uma pessoa lê tem um trabalho: ela entender de primeira. Se ela preci
 pra decifrar uma palavra, o texto falhou — não importa se cada frase estava tecnicamente correta.
 
 Esta skill é sobre **ser entendido**. A `writing-style` das guidelines é sobre **não soar como IA**.
-As duas valem juntas; quando conflitarem, ser entendido ganha.
+As duas valem juntas; quando conflitarem, ser entendido ganha. Comentário de código é a skill
+`comentarios`.
 
 ## O teste, antes de mandar
 

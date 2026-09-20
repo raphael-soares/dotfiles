@@ -18,6 +18,7 @@ export HISTCONTROL=ignoreboth:erasedups
 export HISTTIMEFORMAT="%F %T "
 export PROMPT_COMMAND="history -a; history -n; $PROMPT_COMMAND"
 export BROWSER="flatpak run io.github.zen_browser.zen"
+export EDITOR=nvim
 
 shopt -s histappend
 shopt -s cmdhist

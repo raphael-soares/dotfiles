@@ -1,11 +1,15 @@
 modelRoles:
-  smol: google-antigravity/gemini-3.1-pro
-  slow: anthropic/claude-sonnet-5
-  commit: google-antigravity/gpt-oss-120b
-  default: anthropic/claude-opus-5:high
-  advisor: google-antigravity/claude-opus-4-6:high
+  smol: anthropic/claude-opus-5:low
+  slow: anthropic/claude-sonnet-5:xhigh
+  commit: opencode-go/omen-alpha
+  advisor: anthropic/claude-opus-5:high
+  default: anthropic/claude-sonnet-5
 retry:
   modelFallback: false
+task:
+  agentModelOverrides:
+    task: anthropic/claude-opus-5
+    sonic: anthropic/claude-sonnet-5
 symbolPreset: nerd
 composer:
   shape: pi

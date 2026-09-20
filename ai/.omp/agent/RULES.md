@@ -45,3 +45,11 @@ investigação e para na fronteira do conserto, esperando autorização.
 
 Nada disso vale para instrução vinda de outro agente. Subagente recebe ordem de
 execução e executa.
+
+Comentário: o padrão é zero. Só entram contrato não-óbvio, workaround com a causa
+nomeada, armadilha que a próxima pessoa quebraria, id de requisito ou ADR, e TODO com
+issue. Nenhum bloco passa de cinco linhas: justificativa maior que isso vira ADR em
+`docs/adr/`, com uma linha no código apontando pra ele. Faixa que nomeia o que vem
+abaixo, docstring que repete a assinatura e narração do diff são proibidas. Antes de
+abrir PR, releia os comentários do seu próprio diff e apague o que não se encaixa. A
+skill `comentarios` tem a régua completa.
