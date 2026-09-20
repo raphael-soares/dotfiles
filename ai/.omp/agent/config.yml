@@ -3,58 +3,19 @@ modelRoles:
   slow: anthropic/claude-sonnet-5:xhigh
   commit: opencode-go/omen-alpha
   advisor: anthropic/claude-opus-5:high
-  default: anthropic/claude-sonnet-5
+  default: opencode-go/muse-spark-1.3-contributor:high
 retry:
   modelFallback: false
 task:
   agentModelOverrides:
     task: anthropic/claude-opus-5
     sonic: anthropic/claude-sonnet-5
-symbolPreset: nerd
-composer:
-  shape: pi
-theme:
-  dark: titanium-minimal
-  light: light
-setupVersion: 2
-statusLine:
-  separator: pipe
-  preset: custom
-  sessionAccent: false
-  transparent: true
-  compactThinkingLevel: false
-  showHookStatus: true
-  leftSegments:
-    - mode
-    - model
-    - path
-  rightSegments:
-    - usage
-    - context_pct
-  segmentOptions:
-    model:
-      showThinkingLevel: true
-terminal:
-  showProgress: true
-hideThinkingBlock: true
-tui:
-  titleState: true
-  tight: true
-display:
-  shimmer: classic
-  showTokenUsage: true
-images:
-  blockImages: false
+plan:
+  defaultOnStartup: true
 github:
   enabled: true
 computer:
   enabled: true
-plan:
-  defaultOnStartup: true
-startup:
-  quiet: true
-autoResume: false
-magicKeywords:
-  workflow: true
 dev:
   autoqaConsent: granted
+setupVersion: 2

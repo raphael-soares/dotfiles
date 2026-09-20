@@ -79,20 +79,7 @@
     ]
   },
   "enabledPlugins": {
-    "caveman@caveman": true,
     "jdtls-lsp@claude-plugins-official": true
   },
-  "extraKnownMarketplaces": {
-    "caveman": {
-      "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman"
-      }
-    }
-  },
-  "effortLevel": "high",
-  "tui": "fullscreen",
-  "skipWorkflowUsageWarning": true,
-  "theme": "dark-ansi",
-  "editorMode": "vim"
+  "effortLevel": "high"
 }
