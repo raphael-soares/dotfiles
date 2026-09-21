@@ -1,15 +1,27 @@
 modelRoles:
-  smol: anthropic/claude-opus-5:low
-  slow: anthropic/claude-sonnet-5:xhigh
+  default: anthropic/claude-opus-5
+  slow: anthropic/claude-opus-5:xhigh
+  task: anthropic/claude-sonnet-5:high
+  smol: opencode-go/glm-5.3-flash:high
+  tiny: opencode-go/muse-spark-1.3-contributor
   commit: opencode-go/omen-alpha
-  advisor: anthropic/claude-opus-5:high
-  default: opencode-go/muse-spark-1.3-contributor:high
+  advisor: opencode-go/glm-5.2:medium
 retry:
-  modelFallback: false
+  modelFallback: true
+  fallbackChains:
+    anthropic/*:
+      - opencode-go/kimi-k3:high
+      - opencode-go/minimax-m3:high
+      - opencode-go/glm-5.3-flash:high
+    opencode-go/*:
+      - opencode-go/glm-5.3-flash:high
+      - opencode-go/muse-spark-1.3-contributor
 task:
   agentModelOverrides:
-    task: anthropic/claude-opus-5
-    sonic: anthropic/claude-sonnet-5
+    scout: "@smol"
+    reviewer: "@task"
+    security-reviewer: "@task"
+defaultThinkingLevel: auto
 plan:
   defaultOnStartup: true
 github:
@@ -19,3 +31,17 @@ computer:
 dev:
   autoqaConsent: granted
 setupVersion: 2
+composer:
+  shape: rail
+  tokenRate: false
+terminal:
+  showProgress: false
+display:
+  hideToolActivity: false
+  shimmer: classic
+symbolPreset: nerd
+tui:
+  tight: true
+  vimMode: true
+  vimModeDisplay: text
+externalThinking: false
