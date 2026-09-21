@@ -34,6 +34,32 @@ setupVersion: 2
 composer:
   shape: rail
   tokenRate: false
+statusLine:
+  preset: custom
+  separator: block
+  contextLine: percentage
+  sessionAccent: true
+  transparent: false
+  compactThinkingLevel: true
+  showHookStatus: true
+  leftSegments:
+    - vim
+    - model
+    - mode
+    - path
+    - git
+    - pr
+  rightSegments:
+    - usage
+    - context_pct
+  segmentOptions:
+    model:
+      showThinkingLevel: false
+    git:
+      showBranch: true
+      showStaged: true
+      showUnstaged: true
+      showUntracked: false
 terminal:
   showProgress: false
 display:
