@@ -1,0 +1,14 @@
+hyprland
+noctalia
+hyprpolkitagent
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+socat
+grim
+slurp
+hyprshot
+ddcutil
+nwg-look
+adw-gtk-theme
+papirus-icon-theme
+ttf-jetbrains-mono-nerd

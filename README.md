@@ -1,20 +1,24 @@
 ## Install
 
-
 ```bash
 git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles && \
 cd ~/.dotfiles && \
-./bootstrap.sh
+./install.sh terminal ai
 ```
 
-## Modulos opcionais
+Cada pasta da raiz é um pacote do stow. O `install.sh` agrupa os pacotes em
+camadas; rode só as que fazem sentido na máquina:
 
-Fora do `bootstrap.sh` porque sao especificos de hardware/desktop, nao
-agnosticos. Rode so onde fizer sentido.
+| Camada | O que entra | Onde |
+|---|---|---|
+| `terminal` | bash, tmux, nvim, git, fzf, starship, mise, alacritty, workmux, `~/.local/bin` | qualquer máquina |
+| `ai` | AGENTS.md, skills, omp e Claude Code | qualquer máquina |
+| `desktop` | Hyprland, Noctalia, tema GTK/portal | máquina com Hyprland |
+| `audio` | WirePlumber só com A2DP no Bluetooth: caixa BT não cai em mono 16 kHz, mas nenhum fone BT tem microfone | máquina que precisa disso |
+| `sistema` | greetd, PAM do greetd, plymouth, copiados para `/etc` com sudo | máquina com Hyprland |
 
-- `./bootstrap_audio.sh`: forca todo dispositivo Bluetooth a so usar A2DP
-  (estereo, alta fidelidade), removendo o handsfree HSP/HFP do WirePlumber.
-  Resolve caixa/soundbar BT que conecta como "headset" mono 16 kHz.
-- `./bootstrap_desktop.sh`: config do desktop Hyprland + Noctalia (`~/.config/hypr`,
-  plugins autorais, `settings.toml` do Noctalia, wallpaper em uso e a cola de tema
-  GTK/portal). Só na máquina que roda esse desktop.
+Os pacotes de cada camada estão em `packages/<camada>.txt` e são instalados com
+`yay` (ou `pacman`) só se faltarem. `--sem-pacotes` só linka os arquivos.
+
+O que é só de uma máquina fica fora do repo: `~/.env.local` (criado a partir do
+`.env.example`), `~/.bash_profile.local` e `~/.config/hypr/local.lua`.
