@@ -91,7 +91,7 @@ camada_terminal() {
 camada_ai() {
   instalar_pacotes ai
   avisar_fora_do_pacman omp claude rtk
-  linkar .claude .omp/agent/extensions .omp/agent/rules .config/rtk -- ai
+  linkar .claude .omp/agent/extensions .omp/agent/rules -- ai
 }
 
 camada_desktop() {
