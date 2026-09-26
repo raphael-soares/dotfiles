@@ -201,191 +201,37 @@ Antes de mandar qualquer texto, procure por `—` e por `–` e troque os dois.
 
 ### Texto que uma pessoa vai ler: ser entendido vem antes
 
-Vale para resposta no chat, descrição de PR e texto de tela. Correto e
-incompreensível continua sendo falha. Quando esta seção conflitar com as regras
-acima, ser entendido ganha.
-
-- **Comece pelo desfecho.** O que ficou pronto, o que quebrou, o que falta, o
-  que você precisa da pessoa. O caminho até lá vem depois, se vier.
-- **Não narre o que ela já viu.** Ela acompanhou os comandos rodando; repetir a
-  lista do que foi verificado não informa nada. "Está tudo passando" resolve.
-- **Jargão interno: traduza ou corte.** Diga o efeito, não o mecanismo —
-  "a clínica vê os pacientes dela em todos os convênios", não
-  "prestador-scoped cross-operadora"; "ficaria lento em lista grande", não
-  "lazy load por linha". Termo em inglês solto ("scoped", "roster", "lazy") em
-  texto pt-BR é sempre dívida. Se a frase só faz sentido pra quem leu o diff,
-  ela é comentário de código, não mensagem.
-- **Detalhe técnico só quando muda a decisão dela.** Se não muda o que ela vai
-  fazer agora, fica de fora. Trade-off que você resolveu sozinho e deu certo
-  não precisa de parágrafo.
-- **Corte metade.** Quase sempre dá.
-
-A skill `mensagem-pro-usuario` detalha isso, com o teste antes de mandar e a
-tabela de traduções.
+Resposta no chat, descrição de PR e texto de tela: comece pelo desfecho, não
+narre o que ela já viu, traduza ou corte jargão interno, detalhe técnico só
+quando muda a decisão dela, e corte metade. Quando conflitar com as regras
+acima, ser entendido ganha. Detalhe e tabela de traduções: skill
+`mensagem-pro-usuario`.
 
 ---
 
-## Django — convenções de schema
+## Testes
 
-Padrões para projetos Django com schema novo (Django-managed, migrations limpas).
-Vale quando a gente controla o schema, não quando espelha um banco legado.
-
-### Nomes de coluna e campo
-
-Nomes limpos em **pt-BR**. Sem prefixo húngaro (o `logevento`, `usuariocodigo`,
-`logid` do sistema antigo) e sem inglês (`created_at`, `event`).
-
-- **PK:** `id` UUID, por um mixin `UUIDModel` compartilhado. Não `logid`/`xcodigo`.
-- **Timestamps:** `criado_em` (`auto_now_add`) e `atualizado_em` (`auto_now`), por um
-  mixin `TimestampedModel`. Modelos de domínio herdam um `BaseModel` que junta os dois.
-- **Campos:** nome de domínio direto (`usuario`, `evento`, `mensagem`, `objeto`), sem
-  repetir o nome da tabela como prefixo.
-- **Texto sem `null`:** campo de string usa `blank=True, default=""`, nunca `null=True`
-  (regra do ruff `DJ001`). `null=True` só em campo não-texto.
-
-Por quê: consistência pt-BR com o resto do código e das telas, e um schema legível sem
-o ruído do estilo húngaro. UUID como PK acompanha o que os projetos já vinham usando.
-
-Mixins base (`UUIDModel`, `TimestampedModel`, `BaseModel`) moram no app `core`/compartilhado
-e são herdados pelos apps de domínio.
+Teste comportamento, não implementação: se a implementação muda e o
+comportamento não, o teste não quebra. Mock só na fronteira. Antes de escrever
+ou revisar teste, skill `testes`. Projeto Django com schema próprio: skill
+`django-schema`.
 
 ---
 
-## Testes — escrever teste bom, não teste frágil
+## Comentários: o padrão é zero
 
-Vale pra qualquer stack (Java/Spring, JS/TS, Python). O objetivo é teste que
-pega bug de verdade e sobrevive a refatoração. Teste frágil (quebra sem bug,
-passa com bug) é pior que não ter teste: dá falsa segurança e vira imposto de
-manutenção. Este guia é sobre o que faz um teste ser bom, não sobre a mecânica
-de nenhum framework em particular.
-
-### A regra que resolve 80% da fragilidade: teste comportamento, não implementação
-
-Teste o **o quê** (resultado observável, contrato público), não o **como**
-(passos internos, campos privados, ordem de chamadas). Se a implementação muda
-mas o comportamento continua igual, o teste NÃO pode quebrar.
-
-- Assertar sobre o retorno / estado final / efeito observável, não sobre "chamou
-  o método X com arg Y". `verify(mock).save(...)` como asserção principal quase
-  sempre é teste de implementação disfarçado.
-- Não tocar em privados, campos internos ou estrutura de dados escolhida. Testar
-  `lista.get(0) == 5`, nunca `lista._items instanceof ArrayList`.
-- Mock só na fronteira (I/O, rede, relógio, aleatoriedade, serviço externo). Se
-  o teste mocka tudo, ele testa os mocks, não o código. Over-mock é o sintoma
-  número um de teste que não pega bug.
-
-### Estrutura: Arrange–Act–Assert
-
-Três blocos visíveis, um por linha em branco: monta o cenário, executa a ação,
-verifica o resultado. Se o Arrange é gigante ou tem lógica (loop, if), o teste
-está fazendo coisa demais. Usar builder/fixture pra dado de teste, não montar na
-unha em cada teste.
-
-### Uma asserção lógica por teste
-
-Um teste valida um comportamento. Pode ter vários `assert` desde que todos
-descrevam a mesma coisa (ex.: campos do mesmo objeto retornado). Não misturar
-happy path + erro + edge no mesmo teste. Quando quebra, o nome do teste sozinho
-tem que dizer o que regrediu.
-
-### O que testar: caminhos que importam, não linhas
-
-Por caso de uso / requisito, cobrir:
-- **Happy path** — fluxo normal funciona.
-- **Edge cases** — 0, null, vazio, limite, duplicado, negativo.
-- **Error cases** — o que acontece quando dá errado (exceção certa, mensagem,
-  rollback).
-
-Não testar getter/setter trivial, mapeamento burro de DTO, nem comportamento do
-framework. Foco em regra de negócio. Cobertura é consequência de testar
-requisito, não a meta: 60% de teste bom vale mais que 90% de teste frágil.
-
-### Nome descreve entrada + comportamento esperado
-
-`aplicaDescontoQuandoClienteVip()` ou `deveRejeitarDivisaoPorZero()`. Nunca
-`test1`, `testOk`, `testPreco`. O nome é a documentação que roda.
-
-### Testes independentes
-
-Cada teste roda isolado e em qualquer ordem. Sem estado compartilhado mutável
-entre testes, sem depender de outro ter rodado antes. Estado global (banco,
-static, singleton) reseta no setup/teardown.
-
-### Red flags — se aparecer, o teste provavelmente é ruim
-
-- Assertar sobre privados, getters triviais ou estrutura interna.
-- `verify(...)` de chamada interna como asserção central (testa o "como").
-- Mockar tudo, inclusive o que está sendo testado.
-- Vários asserts de cenários sem relação no mesmo teste.
-- Flaky (às vezes passa, às vezes falha) — normalmente tempo, ordem ou estado
-  compartilhado. Flaky é bug no teste, conserta ou apaga, não ignora.
-- Arrange enorme com dado que o teste não usa.
-- Nome genérico que não diz o que valida.
-
-### Teste de sanidade rápido (mental mutation test)
-
-Depois de escrever, pergunte: "se eu inverter/quebrar a regra que este teste
-cobre, ele falha?" Se não falha, o teste é decorativo. Ajuste até que uma
-mudança real no comportamento quebre o teste, e uma refatoração pura não quebre.
-
----
-
-## Comentários: o padrão é zero, e o resto tem orçamento
-
-Vale pra qualquer linguagem. O modelo escreve comentário demais por default, e
-comentário custa três vezes: token em toda leitura do arquivo, ruído pra quem lê
-o código e mentira quando o código muda e ele fica.
-
-Antes de escrever, o teste: **dá pra escrever esse comentário só lendo a linha de
-baixo?** Então ele não existe. Nome melhor e função extraída resolvem o que o
-comentário ia explicar.
-
-Só estas cinco categorias justificam um comentário, e cada uma tem teto:
-
-| Categoria | O que é | Teto |
-|---|---|---|
-| Contrato não-óbvio | Unidade, nulo permitido, limite inclusivo, efeito colateral, ordem obrigatória de chamada, quem fecha o recurso. Só em API que outro módulo consome. | 3 linhas |
-| Workaround | Bug de lib, navegador, banco ou serviço externo, com a causa nomeada e o link quando existir. | 3 linhas |
-| Armadilha | O que a próxima pessoa quebraria "melhorando": iteração reversa, ordem de efeito, cache, corrida. | 2 linhas |
-| Rastreabilidade | Id de requisito, issue ou ADR (`REQ-AUD-08`, `ADR-0012`). Só o id, sem parágrafo junto. | 1 linha |
-| TODO com dono | `TODO(#123): <ação>`. Sem issue não entra: ou faz agora, ou deixa fora. | 1 linha |
-
-Fora da tabela, apaga. Nenhum bloco passa de **cinco linhas**, em lugar nenhum.
-
-**Justificativa longa vira ADR, não bloco no topo do arquivo.** Precisou de mais de
-cinco linhas pra explicar a decisão? O texto vai pra `docs/adr/NNNN-slug.md`
-(contexto, decisão, consequências) e no código fica uma linha apontando. Projeto sem
-`docs/adr/`, crie a pasta com o ADR. O que já está escrito na spec não vira ADR: cita
-o id do requisito e pronto.
-
-Proibido, sempre:
-
-- Faixa que nomeia o que vem abaixo: `<!-- Diálogo de confirmação -->` em cima do
-  `<ConfirmDialog>`, `// ===== Computed =====`, seção numerada.
-- Docstring que repete a assinatura ("Retorna o total" em `obterTotal()`).
-- Narrar o diff ou a conversa: "agora também trata X", "bug corrigido", "novo",
-  referência ao card, ao prompt ou ao agente.
-- Código comentado. Apaga, o git guarda.
-- Parágrafo justificando gambiarra. Conserta o código.
-
-**Antes de abrir PR, revise os comentários que você adicionou.** Na revisão final do
-card, liste as linhas de comentário do diff e passe cada uma pela tabela:
-
-```bash
-git diff <base>...HEAD -U0 | grep -E '^\+[[:space:]]*(//|/\*|\*|#|<!--)'
-```
-
-Não se encaixa numa categoria, apaga. Bloco maior que cinco linhas, vira ADR. Isso é
-dentro do trabalho já autorizado.
-
-Detalhe, exemplo e o caso ruim -> bom: skill `comentarios`.
+Só entram contrato não-óbvio, workaround com a causa nomeada, armadilha que a
+próxima pessoa quebraria, id de requisito ou ADR, e `TODO(#issue)`. Nenhum bloco
+passa de cinco linhas; justificativa maior vira ADR. Faixa de seção, docstring
+que repete a assinatura, narração do diff e código comentado: nunca. Antes de
+escrever ou revisar comentário, e antes de abrir PR, skill `comentarios`.
 
 ---
 
 ## Learnings
 
 Lições destiladas do uso real que mudaram como eu trabalho. Cada uma: a regra, o
-porquê, e como aplicar. Some quando virar hábito ou for superada — este arquivo
+porquê, e como aplicar. Some quando virar hábito ou for superada: este arquivo
 encolhe tanto quanto cresce.
 
 ---
@@ -394,11 +240,11 @@ encolhe tanto quanto cresce.
 
 **Por quê:** ao precisar de uma variante de algo que já existia (uma seção de
 lista de usuários, para um segundo contexto), clonei o componente em vez de
-generalizá-lo. O clone duplicou a lógica e ainda regrediu — perdeu o
+generalizá-lo. O clone duplicou a lógica e ainda regrediu: perdeu o
 mobile-first, virou tabela crua. Duas cópias divergem com o tempo e a má prática
 se propaga.
 
-**Como aplicar:** antes de criar algo "parecido com X", pare e generalize X — um
+**Como aplicar:** antes de criar algo "parecido com X", pare e generalize X: um
 componente/módulo parametrizado por contexto (uma prop de escopo, um modo) que as
 duas situações consomem. Vale para frontend e backend (DTO, serviço, anotação).
 Esbarrou em código defasado no caminho? Conserte para o padrão atual (com teste)
