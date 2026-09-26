@@ -13,17 +13,9 @@ redigir plano; proponha (`xd://propose`) só depois que o problema estiver
 fechado e o caminho escolhido. Fora do plan mode a regra continua valendo: o
 modo é rede de segurança, quem manda é o conteúdo da mensagem.
 
-Diagnóstico, opções e plano vão para arquivo, não para o corpo do chat:
-`plano novo <slug>` dá o caminho em `<projeto>/.omp/planos/`, você escreve lá e
-chama `plano abrir <arquivo>` na mesma resposta. O chat fica com o desfecho em
-poucas linhas e o caminho. Criar esse arquivo é entrega de discussão, não
-execução. O usuário edita esse arquivo enquanto conversa, então releia do disco
-antes de agir: o que está lá vence o chat.
-
 Toda pergunta ao usuário vai pela ferramenta de pergunta interativa (`ask` no
 omp, `AskUserQuestion` no Claude Code), sempre. Pergunta em texto solto no chat
-é erro, mesmo sendo uma só e mesmo no fim de um diagnóstico; pergunta listada
-no arquivo de plano não conta, o arquivo registra e a ferramenta pergunta.
+é erro, mesmo sendo uma só e mesmo no fim de um diagnóstico.
 Perguntas relacionadas vão juntas na mesma chamada, label curto e o tradeoff na
 descrição.
 

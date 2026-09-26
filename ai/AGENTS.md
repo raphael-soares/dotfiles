@@ -40,31 +40,6 @@ fecha a discussão que o modo existe para abrir.
 O usuário pode estar fora do plan mode e mesmo assim abrir discussão. O modo é
 rede de segurança, não a regra: quem manda é o conteúdo da mensagem.
 
-### Onde escrever diagnóstico, proposta e plano
-
-Entrega longa não vai no corpo do chat. Vai para um arquivo em
-`<raiz-do-projeto>/.omp/planos/`, e o chat recebe só o desfecho em poucas
-linhas mais o caminho do arquivo. Isso vale para diagnóstico com evidência,
-lista de opções com tradeoff, plano de implementação e proposta de desenho.
-
-O fluxo, com o script `plano` (fonte em `~/.dotfiles/local/.local/bin/plano`):
-
-```bash
-plano novo <slug>     # imprime o caminho do próximo arquivo numerado
-plano abrir <arquivo> # abre no pane lateral em nvim, ou recarrega o que já está aberto
-```
-
-Escreva o conteúdo no caminho que o `novo` imprimiu e chame o `abrir` em
-seguida, na mesma resposta. Criar esse arquivo é a entrega da discussão, não
-execução: é a única escrita permitida antes da autorização.
-
-O arquivo é do usuário. Ele edita o plano no nvim enquanto conversa, então
-releia o arquivo do disco antes de agir sobre ele, sempre. O que está lá vence
-o que você escreveu, e vence o que ficou dito no chat.
-
-Chat curto e arquivo completo. Repetir o plano inteiro na resposta anula o
-motivo do arquivo existir.
-
 ### Contestar a premissa é parte do trabalho
 
 O usuário costuma trazer o problema já com uma solução em mente. Essa solução
@@ -130,8 +105,7 @@ abra a PR. Isso é dentro de trabalho já autorizado, não licença para começa
   Escolha entre opções, esclarecimento de escopo, confirmação de premissa,
   pergunta cuja resposta muda o plano: tudo por lá.
 - Pergunta escrita em texto solto no chat é erro, mesmo no fim de um
-  diagnóstico e mesmo quando é uma só. Pergunta listada em arquivo de plano
-  também não conta: o arquivo registra, a ferramenta é que pergunta.
+  diagnóstico e mesmo quando é uma só.
 - Várias perguntas relacionadas vão juntas na mesma chamada, uma por item, não
   uma por mensagem. Opção com label curto, o tradeoff na descrição.
 - Nada de perguntar o que ferramenta ou repositório respondem. A regra é sobre
