@@ -1,72 +1,73 @@
 ---
 name: merge
-description: Commit, rebase, and merge the current branch.
+description: Commita, rebaseia e mescla a branch atual, limpando worktree e
+  janela do tmux. Use ao terminar o trabalho numa branch que vai ser mesclada
+  localmente, sem passar por PR.
 disable-model-invocation: true
 allowed-tools: Read, Bash, Glob, Grep
 ---
 
-<!-- Customize the commit style and rebase behavior to match your workflow. -->
+**Argumentos:** `$ARGUMENTS`
 
-**Arguments:** `$ARGUMENTS`
+Verifique flags nos argumentos:
 
-Check the arguments for flags:
+- `--keep`, `-k` → passa `--keep` pro `workmux merge` (mantém worktree e janela
+  do tmux depois de mesclar)
+- `--no-verify`, `-n` → passa `--no-verify` pro `workmux merge`
 
-- `--keep`, `-k` → pass `--keep` to `workmux merge` (keeps the worktree and tmux window after merging)
-- `--no-verify`, `-n` → pass `--no-verify` to `workmux merge`
+Remova as flags dos argumentos antes de seguir.
 
-Strip all flags from arguments.
+Este comando termina o trabalho na branch atual:
 
-Commit, rebase, and merge the current branch.
+1. Commitando as mudanças pendentes
+2. Rebaseando na base branch
+3. Rodando `workmux merge` pra mesclar e limpar
 
-This command finishes work on the current branch by:
+## Passo 1: Commit
 
-1. Committing all uncommitted changes
-2. Rebasing onto the base branch
-3. Running `workmux merge` to merge and clean up
+Confira mudanças staged, unstaged e untracked com `git status --porcelain`. Se
+houver mudanças, adicione todas com `git add -A`, revise o diff staged e
+commite seguindo a skill `git-commit`. Pule este passo se a working tree
+estiver limpa.
 
-## Step 1: Commit
+## Passo 2: Rebase
 
-Check for staged, unstaged, and untracked changes with `git status --porcelain`. If
-there are changes, stage all of them with `git add -A`, review the staged diff,
-and commit. Use lowercase, imperative mood, no conventional commit prefixes.
-Skip if the working tree is clean.
-
-## Step 2: Rebase
-
-Get the base branch from git config:
+Pegue a base branch da config do git:
 
 ```
 git config --local --get "branch.$(git branch --show-current).workmux-base"
 ```
 
-If no base branch is configured, default to "main".
+Se não houver base branch configurada, use "main" como padrão.
 
-Rebase onto the local base branch (do NOT fetch from origin first):
+Rebaseie na base branch local (NÃO dê fetch no origin antes):
 
 ```
 git rebase <base-branch>
 ```
 
-IMPORTANT: Do NOT run `git fetch`. Do NOT rebase onto `origin/<branch>`. Only rebase onto the local branch name (e.g., `git rebase main`, not `git rebase origin/main`).
+IMPORTANTE: não rode `git fetch`. Não rebaseie em `origin/<branch>`. Só
+rebaseie no nome da branch local (ex: `git rebase main`, nunca
+`git rebase origin/main`).
 
-If conflicts occur:
+Se houver conflito:
 
-- BEFORE resolving any conflict, understand what changes were made to each
-  conflicting file in the base branch
-- For each conflicting file, run `git log -p -n 3 <base-branch> -- <file>` to
-  see recent changes to that file in the base branch
-- The goal is to preserve BOTH the changes from the base branch AND our branch's
-  changes
-- After resolving each conflict, stage the file and continue with
+- ANTES de resolver qualquer conflito, entenda que mudanças foram feitas em
+  cada arquivo conflitante na base branch
+- Pra cada arquivo em conflito, rode `git log -p -n 3 <base-branch> -- <file>`
+  pra ver as mudanças recentes nesse arquivo na base branch
+- O objetivo é preservar AMBAS as mudanças: as da base branch e as da sua
+  branch
+- Depois de resolver cada conflito, dê stage no arquivo e continue com
   `git rebase --continue`
-- If a conflict is too complex or unclear, ask for guidance before proceeding
+- Se um conflito for complexo ou ambíguo, peça orientação antes de seguir
 
-## Step 3: Merge
+## Passo 3: Merge
 
-Run: `workmux merge --rebase --notification [--keep] [--no-verify]`
+Rode: `workmux merge --rebase --notification [--keep] [--no-verify]`
 
-Include `--keep` only if the `--keep` flag was passed in arguments.
-Include `--no-verify` only if the `--no-verify` flag was passed in arguments.
+Inclua `--keep` só se a flag `--keep` foi passada nos argumentos. Inclua
+`--no-verify` só se a flag `--no-verify` foi passada nos argumentos.
 
-This will merge the branch into the base branch and clean up the worktree and
-tmux window (unless `--keep` is used).
+Isso mescla a branch na base branch e limpa worktree e janela do tmux (a
+menos que `--keep` tenha sido usado).

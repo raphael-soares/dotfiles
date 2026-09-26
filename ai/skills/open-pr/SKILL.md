@@ -1,62 +1,65 @@
 ---
 name: open-pr
-description: Write a PR description using conversation context and open PR creation in browser.
+description: Escreve a descrição de um PR a partir do contexto da conversa e
+  abre a criação no navegador. Use ao terminar uma branch que vai virar pull
+  request, antes de rodar gh pr create.
 disable-model-invocation: true
 allowed-tools: Read, Bash, Glob, Grep
 ---
 
-<!-- This is a starting point. Customize the template and guidelines to match your team's PR conventions. -->
+## Reunir contexto
 
-## Gather context
+1. Pegue a base branch (geralmente `main` ou `master`)
+2. Pegue o diff: `git diff <base>...HEAD`
+3. Pegue as mensagens de commit: `git log <base>...HEAD --format="%s"`
+4. Leia os arquivos alterados pra entender o contexto mais amplo
 
-1. Get the base branch (usually `main` or `master`)
-2. Get the diff: `git diff <base>...HEAD`
-3. Get commit messages: `git log <base>...HEAD --format="%s"`
-4. Read changed files to understand the broader context
+## Commitar mudanças pendentes
 
-## Commit uncommitted changes
+1. Rode `git status` pra checar mudanças não commitadas
+2. Se houver mudanças, commite antes de seguir (skill `git-commit`)
 
-1. Run `git status` to check for uncommitted changes
-2. If changes exist, commit them before proceeding
+## Escrever a descrição do PR
 
-## Write PR description
+Segue a skill `mensagem-pro-usuario`: o problema, a decisão e como verificar;
+quem revisa lê o diff pro resto.
 
-Use this template:
+Use este modelo:
 
 ```markdown
-## Summary
+## Problema
 
-[1-2 sentences: what this PR does and why]
+[o que estava acontecendo ou faltando, e por que importa]
 
-## Changes
+## Decisão
 
-- [Key change 1]
-- [Key change 2]
-- [Key change 3]
+[o que mudou e por quê; sem jargão que só faz sentido pra quem leu o diff]
 
-## Testing
+## Como verificar
 
-[How you verified it works]
+[passo a passo pra quem revisa confirmar que funciona]
 ```
 
-Guidelines:
+Diretrizes:
 
-- Lead with a concise summary of what the PR does
-- Explain the "why" before the "how"
-- Use the conversation context to inform the description
-- Include before/after comparisons for UI or performance changes
-- Be direct and to the point
+- Comece pelo problema, não pelo caminho até a solução
+- Traduza jargão interno: se a frase só faz sentido pra quem leu o diff, ela é
+  comentário de código, não descrição de PR
+- Inclua antes e depois quando a mudança for de UI ou performance
+- Seja direto, corte o que não muda a decisão de quem revisa
+- Nunca mencione Claude, IA ou assistente. Sem rodapé de geração automática
 
-## Create the PR
+## Criar o PR
 
-1. Write a short PR title (max 72 characters)
+1. Escreva um título curto (até 72 caracteres), seguindo o formato da skill
+   `git-commit` quando o merge for squash
 
-2. Ensure the branch is pushed:
+2. Garanta que a branch está no remoto:
    ```bash
    git push -u origin HEAD
    ```
 
-3. Open PR creation in browser (do NOT create directly):
+3. Abra a criação do PR no navegador (NÃO crie direto):
    ```bash
    gh pr create --web --title "<title>" --body "<body>"
    ```

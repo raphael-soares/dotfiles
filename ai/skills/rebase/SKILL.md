@@ -1,60 +1,61 @@
 ---
 name: rebase
-description: Rebase the current branch with smart conflict resolution.
+description: Rebaseia a branch atual com resolução de conflito cuidadosa. Use
+  quando precisar atualizar a branch atual com a base (ou com origin) antes de
+  continuar o trabalho ou de mesclar.
 disable-model-invocation: true
 allowed-tools: Read, Bash, Glob, Grep
 ---
 
-<!-- Customize conflict resolution strategy to match your preferences. -->
+Rebaseia a branch atual.
 
-Rebase the current branch.
+Argumentos: $ARGUMENTS
 
-Arguments: $ARGUMENTS
+Comportamento:
 
-Behavior:
+- Sem argumentos: rebaseia na base branch salva da branch atual
+  (`git config branch.<atual>.workmux-base`), caindo pra main local se não
+  houver nenhuma configurada
+- "origin": dá fetch no origin, rebaseia em origin/main
+- "origin/branch": dá fetch no origin, rebaseia em origin/branch
+- "branch": rebaseia na branch local (use "main" pra forçar rebase na main
+  local)
 
-- No arguments: rebase on the current branch's workmux base branch
-  (`git config branch.<current>.workmux-base`), falling back to local main when
-  none is configured
-- "origin": fetch origin, rebase on origin/main
-- "origin/branch": fetch origin, rebase on origin/branch
-- "branch": rebase on local branch (use "main" to force a rebase on local main)
+Passos:
 
-Steps:
+1. Confira mudanças locais com `git status --porcelain`:
+   - Se a working tree tiver mudanças staged, unstaged ou untracked, dê
+     stash com `git stash push --include-untracked -m "workmux rebase"`.
+   - Lembre se este comando criou um stash. Stashes já existentes ficam
+     intocados.
+   - Se o stash falhar, pare antes de dar fetch ou rebase.
+2. Interprete os argumentos:
+   - Sem args → o alvo é a base branch salva da branch atual
+     (`git config --get branch.$(git branch --show-current).workmux-base`);
+     se estiver vazia, o alvo é "main". Sem fetch.
+   - Contém "/" (ex: "origin/develop") → separa remote e branch, dá fetch no
+     remote, o alvo é remote/branch
+   - Só "origin" → dá fetch no origin, o alvo é "origin/main"
+   - Qualquer outra coisa → o alvo é esse nome de branch, sem fetch
+3. Se for dar fetch, rode: `git fetch <remote>`. Se o fetch ou a resolução do
+   alvo falharem antes do rebase começar, restaure o stash criado no passo 1
+   antes de parar.
+4. Rode: `git rebase <target>`
+5. Se houver conflito, trate com cuidado (veja abaixo)
+6. Continue até o rebase terminar
+7. Se o passo 1 criou um stash, restaure com `git stash pop --index`:
+   - Restaure o stash só depois que o rebase terminar com sucesso.
+   - Se a restauração gerar conflito, preserve o stash, reporte os conflitos
+     e deixe os arquivos afetados pra resolução manual.
 
-1. Check for local changes with `git status --porcelain`:
-   - If the working tree has staged, unstaged, or untracked changes, stash them
-     with `git stash push --include-untracked -m "workmux rebase"`.
-   - Remember whether this command created a stash. Existing stash entries must
-     remain untouched.
-   - If stashing fails, stop before fetching or rebasing.
-2. Parse arguments:
-   - No args → target is the current branch's workmux base branch
-     (`git config --get branch.$(git branch --show-current).workmux-base`); if
-     that is empty, target is "main". No fetch.
-   - Contains "/" (e.g., "origin/develop") → split into remote and branch, fetch
-     remote, target is remote/branch
-   - Just "origin" → fetch origin, target is "origin/main"
-   - Anything else → target is that branch name, no fetch
-3. If fetching, run: `git fetch <remote>`. If fetching or target resolution
-   fails before the rebase begins, restore the stash created in step 1 before
-   stopping.
-4. Run: `git rebase <target>`
-5. If conflicts occur, handle them carefully (see below)
-6. Continue until rebase is complete
-7. If step 1 created a stash, restore it with `git stash pop --index`:
-   - Restore the stash only after the rebase succeeds.
-   - If restoration conflicts, preserve the stash, report the conflicts, and
-     leave the affected files for manual resolution.
+Tratamento de conflito:
 
-Handling conflicts:
-
-- BEFORE resolving any conflict, understand what changes were made to each
-  conflicting file in the target branch
-- For each conflicting file, run `git log -p -n 3 <target> -- <file>` to see
-  recent changes to that file in the target branch
-- The goal is to preserve BOTH the changes from the target branch AND our
-  branch's changes
-- After resolving each conflict, stage the file and continue with
+- ANTES de resolver qualquer conflito, entenda que mudanças foram feitas em
+  cada arquivo conflitante na branch alvo
+- Pra cada arquivo em conflito, rode `git log -p -n 3 <target> -- <file>` pra
+  ver as mudanças recentes nesse arquivo na branch alvo
+- O objetivo é preservar AMBAS as mudanças: as da branch alvo e as da sua
+  branch
+- Depois de resolver cada conflito, dê stage no arquivo e continue com
   `git rebase --continue`
-- If a conflict is too complex or unclear, ask for guidance before proceeding
+- Se um conflito for complexo ou ambíguo, peça orientação antes de seguir
