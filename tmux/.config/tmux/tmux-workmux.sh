@@ -2,11 +2,9 @@
 set -euo pipefail
 
 # Menu do workmux, aberto pelo prefix + a. Cada entrada do display-menu chama
-# um subcomando deste mesmo script.
-#
-# O prompt do agente nunca e interpolado numa linha de comando: no caminho
-# rapido ele fica numa variavel do bash, no caminho do editor vira arquivo
-# passado com -P. Aspas e apostrofo no texto nao quebram nada.
+# um subcomando deste mesmo script. O prompt do agente nunca e interpolado numa
+# linha de comando: no caminho rapido fica numa variavel do bash, no do editor
+# vira arquivo passado com -P, entao aspas no texto nao quebram nada.
 
 SELF="${HOME}/.config/tmux/tmux-workmux.sh"
 

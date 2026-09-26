@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# Shared fzf base config — source from .bashrc, scripts, etc.
-# Colors: pure ANSI palette (0-15, -1=terminal default) — theme-agnostic.
-#   -1 = terminal default   0-7 = normal ANSI   8-15 = bright ANSI
-#   accent: 5/13 (magenta/purple), matches tmux colour5
+# Cores so por indice ANSI (0-15, -1 = padrao do terminal): seguem o tema do alacritty.
 
 export FZF_BASE_OPTS=$'
   --pointer=""

@@ -25,18 +25,11 @@ status_icons:
 # gerencia.
 status_format: false
 
-# Sem width fixa: usa o default (10% do terminal, clamp 25-50 col).
-# layout: tiles = cards de altura variavel com stripe de status (a barrinha
-# colorida e a coluna de status icon a esquerda sao chrome do renderer, nao
-# do template). sort: window alinha a ordem com os numeros da status bar.
-# 2 linhas por tile, sem token de git/PR pesado:
-#   1) titulo em destaque (azul/negrito) -- {primary} resolve pro nome da
-#      janela tmux, que o agente seta com a descricao da tarefa
-#   1b) agent_icons.omp = pi (mesmo branding que o omp escreve no pane_title;
-#       o default U+2325 "option key" nao se identifica de imediato)
-#   2) dimmed -- glifo de pasta + projeto a esquerda; branch e tempo
-#      decorrido a direita (branch depois do {fill} pra nao deixar
-#      separador orfao quando o repo nao tem branch resolvida)
+# Sem width fixa: default e 10% do terminal (25-50 col). sort: window segue os
+# numeros da status bar. Linha 1: {primary} e o nome da janela, que o agente seta
+# com a tarefa; agent_icons.omp = pi porque o default (U+2325) nao se reconhece.
+# Linha 2: projeto a esquerda, branch e tempo a direita (branch depois do {fill}
+# para nao sobrar separador quando nao ha branch).
 sidebar:
   layout: tiles
   sort: window

@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
-# Onboarding detector.
-# Dispara em SessionStart. Se a sessao abre num projeto de codigo SEM setup do
-# Claude (sem CLAUDE.md e sem .claude/), injeta um lembrete para o Claude rodar a
-# skill project-init antes de qualquer tarefa. Nao roda nada sozinho — so avisa.
-#
-# Requer jq. Sem jq, ou fora de um projeto de codigo, sai limpo sem avisar nada.
+# SessionStart: se o projeto de codigo nao tem CLAUDE.md nem .claude/, injeta um
+# lembrete para rodar a skill project-init. So avisa, nao roda nada. Sem jq, ou
+# fora de projeto de codigo, sai calado.
 
 set -u
 command -v jq >/dev/null 2>&1 || exit 0

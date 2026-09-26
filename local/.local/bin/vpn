@@ -1,21 +1,7 @@
 #!/usr/bin/env bash
-# VPN Fortinet da Unimed via NetworkManager (nmcli), portavel entre maquinas.
-#
-# Diferente do openfortivpn direto: usa o plugin networkmanager-fortisslvpn,
-# entao integra com o applet de rede do KDE/GNOME e evita o bug de rota
-# default que o NM injeta por padrao (ipv4.never-default corrige isso, ver
-# comentario abaixo). O DNS interno continua declarado na mao aqui, porque o
-# plugin recebe os servidores do gateway e nao os publica no resolver da
-# maquina (ver comentario em ensure_connection).
-#
-# Credenciais saem do ~/.env.local (nao versionado). Variaveis esperadas,
-# veja .env.example:
-#   VPN_UNIMED_HOST, VPN_UNIMED_PORT, VPN_UNIMED_USER, VPN_UNIMED_PASSWORD
-#
-# Uso:
-#   vpn           # cria/atualiza a conexao (idempotente) e conecta
-#   vpn down      # desconecta
-#   vpn status    # mostra se esta conectado
+# VPN Fortinet da Unimed pelo NetworkManager (plugin networkmanager-fortisslvpn).
+# Credenciais no ~/.env.local (VPN_UNIMED_HOST/PORT/USER/PASSWORD, ver .env.example).
+# Uso: vpn [up|down|status]
 
 set -euo pipefail
 
@@ -43,9 +29,6 @@ require_env() {
 }
 
 check_plugin() {
-    if ! nmcli -f VPN_TYPES general permissions >/dev/null 2>&1; then
-        : # nmcli sempre responde isso, so um smoke test de que o binario existe
-    fi
     if [[ ! -f /usr/lib/NetworkManager/VPN/nm-fortisslvpn-service.name ]] \
         && [[ ! -f /usr/lib64/NetworkManager/VPN/nm-fortisslvpn-service.name ]]; then
         echo "Falta o plugin do NetworkManager pra Fortinet SSL-VPN." >&2
@@ -64,25 +47,13 @@ ensure_connection() {
             vpn.data "gateway=${VPN_UNIMED_HOST}:${VPN_UNIMED_PORT}, user=${VPN_UNIMED_USER}"
     fi
 
-    # Sem isso o NetworkManager acrescenta uma rota default extra pela VPN
-    # (alem das rotas internas que o proprio servidor Fortinet empurra),
-    # jogando trafego de internet geral (github.com etc) pra dentro do
-    # tunel, onde o firewall da empresa bloqueia. As rotas internas da
-    # Unimed continuam funcionando normal, isso so tira a rota default
-    # extra que ninguem pediu.
+    # Sem isso o NM poe uma rota default pela VPN, e internet geral (github.com)
+    # entra no tunel, onde o firewall da empresa bloqueia.
     nmcli connection modify "$CONN_NAME" ipv4.never-default yes ipv6.never-default yes
 
-    # O plugin recebe os servidores DNS do gateway (aparecem em
-    # `nmcli dev show ppp0` como IP4.DNS) e nao os publica no
-    # systemd-resolved: o ppp0 entra como device externo, o NM nunca faz
-    # commit de IP nele e `resolvectl dns ppp0` fica vazio. Sem isso, nome
-    # interno tipo dataflow.empresa.example vai pro DNS da sua casa, que nao
-    # conhece nome da Unimed, e a pagina nem abre.
-    #
-    # O til na frente do dominio faz DNS dividido: so esses sufixos vao pro
-    # DNS da Unimed, o resto da navegacao fica no resolver local e nada quebra
-    # quando a VPN cai. O gateway anuncia so o sufixo empresa.example, entao o
-    # coop.br precisa estar escrito aqui.
+    # O plugin recebe o DNS do gateway mas nao publica no systemd-resolved, e nome
+    # interno cairia no DNS de casa. O "~" faz DNS dividido: so esses sufixos vao
+    # para a Unimed. O gateway anuncia so empresa.example, entao o coop.br vai escrito.
     nmcli connection modify "$CONN_NAME" \
         ipv4.dns "10.0.0.1 10.0.0.2" \
         ipv4.dns-search "~empresa.example,~empresa.example"

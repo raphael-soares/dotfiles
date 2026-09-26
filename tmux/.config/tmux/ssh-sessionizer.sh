@@ -4,7 +4,7 @@ SSH_CONFIG="${HOME}/.ssh/config"
 
 [[ -f "$SSH_CONFIG" ]] || { echo "No SSH config found at $SSH_CONFIG"; exit 1; }
 
-source ~/.config/fzf/fzf.sh
+[[ -f ~/.config/fzf/fzf.sh ]] && source ~/.config/fzf/fzf.sh
 export FZF_DEFAULT_OPTS="$FZF_BASE_OPTS
   --prompt='SSH:  '
   --tmux center,50%,40%"

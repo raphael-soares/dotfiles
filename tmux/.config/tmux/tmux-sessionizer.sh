@@ -23,7 +23,7 @@ SEARCH_DIRS=("${_existentes[@]}")
 # Sem a variavel (ou com tudo invalido), varre as pastas do home.
 [[ ${#SEARCH_DIRS[@]} -eq 0 ]] && SEARCH_DIRS=("$HOME")
 
-source ~/.config/fzf/fzf.sh
+[[ -f ~/.config/fzf/fzf.sh ]] && source ~/.config/fzf/fzf.sh
 export FZF_DEFAULT_OPTS="$FZF_BASE_OPTS
   --prompt='SESSIONIZER: '
   --tmux center,50%,40%"
@@ -52,12 +52,9 @@ for d in "${_all_dirs[@]}"; do
     dir_map["$label"]="$d"
 done
 
-# Convert display label to safe tmux session name.
-# tmux usa ':' pra separar sessao:janela e '.' pra janela.pane; qualquer um
-# desses caracteres no meio do nome faz o tmux interpretar o alvo errado
-# (ex.: "template.repo" vira janela=template pane=repo). Troca os dois por
-# '_' em qualquer posicao, nao so no inicio. '/' -> '-' pra evitar colisao
-# com o separador de path usado no label de desambiguacao.
+# ':' e '.' no nome fazem o tmux ler sessao:janela.pane errado ("template.repo" vira
+# janela=template pane=repo), entao viram '_'. '/' vira '-' para nao colidir com o
+# separador do label de desambiguacao.
 to_session_name() {
     local n="$1"
     n="${n//./_}"

@@ -1,24 +1,5 @@
 #!/usr/bin/env bash
-# plano: painel de planos e propostas do agente, aberto no nvim ao lado do chat.
-#
-# O agente escreve diagnostico, proposta e plano em <raiz-do-projeto>/.omp/planos
-# em vez de despejar tudo no corpo do chat, e chama `plano abrir <arquivo>` para
-# mostrar. O arquivo e seu: edite, salve, e continue a conversa no chat.
-#
-# Uso:
-#   plano dir              imprime (criando se precisar) o diretorio de planos
-#   plano novo <slug>      cria o proximo arquivo numerado e imprime o caminho
-#   plano abrir [arquivo]  abre no pane lateral; sem argumento, o plano mais recente
-#   plano toggle           abre o pane lateral, ou fecha se ja estiver aberto
-#   plano listar           lista os planos do projeto, do mais novo para o mais velho
-#   plano onde             mostra qual pane, socket e diretorio ele resolveu
-#
-# O pane lateral e um nvim comum: :w salva, :q fecha o pane, e o diretorio de
-# trabalho dele e o de planos, entao o oil navega entre os arquivos.
-#
-# Fora do tmux, `abrir` e `toggle` caem para um nvim normal no terminal atual.
-#
-# Instalado pelo stow do pacote local/, em ~/.local/bin/plano.
+# Painel de planos do agente: arquivos em <projeto>/.omp/planos, abertos num nvim ao lado do chat.
 set -uo pipefail
 
 WIDTH="${PLANO_WIDTH:-90}"
@@ -26,10 +7,8 @@ MIN_HOST_WIDTH=80
 
 command -v nvim >/dev/null || { printf 'plano: nvim nao encontrado\n' >&2; exit 1; }
 
-# De onde sai o projeto. Chamado de dentro de um shell (o agente), o cwd do
-# processo ja e o projeto. Vindo de atalho de teclado nao ha processo nosso: o
-# `run-shell` roda com o cwd do servidor do tmux, que nao tem relacao com o
-# projeto, entao vale o caminho do pane do agente.
+# Chamado de um shell (o agente), o cwd ja e o projeto. Vindo de atalho, o `run-shell`
+# roda no cwd do servidor do tmux, entao vale o caminho do pane do agente.
 context_base() {
   local host
   if [[ -n "${TMUX_PANE:-}" || -z "${TMUX:-}" ]]; then
@@ -66,12 +45,9 @@ list_plans() {
   ls -t "$dir"/*.md 2>/dev/null
 }
 
-# Toda pergunta ao tmux tem que ser ancorada num pane explicito. Sem `-t`, o
-# tmux responde sobre o "atual", que com mais de uma sessao aberta e a que o
-# usuario esta olhando, nao a que fez a chamada: o painel abria por cima de
-# outro trabalho. $TMUX_PANE existe quando quem chama roda dentro do pane (o
-# agente); vindo de atalho de teclado ele nao existe, e ai o pane ativo do
-# cliente e o certo, porque foi nele que a tecla foi apertada.
+# Toda pergunta ao tmux vai ancorada num pane. Sem `-t`, o tmux responde sobre a sessao
+# que o usuario esta olhando, e o painel abria por cima de outro trabalho. $TMUX_PANE
+# existe quando quem chama roda no pane (o agente); vindo de atalho, vale o pane ativo.
 tmux_anchor() {
   if [[ -n "${TMUX_PANE:-}" ]]; then
     printf '%s\n' "$TMUX_PANE"
@@ -236,7 +212,24 @@ case "$cmd" in
     ;;
 
   -h|--help|ajuda)
-    sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+    cat <<'EOF'
+plano: painel de planos e propostas do agente, aberto no nvim ao lado do chat.
+
+O agente escreve diagnostico, proposta e plano em <raiz-do-projeto>/.omp/planos
+e chama `plano abrir <arquivo>` para mostrar. O arquivo e seu: edite, salve e
+continue a conversa no chat.
+
+Uso:
+  plano dir              imprime (criando se precisar) o diretorio de planos
+  plano novo <slug>      cria o proximo arquivo numerado e imprime o caminho
+  plano abrir [arquivo]  abre no pane lateral; sem argumento, o plano mais recente
+  plano toggle           abre o pane lateral, ou fecha se ja estiver aberto
+  plano listar           lista os planos do projeto, do mais novo para o mais velho
+  plano onde             mostra qual pane, socket e diretorio ele resolveu
+
+O pane lateral e um nvim comum: :w salva, :q fecha. Fora do tmux, `abrir` e
+`toggle` caem para um nvim normal no terminal atual.
+EOF
     ;;
 
   *)
