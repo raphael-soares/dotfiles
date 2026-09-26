@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
-# VPN Fortinet da Unimed pelo NetworkManager (plugin networkmanager-fortisslvpn).
-# Credenciais no ~/.env.local (VPN_UNIMED_HOST/PORT/USER/PASSWORD, ver .env.example).
+# VPN Fortinet SSL pelo NetworkManager (plugin networkmanager-fortisslvpn).
+# Tudo que e da empresa vem do ~/.env.local (VPN_*, ver .env.example).
 # Uso: vpn [up|down|status]
 
 set -euo pipefail
 
-CONN_NAME="Unimed VPN"
+if [[ -f ~/.env.local ]]; then
+    source ~/.env.local
+fi
+
+CONN_NAME="${VPN_NAME:-VPN}"
 
 # Segundos que o nmcli espera pela aprovacao do push antes de desistir. Sem
 # isso ele espera indefinidamente: uma tentativa esquecida ja ficou 2h39min
 # pendurada, e enquanto ela existe as tentativas seguintes sao recusadas.
 CONNECT_TIMEOUT=90
 
-if [[ -f ~/.env.local ]]; then
-    source ~/.env.local
-fi
-
 require_env() {
     local missing=()
-    for var in VPN_UNIMED_HOST VPN_UNIMED_PORT VPN_UNIMED_USER VPN_UNIMED_PASSWORD; do
+    for var in VPN_HOST VPN_PORT VPN_USER VPN_PASSWORD; do
         [[ -z "${!var:-}" ]] && missing+=("$var")
     done
     if [[ ${#missing[@]} -gt 0 ]]; then
@@ -41,10 +41,10 @@ check_plugin() {
 ensure_connection() {
     if nmcli -g NAME connection show | grep -Fxq "$CONN_NAME"; then
         nmcli connection modify "$CONN_NAME" \
-            vpn.data "gateway=${VPN_UNIMED_HOST}:${VPN_UNIMED_PORT}, user=${VPN_UNIMED_USER}"
+            vpn.data "gateway=${VPN_HOST}:${VPN_PORT}, user=${VPN_USER}"
     else
         nmcli connection add type vpn vpn-type fortisslvpn con-name "$CONN_NAME" \
-            vpn.data "gateway=${VPN_UNIMED_HOST}:${VPN_UNIMED_PORT}, user=${VPN_UNIMED_USER}"
+            vpn.data "gateway=${VPN_HOST}:${VPN_PORT}, user=${VPN_USER}"
     fi
 
     # Sem isso o NM poe uma rota default pela VPN, e internet geral (github.com)
@@ -52,11 +52,13 @@ ensure_connection() {
     nmcli connection modify "$CONN_NAME" ipv4.never-default yes ipv6.never-default yes
 
     # O plugin recebe o DNS do gateway mas nao publica no systemd-resolved, e nome
-    # interno cairia no DNS de casa. O "~" faz DNS dividido: so esses sufixos vao
-    # para a Unimed. O gateway anuncia so empresa.example, entao o coop.br vai escrito.
-    nmcli connection modify "$CONN_NAME" \
-        ipv4.dns "10.0.0.1 10.0.0.2" \
-        ipv4.dns-search "~empresa.example,~empresa.example"
+    # interno cairia no DNS de casa. VPN_DNS_SEARCH com "~" faz DNS dividido: so
+    # esses sufixos vao para o DNS da empresa.
+    if [[ -n "${VPN_DNS:-}" ]]; then
+        nmcli connection modify "$CONN_NAME" \
+            ipv4.dns "$VPN_DNS" \
+            ipv4.dns-search "${VPN_DNS_SEARCH:-}"
+    fi
 
     # autoconnect fica desligado de proposito: essa VPN pede aprovacao por
     # push no celular, autoconnect geraria notificacao sem voce ter pedido.
@@ -64,7 +66,7 @@ ensure_connection() {
 
     # Senha sempre vem fresca do .env.local nesse momento, nao depende do
     # que estiver cacheado no agente de segredo (KWallet/gnome-keyring).
-    nmcli connection modify "$CONN_NAME" vpn.secrets "password=${VPN_UNIMED_PASSWORD}"
+    nmcli connection modify "$CONN_NAME" vpn.secrets "password=${VPN_PASSWORD}"
 }
 
 # O nmcli so diz "Unknown reason" quando a ativacao falha. A mensagem util
@@ -90,7 +92,7 @@ case "$cmd" in
         require_env
         check_plugin
         ensure_connection
-        echo "Conectando na Unimed VPN... aprova a notificacao no celular."
+        echo "Conectando em $CONN_NAME... aprova a notificacao no celular."
         started_em=$(date "+%Y-%m-%d %H:%M:%S")
         if ! nmcli --wait "$CONNECT_TIMEOUT" connection up "$CONN_NAME"; then
             show_gateway_error "$started_em"
@@ -102,7 +104,7 @@ case "$cmd" in
         ;;
     status)
         nmcli -f NAME,TYPE,STATE connection show --active | grep -F "$CONN_NAME" \
-            || echo "Unimed VPN nao esta conectada."
+            || echo "$CONN_NAME nao esta conectada."
         ;;
     *)
         echo "Uso: vpn [up|down|status]" >&2
