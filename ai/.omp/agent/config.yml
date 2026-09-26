@@ -1,11 +1,11 @@
 modelRoles:
-  default: anthropic/claude-opus-5
-  slow: anthropic/claude-opus-5:xhigh
+  slow: anthropic/claude-opus-5-5:xhigh
   task: anthropic/claude-sonnet-5:high
-  smol: opencode-go/glm-5.3-flash:high
-  tiny: opencode-go/muse-spark-1.3-contributor
-  commit: opencode-go/omen-alpha
-  advisor: opencode-go/glm-5.2:medium
+  smol: anthropic/claude-sonnet-5
+  tiny: anthropic/claude-haiku-4-5
+  commit: anthropic/claude-3-haiku-20240307
+  advisor: anthropic/claude-opus-5-5:medium
+  default: anthropic/claude-opus-5-5
 retry:
   modelFallback: true
   fallbackChains:
@@ -71,3 +71,5 @@ tui:
   vimMode: true
   vimModeDisplay: text
 externalThinking: false
+completion:
+  notify: "off"
