@@ -1,0 +1,20 @@
+id = "raphael/hypr-shots"
+name = "Hypr Shots"
+version = "1.0.0"
+plugin_api = 24
+author = "raphael"
+license = "MIT"
+icon = "capture"
+description = "Single-key screenshot picker: region, display, window or annotate."
+tags = ["hyprland", "panel", "screenshot", "utility"]
+
+[[panel]]
+id = "menu"
+entry = "panel.luau"
+width = 300
+height = 230
+placement = "floating"
+position = "center"
+open_near_click = false
+keyboard_focus = "exclusive"
+capture_keys = ["Up", "Down", "Left", "Return", "KP_Enter"]

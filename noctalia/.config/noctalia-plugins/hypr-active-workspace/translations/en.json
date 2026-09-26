@@ -1,0 +1,18 @@
+{
+  "plugin_name": "Hypr Active Workspace",
+  "plugin_description": "Shows only the active Hyprland workspace of each monitor in the bar.",
+  "settings": {
+    "format": {
+      "label": "Text",
+      "description": "Text shown in the bar. {name} is the workspace name, {id} its numeric id."
+    },
+    "show_glyph": {
+      "label": "Show icon",
+      "description": "Show an icon before the text."
+    },
+    "glyph": {
+      "label": "Icon",
+      "description": "Icon shown before the text when enabled."
+    }
+  }
+}

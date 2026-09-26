@@ -15,3 +15,6 @@ agnosticos. Rode so onde fizer sentido.
 - `./bootstrap_audio.sh`: forca todo dispositivo Bluetooth a so usar A2DP
   (estereo, alta fidelidade), removendo o handsfree HSP/HFP do WirePlumber.
   Resolve caixa/soundbar BT que conecta como "headset" mono 16 kHz.
+- `./bootstrap_desktop.sh`: config do desktop Hyprland + Noctalia (`~/.config/hypr`,
+  plugins autorais, `settings.toml` do Noctalia, wallpaper em uso e a cola de tema
+  GTK/portal). Só na máquina que roda esse desktop.

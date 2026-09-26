@@ -1,0 +1,46 @@
+id = "raphael/hypr-displays"
+name = "Hypr Displays"
+version = "1.0.0"
+plugin_api = 24
+author = "raphael"
+license = "MIT"
+icon = "device-desktop"
+description = "Monitor mode picker and automatic clamshell switching for Hyprland."
+tags = ["hyprland", "panel", "service", "system", "utility"]
+dependencies = ["hyprctl"]
+
+[[setting]]
+key = "internal_output"
+type = "string"
+label_key = "settings.internal_output.label"
+description_key = "settings.internal_output.description"
+default = ""
+
+[[setting]]
+key = "external_output"
+type = "string"
+label_key = "settings.external_output.label"
+description_key = "settings.external_output.description"
+default = ""
+
+[[setting]]
+key = "auto_enabled"
+type = "bool"
+label_key = "settings.auto_enabled.label"
+description_key = "settings.auto_enabled.description"
+default = true
+
+[[service]]
+id = "watch"
+entry = "service.luau"
+
+[[panel]]
+id = "modes"
+entry = "panel.luau"
+width = 420
+height = 330
+placement = "floating"
+position = "center"
+open_near_click = false
+keyboard_focus = "exclusive"
+capture_keys = ["1", "2", "3", "4", "Up", "Down", "Return", "KP_Enter"]

@@ -1,0 +1,12 @@
+{
+  "panel": {
+    "title": "Screenshot",
+    "deliver_title": "Where to",
+    "region": "Select an area",
+    "display": "Select a display",
+    "window": "Select a window",
+    "save": "Save",
+    "copy": "Copy",
+    "both": "Copy and save"
+  }
+}

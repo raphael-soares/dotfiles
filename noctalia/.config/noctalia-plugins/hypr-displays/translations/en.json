@@ -1,0 +1,37 @@
+{
+  "settings": {
+    "internal_output": {
+      "label": "Internal output",
+      "description": "Connector name of the laptop panel (e.g. eDP-1). Leave empty to auto-detect."
+    },
+    "external_output": {
+      "label": "External output",
+      "description": "Connector name of the external monitor (e.g. DP-1). Leave empty to auto-detect."
+    },
+    "auto_enabled": {
+      "label": "Automatic switching",
+      "description": "Switch modes automatically based on lid state and external monitor presence."
+    }
+  },
+  "panel": {
+    "title": "Displays",
+    "extend": "Extend",
+    "external": "External only",
+    "internal": "Internal only",
+    "mirror": "Mirror",
+    "no_external": "No external monitor detected",
+    "auto_on": "Automatic switching is on",
+    "auto_off": "Automatic switching is off"
+  },
+  "notify": {
+    "title": "Hypr Displays",
+    "extend": "Switched to extend",
+    "external": "Switched to external only",
+    "internal": "Switched to internal only",
+    "mirror": "Switched to mirror"
+  },
+  "error": {
+    "hyprctl_missing": "hyprctl was not found on PATH",
+    "apply_failed": "Failed to apply the display change"
+  }
+}

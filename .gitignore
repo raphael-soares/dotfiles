@@ -50,3 +50,22 @@ ai/.omp/agent/*.db
 ai/.omp/agent/*.db-shm
 ai/.omp/agent/*.db-wal
 ai/.omp/profiles/
+
+# Pacote noctalia: versiona so o settings.toml, os plugins que eu escrevi e o
+# wallpaper em uso. Clipboard, historico de notificacao, cache de plugin, clones
+# da loja e os templates da comunidade sao estado de maquina. As regras abaixo
+# sao rede para o dia que um stow torto dobrar o diretorio de estado no repo.
+noctalia/.local/state/noctalia/*
+!noctalia/.local/state/noctalia/settings.toml
+noctalia/Pictures/Wallpaper/*
+!noctalia/Pictures/Wallpaper/forest-4.jpg
+
+# Pacote desktop: o Noctalia reescreve noctalia.css a cada troca de paleta e o
+# nwg-look reescreve colors.css e os assets a cada troca de tema. Versionado e
+# so o que eu escrevi: settings.ini e o gtk.css que importa os dois.
+desktop/.config/gtk-3.0/*
+!desktop/.config/gtk-3.0/settings.ini
+!desktop/.config/gtk-3.0/gtk.css
+desktop/.config/gtk-4.0/*
+!desktop/.config/gtk-4.0/settings.ini
+!desktop/.config/gtk-4.0/gtk.css

@@ -1,0 +1,35 @@
+id = "raphael/hypr-active-workspace"
+name = "Hypr Active Workspace"
+version = "1.0.0"
+plugin_api = 24
+author = "raphael"
+license = "MIT"
+icon = "layout-grid"
+description = "Shows only the active Hyprland workspace of each monitor in the bar."
+tags = ["hyprland", "bar", "indicator"]
+dependencies = ["hyprctl", "socat"]
+
+[[widget]]
+id = "active-workspace"
+entry = "widget.luau"
+
+  [[widget.setting]]
+  key = "format"
+  type = "string"
+  label_key = "settings.format.label"
+  description_key = "settings.format.description"
+  default = "Workspace {name}"
+
+  [[widget.setting]]
+  key = "show_glyph"
+  type = "bool"
+  label_key = "settings.show_glyph.label"
+  description_key = "settings.show_glyph.description"
+  default = false
+
+  [[widget.setting]]
+  key = "glyph"
+  type = "glyph"
+  label_key = "settings.glyph.label"
+  description_key = "settings.glyph.description"
+  default = "layout-grid"
