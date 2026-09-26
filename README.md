@@ -21,4 +21,4 @@ Os pacotes de cada camada estão em `packages/<camada>.txt` e são instalados co
 `yay` (ou `pacman`) só se faltarem. `--sem-pacotes` só linka os arquivos.
 
 O que é só de uma máquina fica fora do repo: `~/.env.local` (criado a partir do
-`.env.example`), `~/.bash_profile.local` e `~/.config/hypr/local.lua`.
+`.env.example`) e `~/.bash_profile.local`.
