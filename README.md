@@ -3,11 +3,12 @@
 ```bash
 git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles && \
 cd ~/.dotfiles && \
-./install.sh terminal ai
+./install.sh
 ```
 
 Cada pasta da raiz é um pacote do stow. O `install.sh` agrupa os pacotes em
-camadas; rode só as que fazem sentido na máquina:
+camadas e, rodado sem argumento, pergunta quais instalar. Dá para passar direto
+(`./install.sh terminal ai`):
 
 | Camada | O que entra | Onde |
 |---|---|---|

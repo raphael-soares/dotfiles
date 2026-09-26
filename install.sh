@@ -4,21 +4,35 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 REPO=$PWD
 
-usage() {
-  cat <<'EOF'
-Uso: ./install.sh [--adopt] [--sem-pacotes] <camada>...
+CAMADAS=(terminal ai desktop audio sistema)
+declare -A DESCRICAO=(
+  [terminal]="bash, tmux, nvim, git, fzf, starship, mise, alacritty, workmux, ~/.local/bin"
+  [ai]="AGENTS.md, skills, omp e Claude Code"
+  [desktop]="Hyprland, Noctalia e o tema GTK/portal"
+  [audio]="WirePlumber so com A2DP no Bluetooth (sem microfone em fone BT)"
+  [sistema]="/etc: greetd, PAM do greetd e plymouth (copia com sudo)"
+)
 
-Camadas:
-  terminal  bash, tmux, nvim, git, fzf, starship, mise, alacritty, workmux, ~/.local/bin
-  ai        AGENTS.md, skills, omp e Claude Code
-  desktop   Hyprland, Noctalia e o tema GTK/portal
-  audio     WirePlumber so com A2DP no Bluetooth (sem microfone em fone BT)
-  sistema   /etc: greetd, PAM do greetd e plymouth (copia com sudo)
+usage() {
+  echo "Uso: ./install.sh [--adopt] [--sem-pacotes] [camada...]"
+  echo
+  echo "Sem camada, pergunta uma por uma. Camadas:"
+  for c in "${CAMADAS[@]}"; do printf '  %-9s %s\n' "$c" "${DESCRICAO[$c]}"; done
+  cat <<'EOF'
 
 --adopt        puxa para o repo o arquivo real que ja existir no home e depois
                descarta essa copia com git restore, deixando so o symlink
 --sem-pacotes  nao instala pacote, so linka os arquivos
 EOF
+}
+
+perguntar_camadas() {
+  local c resp
+  for c in "${CAMADAS[@]}"; do
+    read -r -p "$c (${DESCRICAO[$c]})? [s/N] " resp
+    [[ $resp == [sS]* ]] && camadas+=("$c")
+  done
+  return 0
 }
 
 adopt=0
@@ -29,11 +43,17 @@ for arg in "$@"; do
     --adopt) adopt=1 ;;
     --sem-pacotes) pacotes=0 ;;
     -h|--help) usage; exit 0 ;;
-    terminal|ai|desktop|audio|sistema) camadas+=("$arg") ;;
-    *) echo "install.sh: camada desconhecida: $arg" >&2; usage >&2; exit 1 ;;
+    *)
+      [[ -v "DESCRICAO[$arg]" ]] || { echo "install.sh: camada desconhecida: $arg" >&2; usage >&2; exit 1; }
+      camadas+=("$arg")
+      ;;
   esac
 done
-[[ ${#camadas[@]} -gt 0 ]] || { usage >&2; exit 1; }
+if [[ ${#camadas[@]} -eq 0 ]]; then
+  [[ -t 0 ]] || { usage >&2; exit 1; }
+  perguntar_camadas
+  [[ ${#camadas[@]} -gt 0 ]] || { echo "Nada escolhido."; exit 0; }
+fi
 
 command -v stow >/dev/null && command -v git >/dev/null \
   || { echo "install.sh: precisa de stow e git" >&2; exit 1; }
