@@ -1,3 +1,6 @@
 greetd
 noctalia-greeter
 plymouth
+zram-generator
+fwupd
+thermald

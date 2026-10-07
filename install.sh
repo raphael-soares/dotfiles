@@ -10,7 +10,7 @@ declare -A DESCRICAO=(
   [ai]="AGENTS.md, skills, omp e Claude Code"
   [desktop]="Hyprland, Noctalia e o tema GTK/portal"
   [audio]="WirePlumber so com A2DP no Bluetooth (sem microfone em fone BT)"
-  [sistema]="/etc: greetd, PAM do greetd e plymouth (copia com sudo)"
+  [sistema]="/etc: greetd, PAM do greetd, plymouth e zram (copia com sudo); thermald e fwupd"
 )
 
 usage() {
@@ -149,6 +149,8 @@ camada_sistema() {
     sudo install -Dm644 "$src" "$dst"
     if [[ $dst == /etc/plymouth/* ]]; then echo "    regere o initramfs para o plymouth pegar a mudanca"; fi
   done < <(find sistema -type f | sort)
+  sudo systemctl enable --now thermald.service
+  echo "==> zram: reinicie (ou sudo systemctl daemon-reload && sudo systemctl start systemd-zram-setup@zram0)"
 }
 
 for camada in "${camadas[@]}"; do
