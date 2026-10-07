@@ -75,7 +75,7 @@ ensure_connection() {
 show_gateway_error() {
     local since="$1" detail
     detail=$(journalctl --since "$since" --no-pager 2>/dev/null \
-        | grep -E "NetworkManager\[[0-9]+\]: (ERROR|WARNING):" \
+        | grep -E "NetworkManager\[[0-9]+\]: ((ERROR|WARNING):|.*Plugin .* is for pppd version)" \
         | tail -3) || true
     if [[ -z "$detail" ]]; then
         return 0
@@ -83,6 +83,11 @@ show_gateway_error() {
     echo >&2
     echo "O que o gateway respondeu:" >&2
     echo "$detail" >&2
+    if grep -q "is for pppd version" <<<"$detail"; then
+        echo >&2
+        echo "O plugin da VPN foi compilado para outra versao do pppd (o ppp atualizou)." >&2
+        echo "Recompila com: yay -S --rebuild networkmanager-fortisslvpn" >&2
+    fi
 }
 
 cmd="${1:-up}"
