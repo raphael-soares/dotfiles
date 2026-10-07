@@ -7,6 +7,7 @@
     "window": "Select a window",
     "save": "Save",
     "copy": "Copy",
-    "both": "Copy and save"
+    "both": "Copy and save",
+    "edit": "Annotate"
   }
 }

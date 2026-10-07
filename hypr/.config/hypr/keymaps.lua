@@ -11,11 +11,9 @@ local directions = {
 
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(programs.terminal))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-
-hl.bind(
-  mainMod .. " + M",
-  hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'")
-)
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd(ipc .. "session lock"))
+hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
+hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. "+" .. directions.LEFT, hl.dsp.focus({ direction = "left" }))
@@ -23,10 +21,31 @@ hl.bind(mainMod .. "+" .. directions.DOWN, hl.dsp.focus({ direction = "down" }))
 hl.bind(mainMod .. "+" .. directions.RIGHT, hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. "+" .. directions.UP, hl.dsp.focus({ direction = "up" }))
 
-hl.bind(mainMod .. " + SHIFT +" .. directions.LEFT, hl.dsp.window.swap({ direction = "left" }))
-hl.bind(mainMod .. " + SHIFT +" .. directions.DOWN, hl.dsp.window.swap({ direction = "down" }))
-hl.bind(mainMod .. " + SHIFT +" .. directions.RIGHT, hl.dsp.window.swap({ direction = "right" }))
-hl.bind(mainMod .. " + SHIFT +" .. directions.UP, hl.dsp.window.swap({ direction = "up" }))
+hl.bind(mainMod .. " + SHIFT +" .. directions.LEFT, hl.dsp.window.move({ direction = "left" }))
+hl.bind(mainMod .. " + SHIFT +" .. directions.DOWN, hl.dsp.window.move({ direction = "down" }))
+hl.bind(mainMod .. " + SHIFT +" .. directions.RIGHT, hl.dsp.window.move({ direction = "right" }))
+hl.bind(mainMod .. " + SHIFT +" .. directions.UP, hl.dsp.window.move({ direction = "up" }))
+
+hl.bind(
+  mainMod .. " + CTRL +" .. directions.LEFT,
+  hl.dsp.window.resize({ x = -40, y = 0, relative = true }),
+  { repeating = true }
+)
+hl.bind(
+  mainMod .. " + CTRL +" .. directions.DOWN,
+  hl.dsp.window.resize({ x = 0, y = 40, relative = true }),
+  { repeating = true }
+)
+hl.bind(
+  mainMod .. " + CTRL +" .. directions.RIGHT,
+  hl.dsp.window.resize({ x = 40, y = 0, relative = true }),
+  { repeating = true }
+)
+hl.bind(
+  mainMod .. " + CTRL +" .. directions.UP,
+  hl.dsp.window.resize({ x = 0, y = -40, relative = true }),
+  { repeating = true }
+)
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace with mainMod + SHIFT + [0-9]
@@ -60,49 +79,21 @@ hl.bind("XF86AudioMute", hl.dsp.exec_cmd(ipc .. "volume-mute"))
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(ipc .. "brightness-up"))
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(ipc .. "brightness-down"))
 
--- Window grouping (tabs)
-hl.bind(mainMod .. " + G", hl.dsp.group.toggle())
-hl.bind(mainMod .. " + ALT + G", hl.dsp.window.move({ out_of_group = true }))
-hl.bind(mainMod .. " + ALT +" .. directions.LEFT, hl.dsp.window.move({ into_group = "l" }))
-hl.bind(mainMod .. " + ALT +" .. directions.DOWN, hl.dsp.window.move({ into_group = "d" }))
-hl.bind(mainMod .. " + ALT +" .. directions.RIGHT, hl.dsp.window.move({ into_group = "r" }))
-hl.bind(mainMod .. " + ALT +" .. directions.UP, hl.dsp.window.move({ into_group = "u" }))
-hl.bind(mainMod .. " + ALT + TAB", hl.dsp.group.next())
-hl.bind(mainMod .. " + ALT + SHIFT + TAB", hl.dsp.group.prev())
-
--- Toggle gaps/borders/rounding off (e.g. for screen sharing)
-local saved_gaps = {
-  gaps_in = hl.get_config("general.gaps_in"),
-  gaps_out = hl.get_config("general.gaps_out"),
-  border_size = hl.get_config("general.border_size"),
-  rounding = hl.get_config("decoration.rounding"),
-}
-local gaps_off = false
-
-hl.bind(mainMod .. " + SHIFT + G", function()
-  gaps_off = not gaps_off
-  if gaps_off then
-    hl.config({
-      general = { gaps_in = 0, gaps_out = 0, border_size = 0 },
-      decoration = { rounding = 0 },
-    })
-  else
-    hl.config({
-      general = { gaps_in = saved_gaps.gaps_in, gaps_out = saved_gaps.gaps_out, border_size = saved_gaps.border_size },
-      decoration = { rounding = saved_gaps.rounding },
-    })
-  end
-end)
-
--- Seletor de modo de monitor e clamshell automático vivem no plugin
--- raphael/hypr-displays da Noctalia. O primeiro SUPER+P abre no modo em vigor,
--- os seguintes avançam; Esc fecha, Enter confirma.
+-- SUPER+P abre o seletor (plugin raphael/hypr-displays).
 hl.bind(
   mainMod .. " + P",
   hl.dsp.exec_cmd(
-    "noctalia msg plugin raphael/hypr-displays:watch all next; noctalia msg panel-open raphael/hypr-displays:modes"
+    "noctalia msg plugin raphael/hypr-displays:modes all next; noctalia msg panel-open raphael/hypr-displays:modes"
   )
 )
+
+-- Fora de monitors.lua: declarados junto com hl.monitor, param de disparar (hyprwm/Hyprland#14858).
+hl.bind("switch:on:Lid Switch", function()
+  require("monitors").evaluate()
+end, { locked = true })
+hl.bind("switch:off:Lid Switch", function()
+  require("monitors").evaluate()
+end, { locked = true })
 
 -- Print abre o seletor do plugin raphael/hypr-shots: área, monitor, janela ou
 -- anotação, escolhidos com setas ou 1-6.

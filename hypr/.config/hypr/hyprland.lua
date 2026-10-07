@@ -2,14 +2,19 @@ require("animations")
 require("autostart")
 require("look")
 require("inputs")
-require("keymaps")
 require("monitors")
+require("keymaps")
 require("windowrules")
 
+hl.env("XCURSOR_THEME", "Adwaita")
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("QT_QPA_PLATFORMTHEME", "gtk3")
+hl.env("GDK_BACKEND", "wayland,x11,*")
+hl.env("QT_QPA_PLATFORM", "wayland;xcb")
+hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
+hl.env("MOZ_ENABLE_WAYLAND", "1")
+hl.env("SSH_AUTH_SOCK", os.getenv("XDG_RUNTIME_DIR") .. "/gcr/ssh")
 
--- For Noctalia Color templates
-require("noctalia").apply_theme()
 require("borders")
+

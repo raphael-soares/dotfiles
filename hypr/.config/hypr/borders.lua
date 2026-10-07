@@ -1,9 +1,8 @@
-local noctalia = require("noctalia")
-
 hl.config({
   general = {
     col = {
-      active_border = { colors = { noctalia.colors.primary, noctalia.colors.secondary }, angle = 45 },
+      active_border = "rgba(ffffff40)",
+      inactive_border = "rgba(ffffff14)",
     },
   },
 })

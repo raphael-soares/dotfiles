@@ -3,18 +3,38 @@ config_version = 14
 [audio]
 enable_sounds = true
 
-[bar.default]
-center = [ "clock", "wallhaven" ]
-concave_edge_corners = false
-contact_shadow = true
-end = [ "tray", "notifications", "clipboard", "network", "bluetooth", "volume", "session", "battery" ]
-font_weight = 600
-hover_highlight = false
-margin_ends = 0
-padding = 12
-radius = 0
-start = [ "active_workspace" ]
-widget_spacing = 8
+[bar]
+order = [ "default" ]
+
+    [bar.default]
+    background_opacity = 1.0
+    border = "#ffffff14"
+    border_width = 1.0
+    center = []
+    concave_edge_corners = false
+    end = [
+        "tray",
+        "clipboard",
+        "notifications",
+        "battery",
+        "network",
+        "bluetooth",
+        "volume",
+        "input_volume",
+        "control-center",
+        "clock"
+    ]
+    hover_highlight = false
+    margin_edge = -1
+    margin_ends = -1
+    padding = 16
+    radius = 0
+    radius_top_left = 0
+    radius_top_right = 0
+    shadow = false
+    start = [ "active_workspace" ]
+    thickness = 38
+    widget_spacing = 12
 
 [brightness]
 enable_ddcutil = true
@@ -23,30 +43,12 @@ sync_all_monitors = true
 
 [control_center]
 hidden_tabs = [ "weather", "screen-time" ]
-show_session_button = false
-show_shortcut_labels = false
-width = 720
+sidebar = "full"
+sidebar_section = "none"
+width = 880
 
     [control_center.calendar]
     show_events_card = false
-
-    [[control_center.shortcuts]]
-    type = "wifi"
-
-    [[control_center.shortcuts]]
-    type = "bluetooth"
-
-    [[control_center.shortcuts]]
-    type = "caffeine"
-
-    [[control_center.shortcuts]]
-    type = "nightlight"
-
-    [[control_center.shortcuts]]
-    type = "power_profile"
-
-    [[control_center.shortcuts]]
-    type = "notification"
 
 [desktop_widgets]
 enabled = false
@@ -81,13 +83,39 @@ widget_order = [ "desktop-widget-0000000000000002" ]
         reversed = false
         show_when_idle = false
 
+[dock]
+background_opacity = 0.99999997764825821
+
+[hooks]
+session_locked = "if [ \"$(pactl get-sink-mute alsa_output.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Speaker__sink)\" = \"Mute: no\" ]; then pactl set-sink-mute alsa_output.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Speaker__sink 1 && touch \"$XDG_RUNTIME_DIR/lock-muted-speaker\"; fi; for p in $(busctl --user list --no-legend | awk '$1 ~ /^org[.]mpris[.]MediaPlayer2[.]/ {print $1}'); do busctl --user call \"$p\" /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player Pause; done"
+session_unlocked = "if [ -e \"$XDG_RUNTIME_DIR/lock-muted-speaker\" ]; then pactl set-sink-mute alsa_output.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Speaker__sink 0; rm -f \"$XDG_RUNTIME_DIR/lock-muted-speaker\"; fi"
+
+[idle.behavior.lock]
+enabled = true
+
+[idle.behavior.screen-off]
+enabled = true
+
 [location]
 auto_locate = true
 
 [lockscreen_widgets]
-enabled = false
+enabled = true
 schema_version = 2
-widget_order = [ "lockscreen-login-box@eDP-1", "lockscreen-login-box@DP-1" ]
+widget_order = [
+    "lockscreen-login-box@FALLBACK",
+    "lockscreen-login-box@eDP-1",
+    "lockscreen-login-box@DP-1",
+    "lockscreen-power@FALLBACK",
+    "lockscreen-reboot@FALLBACK",
+    "lockscreen-logout@FALLBACK",
+    "lockscreen-power@eDP-1",
+    "lockscreen-reboot@eDP-1",
+    "lockscreen-logout@eDP-1",
+    "lockscreen-power@DP-1",
+    "lockscreen-reboot@DP-1",
+    "lockscreen-logout@DP-1"
+]
 
     [lockscreen_widgets.grid]
     cell_size = 16
@@ -98,7 +126,7 @@ widget_order = [ "lockscreen-login-box@eDP-1", "lockscreen-login-box@DP-1" ]
     box_height = 196.0
     box_width = 810.0
     cx = 960.0
-    cy = 898.0
+    cy = 540.0
     output = "DP-1"
     placement_height = 1080.0
     placement_width = 1920.0
@@ -107,25 +135,52 @@ widget_order = [ "lockscreen-login-box@eDP-1", "lockscreen-login-box@DP-1" ]
 
         [lockscreen_widgets.widget."lockscreen-login-box@DP-1".settings]
         background_color = "surface_variant"
-        background_opacity = 0.88
+        background_opacity = 1.0
         background_radius = 12.0
         center_password_text = false
         input_opacity = 1.0
         input_radius = 6.0
         layout = "regular"
         show_caps_lock = true
-        show_keyboard_layout = true
+        show_keyboard_layout = false
         show_login_button = true
-        show_media = true
-        show_session_buttons = true
-        show_unlock_hint = true
-        show_weather = true
+        show_media = false
+        show_session_buttons = false
+        show_unlock_hint = false
+        show_weather = false
+
+    [lockscreen_widgets.widget."lockscreen-login-box@FALLBACK"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 540.0
+    output = "FALLBACK"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@FALLBACK".settings]
+        background_color = "surface_variant"
+        background_opacity = 1.0
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = false
+        show_login_button = true
+        show_media = false
+        show_session_buttons = false
+        show_unlock_hint = false
+        show_weather = false
 
     [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
     box_height = 196.0
     box_width = 810.0
     cx = 960.0
-    cy = 807.0
+    cy = 540.0
     output = "eDP-1"
     placement_height = 1080.0
     placement_width = 1920.0
@@ -134,22 +189,187 @@ widget_order = [ "lockscreen-login-box@eDP-1", "lockscreen-login-box@DP-1" ]
 
         [lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings]
         background_color = "surface_variant"
-        background_opacity = 0.88
+        background_opacity = 1.0
         background_radius = 12.0
         center_password_text = false
         input_opacity = 1.0
         input_radius = 6.0
         layout = "regular"
         show_caps_lock = true
-        show_keyboard_layout = true
+        show_keyboard_layout = false
         show_login_button = true
-        show_media = true
-        show_session_buttons = true
-        show_unlock_hint = true
-        show_weather = true
+        show_media = false
+        show_session_buttons = false
+        show_unlock_hint = false
+        show_weather = false
+
+    [lockscreen_widgets.widget."lockscreen-logout@DP-1"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1792.0
+    cy = 1040.0
+    output = "DP-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-logout@DP-1".settings]
+        background = false
+        command = "noctalia msg session logout"
+        glyph = "logout"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-logout@FALLBACK"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1792.0
+    cy = 1040.0
+    output = "FALLBACK"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-logout@FALLBACK".settings]
+        background = false
+        command = "noctalia msg session logout"
+        glyph = "logout"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-logout@eDP-1"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1792.0
+    cy = 1040.0
+    output = "eDP-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-logout@eDP-1".settings]
+        background = false
+        command = "noctalia msg session logout"
+        glyph = "logout"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-power@DP-1"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1880.0
+    cy = 1040.0
+    output = "DP-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-power@DP-1".settings]
+        background = false
+        command = "noctalia msg session shutdown"
+        glyph = "power"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-power@FALLBACK"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1880.0
+    cy = 1040.0
+    output = "FALLBACK"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-power@FALLBACK".settings]
+        background = false
+        command = "noctalia msg session shutdown"
+        glyph = "power"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-power@eDP-1"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1880.0
+    cy = 1040.0
+    output = "eDP-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-power@eDP-1".settings]
+        background = false
+        command = "noctalia msg session shutdown"
+        glyph = "power"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-reboot@DP-1"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1836.0
+    cy = 1040.0
+    output = "DP-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-reboot@DP-1".settings]
+        background = false
+        command = "noctalia msg session reboot"
+        glyph = "refresh"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-reboot@FALLBACK"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1836.0
+    cy = 1040.0
+    output = "FALLBACK"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-reboot@FALLBACK".settings]
+        background = false
+        command = "noctalia msg session reboot"
+        glyph = "refresh"
+        variant = "ghost"
+
+    [lockscreen_widgets.widget."lockscreen-reboot@eDP-1"]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1836.0
+    cy = 1040.0
+    output = "eDP-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "button"
+
+        [lockscreen_widgets.widget."lockscreen-reboot@eDP-1".settings]
+        background = false
+        command = "noctalia msg session reboot"
+        glyph = "refresh"
+        variant = "ghost"
 
 [nightlight]
 enabled = true
+
+[notification]
+background_opacity = 0.99999997764825821
+
+[osd]
+background_opacity = 1.0
+offset_y = 20
+position = "bottom_center"
+position_vertical = "bottom_right"
+
+    [osd.kinds]
+    media = false
 
 [plugin_settings."noctalia/wallhaven"]
 browser_placement = "floating"
@@ -158,7 +378,7 @@ browser_placement = "floating"
 w-engine-panel_position = "center"
 
 [plugins]
-enabled = [ "raphael/hypr-shots", "raphael/hypr-displays", "raphael/hypr-active-workspace" ]
+enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots" ]
 
     [[plugins.source]]
     kind = "git"
@@ -177,12 +397,9 @@ enabled = [ "raphael/hypr-shots", "raphael/hypr-displays", "raphael/hypr-active-
 
 [shell]
 button_borders = false
-corner_radius_scale = 0.0
-font_family = "JetBrainsMono Nerd Font"
 input_borders = false
 polkit_agent = true
-settings_show_advanced = false
-settings_window_translucent = true
+settings_window_translucent = false
 
     [shell.animation]
     speed = 2.0000000298023224
@@ -195,24 +412,42 @@ settings_window_translucent = true
     "Portuguese (Brazil)" = "BR"
 
     [shell.launcher]
-    compact = true
+    categories = false
+    fetch_exchange_rates = false
+    show_app_origin_indicator = false
+
+        [shell.launcher.providers.calculator]
+        global = false
+
+    [shell.mpris]
+    blacklist = [ "firefox" ]
 
     [shell.panel]
-    transparency_mode = "glass"
+    clipboard_placement = "floating"
+    clipboard_position = "top_center"
+    control_center_placement = "floating"
+    open_near_click_launcher = true
+    session_placement = "floating"
+    session_position = "top_center"
+    wallpaper_placement = "floating"
+    wallpaper_position = "top_center"
 
     [shell.screenshot]
     confirm_region = true
     directory = "/home/raphael/Pictures/Screenshots"
 
+    [shell.shadow]
+    alpha = 0.34999999999999998
+
 [theme]
-builtin = "Gruvbox"
-community_palette = "Gruvbox Material Hard"
-pure_black_dark = true
+builtin = "Kanagawa"
+community_palette = "ADW"
+mode = "dark"
 source = "community"
 wallpaper_scheme = "m3-tonal-spot"
 
     [theme.templates]
-    builtin_ids = [ "btop", "cava", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "qt" ]
+    builtin_ids = [ "btop", "cava", "gtk3", "gtk4" ]
     community_ids = [ "spicetify", "zen-browser", "discord", "libreoffice", "obs", "zathura", "hyprtoolkit" ]
 
 [wallpaper]
@@ -236,10 +471,14 @@ directory = "/home/raphael/Pictures/Wallpaper"
     path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
     theme_mode = "auto"
 
-[weather]
-enabled = false
+[widget.active_window]
+display = "text_only"
+font_weight = 700
+max_length = 380
 
 [widget.active_workspace]
+font_weight = 600
+format = "Desktop {name}"
 type = "raphael/hypr-active-workspace:active-workspace"
 
 [widget.audio_visualizer]
@@ -251,26 +490,40 @@ width = 40
 
 [widget.battery]
 display_mode = "graphic"
-scale = 0.75
+hide_when_full = true
+hide_when_plugged = true
+scale = 0.80000000000000004
 show_label = false
+
+[widget.bluetooth]
+hide_when_adapter_off = true
+hide_when_no_connected_device = true
 
 [widget.brightness]
 show_label = false
 
 [widget.clock]
-format = "{:%D %H:%M}"
+format = "{:%a. %-d de %b. %H:%M}"
+
+[widget.control-center]
+glyph = "adjustments-horizontal"
+
+[widget.input_volume]
+hide_when_inactive = true
+show_label = false
 
 [widget.network]
 show_label = false
+show_vpn_label = true
 
 [widget.notifications]
 hide_when_no_unread = true
 
 [widget.tray]
 color = "on_surface"
+detached_panel = true
+drawer = true
 
 [widget.volume]
+hide_when_inactive = true
 show_label = false
-
-[widget.wallhaven]
-type = "noctalia/wallhaven:wallhaven"

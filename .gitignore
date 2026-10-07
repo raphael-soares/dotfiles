@@ -68,3 +68,6 @@ desktop/.config/gtk-3.0/*
 desktop/.config/gtk-4.0/*
 !desktop/.config/gtk-4.0/settings.ini
 !desktop/.config/gtk-4.0/gtk.css
+
+# O Noctalia gera o tema do Alacritty a cada troca de paleta.
+alacritty/.config/alacritty/themes/noctalia.toml

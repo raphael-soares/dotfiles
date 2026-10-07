@@ -52,12 +52,25 @@ local function deliver(build)
   noctalia.runAsync(build(path, shotDirectory()) .. string.format("; rm -f '%s'", path))
 end
 
+local function stampedPath(dir)
+  return string.format("\"%s/$(date +Screenshot_%%Y%%m%%d_%%H%%M%%S).png\"", dir)
+end
+
 local function saveCommand(path, dir)
-  return string.format("mkdir -p \"%s\" && cp '%s' \"%s/$(date +Screenshot_%%Y%%m%%d_%%H%%M%%S).png\"", dir, path, dir)
+  return string.format("mkdir -p \"%s\" && cp '%s' %s", dir, path, stampedPath(dir))
 end
 
 local function copyCommand(path)
   return string.format("wl-copy --type image/png < '%s'", path)
+end
+
+local function editCommand(path, dir)
+  return string.format(
+    "mkdir -p \"%s\" && satty --filename '%s' --output-filename %s --copy-command wl-copy",
+    dir,
+    path,
+    stampedPath(dir)
+  )
 end
 
 local CAPTURE_ITEMS = {
@@ -85,6 +98,9 @@ local DELIVER_ITEMS = {
   end },
   { key = "both", glyph = "copy", run = function()
     deliver(function(path, dir) return copyCommand(path) .. " && " .. saveCommand(path, dir) end)
+  end },
+  { key = "edit", glyph = "pencil", run = function()
+    deliver(function(path, dir) return editCommand(path, dir) end)
   end },
 }
 

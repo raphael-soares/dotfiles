@@ -8,7 +8,7 @@ CAMADAS=(terminal ai desktop audio sistema)
 declare -A DESCRICAO=(
   [terminal]="bash, tmux, nvim, git, fzf, starship, mise, alacritty, workmux, ~/.local/bin"
   [ai]="AGENTS.md, skills, omp e Claude Code"
-  [desktop]="Hyprland, Noctalia e o tema GTK/portal"
+  [desktop]="Hyprland, Noctalia, tema GTK/portal, fontes e icones"
   [audio]="WirePlumber so com A2DP no Bluetooth (sem microfone em fone BT)"
   [sistema]="/etc: greetd, PAM do greetd, plymouth e zram (copia com sudo); thermald e fwupd"
 )
@@ -119,9 +119,22 @@ camada_ai() {
 
 camada_desktop() {
   instalar_pacotes desktop
-  linkar .config/hypr .config/noctalia-plugins .config/gtk-3.0 .config/gtk-4.0 \
+  linkar .config/hypr .config/noctalia-plugins .config/gtk-3.0 .config/gtk-4.0 .config/fontconfig/conf.d \
     .config/xdg-desktop-portal .local/state/noctalia Pictures/Wallpaper \
     -- hypr noctalia desktop
+  # Apps libadwaita leem fonte e icones do dconf, nao do settings.ini.
+  gsettings set org.gnome.desktop.interface font-name 'Sans 10'
+  gsettings set org.gnome.desktop.interface monospace-font-name 'Monospace 10'
+  gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
+  gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita'
+  gsettings set org.gnome.desktop.wm.preferences button-layout ':'
+  systemctl --user enable --now gcr-ssh-agent.socket
+  # O tema "default" é o que o XCursor usa quando o app não pede nenhum.
+  mkdir -p "$HOME/.icons/default"
+  printf '[Icon Theme]\nInherits=Adwaita\n' >"$HOME/.icons/default/index.theme"
+  # Flatpak não lê o settings.ini do host para ícone e cursor.
+  command -v flatpak >/dev/null &&
+    flatpak override --user --env=ICON_THEME=Papirus-Dark --env=XCURSOR_THEME=Adwaita
   echo "==> Para aplicar: hyprctl reload && noctalia msg config-reload"
 }
 

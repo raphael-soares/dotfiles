@@ -33,6 +33,13 @@ hl.gesture({
   action = "workspace",
 })
 
+hl.gesture({
+  fingers = 4,
+  direction = "vertical",
+  action = "special",
+  workspace = "magic",
+})
+
 hl.device({
   name = "epic-mouse-v1",
   sensitivity = -0.5,
