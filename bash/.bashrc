@@ -2,6 +2,10 @@ case ":$PATH:" in
   *":$HOME/.local/bin:"*) ;;
   *) [ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH" ;;
 esac
+case ":$PATH:" in
+  *":$HOME/.local/share/nvim/mason/bin:"*) ;;
+  *) [ -d "$HOME/.local/share/nvim/mason/bin" ] && export PATH="$PATH:$HOME/.local/share/nvim/mason/bin" ;;
+esac
 
 command -v mise >/dev/null && eval "$(mise activate bash)"
 

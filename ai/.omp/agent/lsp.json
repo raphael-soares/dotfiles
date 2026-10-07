@@ -1,0 +1,34 @@
+{
+  "idleTimeoutMs": 600000,
+  "servers": {
+    "jdtls": {
+      "command": "omp-jdtls",
+      "args": [],
+      "warmupTimeoutMs": 180000
+    },
+    "typescript-language-server": { "disabled": true },
+    "vue-language-server": { "disabled": true },
+    "vtsls": {
+      "command": "vtsls",
+      "args": ["--stdio"],
+      "fileTypes": [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs", ".vue"],
+      "rootMarkers": ["tsconfig.json", "jsconfig.json", "package.json"],
+      "warmupTimeoutMs": 30000,
+      "settings": {
+        "vtsls": {
+          "tsserver": {
+            "globalPlugins": [
+              {
+                "name": "@vue/typescript-plugin",
+                "location": "/home/raphael/.local/share/nvim/mason/packages/vue-language-server/node_modules/@vue/language-server",
+                "languages": ["vue"],
+                "configNamespace": "typescript",
+                "enableForWorkspaceTypeScriptVersions": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

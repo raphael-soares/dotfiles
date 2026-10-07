@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# jdtls do nvim-java para o omp, com Lombok e workspace separado do nvim.
+set -euo pipefail
+
+base="$HOME/.local/share/nvim/nvim-java/packages"
+
+mais_novo() {
+  local achado
+  achado=$(ls -d $1 2>/dev/null | sort -V | tail -1) || true
+  if [[ -z "$achado" ]]; then
+    echo "omp-jdtls: $2 não encontrado em $base (abra o nvim num projeto Java para o nvim-java instalar)" >&2
+    exit 1
+  fi
+  printf %s "${achado%/}"
+}
+
+jdtls=$(mais_novo "$base/jdtls/*/" jdtls)
+jdk=$(mais_novo "$base/openjdk/*/jdk-*/" openjdk)
+lombok=$(mais_novo "$base/lombok/*/lombok-*.jar" lombok)
+
+data="${XDG_CACHE_HOME:-$HOME/.cache}/omp-jdtls/$(printf %s "$PWD" | sha1sum | cut -c1-12)"
+mkdir -p "$data"
+
+exec python3 "$jdtls/bin/jdtls" \
+  --java-executable "$jdk/bin/java" \
+  --jvm-arg=-javaagent:"$lombok" \
+  --jvm-arg=-Xmx2G \
+  --jvm-arg=-XX:+UseG1GC \
+  -data "$data" \
+  "$@"
