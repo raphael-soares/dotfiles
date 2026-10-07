@@ -285,3 +285,22 @@ ponto, pare de editar. Mapeie por que o problema existe, ache a causa única,
 conserte ela. Meça em vez de supor (consultei a API, cloněi em modo raso, testei
 os casos reais antes de propor). Pesquisar e planejar antes de mexer, não depois
 de mais um patch.
+
+---
+
+### Código local não é o sistema: confira a versão que roda antes de afirmar
+
+**Por quê:** afirmei que um POST do parecer para o AutSC "já estava implementado"
+lendo a cópia local de um submódulo parada um dia atrás. O dono já tinha removido
+aquele POST exatamente porque o endpoint nunca existiu: fui eu quem o inventou
+numa sessão anterior. Ainda tratei "nosso código chama esta URL" como prova de que
+a rota existe, com o próprio código avisando "formato inventado". Ele teve que
+perguntar qual era a minha fonte.
+
+**Como aplicar:** antes de dizer como o sistema se comporta, compare a cópia local
+com o que roda (`git log -1` local vs `origin/<branch>` e vs o commit do ambiente,
+ex. `ssh hml` no diretório da app). Divergiu, a fonte é a que roda. Chamada nossa
+a sistema externo não prova que o endpoint exista; só vale contrato do fornecedor,
+DTO do legado que funcionava ou resposta real observada. Comentário "inventado",
+"confirmar contra o real" ou similar quer dizer: não existe até prova. Quando o
+usuário mandar parar de perguntar, pare, mesmo que o harness cobre `ask`.
