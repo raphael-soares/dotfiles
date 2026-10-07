@@ -1,0 +1,11 @@
+theme:
+  dark: titanium-green
+retry:
+  modelFallback: false
+# ~/.aws/credentials faz o omp oferecer amazon-bedrock sem login nenhum.
+# enabledModels barra a escolha automatica; disabledProviders tira do /model.
+enabledModels:
+  - anthropic/*
+disabledProviders:
+  - amazon-bedrock
+  - bedrock-mantle

@@ -112,6 +112,12 @@ camada_ai() {
   instalar_pacotes ai
   avisar_fora_do_pacman omp claude rtk
   linkar .claude .omp/agent/extensions .omp/agent/rules -- ai
+  # Perfil do omp com auth propria (agent.db) e o resto compartilhado com o default.
+  local perfil="$HOME/.omp/profiles/enterprise/agent" item
+  mkdir -p "$perfil"
+  for item in AGENTS.md RULES.md config.yml keybindings.yml lsp.json skills rules extensions themes; do
+    ln -sfn "$REPO/ai/.omp/agent/$item" "$perfil/$item"
+  done
 }
 
 camada_desktop() {
