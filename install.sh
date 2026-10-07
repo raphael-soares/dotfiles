@@ -99,9 +99,6 @@ camada_terminal() {
   avisar_fora_do_pacman starship mise workmux
   linkar .config/tmux .config/workmux .config/mise .config/git .local/bin .local/share/applications \
     -- bash tmux alacritty git starship fzf local mise nvim workmux
-  if [[ ! -d "$HOME/.config/tmux/plugins/tpm" ]]; then
-    git clone --depth 1 https://github.com/tmux-plugins/tpm "$HOME/.config/tmux/plugins/tpm"
-  fi
   if [[ ! -f "$HOME/.env.local" ]]; then
     cp .env.example "$HOME/.env.local"
     echo "==> ~/.env.local criado a partir do .env.example, preencha as chaves"
