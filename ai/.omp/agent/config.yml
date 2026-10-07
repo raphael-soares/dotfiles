@@ -1,7 +1,7 @@
 modelRoles:
   slow: anthropic/claude-opus-5-5:xhigh
-  task: anthropic/claude-sonnet-5:high
-  smol: anthropic/claude-sonnet-5
+  task: anthropic/claude-sonnet-5.5:high
+  smol: anthropic/claude-sonnet-5.5
   tiny: anthropic/claude-haiku-4-5
   commit: anthropic/claude-3-haiku-20240307
   advisor: anthropic/claude-opus-5-5:medium
@@ -32,13 +32,13 @@ dev:
   autoqaConsent: granted
 setupVersion: 2
 composer:
-  shape: rail
+  shape: field
   tokenRate: false
 statusLine:
   preset: custom
   separator: block
   contextLine: percentage
-  sessionAccent: true
+  sessionAccent: false
   transparent: false
   compactThinkingLevel: true
   showHookStatus: true
@@ -65,11 +65,16 @@ terminal:
 display:
   hideToolActivity: false
   shimmer: classic
+  showTokenUsage: true
 symbolPreset: nerd
 tui:
-  tight: true
+  tight: false
   vimMode: true
   vimModeDisplay: text
 externalThinking: false
 completion:
   notify: "off"
+theme:
+  dark: titanium-purple
+hideThinkingBlock: true
+textVerbosity: low
