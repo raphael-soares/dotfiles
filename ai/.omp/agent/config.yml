@@ -41,7 +41,7 @@ statusLine:
   sessionAccent: false
   transparent: false
   compactThinkingLevel: true
-  showHookStatus: true
+  showHookStatus: false
   leftSegments:
     - vim
     - model
@@ -53,6 +53,7 @@ statusLine:
     - usage
     - context_pct
   segmentOptions:
+    - status
     model:
       showThinkingLevel: false
     git:
