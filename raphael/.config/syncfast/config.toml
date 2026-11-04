@@ -23,7 +23,7 @@ id = "personal"
 name = "Personal"
 local = "/home/raphael/Personal"
 remote = "Raphael:Personal"
-enabled = false
+enabled = true
 presets = ["system_junk", "dev_dirs"]
 filters = []
 
