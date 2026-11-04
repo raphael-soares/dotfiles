@@ -1,0 +1,11 @@
+stow
+git
+tmux
+neovim
+fzf
+fd
+ripgrep
+alacritty
+jq
+curl
+github-cli

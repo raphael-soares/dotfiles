@@ -9,6 +9,7 @@ esac
 
 command -v mise >/dev/null && eval "$(mise activate bash)"
 
+for _rc in "$HOME"/.config/shell/rc.d/*.sh; do [ -r "$_rc" ] && . "$_rc"; done; unset _rc
 [ -f ~/.env.local ] && source ~/.env.local
 
 case $- in
@@ -83,5 +84,4 @@ fi
 
 command -v starship >/dev/null && eval "$(starship init bash)"
 
-ompe() { command omp --profile=enterprise --config "$HOME/.dotfiles/ai/.omp/overlays/enterprise.yml" "$@"; }
 alias ompp=omp

@@ -1,0 +1,4 @@
+adw-gtk-theme
+papirus-icon-theme
+ttf-jetbrains-mono-nerd
+inter-font

@@ -126,7 +126,7 @@ Grade de 4px. Todo espaçamento é múltiplo de 4.
 ## Tipografia
 
 A família mora em um lugar só:
-`desktop/.config/fontconfig/conf.d/50-fontes.conf` faz `sans-serif` resolver
+`fontes/.config/fontconfig/conf.d/50-fontes.conf` faz `sans-serif` resolver
 para **Inter** e `monospace` para **JetBrainsMono Nerd Font**. Os apps pedem o
 nome genérico:
 
@@ -205,8 +205,8 @@ Regras:
 | Raio, sombra, gaps, blur desligado | `hypr/.config/hypr/look.lua` | Escrito |
 | Opacidade da shell | `[bar]`, `[osd]`, `[shell]` e `[shell.panel]` no `settings.toml` | Escrito |
 | Movimento | `hypr/.config/hypr/animations.lua` | Escrito |
-| Família de fonte | `desktop/.config/fontconfig/conf.d/50-fontes.conf` | Escrito |
-| Fonte e ícones no GTK | `desktop/.config/gtk-{3,4}.0/settings.ini` | Escrito |
+| Família de fonte | `fontes/.config/fontconfig/conf.d/50-fontes.conf` | Escrito |
+| Fonte e ícones no GTK | `gtk/.config/gtk-{3,4}.0/settings.ini` | Escrito |
 | Tema do terminal | `~/.config/alacritty/themes/noctalia.toml` | Gerado, fora do git |
 
 O `borders.lua` é o único lugar que define cor de borda. O `apply_theme()` do

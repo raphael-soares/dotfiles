@@ -1,0 +1,46 @@
+version = 1
+
+[[pair]]
+id = "pictures"
+name = "Pictures"
+local = "/home/raphael/Pictures"
+remote = "Raphael:Pictures"
+enabled = false
+presets = ["system_junk", "dev_dirs"]
+filters = ["+ /Wallpaper/wallz/Catppuccin Mocha/26. Catppuccin Mocha.png", "+ /Wallpaper/wallz/Catppuccin Mocha/27. Catppuccin Mocha.png", "+ /Wallpaper/wallz/Catppuccin Mocha/28. Catppuccin Mocha.png", "+ /Wallpaper/wallz/Catppuccin Mocha/29. Catppuccin Mocha.png", "+ /Wallpaper/wallz/Catppuccin Mocha/30. Catppuccin Mocha.png", "+ /Wallpaper/wallz/Catppuccin Mocha/32. Catppuccin Mocha.png", "+ /Wallpaper/wallz/Catppuccin Mocha/33. Catppuccin Mocha.jpg", "+ /Wallpaper/wallz/Graphite Mono/21. Graphite Mono.png", "+ /Wallpaper/wallz/Graphite Mono/24. Graphite Mono.jpg", "+ /Wallpaper/wallz/Green Lush/13. Green Lush.png", "+ /Wallpaper/wallz/Greenify/01. Greenify.jpg", "+ /Wallpaper/wallz/Greenify/04. Greenify.jpg", "+ /Wallpaper/wallz/Greenify/08. Greenify.jpg", "+ /Wallpaper/wallz/Greenify/09. Greenify.jpg", "+ /Wallpaper/wallz/Greenify/11. Greenify.jpg", "+ /Wallpaper/wallz/Greenify/14. Greenify.jpg", "+ /Wallpaper/wallz/Gruvbox Retro/06. Gruvbox Retro.jpg", "+ /Wallpaper/wallz/Gruvbox Retro/15. Gruvbox Retro.png", "+ /Wallpaper/wallz/Gruvbox Retro/17. Gruvbox Retro.png", "+ /Wallpaper/wallz/One Dark/02. One Dark.jpg", "+ /Wallpaper/wallz/One Dark/03. One Dark.png", "+ /Wallpaper/wallz/One Dark/05. One Dark.png", "+ /Wallpaper/wallz/One Dark/13. One Dark.png", "+ /Wallpaper/wallz/One Dark/16. One Dark.png", "+ /Wallpaper/wallz/One Dark/17. One Dark.jpg", "+ /Wallpaper/wallz/One Dark/24. One Dark.jpg", "+ /Wallpaper/wallz/One Dark/25. One Dark.jpg", "+ /Wallpaper/wallz/One Dark/29. One Dark.jpg", "+ /Wallpaper/wallz/One Dark/31. One Dark.jpg", "+ /Wallpaper/wallz/One Dark/32. One Dark.png", "- /Wallpaper/**"]
+
+[[pair]]
+id = "videos"
+name = "Videos"
+local = "/home/raphael/Videos"
+remote = "Raphael:Videos"
+enabled = false
+presets = ["system_junk", "dev_dirs"]
+filters = []
+
+[[pair]]
+id = "personal"
+name = "Personal"
+local = "/home/raphael/Personal"
+remote = "Raphael:Personal"
+enabled = false
+presets = ["system_junk", "dev_dirs"]
+filters = []
+
+[[pair]]
+id = "udesc"
+name = "Udesc"
+local = "/home/raphael/Udesc"
+remote = "Raphael:Udesc"
+enabled = false
+presets = ["system_junk", "dev_dirs"]
+filters = []
+
+[[pair]]
+id = "design"
+name = "Design"
+local = "/home/raphael/Design"
+remote = "Raphael:Design"
+enabled = false
+presets = ["system_junk", "dev_dirs"]
+filters = []

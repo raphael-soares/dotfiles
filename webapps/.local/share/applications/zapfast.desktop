@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=WhatsApp
+GenericName=WhatsApp Client
+Comment=A native WhatsApp client
+Exec=zapfast
+Icon=whatsapp
+Terminal=false
+Categories=Network;InstantMessaging;Chat;
+Keywords=whatsapp;chat;messaging;zapfast;
+StartupWMClass=zapfast

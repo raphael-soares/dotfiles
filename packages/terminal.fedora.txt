@@ -1,0 +1,11 @@
+stow
+git
+tmux
+neovim
+fzf
+fd-find
+ripgrep
+alacritty
+jq
+curl
+gh

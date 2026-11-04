@@ -1,8 +1,7 @@
 [general]
 import = [
-  # "~/.config/alacritty/themes/anthropic.toml"
-  # "~/.config/alacritty/themes/oneblack.toml"
-  "~/.config/alacritty/themes/gruvbox-material.toml"
+  "~/.config/alacritty/themes/oneblack.toml",
+  "~/.config/alacritty/themes/noctalia.toml",
 ]
 
 

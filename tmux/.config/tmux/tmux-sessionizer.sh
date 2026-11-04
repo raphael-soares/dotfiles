@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-# Os diretorios varridos saem de TMUX_SESSIONIZER_DIRS, no ~/.env.local
-# (veja o .env.example). O tmux chama este script por run-shell, que nao passa
-# pelo .bashrc, entao o arquivo e carregado aqui. Se a variavel ja veio
-# setada no ambiente (ex.: override manual pra teste), respeita ela e nao
-# deixa o .env.local pisar em cima.
-[[ -z "${TMUX_SESSIONIZER_DIRS:-}" && -f ~/.env.local ]] && source ~/.env.local
+# Os diretorios varridos saem de TMUX_SESSIONIZER_DIRS, definida em
+# ~/.config/shell/rc.d/*.sh ou no ~/.env.local (veja o .env.example). O tmux
+# chama este script por run-shell, que nao passa pelo .bashrc, entao os
+# arquivos sao carregados aqui. Se a variavel ja veio setada no ambiente
+# (ex.: override manual pra teste), respeita ela e nao carrega nada.
+if [[ -z "${TMUX_SESSIONIZER_DIRS:-}" ]]; then
+    for _rc in "$HOME"/.config/shell/rc.d/*.sh; do [[ -r "$_rc" ]] && source "$_rc"; done
+    [[ -f ~/.env.local ]] && source ~/.env.local
+fi
 
 SEARCH_DIRS=()
 if [[ -n "${TMUX_SESSIONIZER_DIRS:-}" ]]; then
