@@ -32,15 +32,15 @@ id = "udesc"
 name = "Udesc"
 local = "/home/raphael/Udesc"
 remote = "Raphael:Udesc"
-enabled = false
+enabled = true
 presets = ["system_junk", "dev_dirs"]
-filters = []
+filters = ["- /estrutura-de-dados-ii/trabalho-final/**", "- /_Archive/University-antigo/estrutura-de-dados-ii/trabalho-final/**"]
 
 [[pair]]
 id = "design"
 name = "Design"
 local = "/home/raphael/Design"
 remote = "Raphael:Design"
-enabled = false
+enabled = true
 presets = ["system_junk", "dev_dirs"]
 filters = []
