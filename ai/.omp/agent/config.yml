@@ -1,9 +1,9 @@
 modelRoles:
   slow: anthropic/claude-opus-5-5:xhigh
   task: anthropic/claude-sonnet-5.5:high
-  smol: anthropic/claude-sonnet-5.5
+  smol: anthropic/claude-haiku-5-5
   tiny: anthropic/claude-haiku-4-5
-  commit: anthropic/claude-3-haiku-20240307
+  commit: anthropic/claude-haiku-5-5
   advisor: anthropic/claude-opus-5-5:medium
   default: anthropic/claude-opus-5-5
 retry:
@@ -21,6 +21,8 @@ task:
     scout: "@smol"
     reviewer: "@task"
     security-reviewer: "@task"
+  eager: always
+  enableLsp: false
 defaultThinkingLevel: auto
 plan:
   defaultOnStartup: true
@@ -51,9 +53,9 @@ statusLine:
     - pr
   rightSegments:
     - usage
+    - status
     - context_pct
   segmentOptions:
-    - status
     model:
       showThinkingLevel: false
     git:
@@ -72,6 +74,7 @@ tui:
   tight: false
   vimMode: true
   vimModeDisplay: text
+  renderSvg: false
 externalThinking: false
 completion:
   notify: "off"
@@ -79,3 +82,12 @@ theme:
   dark: titanium-purple
 hideThinkingBlock: true
 textVerbosity: low
+compaction:
+  idleEnabled: true
+autolearn:
+  enabled: true
+  autoContinue: true
+memory:
+  backend: sharpshooter
+edit:
+  mode: hashline

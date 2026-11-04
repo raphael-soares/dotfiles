@@ -6,6 +6,7 @@ hl.on("hyprland.start", function()
     "systemctl --user import-environment $(env | cut -d= -f1) && dbus-update-activation-environment --systemd --all"
   )
   hl.exec_cmd("noctalia")
+  hl.exec_cmd("flatpak run io.github.raphael_soares.syncfast --start-hidden")
   hl.exec_cmd("flatpak run com.github.wwmm.easyeffects --service-mode --hide-window")
   hl.exec_cmd("flatpak run com.github.IsmaelMartinez.teams_for_linux --minimized")
   hl.exec_cmd("flatpak run com.rtosta.zapzap --hideStart")

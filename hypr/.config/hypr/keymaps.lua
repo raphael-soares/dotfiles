@@ -13,7 +13,19 @@ hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(programs.terminal))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd(ipc .. "session lock"))
 hl.bind(mainMod .. " + M", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
-hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + F", function()
+  hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+  local win = hl.get_active_window()
+  local mon = hl.get_active_monitor()
+  if not (win and win.floating and mon) then
+    return
+  end
+  hl.dispatch(hl.dsp.window.resize({
+    x = math.floor(mon.width / mon.scale * 0.6),
+    y = math.floor(mon.height / mon.scale * 0.6),
+  }))
+  hl.dispatch(hl.dsp.window.center())
+end)
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. "+" .. directions.LEFT, hl.dsp.focus({ direction = "left" }))

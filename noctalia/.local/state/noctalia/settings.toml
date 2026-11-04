@@ -1,4 +1,4 @@
-config_version = 14
+config_version = 16
 
 [audio]
 enable_sounds = true
@@ -7,23 +7,13 @@ enable_sounds = true
 order = [ "default" ]
 
     [bar.default]
-    background_opacity = 1.0
     border = "#ffffff14"
     border_width = 1.0
     center = []
+    compositor_blur = false
     concave_edge_corners = false
-    end = [
-        "tray",
-        "clipboard",
-        "notifications",
-        "battery",
-        "network",
-        "bluetooth",
-        "volume",
-        "input_volume",
-        "control-center",
-        "clock"
-    ]
+    contact_shadow = true
+    end = [ "tray", "clipboard", "notifications", "battery", "network", "bluetooth", "volume", "input_volume", "clock" ]
     hover_highlight = false
     margin_edge = -1
     margin_ends = -1
@@ -42,7 +32,7 @@ minimum_brightness = 0.099999997764825821
 sync_all_monitors = true
 
 [control_center]
-hidden_tabs = [ "weather", "screen-time" ]
+hidden_tabs = [ "media", "weather", "screen-time" ]
 sidebar = "full"
 sidebar_section = "none"
 width = 880
@@ -114,7 +104,10 @@ widget_order = [
     "lockscreen-logout@eDP-1",
     "lockscreen-power@DP-1",
     "lockscreen-reboot@DP-1",
-    "lockscreen-logout@DP-1"
+    "lockscreen-logout@DP-1",
+    "lockscreen-login-box@HEADLESS-1",
+    "lockscreen-login-box@HEADLESS-2",
+    "lockscreen-login-box@HEADLESS-3"
 ]
 
     [lockscreen_widgets.grid]
@@ -123,7 +116,7 @@ widget_order = [
     visible = true
 
     [lockscreen_widgets.widget."lockscreen-login-box@DP-1"]
-    box_height = 196.0
+    box_height = 82.0
     box_width = 810.0
     cx = 960.0
     cy = 540.0
@@ -134,7 +127,7 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@DP-1".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 1.0
         background_radius = 12.0
         center_password_text = false
@@ -145,6 +138,7 @@ widget_order = [
         show_keyboard_layout = false
         show_login_button = true
         show_media = false
+        show_password_reveal = true
         show_session_buttons = false
         show_unlock_hint = false
         show_weather = false
@@ -161,7 +155,7 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@FALLBACK".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 1.0
         background_radius = 12.0
         center_password_text = false
@@ -172,12 +166,97 @@ widget_order = [
         show_keyboard_layout = false
         show_login_button = true
         show_media = false
+        show_password_reveal = true
         show_session_buttons = false
         show_unlock_hint = false
         show_weather = false
 
-    [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
+    [lockscreen_widgets.widget."lockscreen-login-box@HEADLESS-1"]
     box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "HEADLESS-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HEADLESS-1".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HEADLESS-2"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "HEADLESS-2"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HEADLESS-2".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HEADLESS-3"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "HEADLESS-3"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HEADLESS-3".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
+    box_height = 82.0
     box_width = 810.0
     cx = 960.0
     cy = 540.0
@@ -188,7 +267,7 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings]
-        background_color = "surface_variant"
+        background_color = "surface_container"
         background_opacity = 1.0
         background_radius = 12.0
         center_password_text = false
@@ -199,6 +278,7 @@ widget_order = [
         show_keyboard_layout = false
         show_login_button = true
         show_media = false
+        show_password_reveal = true
         show_session_buttons = false
         show_unlock_hint = false
         show_weather = false
@@ -240,7 +320,7 @@ widget_order = [
     [lockscreen_widgets.widget."lockscreen-logout@eDP-1"]
     box_height = 0.0
     box_width = 0.0
-    cx = 1792.0
+    cx = 1792.0001220703125
     cy = 1040.0
     output = "eDP-1"
     placement_height = 1080.0
@@ -397,9 +477,10 @@ enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/h
 
 [shell]
 button_borders = false
+font_family = "Inter"
 input_borders = false
 polkit_agent = true
-settings_window_translucent = false
+show_close_buttons = false
 
     [shell.animation]
     speed = 2.0000000298023224
@@ -414,7 +495,11 @@ settings_window_translucent = false
     [shell.launcher]
     categories = false
     fetch_exchange_rates = false
+    layout = "simple"
+    search_position = "top"
     show_app_origin_indicator = false
+    show_session_button = false
+    show_settings_button = false
 
         [shell.launcher.providers.calculator]
         global = false
@@ -427,10 +512,12 @@ settings_window_translucent = false
     clipboard_position = "top_center"
     control_center_placement = "floating"
     open_near_click_launcher = true
+    open_near_click_wallpaper = true
+    polkit_placement = "attached"
     session_placement = "floating"
     session_position = "top_center"
     wallpaper_placement = "floating"
-    wallpaper_position = "top_center"
+    wallpaper_position = "center"
 
     [shell.screenshot]
     confirm_region = true
@@ -440,15 +527,15 @@ settings_window_translucent = false
     alpha = 0.34999999999999998
 
 [theme]
-builtin = "Kanagawa"
-community_palette = "ADW"
+builtin = "Gruvbox"
+community_palette = "Gruvbox Material Hard"
 mode = "dark"
 source = "community"
-wallpaper_scheme = "m3-tonal-spot"
+wallpaper_scheme = "m3-rainbow"
 
     [theme.templates]
-    builtin_ids = [ "btop", "cava", "gtk3", "gtk4" ]
-    community_ids = [ "spicetify", "zen-browser", "discord", "libreoffice", "obs", "zathura", "hyprtoolkit" ]
+    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4" ]
+    community_ids = [ "spotifast", "syncfast", "discord", "zapfast", "libreoffice", "fastfetch", "obs", "zathura", "hyprtoolkit" ]
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"
@@ -460,16 +547,121 @@ directory = "/home/raphael/Pictures/Wallpaper"
     path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
 
     [wallpaper.monitors.DP-1]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/32. One Dark.png"
+
+    [wallpaper.monitors.HEADLESS-3]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/32. One Dark.png"
 
     [wallpaper.monitors.eDP-1]
     path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
 
     [[wallpaper.favorite]]
-    community_palette = "Gruvbox Material Hard"
+    community_palette = "Kanagawa Dragon"
     palette_source = "community"
     path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
-    theme_mode = "auto"
+    theme_mode = "dark"
+
+    [[wallpaper.favorite]]
+    palette_source = "wallpaper"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/29. One Dark.jpg"
+    theme_mode = "dark"
+    wallpaper_scheme = "m3-tonal-spot"
+
+    [[wallpaper.favorite]]
+    palette_source = "wallpaper"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/05. One Dark.png"
+    theme_mode = "dark"
+    wallpaper_scheme = "m3-content"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/16. One Dark.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/25. One Dark.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/24. One Dark.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/31. One Dark.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/32. One Dark.png"
+
+    [[wallpaper.favorite]]
+    palette_source = "wallpaper"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/17. One Dark.jpg"
+    theme_mode = "dark"
+    wallpaper_scheme = "m3-tonal-spot"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/13. One Dark.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/03. One Dark.png"
+
+    [[wallpaper.favorite]]
+    builtin_palette = "Gruvbox"
+    palette_source = "builtin"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/02. One Dark.jpg"
+    theme_mode = "dark"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Gruvbox Retro/15. Gruvbox Retro.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Gruvbox Retro/17. Gruvbox Retro.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Gruvbox Retro/06. Gruvbox Retro.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/14. Greenify.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/11. Greenify.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/09. Greenify.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/04. Greenify.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Green Lush/13. Green Lush.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/01. Greenify.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/08. Greenify.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Graphite Mono/24. Graphite Mono.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Graphite Mono/21. Graphite Mono.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/33. Catppuccin Mocha.jpg"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/26. Catppuccin Mocha.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/30. Catppuccin Mocha.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/29. Catppuccin Mocha.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/28. Catppuccin Mocha.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/27. Catppuccin Mocha.png"
+
+    [[wallpaper.favorite]]
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/32. Catppuccin Mocha.png"
 
 [widget.active_window]
 display = "text_only"
@@ -477,7 +669,7 @@ font_weight = 700
 max_length = 380
 
 [widget.active_workspace]
-font_weight = 600
+font_weight = 700
 format = "Desktop {name}"
 type = "raphael/hypr-active-workspace:active-workspace"
 
@@ -503,7 +695,10 @@ hide_when_no_connected_device = true
 show_label = false
 
 [widget.clock]
+anchor = true
+font_weight = 700
 format = "{:%a. %-d de %b. %H:%M}"
+scale = 1.05
 
 [widget.control-center]
 glyph = "adjustments-horizontal"

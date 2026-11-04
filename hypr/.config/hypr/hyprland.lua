@@ -15,6 +15,10 @@ hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
 hl.env("SSH_AUTH_SOCK", os.getenv("XDG_RUNTIME_DIR") .. "/gcr/ssh")
+local local_bin = os.getenv("HOME") .. "/.local/bin"
+if not (":" .. os.getenv("PATH") .. ":"):find(":" .. local_bin .. ":", 1, true) then
+    hl.env("PATH", local_bin .. ":" .. os.getenv("PATH"))
+end
 
 require("borders")
 

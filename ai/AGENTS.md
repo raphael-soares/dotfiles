@@ -112,8 +112,8 @@ abra a PR. Isso é dentro de trabalho já autorizado, não licença para começa
   decisão do usuário, não sobre economizar investigação.
 - UI nova segue os padrões visuais já existentes no sistema (ex.: reusar o mesmo
   padrão de tabs/componentes) em vez de reinventar.
-- Vue/Nuxt + Vuetify: carregue a skill `vue-vuetify` ANTES de criar ou alterar
-  qualquer componente, tela ou estilo. Ela é a fonte do design system.
+- Tela em Vue: o padrão é o do próprio repositório (o AGENTS.md dele e o
+  docs/PADROES-DE-TELA.md, quando existir). Não há skill global de design system.
 
 ---
 
@@ -159,6 +159,67 @@ Sem emoji em commits, PRs ou docs, a não ser que o autor peça.
 
 Só commite ou faça push quando pedirem. Se estiver no branch padrão, crie um
 branch antes.
+
+---
+
+## Worktrees
+
+Worktree novo vai sempre em `~/.workmux/<projeto>/<handle>`, o mesmo lugar que o
+`workmux` usa (`worktree_dir` em `~/.config/workmux/config.yaml`). Prefira
+`workmux add`; se usar `git worktree add` direto, aponte para esse caminho. Nunca
+crie worktree na home, no Desktop ou ao lado do repo.
+
+Mesclou a PR da branch, remova o worktree (`git worktree remove`) na mesma sessão.
+Worktree só de leitura (copiar um commit, comparar versões) se remove ao terminar a
+tarefa que o criou.
+
+---
+
+## Onde as coisas ficam no home
+
+Dois PCs com a mesma convenção: o notebook (trabalho, programação, startup,
+faculdade) e o PC de casa (jogos, design, música). Uma pasta por área em
+`~/<Área>`, nome em inglês capitalizado. Cada área tem um alcance: compartilhada
+(existe nos dois PCs, um par do syncfast por área) ou local (existe só no PC
+onde é usada, sem par). Área nova: crie a pasta, escolha o alcance e acrescente
+uma linha aqui.
+
+| Área | Conteúdo | Alcance |
+|---|---|---|
+| `~/Personal` | documentos, currículo, finanças, segurança, livros avulsos | compartilhada |
+| `~/Udesc` | faculdade, padrão de disciplina em `~/Udesc/README.md` | compartilhada |
+| `~/Design` | projetos de design e vetores, uma pasta por projeto | compartilhada |
+| `~/Unimed` | trabalho: docs, envs, assets | só notebook |
+| `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | só notebook |
+| `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
+| `~/Games` | jogos, ROMs, saves | só PC de casa |
+| `~/Music` | produção: samples, kits, projetos | só PC de casa |
+| `~/Media` | filmes, séries, torrents | só PC de casa |
+
+- Repositório git nunca fica dentro de área compartilhada: vai para
+  `~/Code/<Área>/`.
+- Marca de uma área (logo da TEAjudo) fica na área. `~/Design` é para projeto
+  de design próprio.
+- O que acabou vai para `_Archive/` dentro da própria área. Pasta oculta, nunca.
+- `~/Downloads` (também o `XDG_DOCUMENTS_DIR`), `~/Pictures` (Screenshots,
+  Wallpaper, Icons) e `~/Videos` são pastas de sistema de cada PC, não áreas: o
+  que chega nelas vai para a área certa.
+- Fotos e a biblioteca de livros ficam só no Drive (`Raphael:Fotos`,
+  `Raphael:Livros`).
+- Não existem `~/Documents`, `~/Notes` nem `~/University`. Não recrie.
+
+---
+
+## Arquivo temporário de agente
+
+Log, dump, JSON de comparação, rascunho de código e saída de comando gravada
+para ler depois vão em `.scratch/` na raiz do repositório ou worktree em que
+você está (`.scratch/` está no gitignore global). Fora de repositório git, use
+`/tmp/agents/<pasta>`. Nunca solto na raiz do repo, em `~/.workmux` ou no home.
+
+O que precisa durar além da tarefa não é rascunho: vira arquivo versionado no
+lugar certo do repo ou vai para a área certa do home. Terminou a tarefa, apague
+o `.scratch/`.
 
 ---
 
