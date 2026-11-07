@@ -1,0 +1,6 @@
+# O WirePlumber poe o Fuxi-H3 em api.alsa.soft-mixer, entao ninguem mais escreve no mixer
+# do aparelho: o valor que estiver la na hora do plug fica. O alsactl do alsa-state.service
+# restaura o estado salvo, que e o 0,0 que o PipeWire deixou antes do soft-mixer existir, e
+# com 0 o firmware muta o canal direito. Esta regra roda depois da 90-alsa-restore e prende
+# os dois controles no topo. Sem ela o som volta a sair so da esquerda a cada boot.
+ACTION=="add", SUBSYSTEM=="sound", KERNEL=="controlC*", ATTRS{idVendor}=="040b", ATTRS{idProduct}=="0897", RUN+="/usr/bin/amixer -q -c FuxiH3 cset numid=9 100,100", RUN+="/usr/bin/amixer -q -c FuxiH3 cset numid=10 100"
