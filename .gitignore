@@ -33,6 +33,8 @@ ai/.claude/.caveman-active
 ai/.claude/.caveman-mode-log.jsonl
 ai/.claude/.caveman-nudge-shown
 ai/.claude/.last-cleanup
+ai/.claude/.last-update-result.json
+ai/.claude/state/
 ai/skills/synced/
 
 # omp: o pacote versiona so AGENTS.md, RULES.md, config.yml, keybindings.yml,
