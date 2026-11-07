@@ -4,6 +4,8 @@ local MODES = { extend = true, external = true, internal = true }
 local DEFAULT_MODE = "extend"
 local ENABLE_TIMEOUT_MS = 5000
 local SETTLE_MS = 100
+local LID_POLL_MS = 2000
+local LID_SUSPEND_MS = 10000
 
 local WILDCARD = { mode = "preferred", position = "auto", scale = "1" }
 local RULES = {}
@@ -68,6 +70,11 @@ do
   if lid then LID_PATH = "/proc/acpi/button/lid/" .. lid .. "/state" end
 end
 
+local TYPEC_PORTS = {}
+for _, line in ipairs(lines("ls -1 /sys/class/typec 2>/dev/null")) do
+  if line:match("^port%d+$") then table.insert(TYPEC_PORTS, line) end
+end
+
 local pref = PREF_PATH and readFile(PREF_PATH)
 pref = pref and trim(pref)
 if not MODES[pref] then pref = DEFAULT_MODE end
@@ -107,11 +114,29 @@ local function activeSet()
   return active
 end
 
-local function target()
-  local anyExt = false
+local function anyExternalConnected()
   for _, name in ipairs(externals) do
-    if connected(name) then anyExt = true end
+    if connected(name) then return true end
   end
+  return false
+end
+
+-- Dock = parceiro USB-C com DisplayPort alt mode (svid ff01); carregador comum não tem.
+-- Continua ativo quando o monitor troca de entrada ou os periféricos vão pro outro PC.
+local function dockAttached()
+  for _, port in ipairs(TYPEC_PORTS) do
+    local partner = "/sys/class/typec/" .. port .. "-partner/"
+    local count = tonumber(trim(readFile(partner .. "number_of_alternate_modes") or "0")) or 0
+    for i = 0, count - 1 do
+      local svid = readFile(partner .. port .. "-partner." .. i .. "/svid")
+      if svid and trim(svid) == "ff01" then return true end
+    end
+  end
+  return false
+end
+
+local function target()
+  local anyExt = anyExternalConnected()
   local extOn = pref ~= "internal" or internal == nil
   local intOn = not anyExt or pref == "internal" or (pref == "extend" and not lidClosed())
 
@@ -207,6 +232,31 @@ end
 
 hl.on("monitor.added", schedule)
 hl.on("monitor.removed", schedule)
+
+-- O hub pisca ~3 s quando a energia dele oscila: só suspende depois de LID_SUSPEND_MS
+-- seguidos com a tampa fechada, sem monitor externo e sem dock.
+local undockedPolls = 0
+hl.timer(function()
+  if not lidClosed() or anyExternalConnected() or dockAttached() then
+    undockedPolls = 0
+    return
+  end
+  undockedPolls = undockedPolls + 1
+  if undockedPolls * LID_POLL_MS >= LID_SUSPEND_MS then
+    undockedPolls = 0
+    hl.exec_cmd("systemctl suspend")
+  end
+end, { timeout = LID_POLL_MS, type = "repeat" })
+
+-- Tira a tampa do logind enquanto este Hyprland viver; sem sessão (greeter, TTY) ele volta a decidir.
+hl.on("hyprland.start", function()
+  local pid = (readFile("/proc/self/stat") or ""):match("^(%d+)")
+  hl.exec_cmd(
+    "systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='monitors.lua decide a tampa' tail --pid="
+      .. pid
+      .. " -f /dev/null"
+  )
+end)
 
 -- Externo é o principal: SUPER+1..0 só trocam o DP-1, e o notebook fica no 11.
 -- Sem o DP-1 conectado, a regra não se aplica e os workspaces caem no eDP-1.
