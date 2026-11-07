@@ -1,4 +1,7 @@
-version = 1
+version = 2
+
+[app]
+autostart = true
 
 [[pair]]
 id = "pictures"

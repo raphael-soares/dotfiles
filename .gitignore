@@ -37,6 +37,9 @@ ai/.claude/.last-update-result.json
 ai/.claude/state/
 ai/skills/synced/
 
+# O syncfast guarda uma copia do config antes de migrar de versao.
+raphael/.config/syncfast/config.toml.v*
+
 # omp: o pacote versiona so AGENTS.md, RULES.md, config.yml, keybindings.yml,
 # temas, overlays de perfil e as extensoes escritas por mim. Credencial, banco
 # de sessao, transcript, cache e mapa de terminal sao de maquina. As redes
