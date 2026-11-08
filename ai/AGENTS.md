@@ -186,14 +186,15 @@ uma linha aqui.
 
 | Área | Conteúdo | Alcance |
 |---|---|---|
-| `~/Personal` | documentos, currículo, finanças, segurança, livros avulsos | compartilhada |
+| `~/Personal` | documentos, currículo, finanças, segurança, arquivo de `.torrent` | compartilhada |
 | `~/Udesc` | faculdade, padrão de disciplina em `~/Udesc/README.md` | compartilhada |
 | `~/Design` | projetos de design e vetores, uma pasta por projeto | compartilhada |
 | `~/Unimed` | trabalho: docs, envs, assets | só notebook |
 | `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | só notebook |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
 | `~/Games` | jogos, ROMs, saves | só PC de casa |
-| `~/Media` | filmes, séries e, em `Media/Music`, produção: samples, kits, projetos | só PC de casa |
+| `~/Music` | produção: samples, kits, presets, projetos | só PC de casa |
+| `~/Media` | consumo, uma pasta por tipo: `Movies`, `Books`, e o que vier (`Series`, `Mangas`) | só PC de casa |
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
   `~/Code/<Área>/`.
@@ -203,8 +204,10 @@ uma linha aqui.
 - `~/Downloads` (também o `XDG_DOCUMENTS_DIR`), `~/Pictures` (Screenshots,
   Wallpaper, Icons) e `~/Videos` são pastas de sistema de cada PC, não áreas: o
   que chega nelas vai para a área certa.
-- Fotos e a biblioteca de livros ficam só no Drive (`Raphael:Fotos`,
-  `Raphael:Livros`).
+- Foto fica só no Drive (`Raphael:Fotos`). Livro e mangá de leitura ficam em
+  `~/Media`, no PC de casa, fora do sync.
+- `.torrent` vai sempre para `~/Personal/Torrents`, nunca junto do conteúdo: o
+  conteúdo não sincroniza, o ponteiro sim. O qBittorrent exporta direto para lá.
 - Não existem `~/Documents`, `~/Notes` nem `~/University`. Não recrie.
 
 ---
