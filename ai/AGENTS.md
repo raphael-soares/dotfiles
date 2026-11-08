@@ -193,7 +193,7 @@ uma linha aqui.
 | `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | só notebook |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
 | `~/Games` | jogos, ROMs, saves | só PC de casa |
-| `~/Music` | produção: samples, kits, presets, projetos | só PC de casa |
+| `~/Studio` | produção musical: samples, presets, projetos | só PC de casa |
 | `~/Media` | consumo, uma pasta por tipo: `Movies`, `Books`, e o que vier (`Series`, `Mangas`) | só PC de casa |
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
@@ -207,7 +207,13 @@ uma linha aqui.
 - Foto fica só no Drive (`Raphael:Fotos`). Livro e mangá de leitura ficam em
   `~/Media`, no PC de casa, fora do sync.
 - `.torrent` vai sempre para `~/Personal/Torrents`, nunca junto do conteúdo: o
-  conteúdo não sincroniza, o ponteiro sim. O qBittorrent exporta direto para lá.
+  conteúdo não sincroniza, o ponteiro sim. O qBittorrent exporta direto para lá
+  e cada categoria dele cai na área certa: `Movies`, `Series`, `Books` e
+  `Mangas` em `~/Media/<nome>`, `Games/PC` e `Games/Switch` em `~/Games/<nome>`.
+- Mídia pesada (jogo, ROM, filme, série, sample, gravação de tela) mora em
+  `~/Games`, `~/Media`, `~/Studio` e `~/Videos`, que não são pares do syncfast:
+  nada ali sobe pro Drive. Os pares compartilhados ainda barram `*.mkv`,
+  `*.mp4`, `*.iso`, `*.nsp`, `*.xci` e `*.nsz` por filtro.
 - Não existem `~/Documents`, `~/Notes` nem `~/University`. Não recrie.
 
 ---
