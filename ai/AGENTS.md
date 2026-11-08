@@ -193,8 +193,7 @@ uma linha aqui.
 | `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | só notebook |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
 | `~/Games` | jogos, ROMs, saves | só PC de casa |
-| `~/Music` | produção: samples, kits, projetos | só PC de casa |
-| `~/Media` | filmes, séries, torrents | só PC de casa |
+| `~/Media` | filmes, séries e, em `Media/Music`, produção: samples, kits, projetos | só PC de casa |
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
   `~/Code/<Área>/`.
