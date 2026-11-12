@@ -274,8 +274,7 @@ acima, ser entendido ganha. Detalhe e tabela de traduções: skill
 
 Teste comportamento, não implementação: se a implementação muda e o
 comportamento não, o teste não quebra. Mock só na fronteira. Antes de escrever
-ou revisar teste, skill `testes`. Projeto Django com schema próprio: skill
-`django-schema`.
+ou revisar teste, skill `testes`.
 
 ---
 
