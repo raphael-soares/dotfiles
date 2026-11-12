@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Escolhe a conta do gh pelo dono do repositório (-R/--repo ou o remote origin).
+# O helper de credencial do git chama /usr/bin/gh direto e não passa por aqui.
+
+real=/usr/bin/gh
+
+if [[ -n "${GH_TOKEN:-}" || "${1:-}" == "auth" ]]; then
+    exec "$real" "$@"
+fi
+
+dono_do_repo() {
+    local args=("$@") i repo=""
+    for ((i = 0; i < ${#args[@]}; i++)); do
+        case "${args[i]}" in
+        -R | --repo) repo="${args[i + 1]:-}" ;;
+        -R?*) repo="${args[i]#-R}" ;;
+        --repo=*) repo="${args[i]#--repo=}" ;;
+        esac
+    done
+    if [[ -n "$repo" ]]; then
+        local partes
+        IFS=/ read -ra partes <<<"$repo"
+        if ((${#partes[@]} >= 3)); then
+            echo "${partes[1]}"
+        else
+            echo "${partes[0]}"
+        fi
+        return
+    fi
+    local url
+    url=$(git remote get-url origin 2>/dev/null) || return
+    case "$url" in
+    git@*:*) url=${url#*:} ;;
+    *://*) url=${url#*://} && url=${url#*/} ;;
+    *) return ;;
+    esac
+    echo "${url%%/*}"
+}
+
+case "$(dono_do_repo "$@")" in
+TEAjudo | raphael-soares) conta=raphael-soares ;;
+*) conta="" ;;
+esac
+
+if [[ -n "$conta" ]]; then
+    if token=$("$real" auth token -u "$conta" 2>/dev/null) && [[ -n "$token" ]]; then
+        export GH_TOKEN=$token
+    fi
+fi
+
+exec "$real" "$@"
