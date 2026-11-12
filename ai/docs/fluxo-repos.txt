@@ -1,0 +1,3 @@
+~/Code/TEAjudo
+~/Code/TEAjudo/api
+~/Code/TEAjudo/frontend

@@ -1,0 +1,341 @@
+#!/usr/bin/env python3
+"""Aponta onde um repositório se afasta do fluxo novo (contrato em ai/docs/portao.md).
+
+uso: fluxo-desvio [diretório]
+
+Sem argumento, lê os diretórios de ~/.dotfiles/ai/docs/fluxo-repos.txt.
+Cada achado é uma linha `DESVIO <repo>: <o quê> -> <correção>`. Sai 1 se houver algum.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+HOME = Path.home()
+REPOS_TXT = HOME / ".dotfiles/ai/docs/fluxo-repos.txt"
+CONFIG_OMP = HOME / ".omp/agent/config.yml"
+PASTAS_DE_SKILL_GLOBAIS = [HOME / ".omp/agent/managed-skills", HOME / ".dotfiles/ai/skills"]
+
+BLOCOS = [
+    "formato", "estatica", "tamanho", "teste", "mutacao", "arquitetura", "contrato",
+    "migration", "termos", "morto", "segredo", "dependencia", "risco",
+]
+CAMPOS_CODIGO = {
+    "fila": str, "integracao": str, "producao": str, "portao": str, "rapido": str,
+    "risco": list, "prova": str, "nao_se_aplica": dict, "pendente": dict, "extras": list,
+    "prefixo_de_skill": str,
+}
+CAMPOS_FILA = {"fila": str, "repos": dict, "prefixo_de_skill": str}
+MARCADORES_DE_CODIGO = ["pom.xml", "package.json", "pyproject.toml", "Cargo.toml", "go.mod", "build.gradle"]
+LIMITE_INSTRUCAO = 16 * 1024
+GATILHOS_DE_POLITICA = ("gh pr merge", "ready-for-agent")
+PRAZO_COMANDO = 60
+
+
+def curto(p):
+    p = str(p)
+    h = str(HOME)
+    return "~" + p[len(h):] if p == h or p.startswith(h + "/") else p
+
+
+def rodar(args, cwd=None):
+    try:
+        r = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=PRAZO_COMANDO)
+    except (OSError, subprocess.SubprocessError) as e:
+        return 127, str(e)
+    return r.returncode, (r.stdout if r.returncode == 0 else (r.stderr or r.stdout)).strip()
+
+
+def dono_do_remoto(raiz):
+    code, url = rodar(["git", "remote", "get-url", "origin"], cwd=raiz)
+    if code != 0:
+        return None
+    m = re.match(r"^(?:[\w.-]+@[^:]+:|\w+://[^/]+/)([^/]+)/", url)
+    return m.group(1) if m else None
+
+
+def prefixo_de(raiz, ficha):
+    if isinstance(ficha, dict) and isinstance(ficha.get("prefixo_de_skill"), str) and ficha["prefixo_de_skill"]:
+        return ficha["prefixo_de_skill"]
+    dono = dono_do_remoto(raiz)
+    return dono.lower() + "-" if dono else None
+
+
+def ler_ficha(raiz, achar):
+    caminho = raiz / "ficha.json"
+    if not caminho.is_file():
+        achar("ficha.json ausente", "criar ficha.json na raiz conforme ai/docs/portao.md")
+        return None
+    try:
+        ficha = json.loads(caminho.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        achar(f"ficha.json inválido ({e})", "corrigir o JSON")
+        return None
+    if not isinstance(ficha, dict):
+        achar("ficha.json não é um objeto JSON", "reescrever conforme ai/docs/portao.md")
+        return None
+    return ficha
+
+
+def validar_campos(ficha, esperados, achar):
+    faltam = [c for c in esperados if c not in ficha]
+    if faltam:
+        achar(f"ficha.json sem campo obrigatório: {', '.join(faltam)}", "acrescentar o campo (ai/docs/portao.md)")
+    for campo, tipo in esperados.items():
+        if campo in ficha and not isinstance(ficha[campo], tipo):
+            achar(f"ficha.json: campo {campo} deveria ser {tipo.__name__}", "corrigir o tipo")
+
+
+def verificar_portao(raiz, ficha, achar):
+    rel = ficha.get("portao") if isinstance(ficha, dict) and isinstance(ficha.get("portao"), str) and ficha["portao"] else "scripts/portao"
+    portao = raiz / rel
+    if not portao.is_file() or not os.access(portao, os.X_OK):
+        achar(f"{rel} ausente ou não executável", f"criar {rel} com a interface do contrato e chmod +x")
+        return
+    code, saida = rodar([str(portao), "--blocos"], cwd=raiz)
+    if code != 0:
+        achar(f"{rel} --blocos falhou (saída {code}): {saida.splitlines()[-1] if saida else 'sem saída'}",
+              f"fazer {rel} --blocos listar um bloco por linha e sair 0")
+        return
+    implementados = {l.strip() for l in saida.splitlines() if l.strip()}
+    nao_se_aplica = ficha.get("nao_se_aplica") if isinstance(ficha, dict) and isinstance(ficha.get("nao_se_aplica"), dict) else {}
+    pendente = ficha.get("pendente") if isinstance(ficha, dict) and isinstance(ficha.get("pendente"), dict) else {}
+    for bloco in BLOCOS:
+        if bloco in implementados:
+            continue
+        if bloco in nao_se_aplica:
+            if not str(nao_se_aplica[bloco]).strip():
+                achar(f"bloco {bloco} em nao_se_aplica sem motivo", "escrever o motivo no valor")
+        elif bloco in pendente:
+            achar(f"bloco {bloco} pendente ({pendente[bloco]})", f"implementar o bloco {bloco} em {rel} e tirá-lo de pendente")
+        else:
+            achar(f"bloco {bloco} não implementado e não declarado", "implementar em scripts/portao, ou declarar em nao_se_aplica (com motivo) ou pendente (com a issue)")
+
+
+JOB_CHAVE = re.compile(r"^(\s+)(?:[\w.-]+|\"[^\"]+\"|'[^']+')\s*:\s*(?:#.*)?$")
+
+
+def indent_de(linha):
+    return len(linha) - len(linha.lstrip(" "))
+
+
+def util(linha):
+    s = linha.strip()
+    return s != "" and not s.startswith("#")
+
+
+def jobs_do_workflow(texto):
+    linhas = texto.splitlines()
+    inicio = next((i for i, l in enumerate(linhas) if re.match(r"^jobs\s*:\s*(?:#.*)?$", l)), None)
+    if inicio is None:
+        return {}
+    corpo = []
+    for l in linhas[inicio + 1:]:
+        if util(l) and indent_de(l) == 0:
+            break
+        corpo.append(l)
+    uteis = [l for l in corpo if util(l)]
+    if not uteis:
+        return {}
+    nivel = indent_de(uteis[0])
+    jobs, atual = {}, None
+    for l in corpo:
+        if not util(l):
+            continue
+        if indent_de(l) == nivel and JOB_CHAVE.match(l):
+            atual = l.strip().split(":", 1)[0].strip("\"'")
+            jobs[atual] = []
+        elif atual is not None:
+            jobs[atual].append(l)
+    resultado = {}
+    for nome, ls in jobs.items():
+        filhos = indent_de(ls[0]) if ls else None
+        chaves = {l.strip().split(":", 1)[0] for l in ls if indent_de(l) == filhos and ":" in l}
+        resultado[nome] = chaves
+    return resultado
+
+
+def verificar_workflows(raiz, codigo, achar):
+    pasta = raiz / ".github/workflows"
+    arquivos = sorted(list(pasta.glob("*.yml")) + list(pasta.glob("*.yaml"))) if pasta.is_dir() else []
+    chama_portao = False
+    for arq in arquivos:
+        try:
+            texto = arq.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if any("scripts/portao" in l for l in texto.splitlines() if util(l)):
+            chama_portao = True
+        for job, chaves in jobs_do_workflow(texto).items():
+            if "timeout-minutes" not in chaves and "uses" not in chaves:
+                achar(f"job {job} de {arq.name} sem timeout-minutes", "declarar timeout-minutes no job")
+    if codigo and not chama_portao:
+        achar("nenhum workflow chama scripts/portao", "fazer o CI rodar scripts/portao (não existe verificação que só roda no CI)")
+
+
+def verificar_hooks(raiz, achar):
+    pastas = [p for p in (".githooks", ".husky") if (raiz / p).is_dir()]
+    if not pastas:
+        return
+    code, valor = rodar(["git", "config", "core.hooksPath"], cwd=raiz)
+    if code != 0 or not valor:
+        achar(f"{pastas[0]} existe e core.hooksPath está vazio", f"git config core.hooksPath {pastas[0]}")
+
+
+def verificar_instrucoes(raiz, achar):
+    for nome in ("AGENTS.md", "CLAUDE.md"):
+        arq = raiz / nome
+        if arq.is_file() and arq.stat().st_size > LIMITE_INSTRUCAO:
+            achar(f"{nome} com {arq.stat().st_size // 1024} KB (limite 16 KB)", "mover o detalhe para docs/ ou para o pacote que ele descreve e deixar só o essencial")
+    candidatos = [raiz / n for n in ("AGENTS.md", "CLAUDE.md") if (raiz / n).is_file()]
+    for base in (".claude/skills", ".omp/skills"):
+        pasta = raiz / base
+        if pasta.is_dir():
+            candidatos += sorted(pasta.rglob("*.md"))
+    for arq in candidatos:
+        try:
+            texto = arq.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for gatilho in GATILHOS_DE_POLITICA:
+            if gatilho in texto:
+                achar(f"{arq.relative_to(raiz)} contém `{gatilho}`", "tirar: política de fila e de merge é global (RULES.md)")
+
+
+def verificar_skills_globais(prefixo, achar):
+    for pasta in PASTAS_DE_SKILL_GLOBAIS:
+        if not pasta.is_dir():
+            continue
+        for filho in sorted(pasta.iterdir()):
+            if filho.name.startswith(prefixo):
+                achar(f"skill global {curto(filho)}", f"mover para .claude/skills/{filho.name}/ do repositório dono e arquivar a cópia global")
+
+
+def gh_json(args, cwd, linhas=False):
+    code, saida = rodar(["gh", *args], cwd=cwd)
+    if code != 0:
+        return None, saida.splitlines()[-1] if saida else f"saída {code}"
+    try:
+        if linhas:
+            return [json.loads(l) for l in saida.splitlines() if l.strip()], None
+        return json.loads(saida or "null"), None
+    except ValueError as e:
+        return None, f"JSON ilegível ({e})"
+
+
+def verificar_fila(raiz, ficha, achar):
+    fila = ficha.get("fila")
+    repos = ficha.get("repos")
+    if not isinstance(fila, str) or not isinstance(repos, dict):
+        return
+    marcos, erro = gh_json(["api", "--paginate", f"repos/{fila}/milestones?state=open&per_page=100", "--jq", ".[]"], raiz, linhas=True)
+    if erro:
+        achar(f"não consegui ler os milestones de {fila} ({erro})", "conferir `gh auth status` da conta do repositório")
+    else:
+        for m in marcos or []:
+            if m.get("open_issues") == 0 and m.get("closed_issues", 0) > 0:
+                achar(f"milestone {m['title']!r} aberto sem issue aberta ({fila})", f"fechar o milestone: gh api -X PATCH repos/{fila}/milestones/{m['number']} -f state=closed")
+    issues, erro = gh_json(["issue", "list", "-R", fila, "--label", "em-execucao", "--state", "open", "--json", "number,assignees", "--limit", "200"], raiz)
+    if erro:
+        achar(f"não consegui ler as issues em-execucao de {fila} ({erro})", "conferir `gh auth status` da conta do repositório")
+        return
+    for issue in issues or []:
+        if issue["assignees"]:
+            continue
+        n = issue["number"]
+        tem_pr = False
+        for repo in repos.values():
+            prs, erro = gh_json(["pr", "list", "-R", repo, "--head", f"fila/{n}", "--state", "all", "--json", "number", "--limit", "1"], raiz)
+            if erro:
+                achar(f"não consegui procurar PR fila/{n} em {repo} ({erro})", "conferir `gh auth status` da conta do repositório")
+                tem_pr = True
+            elif prs:
+                tem_pr = True
+        if not tem_pr:
+            achar(f"issue {fila}#{n} em-execucao sem PR de head fila/{n} e sem assignee", f"rodar `fila roda`, ou tirar em-execucao e pôr ready-for-agent (ou atribuir ao dono)")
+
+
+def autolearn_ligado():
+    try:
+        linhas = CONFIG_OMP.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return False
+    dentro = False
+    for l in linhas:
+        if re.match(r"^autolearn\s*:\s*\{.*\benabled\s*:\s*true\b", l):
+            return True
+        if re.match(r"^autolearn\s*:\s*(?:#.*)?$", l):
+            dentro = True
+            continue
+        if dentro:
+            if util(l) and indent_de(l) == 0:
+                dentro = False
+            elif re.match(r"^\s+enabled\s*:\s*true\s*(?:#.*)?$", l):
+                return True
+    return False
+
+
+def diretorios():
+    if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] in ("-h", "--help")):
+        print(__doc__.strip(), file=sys.stderr if len(sys.argv) > 2 else sys.stdout)
+        sys.exit(64 if len(sys.argv) > 2 else 0)
+    if len(sys.argv) == 2:
+        return [sys.argv[1]]
+    try:
+        linhas = REPOS_TXT.read_text(encoding="utf-8").splitlines()
+    except OSError as e:
+        print(f"DESVIO {curto(REPOS_TXT)}: não consegui ler a lista de repositórios ({e}) -> criar o arquivo com um diretório por linha")
+        sys.exit(1)
+    return [l.strip() for l in linhas if util(l)]
+
+
+def main():
+    achados = []
+    prefixos_vistos = set()
+    filas_vistas = set()
+
+    for bruto in diretorios():
+        raiz = Path(os.path.expanduser(bruto)).resolve()
+        nome = curto(raiz)
+
+        def achar(oque, correcao, nome=nome):
+            achados.append(f"DESVIO {nome}: {oque} -> {correcao}")
+
+        if not raiz.is_dir():
+            achar("diretório não existe", "corrigir ou tirar de ai/docs/fluxo-repos.txt")
+            continue
+
+        ficha = ler_ficha(raiz, achar)
+        so_fila = isinstance(ficha, dict) and "repos" in ficha and "portao" not in ficha
+        tem_marcador = any((raiz / m).exists() for m in MARCADORES_DE_CODIGO) or (raiz / "scripts/portao").exists()
+        codigo = not so_fila and (ficha is not None or tem_marcador)
+
+        if ficha is not None:
+            validar_campos(ficha, CAMPOS_FILA if so_fila else CAMPOS_CODIGO, achar)
+        if codigo:
+            verificar_portao(raiz, ficha or {}, achar)
+        verificar_workflows(raiz, codigo, achar)
+        verificar_hooks(raiz, achar)
+        verificar_instrucoes(raiz, achar)
+
+        prefixo = prefixo_de(raiz, ficha)
+        if prefixo and prefixo not in prefixos_vistos:
+            prefixos_vistos.add(prefixo)
+            verificar_skills_globais(prefixo, achar)
+
+        if so_fila and ficha.get("fila") not in filas_vistas:
+            filas_vistas.add(ficha.get("fila"))
+            verificar_fila(raiz, ficha, achar)
+
+    if autolearn_ligado():
+        achados.append(f"DESVIO global: autolearn.enabled true em {curto(CONFIG_OMP)} -> pôr enabled: false")
+
+    for linha in achados:
+        print(linha)
+    sys.exit(1 if achados else 0)
+
+
+if __name__ == "__main__":
+    main()
