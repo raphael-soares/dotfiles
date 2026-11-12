@@ -15,6 +15,7 @@ dono_do_repo() {
         -R | --repo) repo="${args[i + 1]:-}" ;;
         -R?*) repo="${args[i]#-R}" ;;
         --repo=*) repo="${args[i]#--repo=}" ;;
+        repos/*/* | /repos/*/*) [[ "${args[0]}" == api && -z "$repo" ]] && repo="${args[i]#/}" && repo="${repo#repos/}" && repo="${repo%%/*}" ;;
         esac
     done
     if [[ -n "$repo" ]]; then
