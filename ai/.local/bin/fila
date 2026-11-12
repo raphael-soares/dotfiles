@@ -1,0 +1,670 @@
+#!/usr/bin/env python3
+"""Laço da fila de issues: pega a próxima issue pronta, roda a sessão executora, espera o CI e mescla ou passa ao dono."""
+
+import argparse
+import fcntl
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+MODELO_EXECUTOR = "@task"
+MODELO_REVISOR = "@slow"
+TETO_EXECUCAO = ("10", "90m")
+TETO_CONSERTO = ("5", "45m")
+TETO_REVISAO = ("5", "30m")
+RODADAS_VERMELHAS = 2
+PRAZO_CI = 2700
+
+LABEL_PRONTA = "ready-for-agent"
+LABEL_EM_EXECUCAO = "em-execucao"
+LABEL_RISCO = "revisar-dono"
+PREFIXO_MARCA = "<!-- fila:"
+MARCA_DONO = "<!-- fila:dono -->"
+MARCA_PERGUNTA = "<!-- fila:pergunta -->"
+BUSCA_PROXIMA = f"is:open label:{LABEL_PRONTA} -is:blocked"
+CAMPOS_ISSUE = "number,title,milestone,body,assignees,comments"
+
+VARS_AWS_REMOVIDAS = ("AWS_PROFILE", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN")
+VARS_AWS_VAZIAS = ("AWS_CONFIG_FILE", "AWS_SHARED_CREDENTIALS_FILE")
+
+VERDE, CONSERTAR, REPETIR, REAVALIAR, DONO = "verde", "consertar", "repetir", "reavaliar", "dono"
+
+PROMPT_EXECUCAO_CABECALHO = """\
+Você é a sessão executora da issue {fila}#{n}. Leia a issue inteira: gh issue view {n} -R {fila} --comments.
+Worktrees prontos no branch fila/{n}: {lista}."""
+
+PROMPT_EXECUCAO_CORPO = """\
+Faça só o que a issue pede. Se quiser acrescentar algo além do pedido, ou precisar decidir esquema do banco, contrato da API, permissão, regra de dinheiro ou desviar da spec: comente a pergunta na issue, com a primeira linha <!-- fila:pergunta -->, e termine sem abrir PR.
+Durante o trabalho rode só o comando "rapido" do ficha.json de cada repositório.
+Ao terminar: commit, git push -u origin fila/{n}, e em cada repositório tocado gh pr create --base {integracao} --head fila/{n}, com a abertura no formato da seção Entrega das regras e a linha "Parte da {fila}#{n}". Não espere o CI e não faça merge. Termine."""
+
+PROMPT_CONTINUACAO = """\
+A issue {fila}#{n} já tem trabalho começado nos worktrees {lista}. Leia a issue com os comentários, git log origin/{integracao}..HEAD e git status em cada worktree, e continue de onde parou. Valem as mesmas regras da sessão de execução: {corpo}."""
+
+PROMPT_CONSERTO = """\
+A PR {repo}#{pr} da issue {fila}#{n} ficou vermelha. Saída da espera: {arquivo}. Corrija a causa, rode o comando "rapido" e o teste que falhou, commit e push. Não espere o CI. Se a falha não vem do seu diff (dev quebrada, infraestrutura), comente na PR com a evidência e termine sem mudar código."""
+
+PROMPT_REVISAO = """\
+Revise a PR {repo}#{pr} contra a issue {fila}#{n}. Não edite nada. Aponte só: comportamento que diverge da spec; caso de borda sem teste; mudança de esquema, contrato, permissão ou dinheiro que a abertura da PR não declara. Nada de estilo. Saída: no máximo cinco pontos, cada um com arquivo:linha e por que o dono deve olhar; ou a linha "Nada a apontar"."""
+
+
+class Erro(Exception):
+    pass
+
+
+@dataclass
+class Repo:
+    nome: str
+    slug: str
+    caminho: Path
+
+
+def chave_da_proxima(issue):
+    marco = issue.get("milestone")
+    titulo = marco["title"] if marco else None
+    prefixo = re.match(r"^\s*\[(\d+(?:\.\d+)*)\]", issue.get("title") or "")
+    numeros = tuple(int(p) for p in prefixo.group(1).split(".")) if prefixo else None
+    return (titulo is None, titulo or "", numeros is None, numeros or (), issue["number"])
+
+
+def ordenar_fila(issues):
+    return sorted(issues, key=chave_da_proxima)
+
+
+def repos_da_issue(corpo):
+    achado = re.search(r"^\s*\**Repos:\**\s*(.+?)\s*$", corpo or "", re.M)
+    if not achado:
+        return None
+    nomes = []
+    for parte in re.split(r"[,|]", achado.group(1)):
+        parte = parte.strip()
+        if parte and parte not in nomes:
+            nomes.append(parte)
+    return nomes
+
+
+def motivo_de_repos_invalidos(nomes, repos):
+    if not nomes:
+        return "a issue não tem a linha `Repos:` com ao menos um repositório"
+    fora = [n for n in nomes if n not in repos]
+    if fora:
+        return f"`Repos:` cita {', '.join(fora)}, que não está no ficha.json (repos: {', '.join(repos)})"
+    return None
+
+
+def decidir_ci(codigo, consertos_feitos, repeticoes_feitas):
+    if codigo == 0:
+        return VERDE
+    if codigo == 1:
+        return CONSERTAR if consertos_feitos < RODADAS_VERMELHAS else DONO
+    if codigo == 2:
+        return REPETIR if repeticoes_feitas == 0 else DONO
+    if codigo == 5:
+        return REAVALIAR
+    return DONO
+
+
+def corpo_do_ultimo(comentarios):
+    return ((comentarios[-1].get("body") or "") if comentarios else "").lstrip()
+
+
+def dono_respondeu(assignees, login, comentarios):
+    if login not in assignees or not comentarios:
+        return False
+    return not corpo_do_ultimo(comentarios).startswith(PREFIXO_MARCA)
+
+
+def sessao_pediu_dono(comentarios):
+    return corpo_do_ultimo(comentarios).startswith(MARCA_PERGUNTA)
+
+
+def nomes_de_labels(pr):
+    return [l["name"] if isinstance(l, dict) else l for l in pr.get("labels") or []]
+
+
+def pode_mesclar(prs):
+    return bool(prs) and not any(LABEL_RISCO in nomes_de_labels(pr) for pr in prs)
+
+
+def todas_mescladas(prs):
+    return bool(prs) and all(pr.get("state") == "MERGED" for pr in prs)
+
+
+def ambiente_da_sessao(env):
+    novo = {k: v for k, v in env.items() if k not in VARS_AWS_REMOVIDAS}
+    for k in VARS_AWS_VAZIAS:
+        novo[k] = "/dev/null"
+    return novo
+
+
+def segundos(duracao):
+    achado = re.fullmatch(r"(\d+)([smh]?)", duracao)
+    if not achado:
+        raise Erro(f"duração inválida: {duracao}")
+    return int(achado.group(1)) * {"": 1, "s": 1, "m": 60, "h": 3600}[achado.group(2)]
+
+
+def slug_do_remote(url):
+    achado = re.search(r"[:/]([^/:]+/[^/]+?)(?:\.git)?/?$", url.strip())
+    return achado.group(1) if achado else None
+
+
+def texto_integracao(integ):
+    valores = sorted(set(integ.values()))
+    if len(valores) == 1:
+        return valores[0]
+    return "a base de cada repositório da lista (" + ", ".join(f"{k}: {v}" for k, v in integ.items()) + ")"
+
+
+def lista_de_worktrees(itens):
+    return "; ".join(f"{caminho} ({slug}, base {base})" for caminho, slug, base in itens)
+
+
+def prompt_execucao(fila, n, itens, integ):
+    cabecalho = PROMPT_EXECUCAO_CABECALHO.format(fila=fila, n=n, lista=lista_de_worktrees(itens))
+    corpo = PROMPT_EXECUCAO_CORPO.format(fila=fila, n=n, integracao=texto_integracao(integ))
+    return f"{cabecalho}\n{corpo}"
+
+
+def prompt_continuacao(fila, n, itens, integ):
+    corpo = PROMPT_EXECUCAO_CORPO.format(fila=fila, n=n, integracao=texto_integracao(integ)).rstrip(".")
+    return PROMPT_CONTINUACAO.format(
+        fila=fila, n=n, lista=lista_de_worktrees(itens), integracao=texto_integracao(integ), corpo=corpo
+    )
+
+
+def espera_de(assignees, login, prs, comentarios):
+    if todas_mescladas(prs):
+        return "fechar: todas as PRs mescladas"
+    if login in assignees:
+        if dono_respondeu(assignees, login, comentarios):
+            return "dono respondeu: retoma no próximo `fila roda`"
+        linhas = corpo_do_ultimo(comentarios).splitlines()
+        return "dono: " + (linhas[-1] if linhas else "sem comentário")
+    abertas = [pr for pr in prs if pr.get("state") == "OPEN"]
+    if any(LABEL_RISCO in nomes_de_labels(pr) for pr in abertas):
+        return "dono: PR de risco (revisar-dono)"
+    if abertas:
+        return "CI e merge da fila"
+    return "sessão em andamento ou travada"
+
+
+def ler_json(caminho):
+    try:
+        return json.loads(Path(caminho).read_text())
+    except FileNotFoundError:
+        raise Erro(f"não existe {caminho}")
+    except json.JSONDecodeError as e:
+        raise Erro(f"JSON inválido em {caminho}: {e}")
+
+
+def executar(cmd, cwd=None, env=None, entrada=None, timeout=120):
+    try:
+        return subprocess.run(
+            cmd, cwd=cwd, env=env, input=entrada, capture_output=True, text=True, timeout=timeout
+        )
+    except FileNotFoundError:
+        raise Erro(f"comando não encontrado: {cmd[0]}")
+    except subprocess.TimeoutExpired:
+        raise Erro(f"tempo esgotado: {shlex.join(cmd)}")
+
+
+def log(msg):
+    print(f"fila: {msg}", flush=True)
+
+
+def ferramenta_irma(nome):
+    ao_lado = Path(__file__).resolve().parent / nome
+    return str(ao_lado) if ao_lado.exists() else (shutil.which(nome) or nome)
+
+
+class Projeto:
+    def __init__(self, diretorio):
+        self.dir = Path(diretorio).expanduser().absolute()
+        self.ficha = ler_json(self.dir / "ficha.json")
+        self.fila = self.ficha.get("fila")
+        if not self.fila or "/" not in self.fila:
+            raise Erro(f"{self.dir}/ficha.json sem campo `fila` no formato dono/repo")
+        repos = self.ficha.get("repos")
+        if repos:
+            self.repos = {nome: Repo(nome, slug, self.dir / nome) for nome, slug in repos.items()}
+        else:
+            r = executar(["git", "-C", str(self.dir), "remote", "get-url", "origin"])
+            slug = slug_do_remote(r.stdout) if r.returncode == 0 else None
+            if not slug:
+                raise Erro(f"{self.dir}/ficha.json sem `repos` e sem remote origin legível")
+            self.repos = {self.dir.name: Repo(self.dir.name, slug, self.dir)}
+        self.cwd_gh = next(iter(self.repos.values())).caminho
+
+    def integracao(self, nome):
+        ficha_repo = self.repos[nome].caminho / "ficha.json"
+        origem = self.ficha
+        if ficha_repo.exists():
+            origem = ler_json(ficha_repo)
+        valor = origem.get("integracao")
+        if not valor:
+            raise Erro(
+                f"sem `integracao` para {nome}: falta {ficha_repo} com esse campo "
+                f"(ou o campo no ficha.json do projeto)"
+            )
+        return valor
+
+    def worktree(self, repo, n):
+        return Path.home() / ".workmux" / repo.nome / f"fila-{n}"
+
+
+class Fila:
+    def __init__(self, projeto, simular=False):
+        self.p = projeto
+        self.simular = simular
+        self._login = None
+
+    def gh(self, *args, entrada=None):
+        r = executar(["gh", *args], cwd=self.p.cwd_gh, entrada=entrada, timeout=90)
+        if r.returncode != 0:
+            raise Erro(f"gh {' '.join(args[:3])} falhou: {(r.stderr or r.stdout).strip()}")
+        return r.stdout
+
+    def gh_json(self, *args):
+        saida = self.gh(*args)
+        return json.loads(saida) if saida.strip() else None
+
+    def mut(self, cmd, cwd=None, entrada=None, descr=None):
+        descr = descr or shlex.join(cmd)
+        if self.simular:
+            print(f"[simular] {descr}", flush=True)
+            return ""
+        log(descr)
+        cwd = cwd or (self.p.cwd_gh if cmd[0] == "gh" else None)
+        r = executar(cmd, cwd=cwd, entrada=entrada, timeout=300)
+        if r.returncode != 0:
+            raise Erro(f"{descr} falhou: {(r.stderr or r.stdout).strip()}")
+        return r.stdout
+
+    def login(self):
+        if self._login is None:
+            self._login = self.gh("api", "user", "--jq", ".login").strip()
+        return self._login
+
+    def logins(self, issue):
+        return [a["login"] for a in issue.get("assignees") or []]
+
+    def listar(self, *filtros):
+        return self.gh_json(
+            "issue", "list", "-R", self.p.fila, "--json", CAMPOS_ISSUE, "--limit", "100", *filtros
+        ) or []
+
+    def prs_da_issue(self, n, repos, estado="all"):
+        achadas = []
+        for r in repos:
+            lista = self.gh_json(
+                "pr", "list", "-R", r.slug, "--head", f"fila/{n}", "--state", estado,
+                "--json", "number,url,state,labels,headRefName", "--limit", "20",
+            ) or []
+            for pr in lista:
+                pr["repo"] = r
+                achadas.append(pr)
+        return achadas
+
+    def repos_do_trabalho(self, issue):
+        nomes = repos_da_issue(issue.get("body")) or []
+        validos = [self.p.repos[n] for n in nomes if n in self.p.repos]
+        return validos or list(self.p.repos.values())
+
+    def proxima(self, excluir=()):
+        achadas = self.listar("--search", BUSCA_PROXIMA)
+        return next(iter(ordenar_fila([i for i in achadas if i["number"] not in excluir])), None)
+
+    def dono(self, issue, motivo, tirar_pronta=False):
+        n = str(issue["number"])
+        motivo = " ".join(motivo.split())
+        args = ["gh", "issue", "edit", n, "-R", self.p.fila, "--add-assignee", self.login()]
+        if tirar_pronta:
+            args += ["--remove-label", LABEL_PRONTA]
+        self.mut(args)
+        self.mut(["gh", "issue", "comment", n, "-R", self.p.fila, "--body", f"{MARCA_DONO}\n{motivo}"])
+
+    def varrer(self, tratadas_fechadas):
+        retomar = []
+        for issue in self.listar("--label", LABEL_EM_EXECUCAO):
+            n = issue["number"]
+            if n in tratadas_fechadas:
+                continue
+            prs = self.prs_da_issue(n, self.repos_do_trabalho(issue))
+            if todas_mescladas(prs):
+                self.fechar(issue, prs)
+                tratadas_fechadas.add(n)
+            elif dono_respondeu(self.logins(issue), self.login(), issue.get("comments") or []):
+                retomar.append(issue)
+        return retomar
+
+    def fechar(self, issue, prs):
+        n = str(issue["number"])
+        repos = self.repos_do_trabalho(issue)
+        lista = "\n".join(f"- {pr['repo'].slug}#{pr['number']}: {pr['url']}" for pr in prs)
+        edicao = ["gh", "issue", "edit", n, "-R", self.p.fila, "--remove-label", LABEL_EM_EXECUCAO]
+        if self.logins(issue):
+            edicao += ["--remove-assignee", ",".join(self.logins(issue))]
+        self.mut(edicao)
+        self.mut(["gh", "issue", "close", n, "-R", self.p.fila, "--comment", f"PRs mescladas:\n{lista}"])
+        for r in repos:
+            self.remover_worktree(r, issue["number"])
+        marco = issue.get("milestone")
+        if marco:
+            self.fechar_marco_vazio(marco["number"])
+
+    def remover_worktree(self, repo, n):
+        caminho = self.p.worktree(repo, n)
+        branch = f"fila/{n}"
+        try:
+            if caminho.exists():
+                self.mut(["git", "-C", str(repo.caminho), "worktree", "remove", "--force", str(caminho)])
+            existe = executar(["git", "-C", str(repo.caminho), "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"])
+            if existe.returncode == 0:
+                self.mut(["git", "-C", str(repo.caminho), "branch", "-D", branch])
+        except Erro as e:
+            log(f"aviso: limpeza do worktree de {repo.nome} incompleta: {e}")
+
+    def fechar_marco_vazio(self, numero):
+        abertas = int(self.gh("api", f"repos/{self.p.fila}/milestones/{numero}", "--jq", ".open_issues").strip())
+        if self.simular:
+            abertas -= 1
+        if abertas == 0:
+            self.mut(["gh", "api", "-X", "PATCH", f"repos/{self.p.fila}/milestones/{numero}", "-f", "state=closed"])
+
+    def garantir_worktrees(self, n, repos, integ):
+        itens = []
+        for r in repos:
+            caminho = self.p.worktree(r, n)
+            branch = f"fila/{n}"
+            if not r.caminho.is_dir():
+                raise Erro(f"repositório de {r.nome} não existe em {r.caminho}")
+            self.mut(["git", "-C", str(r.caminho), "fetch", "origin"])
+            if caminho.exists():
+                log(f"reusa o worktree {caminho}")
+            else:
+                if not self.simular:
+                    caminho.parent.mkdir(parents=True, exist_ok=True)
+                local = executar(["git", "-C", str(r.caminho), "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"])
+                if local.returncode == 0:
+                    cmd = ["git", "-C", str(r.caminho), "worktree", "add", str(caminho), branch]
+                else:
+                    cmd = ["git", "-C", str(r.caminho), "worktree", "add", "-b", branch, str(caminho), f"origin/{integ[r.nome]}"]
+                self.mut(cmd)
+            itens.append((str(caminho), r.slug, integ[r.nome]))
+        return itens
+
+    def sessao(self, tipo, n, cwd, modelo, teto, prompt, auto_aprovar=True):
+        cmd = ["omp", "-p", "--cwd", str(cwd), "--model", modelo, "--max-cost", teto[0], "--max-time", teto[1]]
+        if auto_aprovar:
+            cmd.append("--auto-approve")
+        if self.simular:
+            print(f"[simular] sessão {tipo}: {shlex.join(cmd)} <prompt>", flush=True)
+            print("\n".join("    " + linha for linha in prompt.splitlines()), flush=True)
+            return 0, ""
+        pasta = Path(cwd) / ".scratch"
+        pasta.mkdir(exist_ok=True)
+        base = pasta / f"fila-{n}-{tipo}-{time.strftime('%Y%m%d-%H%M%S')}"
+        saida, erro = Path(f"{base}.log"), Path(f"{base}.err")
+        log(f"sessão {tipo} da issue #{n} em {cwd} (saída em {saida})")
+        inicio = time.monotonic()
+        with saida.open("w") as fo, erro.open("w") as fe:
+            try:
+                rc = subprocess.run(
+                    [*cmd, prompt], cwd=cwd, env=ambiente_da_sessao(os.environ), stdin=subprocess.DEVNULL,
+                    stdout=fo, stderr=fe, timeout=segundos(teto[1]) + 600,
+                ).returncode
+            except FileNotFoundError:
+                raise Erro("comando não encontrado: omp")
+            except subprocess.TimeoutExpired:
+                rc = 124
+        log(f"sessão {tipo} da issue #{n} terminou com código {rc} em {int(time.monotonic() - inicio)}s")
+        return rc, saida.read_text()
+
+    def esperar_ci(self, n, pr, repo, caminho):
+        consertos = repeticoes = 0
+        arquivo = Path(caminho) / ".scratch" / f"fila-{n}-ci.txt"
+        arquivo.parent.mkdir(exist_ok=True)
+        rotulo = f"{repo.slug}#{pr['number']}"
+        while True:
+            log(f"esperando o CI de {rotulo}")
+            with arquivo.open("w") as f:
+                rc = subprocess.run(
+                    [ferramenta_irma("pr-watch"), repo.slug, str(pr["number"]), "--prazo", str(PRAZO_CI), "--sem-notificacao"],
+                    stdout=f, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, cwd=caminho,
+                ).returncode
+            resultado = next(
+                (l for l in reversed(arquivo.read_text().splitlines()) if l.startswith("RESULTADO:")), f"pr-watch saiu {rc}"
+            )
+            log(f"{rotulo}: {resultado}")
+            acao = decidir_ci(rc, consertos, repeticoes)
+            if acao == VERDE:
+                return VERDE, None
+            if acao == REAVALIAR:
+                return REAVALIAR, f"{rotulo} foi fechada ou mesclada durante a espera"
+            if acao == CONSERTAR:
+                consertos += 1
+                prompt = PROMPT_CONSERTO.format(repo=repo.slug, pr=pr["number"], fila=self.p.fila, n=n, arquivo=arquivo)
+                self.sessao("conserto", n, caminho, MODELO_EXECUTOR, TETO_CONSERTO, prompt)
+                continue
+            if acao == REPETIR:
+                repeticoes += 1
+                if not self.repetir_runs_falhos(repo, pr["number"]):
+                    return DONO, f"CI de {rotulo} com falha de infraestrutura e sem run falho para repetir. {resultado}"
+                continue
+            if rc == 1:
+                return DONO, f"CI de {rotulo} continuou vermelho depois de {consertos} consertos. {resultado}"
+            if rc == 2:
+                return DONO, f"CI de {rotulo} repetiu falha de infraestrutura depois do rerun. {resultado}"
+            return DONO, f"CI de {rotulo} sem desfecho verde. {resultado}"
+
+    def repetir_runs_falhos(self, repo, numero):
+        sha = self.gh("pr", "view", str(numero), "-R", repo.slug, "--json", "headRefOid", "--jq", ".headRefOid").strip()
+        ids = self.gh(
+            "api", f"repos/{repo.slug}/actions/runs?head_sha={sha}&per_page=30", "--jq",
+            '.workflow_runs[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .id',
+        ).split()
+        for run in ids:
+            self.mut(["gh", "run", "rerun", run, "--failed", "-R", repo.slug])
+        return bool(ids)
+
+    def processar(self, issue, retomada):
+        n = issue["number"]
+        nomes = repos_da_issue(issue.get("body"))
+        if not nomes and len(self.p.repos) == 1 and not self.p.ficha.get("repos"):
+            nomes = list(self.p.repos)
+        motivo = motivo_de_repos_invalidos(nomes, self.p.repos)
+        if motivo:
+            self.dono(issue, motivo, tirar_pronta=not retomada)
+            return
+        repos = [self.p.repos[nome] for nome in nomes]
+        integ = {r.nome: self.p.integracao(r.nome) for r in repos}
+        if retomada:
+            if self.logins(issue):
+                self.mut(["gh", "issue", "edit", str(n), "-R", self.p.fila, "--remove-assignee", ",".join(self.logins(issue))])
+        else:
+            self.mut([
+                "gh", "issue", "edit", str(n), "-R", self.p.fila,
+                "--add-label", LABEL_EM_EXECUCAO, "--remove-label", LABEL_PRONTA,
+            ])
+        itens = self.garantir_worktrees(n, repos, integ)
+        primeiro = Path(itens[0][0])
+        continuacao = prompt_continuacao(self.p.fila, n, itens, integ)
+        primeira = continuacao if retomada else prompt_execucao(self.p.fila, n, itens, integ)
+        rc, _ = self.sessao("continuacao" if retomada else "execucao", n, primeiro, MODELO_EXECUTOR, TETO_EXECUCAO, primeira)
+        if self.simular:
+            log(f"[simular] daqui em diante a fila depende do resultado da sessão da issue #{n}")
+            return
+        if rc != 0:
+            rc, _ = self.sessao("continuacao", n, primeiro, MODELO_EXECUTOR, TETO_EXECUCAO, continuacao)
+            if rc != 0:
+                self.dono(issue, f"a sessão executora saiu com código {rc} duas vezes")
+                return
+        abertas = self.prs_da_issue(n, repos, "open")
+        if not abertas:
+            comentarios = self.listar_comentarios(n)
+            if sessao_pediu_dono(comentarios):
+                self.mut(["gh", "issue", "edit", str(n), "-R", self.p.fila, "--add-assignee", self.login()])
+            else:
+                self.dono(issue, "sessão terminou sem PR")
+            return
+        for pr in abertas:
+            repo = pr["repo"]
+            resultado, motivo = self.esperar_ci(n, pr, repo, self.p.worktree(repo, n))
+            if resultado == REAVALIAR:
+                if self.encerrar_se_mesclada(issue, repos):
+                    return
+                self.dono(issue, motivo)
+                return
+            if resultado == DONO:
+                self.dono(issue, motivo)
+                return
+        self.concluir(issue, repos)
+
+    def listar_comentarios(self, n):
+        achada = self.gh_json("issue", "view", str(n), "-R", self.p.fila, "--json", "comments")
+        return (achada or {}).get("comments") or []
+
+    def encerrar_se_mesclada(self, issue, repos):
+        prs = self.prs_da_issue(issue["number"], repos)
+        if todas_mescladas(prs):
+            self.fechar(issue, prs)
+            return True
+        return False
+
+    def concluir(self, issue, repos):
+        n = issue["number"]
+        abertas = self.prs_da_issue(n, repos, "open")
+        if pode_mesclar(abertas):
+            for pr in abertas:
+                rotulo = f"{pr['repo'].slug}#{pr['number']}"
+                try:
+                    self.mut(["gh", "pr", "merge", str(pr["number"]), "-R", pr["repo"].slug, "--merge", "--delete-branch"])
+                except Erro as e:
+                    estado = self.gh("pr", "view", str(pr["number"]), "-R", pr["repo"].slug, "--json", "state", "--jq", ".state").strip()
+                    if estado != "MERGED":
+                        self.dono(issue, f"merge de {rotulo} falhou: {e}")
+                        return
+                    log(f"aviso: {rotulo} mesclada, mas o gh reclamou: {e}")
+            return
+        arriscadas = [pr for pr in abertas if LABEL_RISCO in nomes_de_labels(pr)]
+        for pr in arriscadas:
+            repo = pr["repo"]
+            prompt = PROMPT_REVISAO.format(repo=repo.slug, pr=pr["number"], fila=self.p.fila, n=n)
+            rc, saida = self.sessao("revisao", n, self.p.worktree(repo, n), MODELO_REVISOR, TETO_REVISAO, prompt, auto_aprovar=False)
+            texto = saida.strip() or f"A sessão revisora não produziu saída (código {rc})."
+            self.mut(["gh", "pr", "comment", str(pr["number"]), "-R", repo.slug, "--body-file", "-"], entrada=texto)
+            self.mut(["gh", "pr", "edit", str(pr["number"]), "-R", repo.slug, "--add-assignee", self.login()])
+        urls = ", ".join(pr["url"] for pr in arriscadas)
+        self.dono(issue, f"PR de risco ({LABEL_RISCO}) com CI verde, revisão publicada na PR, nada mesclado: {urls}")
+
+    def roda(self, maximo):
+        tratadas, fechadas, feitas = set(), set(), 0
+        while True:
+            retomar = [i for i in self.varrer(fechadas) if i["number"] not in tratadas]
+            if maximo is not None and feitas >= maximo:
+                log(f"limite de {maximo} issue(s) atingido")
+                return 0
+            if retomar:
+                issue, retomada = retomar[0], True
+            else:
+                issue, retomada = self.proxima(tratadas), False
+            if issue is None:
+                log("não há próxima issue pronta")
+                return 0
+            tratadas.add(issue["number"])
+            feitas += 1
+            log(f"{'retomando' if retomada else 'pegando'} #{issue['number']}: {issue['title']}")
+            self.processar(issue, retomada)
+
+    def estado(self):
+        login = self.login()
+        print("em execução:")
+        em_execucao = self.listar("--label", LABEL_EM_EXECUCAO)
+        for issue in em_execucao:
+            prs = self.prs_da_issue(issue["number"], self.repos_do_trabalho(issue))
+            espera = espera_de(self.logins(issue), login, prs, issue.get("comments") or [])
+            print(f"  #{issue['number']} {issue['title']} -> {espera}")
+        if not em_execucao:
+            print("  nenhuma")
+        print(f"atribuído a {login}:")
+        vazio = True
+        for issue in self.gh_json("issue", "list", "-R", self.p.fila, "--assignee", login, "--json", "number,title,url", "--limit", "100") or []:
+            print(f"  issue #{issue['number']} {issue['title']} {issue['url']}")
+            vazio = False
+        for r in self.p.repos.values():
+            for pr in self.gh_json("pr", "list", "-R", r.slug, "--assignee", login, "--json", "number,title,url,labels", "--limit", "100") or []:
+                marca = " [revisar-dono]" if LABEL_RISCO in nomes_de_labels(pr) else ""
+                print(f"  PR {r.slug}#{pr['number']} {pr['title']}{marca} {pr['url']}")
+                vazio = False
+        if vazio:
+            print("  nada")
+
+
+def desvio(projeto):
+    try:
+        r = subprocess.run([ferramenta_irma("fluxo-desvio"), str(projeto.dir)], capture_output=True, text=True, timeout=120)
+    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+        log(f"fluxo-desvio indisponível ({type(e).__name__}), seguindo")
+        return
+    print((r.stdout + r.stderr).rstrip() or "fluxo-desvio: sem achados", flush=True)
+
+
+def travar(projeto):
+    dono, repo = projeto.fila.split("/", 1)
+    pasta = Path.home() / ".cache" / "fila"
+    pasta.mkdir(parents=True, exist_ok=True)
+    arquivo = (pasta / f"{dono}-{repo}.lock").open("a+")
+    try:
+        fcntl.flock(arquivo, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        arquivo.close()
+        return None
+    return arquivo
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="fila", description="Laço da fila de issues no GitHub.")
+    sub = ap.add_subparsers(dest="comando", required=True)
+    sub.add_parser("proxima", help="imprime a próxima issue pronta ou sai 1").add_argument("dir")
+    sub.add_parser("estado", help="issues em execução e o que esperam, mais o que está com o dono").add_argument("dir")
+    roda = sub.add_parser("roda", help="roda o laço")
+    roda.add_argument("dir")
+    roda.add_argument("--uma", action="store_true", help="processa uma issue só")
+    roda.add_argument("--max", type=int, metavar="N", help="processa no máximo N issues")
+    roda.add_argument("--simular", action="store_true", help="imprime as ações sem mudar nada")
+    args = ap.parse_args(argv)
+    try:
+        projeto = Projeto(args.dir)
+        fila = Fila(projeto, simular=getattr(args, "simular", False))
+        if args.comando == "proxima":
+            issue = fila.proxima()
+            if issue is None:
+                print("não há próxima issue pronta")
+                return 1
+            marco = (issue.get("milestone") or {}).get("title", "sem milestone")
+            print(f"#{issue['number']} [{marco}] {issue['title']}")
+            return 0
+        if args.comando == "estado":
+            fila.estado()
+            return 0
+        trava = travar(projeto)
+        if trava is None:
+            print(f"fila: já há um executor rodando para {projeto.fila}", file=sys.stderr)
+            return 1
+        desvio(projeto)
+        return fila.roda(1 if args.uma else args.max)
+    except Erro as e:
+        print(f"fila: {e}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
