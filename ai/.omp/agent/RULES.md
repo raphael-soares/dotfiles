@@ -73,6 +73,11 @@ separando teste escrito de teste rodado); o que não foi feito. Merge em
 branch de integração só com CI verde e sem a label `revisar-dono`. Branch de
 produção e PR com `revisar-dono` são do dono.
 
+PR do frontend que muda tela traz a seção `## Antes e depois` com print da
+mesma rota e do mesmo usuário, antes (a dev) e depois, em 375 px e desktop.
+`scripts/prints <rotas>` tira as imagens e as empurra no branch `prints/telas`;
+o workflow `Prints` barra a PR sem imagem.
+
 Comentário: o padrão é zero. Só entram contrato não-óbvio, workaround com a causa
 nomeada, armadilha que a próxima pessoa quebraria, id de requisito ou ADR, e TODO com
 issue. Nenhum bloco passa de cinco linhas: justificativa maior que isso vira ADR em
