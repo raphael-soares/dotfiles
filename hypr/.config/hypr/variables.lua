@@ -1,3 +1,3 @@
 local M = {}
-M.terminal = "alacritty -e ~/.config/tmux/tmux-default.sh"
+M.terminal = "if tmux list-clients 2>/dev/null | grep -q .; then exec kitty; else exec kitty ~/.config/tmux/tmux-default.sh; fi"
 return M

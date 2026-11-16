@@ -7,14 +7,14 @@ DISTRO=$(. /etc/os-release && echo "$ID")
 
 GRUPOS=(terminal ai desktop hyprland audio sistema vpn raphael)
 declare -A DESCRICAO=(
-  [terminal]="bash, tmux, alacritty, git, starship, fzf, mise, nvim, workmux"
+  [terminal]="bash, tmux, alacritty, kitty, git, starship, fzf, mise, nvim, workmux, herdr-app"
   [ai]="AGENTS.md, skills, omp e Claude Code"
   [desktop]="tema GTK, fontes e webapps (qualquer desktop)"
   [hyprland]="Hyprland, Noctalia e portal (so Arch)"
   [audio]="WirePlumber so com A2DP no Bluetooth (sem microfone em fone BT)"
-  [sistema]="/etc: greetd, PAM do greetd, plymouth e zram (copia com sudo); thermald e fwupd (so Arch)"
+  [sistema]="/etc: greetd, PAM do greetd, plymouth, zram, journald (500M), paccache (desinstalados) e GC do build cache do docker (copia com sudo); thermald e fwupd (so Arch)"
   [vpn]="~/.local/bin/vpn, VPN Fortinet SSL pelo NetworkManager"
-  [raphael]="so do Raphael: TMUX_SESSIONIZER_DIRS, ompe, syncfast, atalho do Alacritty"
+  [raphael]="so do Raphael: TMUX_SESSIONIZER_DIRS, ompe, syncfast, atalhos do Alacritty e do kitty"
 )
 declare -A SO_ARCH=([hyprland]=1 [sistema]=1)
 
@@ -116,7 +116,8 @@ grupo_terminal() {
   instalar_pacotes terminal
   avisar_sem_pacote starship mise workmux
   linkar .config/tmux .config/workmux .config/mise .config/git \
-    -- bash tmux alacritty git starship fzf mise nvim workmux
+    .config/herdr-app .config/herdr-app/layouts .config/herdr-app/mods \
+    -- bash tmux alacritty kitty git starship fzf mise nvim workmux herdr-app
   if [[ ! -f "$HOME/.env.local" ]]; then
     cp .env.example "$HOME/.env.local"
     echo "==> ~/.env.local criado a partir do .env.example, preencha as chaves"

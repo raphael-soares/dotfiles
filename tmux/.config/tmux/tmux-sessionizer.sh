@@ -65,9 +65,10 @@ to_session_name() {
     echo "${n//\//-}"
 }
 
-if [[ $# -eq 1 ]]; then
-    selected=$1
-else
+# Sessao aberta vem como "* nome". O ctrl-x do fzf chama o proprio script nos
+# modos --list e --kill.
+list_entries() {
+    local sessions s label
     # Sessoes popup-* pertencem ao toggle de popup e nao entram na lista.
     sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null |
         grep -v '^popup-' || true)
@@ -75,20 +76,41 @@ else
     declare -A session_set
     while IFS= read -r s; do [[ -n "$s" ]] && session_set["$s"]=1; done <<< "$sessions"
 
-    # Dirs whose session name doesn't match any active session
-    dir_names=""
-    for label in "${!dir_map[@]}"; do
-        sname=$(to_session_name "$label")
-        [[ -z "${session_set[$sname]}" ]] && dir_names+="$label"$'\n'
-    done
-
-    # Active sessions marked with *
-    session_lines=""
     while IFS= read -r s; do
-        [[ -n "$s" ]] && session_lines+="* $s"$'\n'
-    done <<< "$sessions"
+        [[ -n "$s" ]] && printf '* %s\n' "$s"
+    done <<< "$sessions" | sort
+    for label in "${!dir_map[@]}"; do
+        [[ -z "${session_set[$(to_session_name "$label")]}" ]] && printf '%s\n' "$label"
+    done | sort
+}
 
-    selected=$( (printf '%s' "$session_lines"; printf '%s' "$dir_names") | sort -u | fzf ) || exit 0
+case "${1:-}" in
+    --dirs)
+        for label in "${!dir_map[@]}"; do
+            printf '%s\t%s\n' "$label" "${dir_map[$label]}"
+        done | sort
+        exit 0
+        ;;
+    --list)
+        list_entries
+        exit 0
+        ;;
+    --kill)
+        # Matar a sessao atual jogaria o cliente pra outra (detach-on-destroy off).
+        [[ "$2" == '* '* && "${2#\* }" != "${SESSIONIZER_CURRENT:-}" ]] &&
+            tmux kill-session -t "=${2#\* }"
+        exit 0
+        ;;
+esac
+
+if [[ $# -eq 1 ]]; then
+    selected=$1
+else
+    export SESSIONIZER_CURRENT
+    SESSIONIZER_CURRENT=$(tmux display-message -p '#{client_session}')
+    self=$(realpath "$0")
+    selected=$(list_entries | fzf \
+        --bind="ctrl-x:execute-silent($self --kill {})+reload($self --list)") || exit 0
     selected="${selected#\* }"
 fi
 
@@ -100,10 +122,11 @@ if tmux has-session -t="$session_name" 2>/dev/null; then
     tmux switch-client -t="$session_name"
 else
     dir="${dir_map[$selected]:-}"
+    size=(-x "$(tmux display-message -p '#{window_width}')" -y "$(tmux display-message -p '#{window_height}')")
     if [[ -n "$dir" ]]; then
-        tmux new-session -ds "$session_name" -c "$dir"
+        tmux new-session -ds "$session_name" -c "$dir" "${size[@]}"
     else
-        tmux new-session -ds "$session_name"
+        tmux new-session -ds "$session_name" "${size[@]}"
     fi
     tmux switch-client -t="$session_name"
 fi

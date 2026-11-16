@@ -84,4 +84,10 @@ fi
 
 command -v starship >/dev/null && eval "$(starship init bash)"
 
+# OSC 133 marca prompt (A) e inicio da saida (C) pro previous/next-prompt do
+# copy mode do tmux. Depois do starship: ele toma o PROMPT_COMMAND.
+_osc133_prompt() { printf '\e]133;A\e\\'; }
+PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_osc133_prompt"
+PS0="${PS0-}"$'\e]133;C\e\\'
+
 alias ompp=omp

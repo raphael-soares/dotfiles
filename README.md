@@ -12,7 +12,8 @@ o resto: `git clone` do repo e `stow -t ~ <pasta>` de dentro dele.
 | Pacote | O que faz | Precisa de | Observação |
 |---|---|---|---|
 | `bash` | `.bashrc` (histórico, aliases, PATH, mise, fzf, starship) e `.bash_profile` | bash | carrega `~/.config/shell/rc.d/*.sh`, `~/.env.local` e `~/.bash_profile.local` quando existem |
-| `alacritty` | config do terminal e temas | alacritty, JetBrainsMono Nerd Font | usa `oneblack` e, por cima, o `noctalia.toml` quando ele existir (o Noctalia gera só no notebook) |
+| `alacritty` | config do terminal e temas | alacritty, JetBrainsMono Nerd Font | usa o `noctalia.toml` quando ele existir (o Noctalia gera só no notebook) e, por cima, o `gruvbox-material` |
+| `kitty` | config do terminal e tema | kitty, JetBrainsMono Nerd Font | mesmas cores do Alacritty (`gruvbox-material` sobre o `noctalia.conf`); padrão do Hyprland enquanto dura o teste |
 | `tmux` | `tmux.conf`, sessionizer de projetos (`prefix + Tab`), de ssh e integração com o workmux | tmux, fzf | o sessionizer lê `TMUX_SESSIONIZER_DIRS`; sem ela varre o home |
 | `nvim` | config do Neovim com lazy.nvim, LSP, DAP e Java | neovim, git | os plugins se instalam na primeira abertura |
 | `git` | `.gitconfig` (nvimdiff, credencial pelo `gh`) e ignore global | git, gh | o `[user]` tem nome e e-mail do Raphael: troque |
@@ -28,14 +29,14 @@ o resto: `git clone` do repo e `stow -t ~ <pasta>` de dentro dele.
 | `noctalia` | plugins, estado e wallpaper do Noctalia | noctalia | o estado tem caminhos do Raphael: referência, não para instalar |
 | `audio` | WirePlumber só com A2DP no Bluetooth: caixa BT não cai em mono 16 kHz, mas nenhum fone BT tem microfone | pipewire, wireplumber | |
 | `vpn` | `~/.local/bin/vpn up\|down\|status`, VPN Fortinet SSL pelo NetworkManager | networkmanager-fortisslvpn | lê os `VPN_*` do `~/.env.local` |
-| `raphael` | `TMUX_SESSIONIZER_DIRS`, `ompe`, config do syncfast e atalho do Alacritty | | só do Raphael |
+| `raphael` | `TMUX_SESSIONIZER_DIRS`, `ompe`, config do syncfast e atalhos do Alacritty e do kitty | | só do Raphael |
 
 O `install.sh` agrupa os pacotes e, rodado sem argumento, pergunta grupo por
 grupo. Dá para passar direto (`./install.sh terminal ai`):
 
 | Grupo | Pacotes do stow | Distros |
 |---|---|---|
-| `terminal` | bash tmux alacritty git starship fzf mise nvim workmux | Arch, Fedora |
+| `terminal` | bash tmux alacritty kitty git starship fzf mise nvim workmux | Arch, Fedora |
 | `ai` | ai | Arch, Fedora |
 | `desktop` | gtk fontes webapps | Arch, Fedora |
 | `hyprland` | hypr noctalia | Arch |

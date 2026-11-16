@@ -1,48 +1,26 @@
-# Config global do workmux. Projeto pode sobrescrever com um .workmux.yaml
-# na raiz. Referencia completa: workmux config reference
+# Config global do workmux. So o que foge do default, cada um com o motivo.
 
-agent: claude
 nerdfont: true
 
-# Historico deste e dos outros repos e linear, entao rebase em vez de commit
-# de merge.
-merge_strategy: rebase
+# Com agent explicito o painel do agente abre em qualquer repo; sem ele, so
+# em repo com CLAUDE.md.
+agent: omp
 
-# Sem isso, cada repo ganha um irmao <projeto>__worktrees no mesmo diretorio
-# em que o sessionizer varre, e as arvores de trabalho aparecem como se
-# fossem projetos.
+# O default (<repo>__worktrees ao lado do repo) cai na pasta que o
+# sessionizer varre, e as worktrees aparecem como projetos.
 worktree_dir: ~/.workmux/{project}
 
-# Spinner braille default do workmux ocupa 2 celulas (a 2a mostra o frame
-# seguinte, efeito de onda) e parece icone duplicado. Override de working
-# com um bullet unico e discreto -- isso desliga a animacao, por design do
-# workmux. waiting/done ficam nos defaults nerdfont (comment / check_circle).
+# O tmux.conf deixa window-status-format vazio e mostra janelas pelo indice.
+# Com o default, o workmux poe #I:#W em cada janela dele e duplica a barra.
+status_format: false
+
+# O spinner default ocupa 2 celulas e parece icone duplicado.
 status_icons:
   working: "#[fg=colour3]•#[fg=default]"
 
-# Sem isso o workmux seta window-status-format por janela (index:nome+flag),
-# sobrescrevendo o formato global do tmux.conf so nas janelas que ele
-# gerencia.
-status_format: false
-
-# Sem width fixa: default e 10% do terminal (25-50 col). sort: window segue os
-# numeros da status bar. Linha 1: {primary} e o nome da janela, que o agente seta
-# com a tarefa; agent_icons.omp = pi porque o default (U+2325) nao se reconhece.
-# Linha 2: projeto a esquerda, branch e tempo a direita (branch depois do {fill}
-# para nao sobrar separador quando nao ha branch).
+# Largura fixa: sem ela o workmux trata mudanca de largura do pane como
+# resize manual e espalha o valor pra todas as sessoes. Mesma ordem dos
+# indices da barra do tmux.
 sidebar:
-  layout: tiles
   sort: window
-  agent_icons:
-    omp: "π"
-  templates:
-    compact: "{status_icon} {agent_icon} #[fg=blue,bold]{primary}#[default] {pane_suffix} {fill} {elapsed}"
-    tiles:
-      - "{agent_icon} #[fg=blue,bold]{primary}#[default] {pane_suffix}"
-      - "#[fg=colour244] {project}#[default] {fill} #[fg=colour244]{git_branch}#[default] {elapsed}"
-
-panes:
-  - command: <agent>
-    focus: true
-  - split: horizontal
-    size: 15
+  width: 52
