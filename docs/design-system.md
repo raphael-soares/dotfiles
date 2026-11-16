@@ -49,12 +49,12 @@ separar planos (`surface` < container), e preto puro apaga essa hierarquia.
 Como cada app recebe a paleta:
 
 - **Template do Noctalia** (`theme.templates` no `settings.toml`): GTK 3/4,
-  Hyprland, Alacritty, btop, cava, kitty e os da comunidade. O Noctalia
+  Hyprland, Ghostty, btop, cava e os da comunidade (herdr-app). O Noctalia
   reescreve os arquivos gerados a cada troca de paleta; eles ficam fora do git.
 - **Hyprland**: não usa a paleta. A borda da janela é branca com alfa
   (`borders.lua`), como o fio neutro do macOS.
 - **Ferramentas de terminal** (nvim, fzf, tmux, starship): usam as cores ANSI do
-  terminal, que vêm do tema do terminal (Alacritty ou kitty). Cor nelas é
+  terminal, que vêm do tema do terminal (herdr-app ou Ghostty). Cor nelas é
   índice ANSI (0 a 15), nunca hex.
 
 Exceções: a sombra é preta com alfa (`look.lua`) e a borda da janela é branca
@@ -136,11 +136,10 @@ nome genérico:
 | Apps libadwaita (gsettings, aplicado pelo `install.sh`) | `Sans 10` e `Monospace 10` |
 | Qt | Segue o GTK (`QT_QPA_PLATFORMTHEME=gtk3`) |
 | Noctalia | `sans-serif` (padrão; sem `font_family` no `settings.toml`) |
-| Alacritty | `JetBrainsMono Nerd Font` pelo nome |
-| kitty | `JetBrainsMono Nerd Font` pelo nome |
+| Ghostty e herdr-app | `JetBrainsMono Nerd Font` pelo nome |
 
-O Alacritty e o kitty são a exceção: pedem a família pelo nome, para o terminal
-não depender do alias.
+O Ghostty e o herdr-app são a exceção: pedem a família pelo nome, para o
+terminal não depender do alias.
 
 Tamanho base 10pt (13px a 96 dpi), perto dos 13px do macOS. Hierarquia por peso
 e tamanho, nunca por cor. A Inter faz o papel da SF Pro, que só é licenciada
@@ -208,8 +207,8 @@ Regras:
 | Movimento | `hypr/.config/hypr/animations.lua` | Escrito |
 | Família de fonte | `fontes/.config/fontconfig/conf.d/50-fontes.conf` | Escrito |
 | Fonte e ícones no GTK | `gtk/.config/gtk-{3,4}.0/settings.ini` | Escrito |
-| Tema do terminal | `~/.config/alacritty/themes/noctalia.toml` | Gerado, fora do git |
-| Tema do kitty | `~/.config/kitty/themes/noctalia.conf` | Gerado, fora do git |
+| Tema do Ghostty | `~/.config/ghostty/themes/noctalia` | Gerado, fora do git |
+| Tema do herdr-app | `~/.config/herdr-app/themes/noctalia.json` | Gerado, fora do git |
 
 O `borders.lua` é o único lugar que define cor de borda. O `apply_theme()` do
 `noctalia.lua` gerado não é chamado, porque ele sobrescreveria a borda.
@@ -233,8 +232,7 @@ perde.
 | Onde | O quê | Por quê |
 |---|---|---|
 | `windowrules.lua`, `pip-float` | Picture-in-Picture sem borda e opaco | O vídeo é o conteúdo; fio e transparência atrapalham |
-| `alacritty.toml` | Família de fonte pelo nome | Escolha explícita, para o terminal não depender do alias |
-| `kitty.conf` | Família de fonte pelo nome | Mesma escolha do Alacritty |
+| Ghostty `config` e herdr-app `settings.json` | Família de fonte pelo nome | Escolha explícita, para o terminal não depender do alias |
 | `look.lua`, sombra | Preto literal | Sombra não muda de cor com a paleta |
 | `settings.toml`, `[bar.default] border` | `#ffffff14`, cópia do `inactive_border` do `borders.lua` | O Noctalia não lê o Hyprland; o fio da barra tem que ser igual ao da janela |
 | `keymaps.lua`, `SUPER+SHIFT+G` | Zera gaps, borda e raio | Modo para compartilhar tela; restaura os valores do `look.lua` |

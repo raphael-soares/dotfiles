@@ -56,9 +56,9 @@ branch antes.
 ## Worktrees
 
 Worktree novo vai sempre em `~/.workmux/<projeto>/<handle>`, o mesmo lugar que o
-`workmux` usa (`worktree_dir` em `~/.config/workmux/config.yaml`). Prefira
-`workmux add`; se usar `git worktree add` direto, aponte para esse caminho. Nunca
-crie worktree na home, no Desktop ou ao lado do repo.
+herdr-app usa (`worktrees.directory` em `~/.config/herdr-app/settings.json`).
+Prefira criar pelo herdr-app; se usar `git worktree add` direto, aponte para esse
+caminho. Nunca crie worktree na home, no Desktop ou ao lado do repo.
 
 Mesclou a PR da branch, remova o worktree (`git worktree remove`) na mesma sessão.
 Worktree só de leitura (copiar um commit, comparar versões) se remove ao terminar a
