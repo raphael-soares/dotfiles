@@ -15,5 +15,6 @@
   "theme": "noctalia",
   "worktrees": {
     "directory": "~/.workmux"
-  }
+  },
+  "telemetry": false
 }
