@@ -1,6 +1,6 @@
 ---
 name: discussao
-description: Testa uma ideia crua antes de qualquer plano ou código: questiona premissas, compara alternativas (produto ou técnica), poli até ficar sólida. Use quando o usuário chega com uma ideia solta no início da sessão, pede pra "bater ideia", "pensar junto" ou "discutir antes de implementar", antes de entrar no fluxo de plano. Não faz pergunta ao usuário a não ser que ele peça.
+description: Testa uma ideia crua antes de qualquer plano ou código: questiona premissas, compara alternativas (produto ou técnica), poli até ficar sólida. Use quando o usuário chega com uma ideia solta no início da sessão, pede pra "bater ideia", "pensar junto" ou "discutir antes de implementar", antes de entrar no fluxo de plano. Só pergunta no fim, com decisões reais.
 ---
 
 # Discussão
@@ -32,19 +32,18 @@ pessoal, uma skill nova. Ainda não tem card, ainda não tem plano.
 - **Conversa solta, sem ciclo fixo.** Nada de checklist de etapas (intake,
   contexto, convergência, entrega). Segue uma frente por vez, aprofunda o
   ponto mais incerto, deixa a ideia amadurecer no ritmo da conversa.
-- **Sem pergunta, a não ser que o usuário peça.** Não abra a ferramenta de
-  pergunta (`ask`, `AskUserQuestion`) nem faça pergunta em texto. Responda
-  em texto: o diagnóstico, as opções com tradeoff e a sua recomendação, e
-  pare. O usuário responde se quiser. Só pergunte quando ele mandar
-  ("me pergunta", "faz as perguntas"), e aí numa chamada só, com o mínimo.
-  Vale mesmo que a ferramenta ou o harness cobre pergunta.
+- **Pergunta só no fim e só com decisão real.** Enquanto a ideia ainda está
+  crua, responda em texto (diagnóstico, opções com tradeoff, recomendação) e
+  nada de pergunta. Quando ela convergiu em opções que só o usuário pode
+  escolher, feche com uma única chamada `ask` com todas juntas, como manda o
+  RULES.md. Pergunta em texto solto, nunca.
 
 ## Convergência
 
 A ideia está pronta quando dá pra dizer em uma frase que problema ela
 resolve, pelo menos uma alternativa real foi pesada com o tradeoff dela, e os
 riscos ou casos de borda óbvios já foram nomeados. Reflita isso de volta pro
-usuário em texto, sem pedir confirmação por pergunta.
+usuário em texto e, se houver escolha a fazer, feche com o ask das opções.
 
 Não escreva plano, não crie arquivo, não toque em código. Convergiu, para
 por aí: quem assume a partir daqui é o fluxo de plano normal (plan mode,

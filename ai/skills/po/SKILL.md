@@ -82,7 +82,7 @@ fila antes de gravar.
 
 - Issue nova: `gh issue create -R <fila> --title "<título>" --milestone "<milestone>" --body-file <arquivo>`.
 - Issue existente: `gh issue edit <N> -R <fila> --body-file <arquivo>`.
-- Milestone é obrigatório. Título sem prefixo.
+- Milestone é obrigatório e segue a seção Milestone abaixo. Título da issue sem prefixo.
 - Dependência de outra issue: `gh issue edit <N> -R <fila> --add-blocked-by <M>`.
 - O arquivo do corpo vai em `.scratch/` do repositório e é apagado depois.
 
@@ -114,6 +114,21 @@ a agenda por profissional"), nunca uma camada técnica ("criar o controller").
 saber onde abrir os worktrees: use exatamente os nomes do campo `repos` do
 `ficha.json`. Mais de três decisões caras em aberto (esquema, contrato, permissão,
 dinheiro) quer dizer que a spec ainda não está pronta: volte para a conversa.
+
+## Milestone
+
+O mesmo padrão em todo repositório com fila. A fila ordena pelo título da
+milestone, então o título é a ordem de execução.
+
+- Título `NN. Nome`, com dois dígitos, em português. Para entrar entre duas,
+  use sufixo: `17a. Nome`.
+- `00. Saúde técnica` é permanente: bug, dívida técnica e desempenho que não
+  pertencem a uma milestone de resultado. A fila não a fecha.
+- Toda issue aberta tem milestone. Milestone sem issue aberta se fecha.
+- Descrição: uma frase de objetivo e `Itens: #N #M`. Issue que entra ou sai
+  atualiza essa lista.
+- `gh issue list --milestone` com título acentuado pode voltar vazio sem erro.
+  Confira pela API, com o número: `gh api "repos/<fila>/issues?milestone=<numero>"`.
 
 ## Pronta para a fila
 

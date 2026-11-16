@@ -15,6 +15,6 @@ While discussing:
 - Answer with evidence: file, line, what the code actually does.
 - Lay out the real options with the tradeoff of each, including doing nothing.
 - Say which one you would pick and why, and say plainly when the user's idea is the better one.
-- End by handing the decision back, with open questions asked through the interactive question tool.
+- End by handing the decision back: prose first, then a single ask batching the real decisions, if any.
 
 Keep recording findings in `local://<slug>-plan.md` if useful, but do not submit it. The file is notes until the user says it is a plan.

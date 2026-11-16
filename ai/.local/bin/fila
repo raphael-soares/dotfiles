@@ -137,6 +137,10 @@ def todas_mescladas(prs):
     return bool(prs) and all(pr.get("state") == "MERGED" for pr in prs)
 
 
+def fecha_marco_vazio(marco):
+    return bool(marco) and not (marco.get("title") or "").startswith("00.")
+
+
 def ambiente_da_sessao(env):
     novo = {k: v for k, v in env.items() if k not in VARS_AWS_REMOVIDAS}
     for k in VARS_AWS_VAZIAS:
@@ -357,7 +361,7 @@ class Fila:
         for r in repos:
             self.remover_worktree(r, issue["number"])
         marco = issue.get("milestone")
-        if marco:
+        if fecha_marco_vazio(marco):
             self.fechar_marco_vazio(marco["number"])
 
     def remover_worktree(self, repo, n):

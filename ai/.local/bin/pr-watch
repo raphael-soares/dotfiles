@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+# Acompanha os checks de uma PR do GitHub e sai assim que houver um desfecho.
+set -uo pipefail
+
+uso() {
+  cat <<'EOF'
+uso: pr-watch <owner/repo> <pr> [opções]
+
+  --prazo SEG          tempo total máximo (padrão 3600)
+  --sem-check SEG      nenhum check e nenhum run aberto nesse tempo após ver o commit: "não acionada" (padrão 300)
+  --fila SEG           job parado na fila mais que isso: "parado" (padrão 900)
+  --intervalo SEG      intervalo entre leituras (padrão 30)
+  --conta USUARIO      usa o token dessa conta do gh (sem GH_TOKEN, a org TEAjudo usa raphael-soares)
+  --sem-notificacao    não chama notify-send no fim
+
+Só imprime quando o estado muda. Códigos de saída:
+  0 verde              todos os checks do commit atual passaram
+  1 falha              check falhou com erro de código ou teste (trecho do log impresso)
+  2 falha-infra        exit 137/143, rate limit, blob, cancelamento, runner perdido: vale rerun
+  3 nao-acionada       nenhum check para o commit: run esperando aprovação (action_required),
+                       só runs de outro evento, PR em conflito ou rascunho
+  4 parado             job na fila há tempo demais (mostra labels e runners)
+  5 fechada            PR fechada ou mergeada durante a espera
+  6 prazo              estourou --prazo sem desfecho
+  7 gh-falhando        gh falhou 5 leituras seguidas
+EOF
+}
+
+[ $# -ge 2 ] || { uso >&2; exit 64; }
+REPO=$1 PR=$2; shift 2
+PRAZO=3600 SEM_CHECK=300 FILA=900 INTERVALO=30 CONTA="" NOTIFICAR=1
+while [ $# -gt 0 ]; do
+  case $1 in
+    --prazo) PRAZO=$2; shift 2 ;;
+    --sem-check) SEM_CHECK=$2; shift 2 ;;
+    --fila) FILA=$2; shift 2 ;;
+    --intervalo) INTERVALO=$2; shift 2 ;;
+    --conta) CONTA=$2; shift 2 ;;
+    --sem-notificacao) NOTIFICAR=0; shift ;;
+    -h|--help) uso; exit 0 ;;
+    *) echo "pr-watch: opção desconhecida: $1" >&2; exit 64 ;;
+  esac
+done
+
+[ -z "$CONTA" ] && [ -z "${GH_TOKEN:-}" ] && [ "${REPO%%/*}" = TEAjudo ] && CONTA=raphael-soares
+if [ -n "$CONTA" ]; then
+  GH_TOKEN=$(gh auth token -u "$CONTA") || { echo "pr-watch: sem token da conta $CONTA" >&2; exit 7; }
+  export GH_TOKEN
+fi
+
+gh_() { timeout 30 gh "$@" 2>/dev/null; }
+agora() { date +%T; }
+log() { echo "$(agora) $*"; }
+
+fim() {
+  local codigo=$1 nome=$2; shift 2
+  echo "RESULTADO: $nome $*"
+  if [ $NOTIFICAR = 1 ] && command -v notify-send >/dev/null && { [ -n "${WAYLAND_DISPLAY:-}" ] || [ -n "${DISPLAY:-}" ]; }; then
+    local urg=normal; [ "$codigo" -ne 0 ] && urg=critical
+    notify-send -u $urg "pr-watch $REPO#$PR: $nome" "$*" 2>/dev/null || true
+  fi
+  exit "$codigo"
+}
+
+# Trecho do log de um job do Actions: linhas de erro, testes falhos e código de saída.
+resumo_do_log() {
+  local job=$1
+  gh_ api --allow-escape-sequences "repos/$REPO/actions/jobs/$job/logs" \
+    | sed -E 's/^[0-9T:.-]+Z //' \
+    | grep -E '##\[error\]|<<< (FAIL|ERR)|Tests run:.*(Failures: [1-9]|Errors: [1-9])|Process Exit Code|exit code [0-9]+|^\s+✖|^\s+[0-9]+\) |AssertionError|error TS[0-9]+|toomanyrequests|BlobNotFound|operation was canceled|lost communication|The runner has received a shutdown' \
+    | grep -vE 'Failures: 0, Errors: 0' | head -15
+}
+
+# Teste ou compilação quebrada vence sinal de infra: o fork pode morrer (137) no mesmo job de um teste falho.
+falha_de_codigo() { grep -qE '<<< (FAIL|ERR)|Failures: [1-9]|Errors: [1-9]|AssertionError|error TS[0-9]+|^\s+✖|^\s+[0-9]+\) '; }
+eh_infra() { grep -qE 'exit code 13[7]|exit code 143|Process Exit Code: 13[7]|toomanyrequests|BlobNotFound|operation was canceled|lost communication|The runner has received a shutdown'; }
+
+JQ_CHECKS='
+  [.statusCheckRollup[]? |
+    if .__typename == "CheckRun" then
+      {nome: ((.workflowName // "") + (if .workflowName then " / " else "" end) + .name),
+       url: (.detailsUrl // ""),
+       fase: (if .status != "COMPLETED" then (if .status == "IN_PROGRESS" then "rodando" else "fila" end)
+              elif (.conclusion | IN("SUCCESS","SKIPPED","NEUTRAL")) then "ok"
+              elif (.conclusion | IN("CANCELLED","STALE","STARTUP_FAILURE","TIMED_OUT")) then "cancelado"
+              else "falha" end)}
+    else
+      {nome: .context, url: (.targetUrl // ""),
+       fase: (if .state == "SUCCESS" then "ok" elif .state | IN("PENDING","EXPECTED") then "rodando" else "falha" end)}
+    end]'
+
+inicio=$SECONDS
+sha="" sha_desde=0 ultimo_estado="" erros_gh=0
+declare -A fila_desde=()
+
+while :; do
+  dados=$(gh_ pr view "$PR" -R "$REPO" --json state,headRefOid,mergeable,mergeStateStatus,statusCheckRollup)
+  if [ -z "$dados" ]; then
+    erros_gh=$((erros_gh + 1))
+    [ $erros_gh -ge 5 ] && fim 7 gh-falhando "5 leituras seguidas sem resposta do gh"
+    sleep "$INTERVALO"; continue
+  fi
+  erros_gh=0
+
+  estado_pr=$(jq -r .state <<<"$dados")
+  [ "$estado_pr" != OPEN ] && fim 5 fechada "a PR está $estado_pr"
+
+  novo_sha=$(jq -r .headRefOid <<<"$dados")
+  if [ "$novo_sha" != "$sha" ]; then
+    [ -n "$sha" ] && log "commit novo na PR: ${novo_sha:0:9} (era ${sha:0:9}); recomeçando"
+    sha=$novo_sha sha_desde=$SECONDS ultimo_estado=""; fila_desde=()
+  fi
+
+  checks=$(jq -c "$JQ_CHECKS" <<<"$dados")
+  total=$(jq length <<<"$checks")
+  conta() { jq --arg f "$1" '[.[] | select(.fase == $f)] | length' <<<"$checks"; }
+  ok=$(conta ok) falha=$(conta falha) cancelado=$(conta cancelado) rodando=$(conta rodando) fila=$(conta fila)
+
+  estado="checks=$total ok=$ok rodando=$rodando fila=$fila falha=$falha cancelado=$cancelado"
+  [ "$estado" != "$ultimo_estado" ] && log "${sha:0:9} $estado" && ultimo_estado=$estado
+
+  if [ "$total" -eq 0 ]; then
+    runs=$(gh_ api "repos/$REPO/actions/runs?head_sha=$sha&per_page=30" \
+      -q '[.workflow_runs[] | {nome: .name, evento: .event, status, conclusao: .conclusion, url: .html_url}]')
+    runs=${runs:-[]}
+    aprovar=$(jq -r '[.[] | select(.conclusao == "action_required") | "\(.nome) (\(.evento)) \(.url)"] | join("; ")' <<<"$runs")
+    [ -n "$aprovar" ] && fim 3 nao-acionada "run esperando aprovação de quem pode aprovar workflows (action_required), nenhum check foi criado: $aprovar"
+    if [ $((SECONDS - sha_desde)) -ge "$SEM_CHECK" ]; then
+      abertos=$(jq '[.[] | select(.status != "completed")] | length' <<<"$runs")
+      if [ "$abertos" -eq 0 ]; then
+        motivo="nenhum check para ${sha:0:9} em ${SEM_CHECK}s"
+        resumo_runs=$(jq -r '[.[] | "\(.nome) (\(.evento)): \(.conclusao)"] | join("; ")' <<<"$runs")
+        [ -n "$resumo_runs" ] && motivo="$motivo; runs do commit, nenhum de PR: $resumo_runs"
+        mergeable=$(jq -r .mergeable <<<"$dados") mss=$(jq -r .mergeStateStatus <<<"$dados")
+        [ "$mergeable" = CONFLICTING ] && motivo="$motivo; a PR está em CONFLITO com a base (o pull_request não dispara)"
+        [ "$mss" = DRAFT ] && motivo="$motivo; a PR é rascunho"
+        fim 3 nao-acionada "$motivo"
+      fi
+    fi
+  fi
+
+  if [ "$((falha + cancelado))" -gt 0 ] && [ "$((rodando + fila))" -eq 0 ] || [ "$falha" -gt 0 ]; then
+    real=0 saida="" runs_falhos=""
+    while IFS=$'\t' read -r nome url fase; do
+      saida+=$'\n'"- $nome ($fase) $url"
+      job=$(grep -oE '/job/[0-9]+' <<<"$url" | cut -d/ -f3)
+      run=$(grep -oE '/runs/[0-9]+' <<<"$url" | cut -d/ -f3)
+      [ -n "$run" ] && [[ " $runs_falhos " != *" $run "* ]] && runs_falhos+=" $run"
+      if [ -n "$job" ]; then
+        trecho=$(resumo_do_log "$job")
+        [ -n "$trecho" ] && saida+=$'\n'"$(sed 's/^/    /' <<<"$trecho")"
+        if [ "$fase" = falha ] && { falha_de_codigo <<<"$trecho" || ! eh_infra <<<"$trecho"; }; then real=1; fi
+      elif [ "$fase" = falha ]; then
+        real=1
+      fi
+    done < <(jq -r '.[] | select(.fase == "falha" or .fase == "cancelado") | [.nome, .url, .fase] | @tsv' <<<"$checks")
+    echo "$saida" | sed '1d'
+    if [ $real = 1 ]; then fim 1 falha "check falhou em ${sha:0:9}"; fi
+    dica="rerun dos jobs falhos:"
+    for run in $runs_falhos; do dica+=" gh run rerun $run --failed -R $REPO;"; done
+    [ -z "$runs_falhos" ] && dica="check fora do Actions: veja o link acima"
+    fim 2 falha-infra "falha de infraestrutura ou cancelamento em ${sha:0:9}; $dica"
+  fi
+
+  if [ "$total" -gt 0 ] && [ "$ok" -eq "$total" ]; then
+    fim 0 verde "$total checks passaram em ${sha:0:9}"
+  fi
+
+  while IFS=$'\t' read -r nome url; do
+    [ -z "$nome" ] && continue
+    [ -z "${fila_desde[$nome]:-}" ] && fila_desde[$nome]=$SECONDS
+    if [ $((SECONDS - fila_desde[$nome])) -ge "$FILA" ]; then
+      detalhe=""
+      job=$(grep -oE '/job/[0-9]+' <<<"$url" | cut -d/ -f3)
+      if [ -n "$job" ]; then
+        labels=$(gh_ api "repos/$REPO/actions/jobs/$job" -q '.labels | join(",")')
+        runners=$(gh_ api "repos/$REPO/actions/runners" -q '[.runners[] | "\(.name):\(.status)\(if .busy then ":ocupado" else "" end)"] | join(" ")')
+        detalhe="; labels=$labels; runners=${runners:-sem permissão para listar}"
+      fi
+      fim 4 parado "'$nome' na fila há $((SECONDS - fila_desde[$nome]))s$detalhe ($url)"
+    fi
+  done < <(jq -r '.[] | select(.fase == "fila") | [.nome, .url] | @tsv' <<<"$checks")
+  for nome in "${!fila_desde[@]}"; do
+    jq -e --arg n "$nome" 'any(.[]; .nome == $n and .fase == "fila")' <<<"$checks" >/dev/null || unset "fila_desde[$nome]"
+  done
+
+  [ $((SECONDS - inicio)) -ge "$PRAZO" ] && fim 6 prazo "${PRAZO}s sem desfecho ($estado)"
+  sleep "$INTERVALO"
+done

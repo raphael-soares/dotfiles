@@ -134,6 +134,17 @@ class Merge(unittest.TestCase):
         self.assertFalse(fila.todas_mescladas([self.pr("MERGED"), self.pr("CLOSED")]))
 
 
+class MarcoVazio(unittest.TestCase):
+    def test_faixa_00_nunca_fecha(self):
+        self.assertFalse(fila.fecha_marco_vazio({"number": 1, "title": "00. Saúde técnica"}))
+
+    def test_milestone_de_resultado_fecha(self):
+        self.assertTrue(fila.fecha_marco_vazio({"number": 2, "title": "09. Troca da centralizada"}))
+
+    def test_sem_milestone_nao_fecha(self):
+        self.assertFalse(fila.fecha_marco_vazio(None))
+
+
 class SessaoEPrompts(unittest.TestCase):
     def test_ambiente_sem_credenciais_da_aws(self):
         env = {
