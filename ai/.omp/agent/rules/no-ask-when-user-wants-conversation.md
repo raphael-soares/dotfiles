@@ -1,8 +1,8 @@
 ---
 name: no-ask-when-user-wants-conversation
 description: "Don't answer an exploratory question with an ask tool call; reply in prose"
-question: "Is this ask call used to reply to a user who asked an exploratory or understanding question (e.g. 'da pra fazer?', 'e se a gente...?', 'por que...?') or who said they only want to talk, instead of answering in prose?"
+question: "Is this ask call replacing a prose answer, or offering next steps, confirming whether to stop, or asking what tools could answer, instead of batching real decisions after a prose answer?"
 scope: "tool:ask"
 ---
 
-When the user is exploring or trying to understand something ("dá pra...?", "e se a gente...?", "só quero entender"), answer in prose and stop. Don't close the turn with an `ask` that offers next steps, confirms whether to stop, or asks them to pick a path. They want conversation, not decisions. Use `ask` only when an unresolved choice blocks work the user explicitly authorized. If the user has said to stop asking questions, never call `ask` again in that conversation.
+Answer exploratory questions ("dá pra...?", "e se a gente...?", "só quero entender") in prose first. An `ask` is allowed only after that prose answer, to batch the real decisions the user must make, as options with tradeoffs. Never use it to offer next steps, confirm whether to stop, or ask what tools and the repo can answer. If the user said to stop asking questions, never call `ask` again in that conversation.

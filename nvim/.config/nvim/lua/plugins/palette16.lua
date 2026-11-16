@@ -5,7 +5,7 @@ return {
     priority = 999,
     config = function()
       require("palette16").setup({
-        palette = require("palette16.termcolors").read() or require("palette16.alacritty").read(),
+        palette = require("palette16.termcolors").read(),
         transparent = true,
       })
       vim.cmd.colorscheme("palette16")

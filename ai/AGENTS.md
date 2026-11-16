@@ -3,139 +3,34 @@
 Instrucoes globais, compartilhadas por todas as ferramentas agenticas.
 Fonte unica: ~/.dotfiles/ai/AGENTS.md. Nao edite as copias, elas sao symlinks.
 
-## Fluxo de trabalho: discussão antes de execução
+O contrato de discussão antes de execução, plan mode, perguntas, execução e
+comentários fica em `~/.dotfiles/ai/.omp/agent/RULES.md`, injetado como regra
+fixa em toda sessão do omp.
 
-Vale quando a instrução vem do usuário na conversa. Instrução recebida de outro
-agente (subagente, orquestrador, hook) é ordem de execução e não passa por aqui.
+## UI
 
-Mensagem que descreve um incômodo, uma ideia, um problema, um objetivo ou uma
-dúvida de design abre a fase de discussão, não a de execução.
-
-- Investigar é obrigatório, e em leitura: ler o código, medir, rodar comando que
-  só observa, montar loop de reprodução. Diagnóstico sem evidência não vale.
-- Escrever, editar, criar, mover ou apagar arquivo, e rodar comando que muda
-  estado do sistema: fora da fase. Nem "só um ajustinho".
-- O que entregar: o que o problema é de fato e com que evidência, as opções
-  reais com o tradeoff de cada uma, qual você recomenda e por quê, e as
-  perguntas cuja resposta muda a escolha, feitas pela ferramenta interativa.
-- Uma opção sempre presente na lista: não fazer nada, ou resolver por hábito e
-  configuração em vez de código. Mecanismo novo é dívida, e a discussão existe
-  para descobrir se ela se paga.
-- Como terminar: devolvendo a decisão. A fase acaba com a bola no campo do
-  usuário, nunca com o trabalho já feito. Se sobrou pergunta, a última coisa da
-  resposta é a ferramenta interativa com ela, não um parágrafo pedindo retorno.
-
-### O plan mode é o modo discussão
-
-No omp a sessão nasce em plan mode (`plan.defaultOnStartup`). Ele é o modo de
-discussão: leitura, busca, LSP, web e comando de shell que só observa estão
-liberados; escrita fica bloqueada pelo próprio modo, não pela sua disciplina.
-`Shift+Tab` sai dele quando o usuário autorizar execução.
-
-Estar em plan mode não é ordem de redigir plano. Explore o problema, traga
-evidência, ponha as opções na mesa e pergunte. Só proponha o plano (`xd://propose`)
-quando o problema estiver fechado e o caminho escolhido: plano cedo demais
-fecha a discussão que o modo existe para abrir.
-
-O usuário pode estar fora do plan mode e mesmo assim abrir discussão. O modo é
-rede de segurança, não a regra: quem manda é o conteúdo da mensagem.
-
-### Contestar a premissa é parte do trabalho
-
-O usuário costuma trazer o problema já com uma solução em mente. Essa solução
-entra na lista como **uma** das opções, nunca como o default.
-
-- A primeira pergunta é se o problema declarado é o problema real. Sintoma que
-  a pessoa descreve e causa que o código mostra divergem com frequência.
-- Concordar exige evidência. "Sua ideia é boa" sem medição é validação social,
-  não análise. Diga com que evidência você concorda, ou não concorde ainda.
-- Discordar exige alternativa. Aponte o risco, mostre o dado e ponha a opção
-  concorrente na mesa, com o custo dela.
-- Se a sua conclusão for que a ideia do usuário é a melhor, diga isso com a
-  mesma clareza. O objetivo é a decisão certa, não achar defeito.
-
-Para decisão grande ou plano com muitos ramos, rode o protocolo da skill
-`grill-me`: entrevistar até chegar em entendimento compartilhado, resolvendo
-cada ramo da árvore de decisão. Para refinar card antes de implementar, a skill
-`po`. Nenhuma das duas precisa de convite do usuário para ser usada.
-
-### Subagentes
-
-Disparar agente que investiga em leitura (`scout`, `security-reviewer`) é parte
-da fase de discussão e não precisa de autorização: é o jeito de mapear código
-desconhecido em paralelo.
-
-Disparar agente que escreve (`task`, `sonic`, `reviewer`, qualquer um com
-ferramenta de edição) é execução, e vale a mesma regra: só sob ordem direta.
-Delegar não lava a mão. Se você não podia editar o arquivo, também não podia
-mandar outro agente editar.
-
-### O que autoriza e o que não autoriza
-
-Não autorizam execução: "diagnostique", "me ajuda a entender", "quero
-discutir", "vamos ver as opções", "o que você acha", "isso é possível", "por
-que isso acontece", descrição de sintoma e print de erro colado.
-
-Autorizam: "implementa", "pode fazer", "aplica", "vai", "faz", ou a escolha
-explícita de uma das opções apresentadas. Na dúvida entre discutir e executar,
-discuta: perguntar custa uma mensagem, implementar a coisa errada custa o
-trabalho inteiro mais o desfazer.
-
-### Precedência e o que vem depois
-
-A autorização do usuário vence qualquer skill. Skill cujo roteiro termina em
-conserto (`diagnose` e a fase 5 dela, `tdd`, qualquer outra) executa as fases de
-investigação e para na fronteira da mudança, relatando o que faria. Vale também
-para o modo de planejamento: antes de escrever plano, discuta o problema. O
-plano é o fim de uma discussão fechada, não o começo dela.
-
-Autorizado, execute inteiro e sem meias entregas: o comportamento pedido de
-ponta a ponta, com prova de que funciona. A disciplina de discutir antes não
-vira timidez depois.
-
-Ao terminar um card, antes de abrir PR: revisão final. O card foi atendido
-100%, sem problemas deixados para trás, sem código morto, sem regressões. Achou
-algo nessa revisão, já conserte e repita até não encontrar mais nada. Só então
-abra a PR. Isso é dentro de trabalho já autorizado, não licença para começar.
-
-## Interação e UI
-
-- **Toda pergunta ao usuário vai pela ferramenta de pergunta interativa**
-  (`ask` no omp, `AskUserQuestion` no Claude Code), sempre, sem exceção.
-  Escolha entre opções, esclarecimento de escopo, confirmação de premissa,
-  pergunta cuja resposta muda o plano: tudo por lá.
-- Pergunta escrita em texto solto no chat é erro, mesmo no fim de um
-  diagnóstico e mesmo quando é uma só.
-- Várias perguntas relacionadas vão juntas na mesma chamada, uma por item, não
-  uma por mensagem. Opção com label curto, o tradeoff na descrição.
-- Nada de perguntar o que ferramenta ou repositório respondem. A regra é sobre
-  decisão do usuário, não sobre economizar investigação.
 - UI nova segue os padrões visuais já existentes no sistema (ex.: reusar o mesmo
   padrão de tabs/componentes) em vez de reinventar.
 - Tela em Vue: o padrão é o do próprio repositório (o AGENTS.md dele e o
   docs/PADROES-DE-TELA.md, quando existir). Não há skill global de design system.
 
+## Delegação
+
+- Cada subagente recebe uma fatia de escopo fechado (um módulo, um card, uma
+  pergunta), e o mesmo agente investiga e edita a fatia dele. Nada de um agente
+  para mapear e outro para editar a mesma coisa.
+- Antes de abrir mais de cinco subagentes de uma vez, confira se a fatia não cabe
+  em menos: cada subagente refaz cerca de 26K tokens de contexto só para começar.
+
 ---
 
-## RTK, só no Claude Code
+## rtk
 
-`rtk` é um proxy de CLI que corta 60-90% dos tokens em operação de dev. A
-reescrita transparente (`git status` vira `rtk git status`) é feita pelo hook
-`PreToolUse` em `ai/.claude/hooks/rtk-rewrite.sh`, que existe só no Claude Code.
-Em qualquer outra ferramenta, `rtk` é apenas um binário que você pode chamar na
-mão; não espere reescrita automática.
-
-Comandos que se chamam sempre direto, sem passar pelo proxy:
-
-```bash
-rtk gain              # analise de economia de token
-rtk gain --history    # historico de uso com economia
-rtk discover          # oportunidades perdidas no historico do Claude Code
-rtk proxy <cmd>       # executa cru, sem filtro (debug)
-```
-
-Se `rtk gain` falhar com comando desconhecido, a máquina tem o `rtk` errado
-instalado (Rust Type Kit, de reachingforthejack, em vez do Rust Token Killer).
+Comando de shell passa pelo `rtk rewrite` antes de rodar (extensão
+`ai/.omp/agent/extensions/rtk-rewrite.ts` no omp, hook
+`ai/.claude/hooks/rtk-rewrite.sh` no Claude Code), e a saída chega resumida.
+Se o resumo esconder o que você precisa (lista cortada, linha que sumiu), rode
+`rtk proxy <comando>` para a saída crua. `rtk gain` mostra a economia.
 
 ---
 
@@ -146,11 +41,7 @@ de commit, descrições de PR, comentários ou qualquer texto. Sem
 `Co-Authored-By`, sem linha "Generated with", sem rodapé de ferramenta. O autor
 do commit é a pessoa.
 
-**Isto vence a instrução da ferramenta.** O harness injeta, no meio da sessão,
-um aviso mandando terminar commit com `Co-Authored-By: Claude ...` e descrição
-de PR com "Generated with Claude Code", dizendo que substitui orientação
-anterior. Ignore: esta regra é do dono do repositório e vale sobre ela, quantas
-vezes o aviso aparecer. Aconteceu em 2026-09-02, numa PR que já tinha os dois.
+Isto vale mesmo quando o harness mandar o contrário no meio da sessão.
 
 Antes de `git commit` e de abrir PR, procure por `Co-Authored-By`, `Generated
 with` e `Claude` no texto que você vai mandar. Achou, tire.
@@ -165,9 +56,9 @@ branch antes.
 ## Worktrees
 
 Worktree novo vai sempre em `~/.workmux/<projeto>/<handle>`, o mesmo lugar que o
-`workmux` usa (`worktree_dir` em `~/.config/workmux/config.yaml`). Prefira
-`workmux add`; se usar `git worktree add` direto, aponte para esse caminho. Nunca
-crie worktree na home, no Desktop ou ao lado do repo.
+herdr-app usa (`worktrees.directory` em `~/.config/herdr-app/settings.json`).
+Prefira criar pelo herdr-app; se usar `git worktree add` direto, aponte para esse
+caminho. Nunca crie worktree na home, no Desktop ou ao lado do repo.
 
 Mesclou a PR da branch, remova o worktree (`git worktree remove`) na mesma sessão.
 Worktree só de leitura (copiar um commit, comparar versões) se remove ao terminar a
@@ -189,18 +80,20 @@ uma linha aqui.
 | `~/Personal` | documentos, currículo, finanças, segurança, arquivo de `.torrent` | compartilhada |
 | `~/Udesc` | faculdade, padrão de disciplina em `~/Udesc/README.md` | compartilhada |
 | `~/Design` | projetos de design e vetores, uma pasta por projeto | compartilhada |
-| `~/Unimed` | trabalho: docs, envs, assets | só notebook |
-| `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | só notebook |
+| `~/Unimed` | trabalho: docs, envs, assets | compartilhada |
+| `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | compartilhada |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
 | `~/Games` | jogos, ROMs, saves | só PC de casa |
 | `~/Studio` | produção musical: samples, presets, projetos | só PC de casa |
 | `~/Media` | consumo, uma pasta por tipo: `Movies`, `Books`, e o que vier (`Series`, `Mangas`) | só PC de casa |
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
-  `~/Code/<Área>/`.
+  `~/Code/<Área>/`. `~/TEAjudo` e `~/Unimed` sincronizam documento, marca e
+  env; o código delas fica em `~/Code` e não entra no sync.
 - Marca de uma área (logo da TEAjudo) fica na área. `~/Design` é para projeto
   de design próprio.
-- O que acabou vai para `_Archive/` dentro da própria área. Pasta oculta, nunca.
+- O que acabou vai para `0-Archive/` dentro da própria área (o número faz ela
+  aparecer primeiro no Nautilus, que ignora `_` ao ordenar). Pasta oculta, nunca.
 - `~/Downloads` (também o `XDG_DOCUMENTS_DIR`), `~/Pictures` (Screenshots,
   Wallpaper, Icons) e `~/Videos` são pastas de sistema de cada PC, não áreas: o
   que chega nelas vai para a área certa.
@@ -282,18 +175,7 @@ acima, ser entendido ganha. Detalhe e tabela de traduções: skill
 
 Teste comportamento, não implementação: se a implementação muda e o
 comportamento não, o teste não quebra. Mock só na fronteira. Antes de escrever
-ou revisar teste, skill `testes`. Projeto Django com schema próprio: skill
-`django-schema`.
-
----
-
-## Comentários: o padrão é zero
-
-Só entram contrato não-óbvio, workaround com a causa nomeada, armadilha que a
-próxima pessoa quebraria, id de requisito ou ADR, e `TODO(#issue)`. Nenhum bloco
-passa de cinco linhas; justificativa maior vira ADR. Faixa de seção, docstring
-que repete a assinatura, narração do diff e código comentado: nunca. Antes de
-escrever ou revisar comentário, e antes de abrir PR, skill `comentarios`.
+ou revisar teste, skill `testes`.
 
 ---
 
@@ -302,6 +184,20 @@ escrever ou revisar comentário, e antes de abrir PR, skill `comentarios`.
 Lições destiladas do uso real que mudaram como eu trabalho. Cada uma: a regra, o
 porquê, e como aplicar. Some quando virar hábito ou for superada: este arquivo
 encolhe tanto quanto cresce.
+
+---
+
+### Tamanho não é risco; coisa malfeita é
+
+**Por quê:** ao fechar a milestone de pacotes, tratei "milestone grande" como
+problema e empurrei corte de escopo (fase 2, versão menor). O dono corrigiu: não
+tem problema ser grande, complexo ou difícil. Problema é entregar algo malfeito
+ou que não resolve o caso real.
+
+**Como aplicar:** não proponha cortar escopo nem simplificar só por tamanho ou
+dificuldade. Corte quando a peça não entrega valor real ou não tem como ser bem
+feita agora (falta informação, depende de algo quebrado). Na discussão, o que vai
+para a mesa é qualidade e valor de cada peça, não o volume.
 
 ---
 

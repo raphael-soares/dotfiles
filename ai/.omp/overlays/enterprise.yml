@@ -9,3 +9,6 @@ enabledModels:
 disabledProviders:
   - amazon-bedrock
   - bedrock-mantle
+  - ollama
+  - lm-studio
+  - llama.cpp

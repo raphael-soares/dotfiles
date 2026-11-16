@@ -107,7 +107,9 @@ widget_order = [
     "lockscreen-logout@DP-1",
     "lockscreen-login-box@HEADLESS-1",
     "lockscreen-login-box@HEADLESS-2",
-    "lockscreen-login-box@HEADLESS-3"
+    "lockscreen-login-box@HEADLESS-3",
+    "lockscreen-login-box@SFCAP",
+    "lockscreen-login-box@SFFLAT"
 ]
 
     [lockscreen_widgets.grid]
@@ -144,7 +146,7 @@ widget_order = [
         show_weather = false
 
     [lockscreen_widgets.widget."lockscreen-login-box@FALLBACK"]
-    box_height = 196.0
+    box_height = 82.0
     box_width = 810.0
     cx = 960.0
     cy = 540.0
@@ -239,6 +241,62 @@ widget_order = [
     type = "login_box"
 
         [lockscreen_widgets.widget."lockscreen-login-box@HEADLESS-3".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@SFCAP"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "SFCAP"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@SFCAP".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@SFFLAT"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "SFFLAT"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@SFFLAT".settings]
         background_color = "surface_container"
         background_opacity = 0.88
         background_radius = 12.0
@@ -528,14 +586,14 @@ show_close_buttons = false
 
 [theme]
 builtin = "Gruvbox"
-community_palette = "Gruvbox Material Hard"
+community_palette = "Paradise"
 mode = "dark"
 source = "community"
-wallpaper_scheme = "m3-rainbow"
+wallpaper_scheme = "m3-content"
 
     [theme.templates]
-    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4" ]
-    community_ids = [ "spotifast", "syncfast", "discord", "zapfast", "libreoffice", "fastfetch", "obs", "zathura", "hyprtoolkit" ]
+    builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4" ]
+    community_ids = [ "spotifast", "discord", "zapfast", "fastfetch", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"
@@ -547,34 +605,37 @@ directory = "/home/raphael/Pictures/Wallpaper"
     path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
 
     [wallpaper.monitors.DP-1]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/32. One Dark.png"
+    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
 
     [wallpaper.monitors.HEADLESS-3]
     path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/32. One Dark.png"
 
     [wallpaper.monitors.eDP-1]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/16. One Dark.png"
 
     [[wallpaper.favorite]]
-    community_palette = "Kanagawa Dragon"
+    community_palette = "Paradise"
     palette_source = "community"
     path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
     theme_mode = "dark"
 
     [[wallpaper.favorite]]
-    palette_source = "wallpaper"
+    community_palette = "Paradise"
+    palette_source = "community"
     path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/29. One Dark.jpg"
     theme_mode = "dark"
-    wallpaper_scheme = "m3-tonal-spot"
 
     [[wallpaper.favorite]]
-    palette_source = "wallpaper"
+    community_palette = "Paradise"
+    palette_source = "community"
     path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/05. One Dark.png"
     theme_mode = "dark"
-    wallpaper_scheme = "m3-content"
 
     [[wallpaper.favorite]]
+    community_palette = "Paradise"
+    palette_source = "community"
     path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/16. One Dark.png"
+    theme_mode = "dark"
 
     [[wallpaper.favorite]]
     path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/25. One Dark.jpg"
@@ -587,12 +648,6 @@ directory = "/home/raphael/Pictures/Wallpaper"
 
     [[wallpaper.favorite]]
     path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/32. One Dark.png"
-
-    [[wallpaper.favorite]]
-    palette_source = "wallpaper"
-    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/17. One Dark.jpg"
-    theme_mode = "dark"
-    wallpaper_scheme = "m3-tonal-spot"
 
     [[wallpaper.favorite]]
     path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/13. One Dark.png"
@@ -622,7 +677,10 @@ directory = "/home/raphael/Pictures/Wallpaper"
     path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/11. Greenify.jpg"
 
     [[wallpaper.favorite]]
+    palette_source = "wallpaper"
     path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/09. Greenify.jpg"
+    theme_mode = "dark"
+    wallpaper_scheme = "m3-content"
 
     [[wallpaper.favorite]]
     path = "/home/raphael/Pictures/Wallpaper/wallz/Greenify/04. Greenify.jpg"
@@ -643,25 +701,22 @@ directory = "/home/raphael/Pictures/Wallpaper"
     path = "/home/raphael/Pictures/Wallpaper/wallz/Graphite Mono/21. Graphite Mono.png"
 
     [[wallpaper.favorite]]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/33. Catppuccin Mocha.jpg"
-
-    [[wallpaper.favorite]]
     path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/26. Catppuccin Mocha.png"
 
     [[wallpaper.favorite]]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/30. Catppuccin Mocha.png"
-
-    [[wallpaper.favorite]]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/29. Catppuccin Mocha.png"
-
-    [[wallpaper.favorite]]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/28. Catppuccin Mocha.png"
-
-    [[wallpaper.favorite]]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/27. Catppuccin Mocha.png"
-
-    [[wallpaper.favorite]]
     path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/32. Catppuccin Mocha.png"
+
+    [[wallpaper.favorite]]
+    community_palette = "Paradise"
+    palette_source = "community"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/Solarized Dark/01. Solarized Dark.png"
+    theme_mode = "dark"
+
+    [[wallpaper.favorite]]
+    community_palette = "Paradise"
+    palette_source = "community"
+    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/33. One Dark.png"
+    theme_mode = "dark"
 
 [widget.active_window]
 display = "text_only"
