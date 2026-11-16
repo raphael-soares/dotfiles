@@ -5,11 +5,14 @@
     "enabled": true
   },
   "font_ligatures": false,
+  "font": "JetBrainsMono Nerd Font",
+  "font_size": 14,
   "terminal_line_height": 1,
   "terminal_cell_width": 1,
   "terminal_scroll_speed": 1,
   "minimum_contrast": 1,
   "ui_font": "Inter",
+  "theme": "noctalia",
   "worktrees": {
     "directory": "~/.workmux"
   }
