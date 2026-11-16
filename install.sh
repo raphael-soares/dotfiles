@@ -7,14 +7,15 @@ DISTRO=$(. /etc/os-release && echo "$ID")
 
 GRUPOS=(terminal ai desktop hyprland audio sistema vpn raphael)
 declare -A DESCRICAO=(
-  [terminal]="bash, tmux, alacritty, kitty, git, starship, fzf, mise, nvim, workmux, herdr-app"
+  [terminal]="bash, ghostty, git, starship, fzf, mise, nvim, herdr-app"
   [ai]="AGENTS.md, skills, omp e Claude Code"
   [desktop]="tema GTK, fontes e webapps (qualquer desktop)"
   [hyprland]="Hyprland, Noctalia e portal (so Arch)"
   [audio]="WirePlumber so com A2DP no Bluetooth (sem microfone em fone BT)"
   [sistema]="/etc: greetd, PAM do greetd, plymouth, zram, journald (500M), paccache (desinstalados) e GC do build cache do docker (copia com sudo); thermald e fwupd (so Arch)"
   [vpn]="~/.local/bin/vpn, VPN Fortinet SSL pelo NetworkManager"
-  [raphael]="so do Raphael: TMUX_SESSIONIZER_DIRS, ompe, syncfast, atalhos do Alacritty e do kitty"
+  [raphael]="so do Raphael: SESSIONIZER_DIRS, ompe e syncfast"
+  [legado]="tmux, workmux e as extensoes do omp para eles (so pelo nome: ./install.sh legado)"
 )
 declare -A SO_ARCH=([hyprland]=1 [sistema]=1)
 
@@ -23,6 +24,7 @@ usage() {
   echo
   echo "Sem grupo, pergunta um por um. Grupos:"
   for g in "${GRUPOS[@]}"; do printf '  %-9s %s\n' "$g" "${DESCRICAO[$g]}"; done
+  printf '  %-9s %s\n' legado "${DESCRICAO[legado]}"
   cat <<'EOF'
 
 --adopt        puxa para o repo o arquivo real que ja existir no home e depois
@@ -114,10 +116,10 @@ linkar() {
 
 grupo_terminal() {
   instalar_pacotes terminal
-  avisar_sem_pacote starship mise workmux
-  linkar .config/tmux .config/workmux .config/mise .config/git \
+  avisar_sem_pacote starship mise ghostty
+  linkar .config/mise .config/git .config/ghostty/themes \
     .config/herdr-app .config/herdr-app/layouts .config/herdr-app/mods \
-    -- bash tmux alacritty kitty git starship fzf mise nvim workmux herdr-app
+    -- bash git starship fzf mise nvim ghostty herdr-app
   if [[ ! -f "$HOME/.env.local" ]]; then
     cp .env.example "$HOME/.env.local"
     echo "==> ~/.env.local criado a partir do .env.example, preencha as chaves"
@@ -194,6 +196,14 @@ grupo_sistema() {
 grupo_vpn() {
   instalar_pacotes vpn
   linkar .local/bin -- vpn
+}
+
+grupo_legado() {
+  instalar_pacotes legado
+  avisar_sem_pacote workmux
+  linkar .config/tmux .config/workmux .omp/agent/extensions -- tmux workmux omp-legado
+  echo "==> tmux pelo Ghostty: ghostty -e ~/.config/tmux/tmux-default.sh"
+  echo "==> Hooks do workmux no Claude Code: recupere do git (ai/.claude/settings.json antes de feat/herdr-padrao)"
 }
 
 grupo_raphael() {

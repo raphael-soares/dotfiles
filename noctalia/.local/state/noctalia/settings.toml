@@ -592,7 +592,7 @@ source = "community"
 wallpaper_scheme = "m3-content"
 
     [theme.templates]
-    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "kitty" ]
+    builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4" ]
     community_ids = [ "spotifast", "discord", "zapfast", "fastfetch", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
 [wallpaper]

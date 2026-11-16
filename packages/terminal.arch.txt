@@ -1,14 +1,12 @@
 stow
 git
-tmux
 neovim
 fzf
 fd
 ripgrep
-alacritty
-kitty
 jq
 curl
 github-cli
 imagemagick
 ghostscript
+ghostty

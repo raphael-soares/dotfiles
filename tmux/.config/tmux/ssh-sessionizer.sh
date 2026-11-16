@@ -34,9 +34,6 @@ parse_hosts() {
 # sort -u: o mesmo alias pode aparecer em mais de um arquivo via Include.
 hosts=$(parse_hosts "$SSH_CONFIG" | grep -v '[*?!]' | sort -u)
 
-# --hosts: so lista, para o sessionizer do herdr-app.
-[[ "${1:-}" == "--hosts" ]] && { echo "$hosts"; exit 0; }
-
 if [[ $# -eq 1 ]]; then
     selected=$1
 else

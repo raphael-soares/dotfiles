@@ -1,12 +1,9 @@
 stow
 git
-tmux
 neovim
 fzf
 fd-find
 ripgrep
-alacritty
-kitty
 jq
 curl
 gh
