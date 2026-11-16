@@ -6,6 +6,9 @@ fzf
 fd
 ripgrep
 alacritty
+kitty
 jq
 curl
 github-cli
+imagemagick
+ghostscript

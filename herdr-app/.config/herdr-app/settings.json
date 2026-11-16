@@ -1,0 +1,16 @@
+{
+  "zoom": 1,
+  "pane_scrollbars": false,
+  "sounds": {
+    "enabled": true
+  },
+  "font_ligatures": false,
+  "terminal_line_height": 1,
+  "terminal_cell_width": 1,
+  "terminal_scroll_speed": 1,
+  "minimum_contrast": 1,
+  "ui_font": "Inter",
+  "worktrees": {
+    "directory": "~/.workmux"
+  }
+}
