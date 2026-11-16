@@ -1,7 +1,7 @@
 // Sessionizer: o mesmo do tmux (prefixo Tab). Spaces abertos primeiro (*), depois
-// as pastas do `tmux-sessionizer.sh --dirs` sem space aberto. Digite para filtrar,
+// as pastas do `pastas.sh` sem space aberto. Digite para filtrar,
 // ↑/↓ (ou ctrl-n/p, ctrl-j/k) e Enter para ir, ctrl-x fecha um space, Esc sai.
-// Com props `ssh` (prefixo S) lista os hosts do `ssh-sessionizer.sh --hosts`:
+// Com props `ssh` (prefixo S) lista os hosts do `hosts.sh`:
 // cada host é uma tab com o nome dele no space "ssh", reaproveitada se já existe.
 
 import { View, div, svg } from "gpui-kit";
@@ -77,8 +77,8 @@ export default class Sessionizer extends View {
       const aviso = this.ssh ? "SSH sem hosts" : "Sessionizer sem pastas";
       try {
         const r = this.ssh
-          ? await exec(`${home()}/.config/tmux/ssh-sessionizer.sh`, ["--hosts"])
-          : await exec(`${home()}/.config/tmux/tmux-sessionizer.sh`, ["--dirs"]);
+          ? await exec(`${home()}/.config/herdr-app/mods/sessionizer/hosts.sh`, [])
+          : await exec(`${home()}/.config/herdr-app/mods/sessionizer/pastas.sh`, []);
         if (r.code !== 0) {
           notify({ title: aviso, body: r.stderr.trim().split("\n")[0] || `saiu com ${r.code}`, level: "warning" });
         } else if (this.ssh) {

@@ -14,7 +14,7 @@ declare -A DESCRICAO=(
   [audio]="WirePlumber so com A2DP no Bluetooth (sem microfone em fone BT)"
   [sistema]="/etc: greetd, PAM do greetd, plymouth, zram, journald (500M), paccache (desinstalados) e GC do build cache do docker (copia com sudo); thermald e fwupd (so Arch)"
   [vpn]="~/.local/bin/vpn, VPN Fortinet SSL pelo NetworkManager"
-  [raphael]="so do Raphael: TMUX_SESSIONIZER_DIRS, ompe, syncfast, atalhos do Alacritty e do kitty"
+  [raphael]="so do Raphael: SESSIONIZER_DIRS, ompe, syncfast, atalhos do Alacritty e do kitty"
 )
 declare -A SO_ARCH=([hyprland]=1 [sistema]=1)
 

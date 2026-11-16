@@ -14,7 +14,7 @@ o resto: `git clone` do repo e `stow -t ~ <pasta>` de dentro dele.
 | `bash` | `.bashrc` (histórico, aliases, PATH, mise, fzf, starship) e `.bash_profile` | bash | carrega `~/.config/shell/rc.d/*.sh`, `~/.env.local` e `~/.bash_profile.local` quando existem |
 | `alacritty` | config do terminal e temas | alacritty, JetBrainsMono Nerd Font | usa o `noctalia.toml` quando ele existir (o Noctalia gera só no notebook) e, por cima, o `gruvbox-material` |
 | `kitty` | config do terminal e tema | kitty, JetBrainsMono Nerd Font | mesmas cores do Alacritty (`gruvbox-material` sobre o `noctalia.conf`); padrão do Hyprland enquanto dura o teste |
-| `tmux` | `tmux.conf`, sessionizer de projetos (`prefix + Tab`), de ssh e integração com o workmux | tmux, fzf | o sessionizer lê `TMUX_SESSIONIZER_DIRS`; sem ela varre o home |
+| `tmux` | `tmux.conf`, sessionizer de projetos (`prefix + Tab`), de ssh e integração com o workmux | tmux, fzf | o sessionizer lê `SESSIONIZER_DIRS`; sem ela varre o home |
 | `nvim` | config do Neovim com lazy.nvim, LSP, DAP e Java | neovim, git | os plugins se instalam na primeira abertura |
 | `git` | `.gitconfig` (nvimdiff, credencial pelo `gh`) e ignore global | git, gh | o `[user]` tem nome e e-mail do Raphael: troque |
 | `fzf` | opções e cores do fzf, por índice ANSI | fzf | |
@@ -29,7 +29,7 @@ o resto: `git clone` do repo e `stow -t ~ <pasta>` de dentro dele.
 | `noctalia` | plugins, estado e wallpaper do Noctalia | noctalia | o estado tem caminhos do Raphael: referência, não para instalar |
 | `audio` | WirePlumber só com A2DP no Bluetooth: caixa BT não cai em mono 16 kHz, mas nenhum fone BT tem microfone | pipewire, wireplumber | |
 | `vpn` | `~/.local/bin/vpn up\|down\|status`, VPN Fortinet SSL pelo NetworkManager | networkmanager-fortisslvpn | lê os `VPN_*` do `~/.env.local` |
-| `raphael` | `TMUX_SESSIONIZER_DIRS`, `ompe`, config do syncfast e atalhos do Alacritty e do kitty | | só do Raphael |
+| `raphael` | `SESSIONIZER_DIRS`, `ompe`, config do syncfast e atalhos do Alacritty e do kitty | | só do Raphael |
 
 O `install.sh` agrupa os pacotes e, rodado sem argumento, pergunta grupo por
 grupo. Dá para passar direto (`./install.sh terminal ai`):

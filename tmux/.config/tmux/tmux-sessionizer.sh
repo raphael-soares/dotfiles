@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
-# Os diretorios varridos saem de TMUX_SESSIONIZER_DIRS, definida em
+# Os diretorios varridos saem de SESSIONIZER_DIRS, definida em
 # ~/.config/shell/rc.d/*.sh ou no ~/.env.local (veja o .env.example). O tmux
 # chama este script por run-shell, que nao passa pelo .bashrc, entao os
 # arquivos sao carregados aqui. Se a variavel ja veio setada no ambiente
 # (ex.: override manual pra teste), respeita ela e nao carrega nada.
-if [[ -z "${TMUX_SESSIONIZER_DIRS:-}" ]]; then
+if [[ -z "${SESSIONIZER_DIRS:-}" ]]; then
     for _rc in "$HOME"/.config/shell/rc.d/*.sh; do [[ -r "$_rc" ]] && source "$_rc"; done
     [[ -f ~/.env.local ]] && source ~/.env.local
 fi
 
 SEARCH_DIRS=()
-if [[ -n "${TMUX_SESSIONIZER_DIRS:-}" ]]; then
-    IFS=':' read -r -a SEARCH_DIRS <<< "$TMUX_SESSIONIZER_DIRS"
+if [[ -n "${SESSIONIZER_DIRS:-}" ]]; then
+    IFS=':' read -r -a SEARCH_DIRS <<< "$SESSIONIZER_DIRS"
     # ~ so vira $HOME quando o shell expande; vindo de variavel, e literal.
     SEARCH_DIRS=("${SEARCH_DIRS[@]/#\~/$HOME}")
 fi
@@ -85,12 +85,6 @@ list_entries() {
 }
 
 case "${1:-}" in
-    --dirs)
-        for label in "${!dir_map[@]}"; do
-            printf '%s\t%s\n' "$label" "${dir_map[$label]}"
-        done | sort
-        exit 0
-        ;;
     --list)
         list_entries
         exit 0
