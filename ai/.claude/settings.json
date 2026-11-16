@@ -6,27 +6,6 @@
     "defaultMode": "auto"
   },
   "hooks": {
-    "Notification": [
-      {
-        "matcher": "permission_prompt|elicitation_dialog",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workmux set-window-status waiting"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workmux set-window-status working"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -44,35 +23,6 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/project-onboard.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "startup|resume|clear|fork",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workmux register-agent"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workmux set-window-status done"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "workmux set-window-status working"
           }
         ]
       }
