@@ -20,11 +20,11 @@ PASTAS_DE_SKILL_GLOBAIS = [HOME / ".omp/agent/managed-skills", HOME / ".dotfiles
 
 BLOCOS = [
     "formato", "estatica", "tamanho", "teste", "mutacao", "arquitetura", "contrato",
-    "migration", "termos", "morto", "segredo", "dependencia", "risco",
+    "migration", "termos", "morto", "segredo", "dependencia",
 ]
 CAMPOS_CODIGO = {
     "fila": str, "integracao": str, "producao": str, "portao": str, "rapido": str,
-    "risco": list, "prova": str, "nao_se_aplica": dict, "pendente": dict, "extras": list,
+    "prova": str, "nao_se_aplica": dict, "pendente": dict, "extras": list,
     "prefixo_de_skill": str,
 }
 CAMPOS_FILA = {"fila": str, "repos": dict, "prefixo_de_skill": str}

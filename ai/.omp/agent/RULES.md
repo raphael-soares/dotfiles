@@ -74,22 +74,21 @@ antes de delegar.
 ## Verificação e espera
 
 Durante o trabalho rode só o comando `rapido` do `ficha.json` do repositório
-e o teste que você tocou. A suíte inteira roda uma vez, no CI. Não espere CI
-na sessão: abra a PR e termine. Quando precisar esperar, é
-`pr-watch <dono/repo> <pr>` numa chamada só; ele sai na primeira falha.
+e o teste que você tocou. A suíte inteira roda uma vez, no CI. Sem pedido de
+merge, não espere CI: abra a PR e termine. Quando o dono pedir merge, espere
+com `pr-watch <dono/repo> <pr>` numa chamada só (ele sai na primeira falha) e
+mescle quando ficar verde.
 
 ## Entrega
 
 A abertura da PR tem, nesta ordem: o que muda para quem usa, em até cinco
 linhas; decisões que você tomou sozinho; prova (o que rodou e o resultado,
 separando teste escrito de teste rodado); o que não foi feito. Merge em
-branch de integração só com CI verde e sem a label `revisar-dono`. Branch de
-produção e PR com `revisar-dono` são do dono.
-
-PR do frontend que muda tela traz a seção `## Antes e depois` com print da
-mesma rota e do mesmo usuário, antes (a dev) e depois, em 375 px e desktop.
-`scripts/prints <rotas>` tira as imagens e as empurra no branch `prints/telas`;
-o workflow `Prints` barra a PR sem imagem.
+branch de integração com CI verde é seu quando o dono pedir. CI vermelho ou
+ausente, base de produção, push direto em `dev`/`main`/`master`, `--admin` e
+`--no-verify` passam pela trava do omp, que pergunta ao dono na hora. Se o
+dono autorizou na conversa, rode o comando e deixe a trava perguntar; não
+recuse por conta própria.
 
 ## Comentários
 

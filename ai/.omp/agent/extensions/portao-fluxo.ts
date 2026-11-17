@@ -5,7 +5,6 @@ import { basename, resolve } from "node:path";
 
 export type Sh = (args: string[], cwd: string) => { code: number; out: string };
 
-const LABEL_DONO = "revisar-dono";
 const BRANCHES_PROTEGIDAS = new Set(["dev", "main", "master"]);
 const MSG_ESPERA =
   "Não espere CI em laço nem com --watch: use `pr-watch <dono/repo> <pr>` numa chamada só; em sessão da fila, termine.";
@@ -143,12 +142,12 @@ function regraMerge(args: string[], dir: string, sh: Sh): string | undefined {
         ...(seletor ? [seletor] : []),
         ...(repoArg ? ["-R", repoArg] : []),
         "--json",
-        "url,baseRefName,labels,statusCheckRollup",
+        "url,baseRefName,statusCheckRollup",
       ],
       dir,
     );
     if (consulta.code !== 0) {
-      return "Não consegui consultar a PR antes do merge, então o merge está bloqueado. Verifique o CI e se há `revisar-dono`, ou deixe com o dono.";
+      return "Não consegui consultar a PR antes do merge, então o merge está bloqueado. Verifique o CI ou deixe com o dono.";
     }
     const pr = JSON.parse(consulta.out);
     const base: string = pr.baseRefName;
@@ -165,10 +164,6 @@ function regraMerge(args: string[], dir: string, sh: Sh): string | undefined {
 
     if (producao.includes(base)) {
       return `A base \`${base}\` é branch de produção: o merge é do dono.`;
-    }
-    const labels: { name?: string }[] = pr.labels ?? [];
-    if (labels.some((l) => l.name === LABEL_DONO)) {
-      return `A PR tem a label \`${LABEL_DONO}\`: o merge é do dono.`;
     }
     const checks: Record<string, unknown>[] = pr.statusCheckRollup ?? [];
     if (checks.length === 0) return "A PR não tem nenhum check: falta o CI rodar.";
@@ -189,19 +184,6 @@ function regraGh(args: string[], dir: string, sh: Sh): string | undefined {
       return "`gh pr merge --admin` é recusado: espere o CI ficar verde.";
     }
     return regraMerge(depoisDoMerge, dir, sh);
-  }
-  if (sub === "pr" && outro === "edit") {
-    const removidas = resto.flatMap((a, i) => {
-      if (a === "--remove-label") return [resto[i + 1] ?? ""];
-      if (a.startsWith("--remove-label=")) return [a.slice("--remove-label=".length)];
-      return [];
-    });
-    if (removidas.some((v) => v.split(",").includes(LABEL_DONO))) {
-      return `A label \`${LABEL_DONO}\` é do CI e do dono: não a remova.`;
-    }
-  }
-  if (sub === "label" && outro === "delete" && resto.includes(LABEL_DONO)) {
-    return `A label \`${LABEL_DONO}\` é do CI e do dono: não a apague.`;
   }
   if (sub === "run" && outro === "watch") return MSG_ESPERA;
   if (sub === "pr" && outro === "checks" && resto.some((a) => a === "--watch" || a.startsWith("--watch="))) {
@@ -267,6 +249,20 @@ export function decidir(comando: string, cwd: string, sh: Sh): string | undefine
   }
 }
 
+export type Contexto = {
+  hasUI: boolean;
+  agent?: { kind: string };
+  ui: { confirm(titulo: string, mensagem: string): Promise<boolean> };
+};
+
+export async function avaliar(comando: string, cwd: string, sh: Sh, ctx: Contexto): Promise<string | undefined> {
+  const motivo = decidir(comando, cwd, sh);
+  if (!motivo) return;
+  if (!ctx.hasUI || ctx.agent?.kind !== "main") return motivo;
+  const liberado = await ctx.ui.confirm("Trava do fluxo", `${motivo}\n\nComando: ${comando}\n\nLiberar só esta vez?`);
+  return liberado ? undefined : `${motivo} O dono recusou a liberação.`;
+}
+
 function shReal(args: string[], cwd: string): { code: number; out: string } {
   const r = spawnSync(args[0], args.slice(1), { cwd, encoding: "utf8", timeout: 10_000 });
   return { code: r.status ?? 1, out: r.stdout ?? "" };
@@ -279,7 +275,7 @@ export default function (pi: ExtensionAPI) {
     if (event.toolName !== "bash") return;
     const command = event.input.command;
     if (typeof command !== "string" || command.trim() === "") return;
-    const reason = decidir(command, ctx.cwd, shReal);
+    const reason = await avaliar(command, ctx.cwd, shReal, ctx);
     if (reason) return { block: true, reason };
   });
 }

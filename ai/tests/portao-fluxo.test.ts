@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decidir, type Sh } from "../.omp/agent/extensions/portao-fluxo.ts";
+import { avaliar, type Contexto, decidir, type Sh } from "../.omp/agent/extensions/portao-fluxo.ts";
 
 type Resposta = { code: number; out: string };
 
@@ -28,13 +28,13 @@ const semPortao: Record<string, Resposta> = {
   "git rev-parse --show-toplevel": { code: 0, out: "/repo\n" },
 };
 
-function pr(base: string, labels: string[], checks: Record<string, string>[]): Resposta {
+function pr(base: string, checks: Record<string, string>[], extra: Record<string, unknown> = {}): Resposta {
   return {
     code: 0,
     out: JSON.stringify({
       url: "https://github.com/TEAjudo/api/pull/7",
       baseRefName: base,
-      labels: labels.map((name) => ({ name })),
+      ...extra,
       statusCheckRollup: checks,
     }),
   };
@@ -77,31 +77,37 @@ test("regra 3: gh pr merge --admin", () => {
 });
 
 test("regra 4: gh pr merge consulta o estado da PR", () => {
-  const consultaVerde = (base: string, labels: string[] = [], checks = verde) => ({
-    "gh pr view 7 --json": pr(base, labels, checks),
+  const consultaVerde = (base: string, checks = verde) => ({
+    "gh pr view 7 --json": pr(base, checks),
     "gh api repos/TEAjudo/api/contents/ficha.json": ficha("main"),
   });
 
   assert.equal(roda("gh pr merge 7 --merge --delete-branch", consultaVerde("dev")), undefined);
   assert.match(roda("gh pr merge 7 --merge", consultaVerde("main")) ?? "", /produção/);
-  assert.match(roda("gh pr merge 7 --merge", consultaVerde("dev", ["revisar-dono"])) ?? "", /revisar-dono/);
+  assert.equal(
+    roda("gh pr merge 7", {
+      "gh pr view 7 --json": pr("dev", verde, { labels: [{ name: "revisar-dono" }] }),
+      "gh api repos/TEAjudo/api/contents/ficha.json": ficha("main"),
+    }),
+    undefined,
+  );
   assert.match(
-    roda("gh pr merge 7", consultaVerde("dev", [], [{ conclusion: "FAILURE" }])) ?? "",
+    roda("gh pr merge 7", consultaVerde("dev", [{ conclusion: "FAILURE" }])) ?? "",
     /checks/,
   );
   assert.match(
-    roda("gh pr merge 7", consultaVerde("dev", [], [{ conclusion: "SUCCESS" }, { status: "IN_PROGRESS" }])) ?? "",
+    roda("gh pr merge 7", consultaVerde("dev", [{ conclusion: "SUCCESS" }, { status: "IN_PROGRESS" }])) ?? "",
     /checks/,
   );
-  assert.match(roda("gh pr merge 7", consultaVerde("dev", [], [])) ?? "", /nenhum check/);
+  assert.match(roda("gh pr merge 7", consultaVerde("dev", [])) ?? "", /nenhum check/);
 });
 
 test("regra 4: sem ficha, main e master são produção; ficha manda quando existe", () => {
-  const semFicha = (base: string) => ({ "gh pr view 7 --json": pr(base, [], verde) });
+  const semFicha = (base: string) => ({ "gh pr view 7 --json": pr(base, verde) });
   assert.match(roda("gh pr merge 7", semFicha("master")) ?? "", /produção/);
   assert.equal(roda("gh pr merge 7", semFicha("dev")), undefined);
   const fichaProd = (base: string) => ({
-    "gh pr view 7 --json": pr(base, [], verde),
+    "gh pr view 7 --json": pr(base, verde),
     "gh api": ficha("release"),
   });
   assert.match(roda("gh pr merge 7", fichaProd("release")) ?? "", /produção/);
@@ -115,17 +121,9 @@ test("regra 4: consulta falhando bloqueia", () => {
 
 test("regra 4: passa -R e usa a PR da branch atual quando não há número", () => {
   const chamadas: string[] = [];
-  const sh = falso({ "gh pr view": pr("dev", [], verde) }, chamadas);
+  const sh = falso({ "gh pr view": pr("dev", verde) }, chamadas);
   assert.equal(decidir("gh pr merge -R TEAjudo/api --merge", "/repo", sh), undefined);
-  assert.ok(chamadas.includes("gh pr view -R TEAjudo/api --json url,baseRefName,labels,statusCheckRollup"));
-});
-
-test("regra 5: remover revisar-dono", () => {
-  assert.match(roda("gh pr edit 7 --remove-label revisar-dono") ?? "", /label/);
-  assert.match(roda("gh pr edit 7 --remove-label=bug,revisar-dono") ?? "", /label/);
-  assert.match(roda("gh label delete revisar-dono -R TEAjudo/api --yes") ?? "", /label/);
-  assert.equal(roda("gh pr edit 7 --remove-label bug"), undefined);
-  assert.equal(roda("gh pr edit 7 --add-label revisar-dono"), undefined);
+  assert.ok(chamadas.includes("gh pr view -R TEAjudo/api --json url,baseRefName,statusCheckRollup"));
 });
 
 test("regra 6: gh run watch e gh pr checks --watch", () => {
@@ -184,4 +182,41 @@ test("exceção da própria avaliação libera o comando", () => {
   };
   assert.equal(decidir("git push", "/repo", quebra), undefined);
   assert.equal(decidir("./mvnw test", "/repo", quebra), undefined);
+});
+
+function contexto(hasUI: boolean, kind: string, resposta: boolean) {
+  const mensagens: string[] = [];
+  const ctx: Contexto = {
+    hasUI,
+    agent: { kind },
+    ui: {
+      confirm: async (_titulo, mensagem) => {
+        mensagens.push(mensagem);
+        return resposta;
+      },
+    },
+  };
+  return { ctx, mensagens };
+}
+
+test("avaliar pergunta ao dono só na sessão principal com UI", async () => {
+  const liberou = contexto(true, "main", true);
+  assert.equal(await avaliar("git push origin main", "/repo", falso(), liberou.ctx), undefined);
+  assert.equal(liberou.mensagens.length, 1);
+  assert.match(liberou.mensagens[0], /Push direto em `main`/);
+
+  const recusou = contexto(true, "main", false);
+  assert.match((await avaliar("git push origin main", "/repo", falso(), recusou.ctx)) ?? "", /recusou/);
+
+  const semUI = contexto(false, "main", true);
+  assert.match((await avaliar("git push origin main", "/repo", falso(), semUI.ctx)) ?? "", /PR/);
+  assert.equal(semUI.mensagens.length, 0);
+
+  const sub = contexto(true, "sub", true);
+  assert.match((await avaliar("git push origin main", "/repo", falso(), sub.ctx)) ?? "", /PR/);
+  assert.equal(sub.mensagens.length, 0);
+
+  const livre = contexto(true, "main", true);
+  assert.equal(await avaliar("git status", "/repo", falso(), livre.ctx), undefined);
+  assert.equal(livre.mensagens.length, 0);
 });

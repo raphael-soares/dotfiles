@@ -15,16 +15,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 MODELO_EXECUTOR = "@task"
-MODELO_REVISOR = "@slow"
 TETO_EXECUCAO = ("10", "90m")
 TETO_CONSERTO = ("5", "45m")
-TETO_REVISAO = ("5", "30m")
 RODADAS_VERMELHAS = 2
 PRAZO_CI = 2700
 
 LABEL_PRONTA = "ready-for-agent"
 LABEL_EM_EXECUCAO = "em-execucao"
-LABEL_RISCO = "revisar-dono"
 PREFIXO_MARCA = "<!-- fila:"
 MARCA_DONO = "<!-- fila:dono -->"
 MARCA_PERGUNTA = "<!-- fila:pergunta -->"
@@ -50,9 +47,6 @@ A issue {fila}#{n} já tem trabalho começado nos worktrees {lista}. Leia a issu
 
 PROMPT_CONSERTO = """\
 A PR {repo}#{pr} da issue {fila}#{n} ficou vermelha. Saída da espera: {arquivo}. Corrija a causa, rode o comando "rapido" e o teste que falhou, commit e push. Não espere o CI. Se a falha não vem do seu diff (dev quebrada, infraestrutura), comente na PR com a evidência e termine sem mudar código."""
-
-PROMPT_REVISAO = """\
-Revise a PR {repo}#{pr} contra a issue {fila}#{n}. Não edite nada. Aponte só: comportamento que diverge da spec; caso de borda sem teste; mudança de esquema, contrato, permissão ou dinheiro que a abertura da PR não declara. Nada de estilo. Saída: no máximo cinco pontos, cada um com arquivo:linha e por que o dono deve olhar; ou a linha "Nada a apontar"."""
 
 
 class Erro(Exception):
@@ -125,14 +119,6 @@ def sessao_pediu_dono(comentarios):
     return corpo_do_ultimo(comentarios).startswith(MARCA_PERGUNTA)
 
 
-def nomes_de_labels(pr):
-    return [l["name"] if isinstance(l, dict) else l for l in pr.get("labels") or []]
-
-
-def pode_mesclar(prs):
-    return bool(prs) and not any(LABEL_RISCO in nomes_de_labels(pr) for pr in prs)
-
-
 def todas_mescladas(prs):
     return bool(prs) and all(pr.get("state") == "MERGED" for pr in prs)
 
@@ -193,8 +179,6 @@ def espera_de(assignees, login, prs, comentarios):
         linhas = corpo_do_ultimo(comentarios).splitlines()
         return "dono: " + (linhas[-1] if linhas else "sem comentário")
     abertas = [pr for pr in prs if pr.get("state") == "OPEN"]
-    if any(LABEL_RISCO in nomes_de_labels(pr) for pr in abertas):
-        return "dono: PR de risco (revisar-dono)"
     if abertas:
         return "CI e merge da fila"
     return "sessão em andamento ou travada"
@@ -310,7 +294,7 @@ class Fila:
         for r in repos:
             lista = self.gh_json(
                 "pr", "list", "-R", r.slug, "--head", f"fila/{n}", "--state", estado,
-                "--json", "number,url,state,labels,headRefName", "--limit", "20",
+                "--json", "number,url,state,headRefName", "--limit", "20",
             ) or []
             for pr in lista:
                 pr["repo"] = r
@@ -405,10 +389,8 @@ class Fila:
             itens.append((str(caminho), r.slug, integ[r.nome]))
         return itens
 
-    def sessao(self, tipo, n, cwd, modelo, teto, prompt, auto_aprovar=True):
-        cmd = ["omp", "-p", "--cwd", str(cwd), "--model", modelo, "--max-cost", teto[0], "--max-time", teto[1]]
-        if auto_aprovar:
-            cmd.append("--auto-approve")
+    def sessao(self, tipo, n, cwd, modelo, teto, prompt):
+        cmd = ["omp", "-p", "--cwd", str(cwd), "--model", modelo, "--max-cost", teto[0], "--max-time", teto[1], "--auto-approve"]
         if self.simular:
             print(f"[simular] sessão {tipo}: {shlex.join(cmd)} <prompt>", flush=True)
             print("\n".join("    " + linha for linha in prompt.splitlines()), flush=True)
@@ -546,28 +528,21 @@ class Fila:
     def concluir(self, issue, repos):
         n = issue["number"]
         abertas = self.prs_da_issue(n, repos, "open")
-        if pode_mesclar(abertas):
-            for pr in abertas:
-                rotulo = f"{pr['repo'].slug}#{pr['number']}"
-                try:
-                    self.mut(["gh", "pr", "merge", str(pr["number"]), "-R", pr["repo"].slug, "--merge", "--delete-branch"])
-                except Erro as e:
-                    estado = self.gh("pr", "view", str(pr["number"]), "-R", pr["repo"].slug, "--json", "state", "--jq", ".state").strip()
-                    if estado != "MERGED":
-                        self.dono(issue, f"merge de {rotulo} falhou: {e}")
-                        return
-                    log(f"aviso: {rotulo} mesclada, mas o gh reclamou: {e}")
+        if not abertas:
+            if self.encerrar_se_mesclada(issue, repos):
+                return
+            self.dono(issue, "nenhuma PR aberta para mesclar")
             return
-        arriscadas = [pr for pr in abertas if LABEL_RISCO in nomes_de_labels(pr)]
-        for pr in arriscadas:
-            repo = pr["repo"]
-            prompt = PROMPT_REVISAO.format(repo=repo.slug, pr=pr["number"], fila=self.p.fila, n=n)
-            rc, saida = self.sessao("revisao", n, self.p.worktree(repo, n), MODELO_REVISOR, TETO_REVISAO, prompt, auto_aprovar=False)
-            texto = saida.strip() or f"A sessão revisora não produziu saída (código {rc})."
-            self.mut(["gh", "pr", "comment", str(pr["number"]), "-R", repo.slug, "--body-file", "-"], entrada=texto)
-            self.mut(["gh", "pr", "edit", str(pr["number"]), "-R", repo.slug, "--add-assignee", self.login()])
-        urls = ", ".join(pr["url"] for pr in arriscadas)
-        self.dono(issue, f"PR de risco ({LABEL_RISCO}) com CI verde, revisão publicada na PR, nada mesclado: {urls}")
+        for pr in abertas:
+            rotulo = f"{pr['repo'].slug}#{pr['number']}"
+            try:
+                self.mut(["gh", "pr", "merge", str(pr["number"]), "-R", pr["repo"].slug, "--merge", "--delete-branch"])
+            except Erro as e:
+                estado = self.gh("pr", "view", str(pr["number"]), "-R", pr["repo"].slug, "--json", "state", "--jq", ".state").strip()
+                if estado != "MERGED":
+                    self.dono(issue, f"merge de {rotulo} falhou: {e}")
+                    return
+                log(f"aviso: {rotulo} mesclada, mas o gh reclamou: {e}")
 
     def roda(self, maximo):
         tratadas, fechadas, feitas = set(), set(), 0
@@ -604,9 +579,8 @@ class Fila:
             print(f"  issue #{issue['number']} {issue['title']} {issue['url']}")
             vazio = False
         for r in self.p.repos.values():
-            for pr in self.gh_json("pr", "list", "-R", r.slug, "--assignee", login, "--json", "number,title,url,labels", "--limit", "100") or []:
-                marca = " [revisar-dono]" if LABEL_RISCO in nomes_de_labels(pr) else ""
-                print(f"  PR {r.slug}#{pr['number']} {pr['title']}{marca} {pr['url']}")
+            for pr in self.gh_json("pr", "list", "-R", r.slug, "--assignee", login, "--json", "number,title,url", "--limit", "100") or []:
+                print(f"  PR {r.slug}#{pr['number']} {pr['title']} {pr['url']}")
                 vazio = False
         if vazio:
             print("  nada")

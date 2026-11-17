@@ -114,18 +114,8 @@ class DonoRespondeu(unittest.TestCase):
 
 
 class Merge(unittest.TestCase):
-    def pr(self, estado="OPEN", *labels):
-        return {"state": estado, "labels": [{"name": l} for l in labels]}
-
-    def test_nao_mescla_quando_qualquer_pr_tem_revisar_dono(self):
-        prs = [self.pr("OPEN"), self.pr("OPEN", "outra", fila.LABEL_RISCO)]
-        self.assertFalse(fila.pode_mesclar(prs))
-
-    def test_mescla_quando_nenhuma_tem(self):
-        self.assertTrue(fila.pode_mesclar([self.pr("OPEN", "bug"), self.pr("OPEN")]))
-
-    def test_sem_pr_nao_mescla(self):
-        self.assertFalse(fila.pode_mesclar([]))
+    def pr(self, estado="OPEN"):
+        return {"state": estado}
 
     def test_todas_mescladas_exige_ao_menos_uma(self):
         self.assertFalse(fila.todas_mescladas([]))
@@ -174,8 +164,7 @@ class SessaoEPrompts(unittest.TestCase):
         execucao = fila.prompt_execucao("TEAjudo/teajudo", 7, itens, integ)
         continuacao = fila.prompt_continuacao("TEAjudo/teajudo", 7, itens, integ)
         conserto = fila.PROMPT_CONSERTO.format(repo="TEAjudo/api", pr=3, fila="TEAjudo/teajudo", n=7, arquivo="/x/ci.txt")
-        revisao = fila.PROMPT_REVISAO.format(repo="TEAjudo/api", pr=3, fila="TEAjudo/teajudo", n=7)
-        for texto in (execucao, continuacao, conserto, revisao):
+        for texto in (execucao, continuacao, conserto):
             self.assertNotRegex(texto, r"\{[a-z_]+\}")
         self.assertIn("gh issue view 7 -R TEAjudo/teajudo --comments", execucao)
         self.assertIn("/w/api/fila-7 (TEAjudo/api, base dev); /w/frontend/fila-7", execucao)
@@ -190,9 +179,8 @@ class SessaoEPrompts(unittest.TestCase):
         self.assertIn("a: dev", fila.texto_integracao({"a": "dev", "b": "main"}))
 
     def test_espera_de(self):
-        pr = lambda estado, *l: {"state": estado, "labels": [{"name": x} for x in l]}
+        pr = lambda estado: {"state": estado}
         self.assertTrue(fila.espera_de([], "eu", [pr("MERGED")], []).startswith("fechar"))
-        self.assertIn("risco", fila.espera_de([], "eu", [pr("OPEN", fila.LABEL_RISCO)], []))
         self.assertIn("motivo", fila.espera_de(["eu"], "eu", [], [{"body": "<!-- fila:dono -->\nmotivo"}]))
         self.assertIn("respondeu", fila.espera_de(["eu"], "eu", [], [{"body": "vai"}]))
         self.assertIn("CI", fila.espera_de([], "eu", [pr("OPEN")], []))
