@@ -1,0 +1,2 @@
+#!/bin/sh
+exec omp --profile=enterprise --config "$HOME/.dotfiles/ai/.omp/overlays/enterprise.yml" --append-system-prompt "$HOME/.dotfiles/ai/.omp/sem-humano.md" "$@"

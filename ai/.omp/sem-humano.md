@@ -1,0 +1,1 @@
+Sessão sem humano: ninguém vai responder pergunta nem aprovar design. O pedido, ou a issue, já é o design aprovado. Não rode `brainstorming` nem o menu de `finishing-a-development-branch`; planeje, execute, verifique e termine do jeito que o pedido manda. Se faltar uma decisão que só o dono toma, use o canal que o pedido indica para isso (na fila, comentário na issue) e termine.

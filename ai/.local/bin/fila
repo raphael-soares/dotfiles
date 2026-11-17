@@ -390,7 +390,8 @@ class Fila:
         return itens
 
     def sessao(self, tipo, n, cwd, modelo, teto, prompt):
-        cmd = ["omp", "-p", "--cwd", str(cwd), "--model", modelo, "--max-cost", teto[0], "--max-time", teto[1], "--auto-approve"]
+        cmd = ["omp", "-p", "--cwd", str(cwd), "--model", modelo, "--max-cost", teto[0], "--max-time", teto[1], "--auto-approve",
+               "--append-system-prompt", str(Path.home() / ".dotfiles/ai/.omp/sem-humano.md")]
         if self.simular:
             print(f"[simular] sessão {tipo}: {shlex.join(cmd)} <prompt>", flush=True)
             print("\n".join("    " + linha for linha in prompt.splitlines()), flush=True)

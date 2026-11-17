@@ -136,6 +136,8 @@ grupo_ai() {
   for item in AGENTS.md RULES.md config.yml keybindings.yml lsp.json skills rules extensions themes; do
     ln -sfn "$REPO/ai/.omp/agent/$item" "$perfil/$item"
   done
+  omp plugin install github:obra/superpowers#v7.0.2
+  OMP_PROFILE=enterprise omp plugin install github:obra/superpowers#v7.0.2
 }
 
 grupo_desktop() {
