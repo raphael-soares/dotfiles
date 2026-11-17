@@ -5,8 +5,7 @@
 3. Nenhuma variável desliga bloco ou regra.
 4. Arquivo novo é cobrado inteiro; arquivo antigo, nas linhas que a PR escreveu.
 5. Exceção é linha num arquivo versionado, com quem decidiu e o motivo. Aparece no diff.
-6. Blocos têm nome fixo: formato, estatica, tamanho, teste, mutacao, arquitetura, contrato, migration, termos, morto, segredo, dependencia, risco. Bloco que não se aplica vai em `nao_se_aplica` no `ficha.json`, com motivo; bloco que falta vai em `pendente`, com a issue.
+6. Blocos têm nome fixo: formato, estatica, tamanho, teste, mutacao, arquitetura, contrato, migration, termos, morto, segredo, dependencia. Bloco que não se aplica vai em `nao_se_aplica` no `ficha.json`, com motivo; bloco que falta vai em `pendente`, com a issue.
 7. Cada violação diz arquivo, regra e o que fazer.
-8. `risco` não reprova: marca a PR com `revisar-dono` quando ela toca caminho de risco, muda contrato de forma incompatível, acrescenta migration, apaga teste ou asserção, ou mexe no próprio portão.
 
-`ficha.json` na raiz: `fila`, `integracao`, `producao` (vazio quando a integração já é a produção), `portao`, `rapido`, `risco` (globs), `prova`, `nao_se_aplica`, `pendente`, `extras`, `prefixo_de_skill`. Repositório que só guarda a fila declara `fila`, `repos` e `prefixo_de_skill`.
+`ficha.json` na raiz: `fila`, `integracao`, `producao` (vazio quando a integração já é a produção), `portao`, `rapido`, `prova`, `nao_se_aplica`, `pendente`, `extras`, `prefixo_de_skill`. Repositório que só guarda a fila declara `fila`, `repos` e `prefixo_de_skill`.
