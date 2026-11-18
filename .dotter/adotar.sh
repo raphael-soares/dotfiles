@@ -8,6 +8,14 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 REPO=$(pwd -P)
 BACKUP=$HOME/.dotfiles-backup/$(date +%Y-%m-%d-%H%M%S)
 
+teste=$(mktemp -d)
+if ! saida=$(HOME=$teste dotter -d "$@" deploy 2>&1); then
+  echo "$saida" >&2
+  rm -rf "$teste"
+  exit 1
+fi
+rm -rf "$teste"
+
 while IFS= read -r -d '' link; do
   [[ $(readlink -m "$link") == "$REPO"/* ]] || continue
   echo "==> link antigo removido: ${link#"$HOME"/}"

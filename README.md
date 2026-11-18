@@ -29,7 +29,7 @@ git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles
 
 Troque também o nome antigo na linha `127.0.1.1` do `/etc/hosts`.
 
-Instale o dotter: no Arch, `yay -S dotter-rs`; no Fedora, que não tem pacote,
+Instale o dotter: no Arch, `yay -S dotter-rs-bin`; no Fedora, que não tem pacote,
 baixe o `dotter-linux-x64-musl` do
 [último release](https://github.com/SuperCuber/dotter/releases/latest) para
 `~/.local/bin/dotter` e dê `chmod +x`.

@@ -76,9 +76,10 @@ if copiar_etc desktop/audio/91-fuxi-h3-mixer.rules /etc/udev/rules.d/91-fuxi-h3-
 fi
 regras=$(cat "$REPO"/desktop/audio/wireplumber/* | sha256sum)
 if [[ $(cat "$ESTADO/wireplumber" 2>/dev/null) != "$regras" ]] && command -v systemctl >/dev/null; then
-  systemctl --user restart wireplumber
-  echo "$regras" >"$ESTADO/wireplumber"
-  echo "==> WirePlumber reiniciado; reconecte o Bluetooth para renegociar em A2DP"
+  if systemctl --user restart wireplumber; then
+    echo "$regras" >"$ESTADO/wireplumber"
+    echo "==> WirePlumber reiniciado; reconecte o Bluetooth para renegociar em A2DP"
+  fi
 fi
 if [[ $DISTRO == fedora ]] && ! fc-list | grep -qi 'JetBrainsMono Nerd'; then
   echo "==> Instale a JetBrainsMono Nerd Font a mão (não está no dnf)"
@@ -105,7 +106,7 @@ if command -v flatpak >/dev/null; then
 fi
 # Trocar o link de ~/.config/hypr com o Hyprland aberto o deixa em modo de emergência.
 if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
-  hyprctl reload >/dev/null && noctalia msg config-reload
+  hyprctl reload >/dev/null && { noctalia msg config-reload || true; }
   hyprctl configerrors
 fi
 {{/if}}

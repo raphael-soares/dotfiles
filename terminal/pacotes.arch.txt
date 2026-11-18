@@ -11,4 +11,4 @@ ghostscript
 ghostty
 go
 fastfetch
-dotter-rs
+dotter-rs-bin

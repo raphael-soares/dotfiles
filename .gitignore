@@ -13,3 +13,6 @@
 
 ai/skills/synced/
 __pycache__/
+
+# O syncfast guarda uma cópia do config antes de migrar de versão.
+desktop/syncfast/config.toml.v*
