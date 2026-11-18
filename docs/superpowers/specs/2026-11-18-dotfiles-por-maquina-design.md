@@ -60,19 +60,24 @@ simbólico aceita `owner` e `recurse`.
   global.toml        módulos: arquivo do repo -> destino, variáveis
   notebook.toml      packages = [...] do notebook
   casa.toml          packages = [...] da casa
-  post_deploy.sh     pacotes da distro, gsettings, herdr-setup, perfil enterprise
+  post_deploy.sh     pacotes da distro, /etc, gsettings, herdr-setup, perfil enterprise
+  adotar.sh          primeira aplicação numa máquina que já tem config
 terminal/  bash git starship fzf mise nvim ghostty fastfetch
-desktop/   fontes webapps audio (com o Fuxi) syncfast hypr noctalia gtk greetd
+desktop/   fontes webapps audio (com o Fuxi) syncfast
+hyprland/  hypr portal noctalia gtk greetd
 ai/        layout interno sem mudança
-trabalho/  vpn, shell (ompe, SESSIONIZER_DIRS)
+trabalho/  bin (vpn, omp-agendado-work), shell (ompe, SESSIONIZER_DIRS)
+tests/     maquinas.sh e adotar.sh, num HOME falso
 docs/
 README.md
 .env.example
 ```
 
-Dentro de cada pasta de app ficam só os arquivos do app, sem o prefixo do home
-(`terminal/ghostty/config`, não `ghostty/.config/ghostty/config`). O destino
-mora no `global.toml`.
+Cada pasta da raiz é um módulo do dotter, com o mesmo nome que aparece no
+arquivo da máquina. Dentro de cada pasta de app ficam só os arquivos do app,
+sem o prefixo do home (`terminal/ghostty/config`, não
+`ghostty/.config/ghostty/config`). O destino mora no `global.toml`. A lista de
+pacotes da distro fica no módulo, em `pacotes.<distro>.txt`.
 
 `ai/` mantém a árvore interna (`ai/.omp/agent/...`, `ai/.claude/...`,
 `ai/.local/bin/...`, `ai/skills`). Scripts, skills e o `AGENTS.md` citam esses
@@ -93,10 +98,11 @@ arquivo de cada máquina caber em uma linha.
 | `hyprland` | hypr, portal, noctalia, gtk, o `theme = noctalia` do Ghostty, greetd e o PAM dele; no hook: gsettings, `~/.icons/default`, override do flatpak, `gcr-ssh-agent.socket` | sim | não |
 | `trabalho` | vpn, `ompe`, `SESSIONIZER_DIRS`, `omp-agendado-work`, `ai/.omp/overlays/enterprise.yml`; no hook: os links de `~/.omp/profiles/enterprise/agent` e o `plugin install` do perfil enterprise | sim | não |
 
-Um módulo pode linkar arquivo de qualquer pasta do repo. Os arquivos de
-trabalho que moram em `ai/` (`omp-agendado-work`, `overlays/enterprise.yml`)
-continuam lá, porque scripts citam o caminho, mas só o módulo `trabalho` os
-linka. A casa não recebe nada do perfil enterprise.
+Um módulo pode linkar arquivo de qualquer pasta do repo. O
+`overlays/enterprise.yml` continua em `ai/`, porque o `ompe` cita o caminho,
+mas só o módulo `trabalho` o linka. O `omp-agendado-work` vai para
+`trabalho/bin`: ninguém cita o caminho dele, só o nome. A casa não recebe nada
+do perfil enterprise.
 
 O tema `noctalia.json` do syncfast fica como está: quando o tema some, o
 syncfast cai no tema embutido claro ou escuro (`Themes::resolve`).

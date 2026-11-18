@@ -12,8 +12,8 @@ num terminal do hc com o omp da conta escolhida.
 ## 1. Confira o CLI
 
 Rode `herdr-automations list --json`. Se o comando falhar ou o campo `backend`
-não for `hc`, diga ao usuário para rodar `~/.dotfiles/install.sh terminal` e
-pare aqui.
+não for `hc`, diga ao usuário para rodar `cd ~/.dotfiles && dotter deploy`
+(reinstala o herdr-setup) e pare aqui.
 
 ## 2. Junte o que falta numa pergunta só
 
