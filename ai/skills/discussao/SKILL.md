@@ -50,8 +50,32 @@ Quando a conversa convergir:
    - **Construir agora:** o `brainstorming` assume e trata as decisões da
      tabela como respondidas, sem repetir as perguntas.
    - **Registrar para depois:** uma issue por entrega no repositório `fila` do
-     `ficha.json`, com as decisões no corpo e a label `ready-for-agent`. Sem
-     `ficha.json`, a issue vai no próprio repositório, sem label.
+     `ficha.json`, com o PRD no corpo e a label `ready-for-agent`. Sem
+     `ficha.json`, a issue vai no próprio repositório, sem label. Milestone
+     pela seção Milestones das regras.
    - **Só conversa:** nada a registrar.
 
 Escolher uma saída autoriza só ela. Esta skill não escreve código.
+
+## PRD
+
+O corpo da issue diz o quê e o porquê, nunca o como: classe, endpoint, esquema
+e biblioteca são do `brainstorming`, que parte deste PRD.
+
+```markdown
+## Problema
+<o quê, para quem e por quê, em até cinco linhas>
+
+## Aceite
+- [ ] <comportamento que quem usa observa, nunca camada técnica>
+
+## Restrições e decisões
+<o que já foi decidido na conversa, com o motivo; some se não houver>
+
+## Risco
+<esquema, contrato, permissão, dinheiro: o que toca, ou "nenhum">
+
+Repos: <nomes do campo `repos` do ficha.json, separados por vírgula>
+```
+
+A linha `Repos:` só entra quando o `ficha.json` tem `repos`.

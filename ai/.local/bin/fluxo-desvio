@@ -28,6 +28,7 @@ CAMPOS_CODIGO = {
     "prefixo_de_skill": str,
 }
 CAMPOS_FILA = {"fila": str, "repos": dict, "prefixo_de_skill": str}
+CAMPOS_LEVE = {"fila": str, "integracao": str}
 MARCADORES_DE_CODIGO = ["pom.xml", "package.json", "pyproject.toml", "Cargo.toml", "go.mod", "build.gradle"]
 LIMITE_INSTRUCAO = 16 * 1024
 GATILHOS_DE_POLITICA = ("gh pr merge", "ready-for-agent")
@@ -309,11 +310,12 @@ def main():
 
         ficha = ler_ficha(raiz, achar)
         so_fila = isinstance(ficha, dict) and "repos" in ficha and "portao" not in ficha
+        leve = isinstance(ficha, dict) and "repos" not in ficha and "portao" not in ficha
         tem_marcador = any((raiz / m).exists() for m in MARCADORES_DE_CODIGO) or (raiz / "scripts/portao").exists()
-        codigo = not so_fila and (ficha is not None or tem_marcador)
+        codigo = not so_fila and not leve and (ficha is not None or tem_marcador)
 
         if ficha is not None:
-            validar_campos(ficha, CAMPOS_FILA if so_fila else CAMPOS_CODIGO, achar)
+            validar_campos(ficha, CAMPOS_FILA if so_fila else CAMPOS_LEVE if leve else CAMPOS_CODIGO, achar)
         if codigo:
             verificar_portao(raiz, ficha or {}, achar)
         verificar_workflows(raiz, codigo, achar)

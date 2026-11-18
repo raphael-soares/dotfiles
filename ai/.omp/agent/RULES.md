@@ -23,8 +23,31 @@ do dono e vencem o texto das skills dele quando os dois conflitam.
 - Ideia solta, que ainda não se sabe se vira código, é da skill `discussao`, e
   só quando o dono chamar.
 - Mandar trabalho para a fila só quando o dono pedir: issue no repositório
-  `fila` do `ficha.json`, com o design aprovado no corpo e a label
-  `ready-for-agent`.
+  `fila` do `ficha.json`, com o PRD no corpo e a label `ready-for-agent`.
+- Repo com `ficha.json` tem camada de gestão: o trabalho parte de uma issue, e
+  o `brainstorming` parte do PRD dela. Sem issue, crie uma com o PRD (formato
+  da skill `discussao`) antes de começar, sem perguntar e sem
+  `ready-for-agent`: aprovar é do dono. Se o dono disser "sem issue", trabalhe
+  direto. Repo sem `ficha.json` segue o Superpowers puro, sem issue.
+- Quando há issue, branch e arquivo de spec levam o número dela e a PR leva
+  `Closes #N`. A spec é versionada em `docs/superpowers/specs/`; o plano vai em
+  `.scratch/` e não é commitado.
+- Repo cujo `ficha.json` tem `quadro`: ao discutir uma issue ponha a label
+  `investigando`; ao implementar troque por `em-execucao`; depois de cada
+  troca rode `quadro sync . <N>`.
+- Pergunta ao dono vai sempre numa chamada `ask`, nunca solta no chat, uma
+  pergunta por chamada. Alternativas que dá para nomear: uma opção por
+  escolha, com o tradeoff no texto e a sua recomendação marcada. Pergunta
+  aberta: campo de texto.
+
+## Milestones
+
+Em repositório que usa milestone: título `NN. Nome`, dois dígitos, na ordem de
+execução (sufixo para inserir: `17a.`). `00. Saúde técnica` é permanente, para
+bug, dívida técnica e desempenho fora de uma milestone de resultado. Toda issue
+aberta tem milestone, menos a da conferência diária (label `conferencia`);
+milestone sem issue aberta se fecha. A descrição é uma frase de objetivo, sem
+lista de itens.
 
 ## Decisão cara
 
