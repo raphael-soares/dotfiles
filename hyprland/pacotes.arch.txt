@@ -15,7 +15,6 @@ gnome-calculator
 gvfs-mtp
 gvfs-smb
 seahorse
-baobab
 gnome-disk-utility
 ddcutil
 nwg-look
