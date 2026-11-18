@@ -1,6 +1,6 @@
--- O ambiente inteiro da sessão vai pro systemd antes de tudo: sem ele o
--- xdg-desktop-portal não casa o backend do Hyprland (exige
--- XDG_CURRENT_DESKTOP=Hyprland) e o portal GTK falha com "cannot open display".
+-- The whole session environment goes to systemd before anything else: without it
+-- xdg-desktop-portal does not match the Hyprland backend (it requires
+-- XDG_CURRENT_DESKTOP=Hyprland) and the GTK portal fails with "cannot open display".
 hl.on("hyprland.start", function()
   hl.exec_cmd(
     "systemctl --user import-environment $(env | cut -d= -f1) && dbus-update-activation-environment --systemd --all"

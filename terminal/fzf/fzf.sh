@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cores so por indice ANSI (0-15, -1 = padrao do terminal): seguem o tema do terminal.
+# Colors by ANSI index only (0-15, -1 = terminal default): they follow the terminal theme.
 
 export FZF_BASE_OPTS=$'
   --pointer=""

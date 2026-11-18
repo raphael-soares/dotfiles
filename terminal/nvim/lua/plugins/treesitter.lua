@@ -53,7 +53,7 @@ return {
       -- Auto-close and auto-rename HTML/Vue tags
       require("nvim-ts-autotag").setup()
 
-      -- New nvim-treesitter API doesn't enable highlighting automatically — do it for all filetypes
+      -- New nvim-treesitter API doesn't enable highlighting automatically; do it for all filetypes
       vim.api.nvim_create_autocmd("FileType", {
         callback = function(args)
           pcall(vim.treesitter.start, args.buf)

@@ -31,7 +31,7 @@ default_target_type = "symbolic"
 "ai/.local/bin" = "~/.local/bin"
 
 [desktop.files]
-"desktop/fontes/50-fontes.conf" = "~/.config/fontconfig/conf.d/50-fontes.conf"
+"desktop/fonts/50-fonts.conf" = "~/.config/fontconfig/conf.d/50-fonts.conf"
 "desktop/webapps/applications" = "~/.local/share/applications"
 "desktop/webapps/icons" = "~/.local/share/icons/hicolor/scalable/apps"
 "desktop/audio/wireplumber" = "~/.config/wireplumber/wireplumber.conf.d"
@@ -45,11 +45,11 @@ default_target_type = "symbolic"
 "hyprland/noctalia/plugins/hypr-shots" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-shots", recurse = false }
 "hyprland/noctalia/settings.toml" = "~/.local/state/noctalia/settings.toml"
 "hyprland/noctalia/forest-4.jpg" = "~/Pictures/Wallpaper/forest-4.jpg"
-"hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/maquina.conf"
+"hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/machine.conf"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
 "hyprland/gtk/gtk-4.0/settings.ini" = "~/.config/gtk-4.0/settings.ini"
 
-[trabalho.files]
-"trabalho/bin" = "~/.local/bin"
-"trabalho/shell/trabalho.sh" = "~/.config/shell/rc.d/trabalho.sh"
+[work.files]
+"work/bin" = "~/.local/bin"
+"work/shell/work.sh" = "~/.config/shell/rc.d/work.sh"
 "ai/.omp/overlays" = { type = "symbolic", target = "~/.omp/overlays", recurse = false }

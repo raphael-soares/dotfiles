@@ -35,7 +35,7 @@ hl.config({
     focus_on_activate = true,
     anr_missed_pings = 3,
     middle_click_paste = false,
-    -- Noctalia é o lockscreen; se ele cair bloqueado, reiniciá-lo recupera a sessão.
+    -- Noctalia is the lockscreen; if it crashes while locked, restarting it recovers the session.
     allow_session_lock_restore = true,
   },
 

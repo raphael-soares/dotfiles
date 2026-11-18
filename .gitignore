@@ -1,12 +1,12 @@
-# Config de maquina, com chave de API e caminho local. Mora no home; a regra
-# aqui e rede de seguranca para o dia que uma copia cair dentro do repo.
-# O .env.example, esse sim, e versionado.
+# Machine config, with API keys and local paths. Lives in the home; the rule
+# here is a safety net for the day a copy lands inside the repo.
+# .env.example, on the other hand, is versioned.
 .env
 .env.local
 *.env.local
 .bash_profile.local
 
-# Estado do dotter em cada maquina.
+# Dotter state on each machine.
 .dotter/local.toml
 .dotter/cache.toml
 .dotter/cache/
@@ -14,5 +14,5 @@
 ai/skills/synced/
 __pycache__/
 
-# O syncfast guarda uma cópia do config antes de migrar de versão.
+# syncfast keeps a copy of the config before migrating versions.
 desktop/syncfast/config.toml.v*

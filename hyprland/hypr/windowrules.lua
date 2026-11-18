@@ -6,14 +6,14 @@ hl.window_rule({
 })
 
 hl.window_rule({
-  -- Com follow_mouse, popup e autocomplete dos JetBrains fecham ao passar o mouse fora.
+  -- With follow_mouse, JetBrains popups and autocomplete close when the mouse moves outside.
   name = "jetbrains-no-follow-mouse",
   match = { class = "^(jetbrains-.*)$" },
   no_follow_mouse = true,
 })
 
 hl.window_rule({
-  -- O portal só abre diálogo: seletor de arquivo, compartilhamento, permissão.
+  -- The portal only opens dialogs: file picker, screen sharing, permissions.
   name = "portal-dialogs",
   match = { class = "^(xdg-desktop-portal-gtk)$" },
   float = true,
@@ -22,7 +22,7 @@ hl.window_rule({
 })
 
 hl.window_rule({
-  -- Barrinha "fulano está compartilhando sua tela" do Chromium/Meet/Zoom.
+  -- The "someone is sharing your screen" bar from Chromium/Meet/Zoom.
   name = "hide-sharing-indicator",
   match = { title = ".*is sharing (your screen|a window).*" },
   workspace = "special silent",
@@ -76,14 +76,14 @@ hl.window_rule({
 })
 
 hl.layer_rule({
-  -- O Noctalia anima os próprios painéis; o fade do Hyprland por cima somava as duas.
+  -- Noctalia animates its own panels; Hyprland's fade on top doubled the effect.
   name = "shell-motion",
   match = { namespace = "^noctalia-" },
   no_anim = true,
 })
 
 hl.layer_rule({
-  -- Notificação e OSD aparecem só pra você, nunca no compartilhamento de tela.
+  -- Notification and OSD show only for you, never in screen sharing.
   name = "shell-private",
   match = { namespace = "^noctalia-(notification|osd)" },
   no_screen_share = true,

@@ -10,17 +10,17 @@ local LID_SUSPEND_MS = 10000
 local WILDCARD = { mode = "preferred", position = "auto", scale = "1" }
 local RULES = {}
 
--- 1080p60 padrao (148,5 MHz) e o VIC 16 da TV: o i915 manda faixa limitada
--- com Broadcast RGB automatico e o aquamarine nao seta a propriedade.
--- CVT-RB (cvt -r 1920 1080 60) nao casa com modo CEA e sai em faixa completa.
+-- Standard 1080p60 (148.5 MHz) is the TV's VIC 16: i915 sends limited range
+-- with automatic Broadcast RGB and aquamarine does not set the property.
+-- CVT-RB (cvt -r 1920 1080 60) does not match a CEA mode and goes out in full range.
 RULES["DP-1"] = {
   mode = "modeline 138.50 1920 1968 2000 2080 1080 1083 1088 1111 +hsync -vsync",
   position = "0x0",
   scale = "1",
 }
 
--- Mesa: externo à esquerda, notebook à direita.
--- "auto" dependia da ordem em que os monitores apareciam no boot.
+-- Desk: external on the left, laptop on the right.
+-- "auto" depended on the order the monitors appeared at boot.
 RULES["eDP-1"] = { mode = "preferred", position = "auto-right", scale = "1" }
 
 local RUNTIME_DIR = os.getenv("XDG_RUNTIME_DIR")
@@ -121,8 +121,8 @@ local function anyExternalConnected()
   return false
 end
 
--- Dock = parceiro USB-C com DisplayPort alt mode (svid ff01); carregador comum não tem.
--- Continua ativo quando o monitor troca de entrada ou os periféricos vão pro outro PC.
+-- Dock = USB-C partner with DisplayPort alt mode (svid ff01); a plain charger has none.
+-- Stays active when the monitor switches input or the peripherals go to the other PC.
 local function dockAttached()
   for _, port in ipairs(TYPEC_PORTS) do
     local partner = "/sys/class/typec/" .. port .. "-partner/"
@@ -178,9 +178,9 @@ function M.evaluate()
     if on then declare(name, false) end
   end
 
-  -- Só desliga quando o que deve ficar ligado já está ativo: o 0.56 só aplica
-  -- regra no frame de um monitor que desenha, e sem nenhum a sessão fica sem
-  -- tela (hyprwm/Hyprland#14496).
+  -- Only turns off once what must stay on is already active: 0.56 only applies a
+  -- rule on the frame of a monitor that is drawing, and with none the session is left
+  -- without a screen (hyprwm/Hyprland#14496).
   if #missing(want) > 0 then
     armEnableTimeout()
     return
@@ -191,8 +191,8 @@ function M.evaluate()
   end
 end
 
--- Callback de monitor.* roda dentro do ensureMonitorStatus, que zera o reload
--- agendado ao voltar; a regra gravada ali se perderia.
+-- A monitor.* callback runs inside ensureMonitorStatus, which clears the reload
+-- scheduled on return; a rule written there would be lost.
 local function schedule()
   if settleTimer then return end
   settleTimer = true
@@ -233,8 +233,8 @@ end
 hl.on("monitor.added", schedule)
 hl.on("monitor.removed", schedule)
 
--- O hub pisca ~3 s quando a energia dele oscila: só suspende depois de LID_SUSPEND_MS
--- seguidos com a tampa fechada, sem monitor externo e sem dock.
+-- The hub blinks for ~3 s when its power fluctuates: only suspends after LID_SUSPEND_MS
+-- in a row with the lid closed, no external monitor and no dock.
 local undockedPolls = 0
 hl.timer(function()
   if not lidClosed() or anyExternalConnected() or dockAttached() then
@@ -248,18 +248,18 @@ hl.timer(function()
   end
 end, { timeout = LID_POLL_MS, type = "repeat" })
 
--- Tira a tampa do logind enquanto este Hyprland viver; sem sessão (greeter, TTY) ele volta a decidir.
+-- Takes the lid away from logind while this Hyprland lives; with no session (greeter, TTY) logind decides again.
 hl.on("hyprland.start", function()
   local pid = (readFile("/proc/self/stat") or ""):match("^(%d+)")
   hl.exec_cmd(
-    "systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='monitors.lua decide a tampa' tail --pid="
+    "systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='monitors.lua handles the lid' tail --pid="
       .. pid
       .. " -f /dev/null"
   )
 end)
 
--- Externo é o principal: SUPER+1..0 só trocam o DP-1, e o notebook fica no 11.
--- Sem o DP-1 conectado, a regra não se aplica e os workspaces caem no eDP-1.
+-- External is the primary: SUPER+1..0 only switch DP-1, and the laptop stays on 11.
+-- Without DP-1 connected, the rule does not apply and the workspaces fall onto eDP-1.
 for i = 1, 10 do
   hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1", default = i == 1 })
 end

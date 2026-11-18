@@ -1,10 +1,10 @@
--- Tokens de movimento: docs/design-system.md#movimento
+-- Motion tokens: docs/design-system.md#motion
 hl.curve("standard", { type = "bezier", points = { { 0.2, 0 }, { 0, 1 } } })
 hl.curve("decelerate", { type = "bezier", points = { { 0.05, 0.7 }, { 0.1, 1 } } })
 hl.curve("accelerate", { type = "bezier", points = { { 0.3, 0 }, { 0.8, 0.15 } } })
 
--- Em spring o speed nao define a duracao; quem define e stiffness/dampening.
--- zeta ~= 1 (criticamente amortecida): assenta em ~200ms sem passar do ponto.
+-- With spring, speed does not set the duration; stiffness/dampening do.
+-- zeta ~= 1 (critically damped): settles in ~200ms without overshoot.
 hl.curve("snappy", { type = "spring", mass = 1, stiffness = 880, dampening = 59 })
 
 hl.animation({ leaf = "global", enabled = true, speed = 2.5, bezier = "standard" })

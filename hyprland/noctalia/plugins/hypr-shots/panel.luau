@@ -20,8 +20,8 @@ local function tempPath()
   return "/tmp/hypr-shots/" .. tostring(noctalia.nowMs()) .. ".png"
 end
 
--- O painel é uma layer: some antes do disparo, senão entra na foto. A captura
--- não salva nem copia nada, só deixa o PNG no /tmp; o destino é a segunda tela.
+-- The panel is a layer: it disappears before the shot, otherwise it ends up in the photo. The capture
+-- does not save or copy anything, it only leaves the PNG in /tmp; the destination is the second screen.
 local function capture(command)
   local path = tempPath()
   panel.close()

@@ -91,7 +91,7 @@ hl.bind("XF86AudioMute", hl.dsp.exec_cmd(ipc .. "volume-mute"))
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(ipc .. "brightness-up"))
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(ipc .. "brightness-down"))
 
--- SUPER+P abre o seletor (plugin raphael/hypr-displays).
+-- SUPER+P opens the picker (raphael/hypr-displays plugin).
 hl.bind(
   mainMod .. " + P",
   hl.dsp.exec_cmd(
@@ -99,7 +99,7 @@ hl.bind(
   )
 )
 
--- Fora de monitors.lua: declarados junto com hl.monitor, param de disparar (hyprwm/Hyprland#14858).
+-- Outside monitors.lua: when declared next to hl.monitor, they stop firing (hyprwm/Hyprland#14858).
 hl.bind("switch:on:Lid Switch", function()
   require("monitors").evaluate()
 end, { locked = true })
@@ -107,6 +107,6 @@ hl.bind("switch:off:Lid Switch", function()
   require("monitors").evaluate()
 end, { locked = true })
 
--- Print abre o seletor do plugin raphael/hypr-shots: área, monitor, janela ou
--- anotação, escolhidos com setas ou 1-6.
+-- Print opens the raphael/hypr-shots plugin picker: area, monitor, window or
+-- annotation, chosen with arrow keys or 1-6.
 hl.bind("Print", hl.dsp.exec_cmd(ipc .. "panel-open raphael/hypr-shots:menu"))

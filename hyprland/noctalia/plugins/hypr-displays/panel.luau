@@ -143,8 +143,8 @@ render = function()
     subtitleText = tr("panel.no_external")
   end
 
-  -- Um único destaque forte: o cursor. O modo em vigor só fica contornado,
-  -- com um check, pra não parecer uma segunda opção selecionada.
+  -- A single strong highlight: the cursor. The active mode is only outlined,
+  -- with a check, so it does not look like a second selected option.
   local buttons = {}
   for i, m in ipairs(MODES) do
     local isCursor = cursor == i

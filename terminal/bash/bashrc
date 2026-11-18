@@ -40,7 +40,7 @@ bind 'set completion-ignore-case on'
 bind 'set show-all-if-ambiguous on'
 bind 'set colored-stats on'
 
-# GNU coreutils usa --color; BSD/macOS usa -G.
+# GNU coreutils uses --color; BSD/macOS uses -G.
 if ls --color=auto >/dev/null 2>&1; then
   alias ls='ls --color=auto'
   alias l='ls -lah --color=auto'
@@ -70,7 +70,7 @@ export FZF_CTRL_R_OPTS='--prompt="HISTORY: "'
 export FZF_CTRL_T_OPTS='--prompt="FILES: "'
 export FZF_ALT_C_OPTS='--prompt="JUMP: "'
 
-# fd em vez do find padrao do fzf: mais rapido e ja ignora .git/.gitignore.
+# fd instead of fzf's default find: faster and it already ignores .git/.gitignore.
 if command -v fd >/dev/null; then
   export FZF_DEFAULT_COMMAND='fd --hidden --strip-cwd-prefix --exclude .git'
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -88,8 +88,8 @@ fi
 
 command -v starship >/dev/null && eval "$(starship init bash)"
 
-# OSC 133 marca prompt (A) e inicio da saida (C) pro previous/next-prompt do
-# copy mode do tmux. Depois do starship: ele toma o PROMPT_COMMAND.
+# OSC 133 marks the prompt (A) and the start of output (C) for the previous/next-prompt of
+# tmux copy mode. After starship: it takes over PROMPT_COMMAND.
 _osc133_prompt() { printf '\e]133;A\e\\'; }
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_osc133_prompt"
 PS0="${PS0-}"$'\e]133;C\e\\'

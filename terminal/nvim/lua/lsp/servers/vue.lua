@@ -15,7 +15,7 @@ vim.lsp.config("vue_ls", {
     client.handlers["tsserver/request"] = function(_, result, context)
       local clients = vim.lsp.get_clients({ bufnr = context.bufnr, name = "vtsls" })
       if #clients == 0 then
-        vim.notify("Could not find `vtsls` — `vue_ls` will not work without it.", vim.log.levels.ERROR)
+        vim.notify("Could not find `vtsls`: `vue_ls` will not work without it.", vim.log.levels.ERROR)
         return
       end
       local ts_client = clients[1]
