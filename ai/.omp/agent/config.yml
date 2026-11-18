@@ -22,7 +22,7 @@ task:
   softRequestBudget: 100
 defaultThinkingLevel: auto
 plan:
-  defaultOnStartup: true
+  defaultOnStartup: false
 github:
   enabled: true
 computer:
@@ -34,7 +34,7 @@ composer:
   shape: field
   tokenRate: false
 statusLine:
-  preset: custom
+  preset: minimal
   separator: block
   contextLine: percentage
   sessionAccent: false
@@ -65,16 +65,16 @@ terminal:
 display:
   hideToolActivity: false
   shimmer: classic
-  showTokenUsage: true
+  showTokenUsage: false
 symbolPreset: nerd
 tui:
   tight: false
   vimMode: true
   vimModeDisplay: text
   renderSvg: true
-  resizeScrollback: rebuild
-  completeScrollback: true
-  textSizing: true
+  resizeScrollback: append
+  completeScrollback: false
+  textSizing: false
 externalThinking: false
 completion:
   notify: "off"

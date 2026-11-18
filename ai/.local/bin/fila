@@ -318,6 +318,21 @@ class Fila:
             args += ["--remove-label", LABEL_PRONTA]
         self.mut(args)
         self.mut(["gh", "issue", "comment", n, "-R", self.p.fila, "--body", f"{MARCA_DONO}\n{motivo}"])
+        self.quadro(n)
+
+    def quadro(self, n):
+        cmd = [ferramenta_irma("quadro"), "sync", str(self.p.dir), str(n), "--da-fila"]
+        if self.simular:
+            print(f"[simular] {shlex.join(cmd)}", flush=True)
+            return
+        try:
+            r = executar(cmd, timeout=300)
+        except Erro as e:
+            log(f"aviso: quadro: {e}")
+            return
+        saida = (r.stdout + r.stderr).strip()
+        if saida:
+            log(saida)
 
     def varrer(self, tratadas_fechadas):
         retomar = []
@@ -347,6 +362,7 @@ class Fila:
         marco = issue.get("milestone")
         if fecha_marco_vazio(marco):
             self.fechar_marco_vazio(marco["number"])
+        self.quadro(issue["number"])
 
     def remover_worktree(self, repo, n):
         caminho = self.p.worktree(repo, n)
@@ -390,7 +406,8 @@ class Fila:
         return itens
 
     def sessao(self, tipo, n, cwd, modelo, teto, prompt):
-        cmd = ["omp", "-p", "--cwd", str(cwd), "--model", modelo, "--max-cost", teto[0], "--max-time", teto[1], "--auto-approve"]
+        cmd = ["omp", "-p", "--cwd", str(cwd), "--model", modelo, "--max-cost", teto[0], "--max-time", teto[1], "--auto-approve",
+               "--append-system-prompt", str(Path.home() / ".dotfiles/ai/.omp/sem-humano.md")]
         if self.simular:
             print(f"[simular] sessão {tipo}: {shlex.join(cmd)} <prompt>", flush=True)
             print("\n".join("    " + linha for linha in prompt.splitlines()), flush=True)
@@ -480,6 +497,7 @@ class Fila:
                 "gh", "issue", "edit", str(n), "-R", self.p.fila,
                 "--add-label", LABEL_EM_EXECUCAO, "--remove-label", LABEL_PRONTA,
             ])
+        self.quadro(n)
         itens = self.garantir_worktrees(n, repos, integ)
         primeiro = Path(itens[0][0])
         continuacao = prompt_continuacao(self.p.fila, n, itens, integ)
@@ -498,9 +516,11 @@ class Fila:
             comentarios = self.listar_comentarios(n)
             if sessao_pediu_dono(comentarios):
                 self.mut(["gh", "issue", "edit", str(n), "-R", self.p.fila, "--add-assignee", self.login()])
+                self.quadro(n)
             else:
                 self.dono(issue, "sessão terminou sem PR")
             return
+        self.quadro(n)
         for pr in abertas:
             repo = pr["repo"]
             resultado, motivo = self.esperar_ci(n, pr, repo, self.p.worktree(repo, n))
@@ -543,6 +563,7 @@ class Fila:
                     self.dono(issue, f"merge de {rotulo} falhou: {e}")
                     return
                 log(f"aviso: {rotulo} mesclada, mas o gh reclamou: {e}")
+        self.quadro(n)
 
     def roda(self, maximo):
         tratadas, fechadas, feitas = set(), set(), 0

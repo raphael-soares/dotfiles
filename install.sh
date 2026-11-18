@@ -117,13 +117,19 @@ linkar() {
 grupo_terminal() {
   instalar_pacotes terminal
   avisar_sem_pacote starship mise ghostty
-  linkar .config/mise .config/git .config/ghostty/themes \
-    .config/herdr-app .config/herdr-app/layouts .config/herdr-app/mods \
-    -- bash git starship fzf mise nvim ghostty herdr-app
+  linkar .config/mise .config/git .config/ghostty/themes .config/fastfetch -- bash git starship fzf mise nvim ghostty fastfetch
   if [[ ! -f "$HOME/.env.local" ]]; then
     cp .env.example "$HOME/.env.local"
     echo "==> ~/.env.local criado a partir do .env.example, preencha as chaves"
   fi
+  instalar_herdr_setup
+}
+
+# Setup do herdr-app (mods, layouts, atalhos, templates do hc) mora no repo proprio.
+instalar_herdr_setup() {
+  local dir="$HOME/Code/Personal/herdr-setup"
+  [[ -d "$dir" ]] || git clone https://github.com/raphael-soares/herdr-setup "$dir"
+  "$dir/install.sh"
 }
 
 grupo_ai() {
@@ -133,9 +139,11 @@ grupo_ai() {
   # Perfil do omp com auth propria (agent.db) e o resto compartilhado com o default.
   local perfil="$HOME/.omp/profiles/enterprise/agent" item
   mkdir -p "$perfil"
-  for item in AGENTS.md RULES.md config.yml keybindings.yml lsp.json skills rules extensions themes; do
+  for item in AGENTS.md RULES.md config.yml keybindings.yml lsp.json skills prompts rules extensions themes; do
     ln -sfn "$REPO/ai/.omp/agent/$item" "$perfil/$item"
   done
+  omp plugin install github:obra/superpowers#v7.0.2
+  OMP_PROFILE=enterprise omp plugin install github:obra/superpowers#v7.0.2
 }
 
 grupo_desktop() {

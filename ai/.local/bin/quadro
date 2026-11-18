@@ -1,0 +1,312 @@
+#!/usr/bin/env python3
+"""Board do GitHub Projects por repo: a coluna de cada issue sai do estado dela (labels, responsável, PR)."""
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+COLUNAS = ("Backlog", "Investigação", "Pronta", "Fazendo", "Esperando você", "Revisão", "Feita")
+CORES = ("GRAY", "PURPLE", "BLUE", "YELLOW", "RED", "ORANGE", "GREEN")
+LABEL_INVESTIGANDO = "investigando"
+LABEL_PRONTA = "ready-for-agent"
+LABEL_EM_EXECUCAO = "em-execucao"
+LABEL_FORA_DO_BOARD = "conferencia"
+DONO_DO_MODELO = "raphael-soares"
+MODELO = 1
+TITULO_DO_MODELO = "Modelo de quadro"
+
+
+class Erro(Exception):
+    pass
+
+
+def coluna(issue, login, prs):
+    if issue["state"] == "CLOSED":
+        return "Feita"
+    if login in issue["assignees"]:
+        return "Esperando você"
+    if any(p["state"] in ("OPEN", "MERGED") for p in prs):
+        return "Revisão"
+    labels = set(issue["labels"])
+    if LABEL_EM_EXECUCAO in labels:
+        return "Fazendo"
+    if LABEL_PRONTA in labels:
+        return "Pronta"
+    if LABEL_INVESTIGANDO in labels:
+        return "Investigação"
+    return "Backlog"
+
+
+def executar(cmd, cwd=None):
+    try:
+        r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        raise Erro(f"comando não encontrado: {cmd[0]}")
+    except subprocess.TimeoutExpired:
+        raise Erro(f"tempo esgotado: {' '.join(cmd[:4])}")
+    if r.returncode != 0:
+        raise Erro(f"{' '.join(cmd[:4])} falhou: {(r.stderr or r.stdout).strip()}")
+    return r.stdout
+
+
+def gh_json(*args):
+    saida = executar(["gh", *args])
+    return json.loads(saida) if saida.strip() else None
+
+
+def graphql(consulta, **variaveis):
+    args = ["api", "graphql", "-f", f"query={consulta}"]
+    for nome, valor in variaveis.items():
+        args += ["-F" if isinstance(valor, int) else "-f", f"{nome}={valor}"]
+    resposta = gh_json(*args)
+    if resposta.get("errors"):
+        raise Erro("; ".join(e.get("message", "?") for e in resposta["errors"]))
+    return resposta["data"]
+
+
+def ler_ficha(diretorio):
+    caminho = Path(diretorio).expanduser() / "ficha.json"
+    if not caminho.exists():
+        return caminho, {}
+    try:
+        return caminho, json.loads(caminho.read_text())
+    except json.JSONDecodeError as e:
+        raise Erro(f"JSON inválido em {caminho}: {e}")
+
+
+def slug_do_remote(diretorio):
+    url = executar(["git", "-C", str(Path(diretorio).expanduser()), "remote", "get-url", "origin"])
+    achado = re.search(r"[:/]([^/:]+/[^/]+?)(?:\.git)?/?$", url.strip())
+    if not achado:
+        raise Erro(f"remote origin ilegível em {diretorio}")
+    return achado.group(1)
+
+
+def repo_da_fila(diretorio, ficha):
+    return ficha.get("fila") or slug_do_remote(diretorio)
+
+
+def repos_de_codigo(ficha, fila):
+    return list((ficha.get("repos") or {}).values()) or [fila]
+
+
+def partes_da_url(url):
+    achado = re.match(r"https://github\.com/(users|orgs)/([^/]+)/projects/(\d+)", url or "")
+    if not achado:
+        raise Erro(f"URL de Project inválida: {url}")
+    return ("user" if achado.group(1) == "users" else "organization"), achado.group(2), int(achado.group(3))
+
+
+CONSULTA_PROJETO = """
+query($dono: String!, $numero: Int!) {
+  %s(login: $dono) {
+    projectV2(number: $numero) {
+      id
+      field(name: "Status") { ... on ProjectV2SingleSelectField { id options { id name } } }
+    }
+  }
+}"""
+
+
+class Board:
+    def __init__(self, url):
+        tipo, dono, numero = partes_da_url(url)
+        dados = graphql(CONSULTA_PROJETO % tipo, dono=dono, numero=numero)
+        projeto = (dados.get(tipo) or {}).get("projectV2")
+        if not projeto:
+            raise Erro(f"Project não encontrado: {url}")
+        campo = projeto.get("field")
+        if not campo:
+            raise Erro(f"Project {url} sem campo Status de seleção única")
+        self.id = projeto["id"]
+        self.campo = campo["id"]
+        opcoes = {o["name"]: o["id"] for o in campo["options"]}
+        faltam = [c for c in COLUNAS if c not in opcoes]
+        if faltam:
+            raise Erro(f"Status do Project {url} sem as opções: {', '.join(faltam)}")
+        self.opcoes = opcoes
+
+    def itens_abertos(self, fila):
+        consulta = """
+query($id: ID!, $depois: String) {
+  node(id: $id) { ... on ProjectV2 { items(first: 100, after: $depois) {
+    pageInfo { hasNextPage endCursor }
+    nodes { fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
+            content { ... on Issue { number repository { nameWithOwner } } } } } } }
+}"""
+        numeros, depois = [], None
+        while True:
+            variaveis = {"id": self.id}
+            if depois:
+                variaveis["depois"] = depois
+            itens = graphql(consulta, **variaveis)["node"]["items"]
+            for item in itens["nodes"]:
+                conteudo = item.get("content") or {}
+                status = (item.get("fieldValueByName") or {}).get("name")
+                if conteudo.get("number") and conteudo["repository"]["nameWithOwner"].lower() == fila.lower() and status != "Feita":
+                    numeros.append(conteudo["number"])
+            if not itens["pageInfo"]["hasNextPage"]:
+                return numeros
+            depois = itens["pageInfo"]["endCursor"]
+
+    def colocar(self, issue_id, atual_item):
+        if atual_item:
+            return atual_item
+        dados = graphql(
+            "mutation($p: ID!, $c: ID!) { addProjectV2ItemById(input: {projectId: $p, contentId: $c}) { item { id } } }",
+            p=self.id, c=issue_id,
+        )
+        return dados["addProjectV2ItemById"]["item"]["id"]
+
+    def gravar(self, item, nome):
+        graphql(
+            "mutation($p: ID!, $i: ID!, $f: ID!, $o: String!) { updateProjectV2ItemFieldValue(input: "
+            "{projectId: $p, itemId: $i, fieldId: $f, value: {singleSelectOptionId: $o}}) { projectV2Item { id } } }",
+            p=self.id, i=item, f=self.campo, o=self.opcoes[nome],
+        )
+
+
+CONSULTA_ISSUE = """
+query($dono: String!, $nome: String!, $n: Int!) {
+  repository(owner: $dono, name: $nome) { issue(number: $n) {
+    id state
+    labels(first: 50) { nodes { name } }
+    assignees(first: 20) { nodes { login } }
+    closedByPullRequestsReferences(first: 20, includeClosedPrs: true) { nodes { state } }
+    projectItems(first: 20) { nodes { id project { id }
+      fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } } } }
+  } }
+}"""
+
+
+def sincronizar_issue(board, fila, repos, login, n):
+    dono, nome = fila.split("/", 1)
+    dados = graphql(CONSULTA_ISSUE, dono=dono, nome=nome, n=n)["repository"]["issue"]
+    if not dados:
+        raise Erro(f"issue {fila}#{n} não existe")
+    if any(l["name"] == LABEL_FORA_DO_BOARD for l in dados["labels"]["nodes"]):
+        return None
+    prs = list(dados["closedByPullRequestsReferences"]["nodes"])
+    for repo in repos:
+        prs += gh_json("pr", "list", "-R", repo, "--head", f"fila/{n}", "--state", "all", "--json", "state") or []
+    issue = {
+        "state": dados["state"],
+        "labels": [l["name"] for l in dados["labels"]["nodes"]],
+        "assignees": [a["login"] for a in dados["assignees"]["nodes"]],
+    }
+    alvo = coluna(issue, login, prs)
+    meu = next((i for i in dados["projectItems"]["nodes"] if i["project"]["id"] == board.id), None)
+    atual = ((meu or {}).get("fieldValueByName") or {}).get("name")
+    if atual == alvo:
+        return None
+    item = board.colocar(dados["id"], meu and meu["id"])
+    board.gravar(item, alvo)
+    return f"#{n}: {atual or 'fora do board'} -> {alvo}"
+
+
+def cmd_sync(diretorio, numeros):
+    _, ficha = ler_ficha(diretorio)
+    url = ficha.get("quadro")
+    if not url:
+        return 0
+    fila = repo_da_fila(diretorio, ficha)
+    board = Board(url)
+    login = executar(["gh", "api", "user", "--jq", ".login"]).strip()
+    if not numeros:
+        abertas = gh_json("issue", "list", "-R", fila, "--state", "open", "--json", "number", "--limit", "1000") or []
+        numeros = sorted({i["number"] for i in abertas} | set(board.itens_abertos(fila)))
+    repos = repos_de_codigo(ficha, fila)
+    for n in numeros:
+        mudanca = sincronizar_issue(board, fila, repos, login, n)
+        if mudanca:
+            print(f"quadro: {mudanca}")
+    return 0
+
+
+def id_do_dono(login):
+    dados = graphql("query($l: String!) { repositoryOwner(login: $l) { id } }", l=login)
+    if not dados.get("repositoryOwner"):
+        raise Erro(f"conta {login} não encontrada")
+    return dados["repositoryOwner"]["id"]
+
+
+def cmd_criar(diretorio):
+    if MODELO is None:
+        raise Erro("sem board modelo: rode `quadro modelo` e grave o número em MODELO")
+    caminho, ficha = ler_ficha(diretorio)
+    if ficha.get("quadro"):
+        raise Erro(f"{caminho} já tem quadro: {ficha['quadro']}")
+    fila = repo_da_fila(diretorio, ficha)
+    dono, nome = fila.split("/", 1)
+    modelo = graphql(
+        "query($l: String!, $n: Int!) { user(login: $l) { projectV2(number: $n) { id } } }",
+        l=DONO_DO_MODELO, n=MODELO,
+    )["user"]["projectV2"]
+    if not modelo:
+        raise Erro(f"board modelo {DONO_DO_MODELO}#{MODELO} não encontrado")
+    copia = graphql(
+        "mutation($p: ID!, $o: ID!, $t: String!) { copyProjectV2(input: {projectId: $p, ownerId: $o, title: $t, "
+        "includeDraftIssues: false}) { projectV2 { id url } } }",
+        p=modelo["id"], o=id_do_dono(dono), t=nome,
+    )["copyProjectV2"]["projectV2"]
+    repo_id = graphql("query($d: String!, $n: String!) { repository(owner: $d, name: $n) { id } }", d=dono, n=nome)["repository"]["id"]
+    graphql(
+        "mutation($p: ID!, $r: ID!) { linkProjectV2ToRepository(input: {projectId: $p, repositoryId: $r}) { repository { id } } }",
+        p=copia["id"], r=repo_id,
+    )
+    labels = {l["name"] for l in gh_json("label", "list", "-R", fila, "--json", "name", "--limit", "500") or []}
+    if LABEL_INVESTIGANDO not in labels:
+        executar(["gh", "label", "create", LABEL_INVESTIGANDO, "-R", fila, "--color", "8250df",
+                  "--description", "Em discussão ou brainstorming"])
+    ficha["quadro"] = copia["url"]
+    caminho.write_text(json.dumps(ficha, indent=2, ensure_ascii=False) + "\n")
+    print(f"quadro: board {copia['url']} criado e gravado em {caminho}")
+    return 0
+
+
+def cmd_modelo():
+    projeto = graphql(
+        "mutation($o: ID!, $t: String!) { createProjectV2(input: {ownerId: $o, title: $t}) { projectV2 { id number url "
+        "field(name: \"Status\") { ... on ProjectV2SingleSelectField { id } } } } }",
+        o=id_do_dono(DONO_DO_MODELO), t=TITULO_DO_MODELO,
+    )["createProjectV2"]["projectV2"]
+    opcoes = ", ".join(
+        f'{{name: {json.dumps(nome, ensure_ascii=False)}, color: {cor}, description: ""}}' for nome, cor in zip(COLUNAS, CORES)
+    )
+    graphql(
+        "mutation($f: ID!) { updateProjectV2Field(input: {fieldId: $f, singleSelectOptions: [%s]}) { projectV2Field { __typename } } }" % opcoes,
+        f=projeto["field"]["id"],
+    )
+    print(f"quadro: modelo {projeto['url']} (número {projeto['number']})")
+    return 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="quadro", description="Board do GitHub Projects por repo.")
+    sub = ap.add_subparsers(dest="comando", required=True)
+    sync = sub.add_parser("sync", help="grava a coluna calculada de cada issue no board")
+    sync.add_argument("dir")
+    sync.add_argument("numeros", nargs="*", type=int, metavar="N")
+    sync.add_argument("--da-fila", action="store_true", help="erro vira aviso e sai 0")
+    sub.add_parser("criar", help="copia o board modelo para o repo e grava em ficha.json").add_argument("dir")
+    sub.add_parser("modelo", help="cria o board modelo com as sete colunas")
+    args = ap.parse_args(argv)
+    try:
+        if args.comando == "sync":
+            return cmd_sync(args.dir, args.numeros)
+        if args.comando == "criar":
+            return cmd_criar(args.dir)
+        return cmd_modelo()
+    except Erro as e:
+        if getattr(args, "da_fila", False):
+            print(f"quadro: aviso: {e}")
+            return 0
+        print(f"quadro: {e}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

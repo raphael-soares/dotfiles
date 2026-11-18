@@ -9,3 +9,5 @@ curl
 gh
 ImageMagick
 ghostscript
+golang
+fastfetch

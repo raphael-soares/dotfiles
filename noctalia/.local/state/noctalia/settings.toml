@@ -1,4 +1,4 @@
-config_version = 16
+config_version = 20
 
 [audio]
 enable_sounds = true
@@ -707,7 +707,7 @@ directory = "/home/raphael/Pictures/Wallpaper"
     path = "/home/raphael/Pictures/Wallpaper/wallz/Catppuccin Mocha/32. Catppuccin Mocha.png"
 
     [[wallpaper.favorite]]
-    community_palette = "Paradise"
+    community_palette = "Rose Pine Moon Alt"
     palette_source = "community"
     path = "/home/raphael/Pictures/Wallpaper/wallz/Solarized Dark/01. Solarized Dark.png"
     theme_mode = "dark"

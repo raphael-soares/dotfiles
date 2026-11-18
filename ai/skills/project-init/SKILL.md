@@ -8,8 +8,8 @@ description: Onboarding de um projeto novo (sem CLAUDE.md). Explora o repo, entr
 Um projeto sem `CLAUDE.md` é um projeto que o Claude não entende. Antes de
 implementar, refatorar ou revisar qualquer coisa, monte a base: explore o
 código, **entreviste o usuário** sobre o produto e o domínio, e escreva os
-documentos que as outras skills consomem (`po`, `grill-me`,
-`domain-driven-design`).
+documentos que o resto do fluxo consome: o `brainstorming` do Superpowers lê
+o `CLAUDE.md`, o `CONTEXT.md` e os ADRs antes de desenhar.
 
 > Converse em **pt-BR, em prosa clara**. Isto é descoberta, não execução — não
 > comprima, não vá para o modo caveman aqui.
@@ -54,8 +54,7 @@ Uma frente por vez, com recomendação sua a partir do que explorou. Não despej
 tudo de uma vez; aprofunde o ponto mais incerto primeiro. Cubra:
 
 - **Produto** — o que o sistema faz e para quem. Qual problema resolve.
-- **Perfis / usuários** — quem usa e o que cada papel pode fazer (vira a base do
-  RBAC e do que o `po` chama de "perfil afetado").
+- **Perfis / usuários** — quem usa e o que cada papel pode fazer (vira a base do RBAC).
 - **Linguagem ubíqua** — as entidades centrais e os termos do domínio, no nome
   que o negócio usa. Confirme os que você inferiu do código.
 - **Invariantes invioláveis** — as regras que nunca podem ser quebradas
@@ -124,8 +123,8 @@ Crie estes arquivos. Use a linguagem ubíqua confirmada na entrevista em todos.
 
 ### `CONTEXT.md` (raiz) — a linguagem do domínio
 
-Glossário ubíquo + visão de bounded contexts. É o que `domain-driven-design` e
-`po` consomem. Estrutura:
+Glossário ubíquo + visão de bounded contexts. É de onde o design tira os
+termos (RULES.md, seção Superpowers). Estrutura:
 
 ```markdown
 # CONTEXT — <Nome do projeto>
@@ -170,14 +169,11 @@ Histórico de decisões versionado e navegável; uma etapa a mais ao decidir alg
 estrutural.
 ```
 
-### `.claude/po-plans/` — pasta dos planos do PO
-
-Crie a pasta (com um `.gitkeep`) para a skill `po` escrever os planos depois.
-
 ## 6. Próximo passo
 
-Avise que a base está pronta e aponte o começo do fluxo: refinar o primeiro card
-com `/po`, que agora vai ler este `CLAUDE.md` para domínio, perfis e invariantes.
+Avise que a base está pronta e aponte o começo do fluxo: descrever a primeira
+feature, e o `brainstorming` do Superpowers vai ler este `CLAUDE.md` para
+domínio, perfis e invariantes.
 
 ## Limites
 

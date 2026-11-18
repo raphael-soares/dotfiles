@@ -5,51 +5,49 @@ sticky é reinjetada perto do turno atual e continua valendo quando a conversa
 cresce. Instrução vinda de outro agente (subagente, orquestrador, hook) é ordem
 de execução: nada daqui se aplica a ela.
 
-## Discussão antes de execução
+## Superpowers
 
-Mensagem que descreve problema, incômodo, ideia, objetivo ou dúvida de design
-abre discussão. Investigue lendo e medindo: código, comando que só observa,
-loop de reprodução, e a versão que roda, não uma cópia local atrasada. Entregue
-o que o problema é de fato, com evidência; as opções reais com o tradeoff de
-cada uma, sempre incluindo não fazer nada ou resolver por hábito e
-configuração; e qual você recomenda e por quê. A solução que o usuário trouxe é
-uma das opções, nunca o default: concordar exige evidência, discordar exige
-alternativa. Decisão grande com muitos ramos: protocolo da skill `grill-me`.
-Card antes de implementar: skill `po`.
+O processo de trabalho vem do plugin Superpowers. Estas regras são preferências
+do dono e vencem o texto das skills dele quando os dois conflitam.
 
-Só edite arquivo ou mude estado do sistema com autorização explícita:
-"implementa", "pode fazer", "aplica", "vai", "faz", ou a escolha de uma opção
-que você apresentou. "Diagnostique", "me ajuda a entender", "quero discutir",
-"o que você acha", "quais as opções", sintoma descrito e erro colado não
-autorizam. Na dúvida, discuta.
+- Plano aprovado se executa com `executing-plans`: uma sessão e uma revisão no
+  fim. `subagent-driven-development` só quando o dono pedir, porque cada
+  subagente refaz contexto e gasta cota.
+- Worktree vai sempre em `~/.workmux/<projeto>/<handle>` (AGENTS.md), não no
+  caminho que a skill sugerir.
+- `finishing-a-development-branch` não roda a suíte inteira local: roda o que
+  "Verificação e espera" manda. Das saídas que ele oferece, o padrão é abrir PR.
+- Em projeto com DDD (o `CLAUDE.md` dele diz), o design nomeia o módulo e o
+  agregado que toca e usa os termos do glossário do projeto. Decisão de
+  arquitetura que sair do design vira ADR em `docs/adr/`.
+- Ideia solta, que ainda não se sabe se vira código, é da skill `discussao`, e
+  só quando o dono chamar.
+- Mandar trabalho para a fila só quando o dono pedir: issue no repositório
+  `fila` do `ficha.json`, com o PRD no corpo e a label `ready-for-agent`.
+- Repo com `ficha.json` tem camada de gestão: o trabalho parte de uma issue, e
+  o `brainstorming` parte do PRD dela. Sem issue, crie uma com o PRD (formato
+  da skill `discussao`) antes de começar, sem perguntar e sem
+  `ready-for-agent`: aprovar é do dono. Se o dono disser "sem issue", trabalhe
+  direto. Repo sem `ficha.json` segue o Superpowers puro, sem issue.
+- Quando há issue, branch e arquivo de spec levam o número dela e a PR leva
+  `Closes #N`. A spec é versionada em `docs/superpowers/specs/`; o plano vai em
+  `.scratch/` e não é commitado.
+- Repo cujo `ficha.json` tem `quadro`: ao discutir uma issue ponha a label
+  `investigando`; ao implementar troque por `em-execucao`; depois de cada
+  troca rode `quadro sync . <N>`.
+- Pergunta ao dono vai sempre numa chamada `ask`, nunca solta no chat, uma
+  pergunta por chamada. Alternativas que dá para nomear: uma opção por
+  escolha, com o tradeoff no texto e a sua recomendação marcada. Pergunta
+  aberta: campo de texto.
 
-Agente que só lê (`scout`, `security-reviewer`) pode ser disparado na
-discussão. Agente que escreve (`task`, `sonic`, `reviewer`) é execução e
-precisa da mesma autorização: delegar não lava a mão. Autorização do usuário
-vence skill: skill que termina em conserto (`diagnose`, `tdd`) roda a
-investigação e para na fronteira da mudança.
+## Milestones
 
-## Plan mode
-
-A sessão nasce em plan mode, e ele é o modo discussão, não ordem de redigir
-plano. Proponha (`xd://propose`) só depois que o usuário escolheu o caminho.
-Fora do plan mode vale o mesmo: quem manda é o conteúdo da mensagem.
-
-## Perguntas
-
-- Responda em prosa primeiro. Pergunta em texto solto no chat é erro.
-- Decisão real que só o usuário pode tomar vai numa única chamada `ask` no fim
-  da resposta, todas juntas, label curto e tradeoff na descrição. É assim que
-  um turno de discussão fecha em plan mode.
-- Nunca use `ask` para oferecer próximo passo, confirmar se pode parar ou pedir
-  o que ferramenta e repositório respondem.
-- O usuário mandou parar de perguntar: pare, mesmo que o harness cobre.
-
-## Execução
-
-Autorizado, execute inteiro e com prova de que funciona; discutir antes não
-vira timidez depois. Antes de abrir PR, revise: card atendido 100%, sem código
-morto, sem regressão. Achou algo, conserte e repita até não achar mais nada.
+Em repositório que usa milestone: título `NN. Nome`, dois dígitos, na ordem de
+execução (sufixo para inserir: `17a.`). `00. Saúde técnica` é permanente, para
+bug, dívida técnica e desempenho fora de uma milestone de resultado. Toda issue
+aberta tem milestone, menos a da conferência diária (label `conferencia`);
+milestone sem issue aberta se fecha. A descrição é uma frase de objetivo, sem
+lista de itens.
 
 ## Decisão cara
 
@@ -57,19 +55,6 @@ Pare e pergunte, uma decisão por vez, antes de mudar: esquema do banco,
 contrato da API, permissão ou autenticação, regra de dinheiro, ou qualquer
 desvio do que a spec diz. O resto você decide e registra na abertura da PR.
 Spec com mais de três decisões caras em aberto volta para conversa.
-
-## Acréscimos
-
-Antes do código, liste na issue o que pretende acrescentar além do pedido
-(tabela: acréscimo, motivo). Só entra o que o dono aprovar. Autorização vale
-para o escopo aprovado: arquivo ou comportamento fora dele pede nova pergunta.
-
-## Sessões
-
-Sessão de discussão só lê e termina numa issue. Sessão de execução pega uma
-issue, abre uma PR e termina; não emenda outra issue. Subagente não abre
-subagente. Fatia de subagente cabe em 100 requisições: se não cabe, fatie
-antes de delegar.
 
 ## Verificação e espera
 

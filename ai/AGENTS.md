@@ -3,8 +3,9 @@
 Instrucoes globais, compartilhadas por todas as ferramentas agenticas.
 Fonte unica: ~/.dotfiles/ai/AGENTS.md. Nao edite as copias, elas sao symlinks.
 
-O contrato de discussão antes de execução, plan mode, perguntas, execução e
-comentários fica em `~/.dotfiles/ai/.omp/agent/RULES.md`, injetado como regra
+O processo de trabalho vem do plugin Superpowers. As preferências do dono que
+vencem as skills dele (worktree, verificação, DDD, decisão cara, entrega,
+comentários) ficam em `~/.dotfiles/ai/.omp/agent/RULES.md`, injetado como regra
 fixa em toda sessão do omp.
 
 ## UI

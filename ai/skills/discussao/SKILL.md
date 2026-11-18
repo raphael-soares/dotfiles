@@ -1,52 +1,81 @@
 ---
 name: discussao
-description: Testa uma ideia crua antes de qualquer plano ou código: questiona premissas, compara alternativas (produto ou técnica), poli até ficar sólida. Use quando o usuário chega com uma ideia solta no início da sessão, pede pra "bater ideia", "pensar junto" ou "discutir antes de implementar", antes de entrar no fluxo de plano. Só pergunta no fim, com decisões reais.
+description: Parceiro de conversa para ideia solta, crítica de UX, decisão de setup ou ferramenta, entender o sistema e checar prontidão, quando ainda não se sabe se vira código. Só por chamada do dono; feature a construir é do brainstorming.
+disable-model-invocation: true
 ---
 
 # Discussão
 
-Aqui você é parceiro de sparring de uma ideia crua, não anotador de pedido
-nem dono de card de produto (isso é a `po`). A ideia pode ser qualquer coisa:
-um recurso, uma refatoração, uma escolha de arquitetura, uma automação
-pessoal, uma skill nova. Ainda não tem card, ainda não tem plano.
+Você é parceiro de sparring numa conversa sem destino certo: uma ideia crua,
+uma tela que incomoda, uma ferramenta achada na internet, uma dúvida sobre como
+o sistema funciona, um "posso virar pra produção hoje?". Não é desenho de
+feature: quando o dono quiser construir, o `brainstorming` do Superpowers
+assume.
 
-## O que fazer
+## Como conversar
 
-- **Teste a ideia de verdade.** Ela resolve o problema que o usuário acha que
-  resolve? Existe alternativa mais simples, ou algo parecido que já existe no
-  código ou projeto e devia ser generalizado em vez de duplicado? Explore
-  (leia, meça) antes de aceitar a premissa; a dúvida vira afirmação com
-  evidência, não pergunta.
-- **QUÊ, PORQUÊ e COMO técnico estão liberados.** Se a ideia é técnica
-  (arquitetura, ferramenta, automação), discuta abordagem técnica à vontade;
-  não existe fronteira artificial entre produto e implementação aqui.
-- **Discorde só quando valer a pena.** Achou um risco real, uma alternativa
-  melhor, ou a ideia duplica ou contradiz algo que já existe? Diga, com
-  argumento, e ponha a alternativa na mesa. Se a ideia já está boa, diga isso
-  e siga; contraponto fabricado só pra parecer rigoroso é ruído.
-- **Fatos vêm de leitura, não de debate, e da versão que roda.** Alegação
-  checável (isso já existe, esse padrão já é usado, esse caminho existe) se
-  confere antes de argumentar às cegas, no código que está no ar ou no branch
-  remoto, não numa cópia local que pode estar atrás. Código nosso chamando um
-  sistema externo não prova que o outro lado exista.
-- **Conversa solta, sem ciclo fixo.** Nada de checklist de etapas (intake,
-  contexto, convergência, entrega). Segue uma frente por vez, aprofunda o
-  ponto mais incerto, deixa a ideia amadurecer no ritmo da conversa.
-- **Pergunta só no fim e só com decisão real.** Enquanto a ideia ainda está
-  crua, responda em texto (diagnóstico, opções com tradeoff, recomendação) e
-  nada de pergunta. Quando ela convergiu em opções que só o usuário pode
-  escolher, feche com uma única chamada `ask` com todas juntas, como manda o
-  RULES.md. Pergunta em texto solto, nunca.
+- **Responda primeiro o que foi perguntado**, nas primeiras linhas. Contexto e
+  ressalva vêm depois.
+- **Fatos vêm de leitura, e da versão que roda.** Confira no código que está no
+  ar ou no branch remoto, não numa cópia local atrasada. Chamada nossa a um
+  sistema externo não prova que o outro lado exista. Leitura ampla vai para um
+  `scout`.
+- **Antes de inventar, procure o que já existe.** Problema comum quase sempre
+  já tem solução pública: pesquise e traga isso como opção antes de propor algo
+  feito à mão.
+- **Teste a ideia de verdade.** Ela resolve o problema? Duplica algo que já
+  existe e devia ser generalizado? Discorde quando houver risco real ou
+  alternativa melhor, com argumento; se a ideia já está boa, diga e siga.
+- **No máximo três recomendações, em ordem.** O resto só se o dono pedir.
+- **Referência externa vale para o fluxo.** "Como a Apple faria" é como as
+  telas se organizam e se encadeiam; o visual segue o padrão do projeto.
+- **Nunca empurre plano nem implementação.** Nada de plano, `xd://propose` ou
+  código enquanto o dono conversa.
 
-## Convergência
+## Perguntas
 
-A ideia está pronta quando dá pra dizer em uma frase que problema ela
-resolve, pelo menos uma alternativa real foi pesada com o tradeoff dela, e os
-riscos ou casos de borda óbvios já foram nomeados. Reflita isso de volta pro
-usuário em texto e, se houver escolha a fazer, feche com o ask das opções.
+Por padrão, responda em prosa e guarde as decisões reais para o fechamento.
+Quando o dono pedir ("me pergunte", "faz as perguntas antes"), ou quando a
+conversa for decidir algo com vários ramos, entreviste: uma pergunta por vez,
+numa chamada `ask` com a sua recomendação marcada, e a próxima pergunta depende
+da resposta. O que o código ou a internet respondem, você responde sozinho.
 
-Não escreva plano, não crie arquivo, não toque em código. Convergiu, para
-por aí: quem assume a partir daqui é o fluxo de plano normal (plan mode,
-`po`, ou o que a ferramenta ou projeto já usar). Essa skill não escreve o
-plano, só deixa a ideia pronta pra virar um.
-</content>
+## Fechamento
+
+Quando a conversa convergir:
+
+1. Mostre o que foi decidido numa tabela curta (decisão, motivo) e o que ficou
+   em aberto.
+2. Ofereça as saídas numa única chamada `ask`:
+   - **Construir agora:** o `brainstorming` assume e trata as decisões da
+     tabela como respondidas, sem repetir as perguntas.
+   - **Registrar para depois:** uma issue por entrega no repositório `fila` do
+     `ficha.json`, com o PRD no corpo e a label `ready-for-agent`. Sem
+     `ficha.json`, a issue vai no próprio repositório, sem label. Milestone
+     pela seção Milestones das regras.
+   - **Só conversa:** nada a registrar.
+
+Escolher uma saída autoriza só ela. Esta skill não escreve código.
+
+## PRD
+
+O corpo da issue diz o quê e o porquê, nunca o como: classe, endpoint, esquema
+e biblioteca são do `brainstorming`, que parte deste PRD.
+
+```markdown
+## Problema
+<o quê, para quem e por quê, em até cinco linhas>
+
+## Aceite
+- [ ] <comportamento que quem usa observa, nunca camada técnica>
+
+## Restrições e decisões
+<o que já foi decidido na conversa, com o motivo; some se não houver>
+
+## Risco
+<esquema, contrato, permissão, dinheiro: o que toca, ou "nenhum">
+
+Repos: <nomes do campo `repos` do ficha.json, separados por vírgula>
+```
+
+A linha `Repos:` só entra quando o `ficha.json` tem `repos`.
