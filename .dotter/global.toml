@@ -1,0 +1,55 @@
+[settings]
+default_target_type = "symbolic"
+
+[terminal.files]
+"terminal/bash/bashrc" = "~/.bashrc"
+"terminal/bash/bash_profile" = "~/.bash_profile"
+"terminal/git/gitconfig" = "~/.gitconfig"
+"terminal/git/ignore" = "~/.config/git/ignore"
+"terminal/starship/starship.toml" = "~/.config/starship.toml"
+"terminal/fzf/fzf.sh" = "~/.config/fzf/fzf.sh"
+"terminal/mise/config.toml" = "~/.config/mise/config.toml"
+"terminal/nvim" = { type = "symbolic", target = "~/.config/nvim", recurse = false }
+"terminal/ghostty/config" = "~/.config/ghostty/config"
+"terminal/fastfetch/config.jsonc" = "~/.config/fastfetch/config.jsonc"
+
+[ai.files]
+"ai/.claude/CLAUDE.md" = "~/.claude/CLAUDE.md"
+"ai/.claude/settings.json" = "~/.claude/settings.json"
+"ai/.claude/hooks" = "~/.claude/hooks"
+"ai/.claude/skills" = { type = "symbolic", target = "~/.claude/skills", recurse = false }
+"ai/.omp/agent/AGENTS.md" = "~/.omp/agent/AGENTS.md"
+"ai/.omp/agent/RULES.md" = "~/.omp/agent/RULES.md"
+"ai/.omp/agent/config.yml" = "~/.omp/agent/config.yml"
+"ai/.omp/agent/keybindings.yml" = "~/.omp/agent/keybindings.yml"
+"ai/.omp/agent/lsp.json" = "~/.omp/agent/lsp.json"
+"ai/.omp/agent/skills" = { type = "symbolic", target = "~/.omp/agent/skills", recurse = false }
+"ai/.omp/agent/extensions" = { type = "symbolic", target = "~/.omp/agent/extensions", recurse = false }
+"ai/.omp/agent/rules" = { type = "symbolic", target = "~/.omp/agent/rules", recurse = false }
+"ai/.omp/agent/prompts" = { type = "symbolic", target = "~/.omp/agent/prompts", recurse = false }
+"ai/.omp/agent/themes" = { type = "symbolic", target = "~/.omp/agent/themes", recurse = false }
+"ai/.local/bin" = "~/.local/bin"
+
+[desktop.files]
+"desktop/fontes/50-fontes.conf" = "~/.config/fontconfig/conf.d/50-fontes.conf"
+"desktop/webapps/applications" = "~/.local/share/applications"
+"desktop/webapps/icons" = "~/.local/share/icons/hicolor/scalable/apps"
+"desktop/audio/wireplumber" = "~/.config/wireplumber/wireplumber.conf.d"
+"desktop/syncfast/config.toml" = "~/.config/syncfast/config.toml"
+
+[hyprland.files]
+"hyprland/hypr" = { type = "symbolic", target = "~/.config/hypr", recurse = false }
+"hyprland/portal/hyprland-portals.conf" = "~/.config/xdg-desktop-portal/hyprland-portals.conf"
+"hyprland/noctalia/plugins/hypr-active-workspace" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-active-workspace", recurse = false }
+"hyprland/noctalia/plugins/hypr-displays" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-displays", recurse = false }
+"hyprland/noctalia/plugins/hypr-shots" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-shots", recurse = false }
+"hyprland/noctalia/settings.toml" = "~/.local/state/noctalia/settings.toml"
+"hyprland/noctalia/forest-4.jpg" = "~/Pictures/Wallpaper/forest-4.jpg"
+"hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/maquina.conf"
+"hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
+"hyprland/gtk/gtk-4.0/settings.ini" = "~/.config/gtk-4.0/settings.ini"
+
+[trabalho.files]
+"trabalho/bin" = "~/.local/bin"
+"trabalho/shell/trabalho.sh" = "~/.config/shell/rc.d/trabalho.sh"
+"ai/.omp/overlays" = { type = "symbolic", target = "~/.omp/overlays", recurse = false }
