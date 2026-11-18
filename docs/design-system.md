@@ -30,7 +30,7 @@ sistema.
 ## Cor
 
 A paleta vem do Noctalia (`[theme]` em
-`noctalia/.local/state/noctalia/settings.toml`), seja do wallpaper, seja de um
+`hyprland/noctalia/settings.toml`), seja do wallpaper, seja de um
 esquema pronto. O que o sistema fixa são os **papéis**, não os valores: trocar
 a paleta na UI do Noctalia tem que mudar o desktop inteiro sem editar arquivo.
 
@@ -133,7 +133,7 @@ nome genérico:
 | App | Pede |
 |---|---|
 | GTK 3/4 (`settings.ini`) | `Sans 10` |
-| Apps libadwaita (gsettings, aplicado pelo `install.sh`) | `Sans 10` e `Monospace 10` |
+| Apps libadwaita (gsettings, aplicado pelo `.dotter/post_deploy.sh`) | `Sans 10` e `Monospace 10` |
 | Qt | Segue o GTK (`QT_QPA_PLATFORMTHEME=gtk3`) |
 | Noctalia | `sans-serif` (padrão; sem `font_family` no `settings.toml`) |
 | Ghostty e herdr-app | `JetBrainsMono Nerd Font` pelo nome |
@@ -152,7 +152,7 @@ macOS em pt-BR (`sáb. 26 de set. 18:21`). O resto fica no peso padrão.
 
 ## Movimento
 
-Tokens em `hypr/.config/hypr/animations.lua`:
+Tokens em `hyprland/hypr/animations.lua`:
 
 | Curva | Tipo | Uso |
 |---|---|---|
@@ -188,7 +188,7 @@ Regras:
 - **App** (launcher, bandeja, dock, gerenciador de arquivos): Papirus-Dark, do
   pacote `papirus-icon-theme`.
 - Quem lê o tema: GTK (`settings.ini`), apps libadwaita (gsettings) e o Noctalia
-  (lê o `gtk-3.0/settings.ini`). O `install.sh` ajusta os dois que ficam fora do
+  (lê o `gtk-3.0/settings.ini`). O `.dotter/post_deploy.sh` ajusta os dois que ficam fora do
   repo.
 - **Glifos da shell** (barra e painéis do Noctalia): fonte Tabler embutida. O
   config escolhe qual glifo vai em cada lugar (`launcher_icon`, `glyph` das
@@ -199,14 +199,14 @@ Regras:
 
 | Token | Arquivo | Escrito ou gerado |
 |---|---|---|
-| Paleta e templates | `noctalia/.local/state/noctalia/settings.toml` | Escrito (pela UI do Noctalia) |
-| Cores no Hyprland | `hypr/.config/hypr/noctalia.lua` | Gerado, não usado |
-| Borda da janela | `hypr/.config/hypr/borders.lua` | Escrito |
-| Raio, sombra, gaps, blur desligado | `hypr/.config/hypr/look.lua` | Escrito |
+| Paleta e templates | `hyprland/noctalia/settings.toml` | Escrito (pela UI do Noctalia) |
+| Cores no Hyprland | `hyprland/hypr/noctalia.lua` | Gerado, não usado |
+| Borda da janela | `hyprland/hypr/borders.lua` | Escrito |
+| Raio, sombra, gaps, blur desligado | `hyprland/hypr/look.lua` | Escrito |
 | Opacidade da shell | `[bar]`, `[osd]`, `[shell]` e `[shell.panel]` no `settings.toml` | Escrito |
-| Movimento | `hypr/.config/hypr/animations.lua` | Escrito |
-| Família de fonte | `fontes/.config/fontconfig/conf.d/50-fontes.conf` | Escrito |
-| Fonte e ícones no GTK | `gtk/.config/gtk-{3,4}.0/settings.ini` | Escrito |
+| Movimento | `hyprland/hypr/animations.lua` | Escrito |
+| Família de fonte | `desktop/fontes/50-fontes.conf` | Escrito |
+| Fonte e ícones no GTK | `hyprland/gtk/gtk-{3,4}.0/settings.ini` | Escrito |
 | Tema do Ghostty | `~/.config/ghostty/themes/noctalia` | Gerado, fora do git |
 | Tema do herdr-app | `~/.config/herdr-app/themes/noctalia.json` | Gerado, fora do git |
 

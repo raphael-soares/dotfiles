@@ -1,0 +1,14 @@
+git
+neovim
+fzf
+fd
+ripgrep
+jq
+curl
+github-cli
+imagemagick
+ghostscript
+ghostty
+go
+fastfetch
+dotter-rs-bin
