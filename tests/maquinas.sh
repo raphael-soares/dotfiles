@@ -51,14 +51,25 @@ so_notebook=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
   .local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/trabalho.sh)
 
+hook=$T/cache/.dotter/post_deploy.sh
+if [[ -f $hook ]]; then
+  bash -n "$hook" || falha "hook renderizado tem erro de sintaxe"
+else
+  falha "hook não foi renderizado"
+fi
+hook_tem() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
+so_notebook_no_hook=(hyprctl greetd enterprise)
+
 case $maquina in
   notebook)
     for f in "${so_notebook[@]}"; do existe "$f"; done
     link_do_repo .config/hypr
     [[ -f $H/.config/hypr/hyprland.lua ]] || falha ".config/hypr não chega no hyprland.lua"
+    for p in "${so_notebook_no_hook[@]}"; do hook_tem "$p" || falha "hook sem $p"; done
     ;;
   casa)
     for f in "${so_notebook[@]}"; do ausente "$f"; done
+    for p in "${so_notebook_no_hook[@]}"; do ! hook_tem "$p" || falha "hook da casa com $p"; done
     ;;
   *) echo "máquina desconhecida: $maquina"; exit 2 ;;
 esac
