@@ -2,9 +2,10 @@
 
 Os dotfiles servem dois PCs, e o [dotter](https://github.com/SuperCuber/dotter)
 decide o que vai em cada um pelo hostname: ele lê `.dotter/<hostname>.toml`,
-que lista os módulos da máquina.
+que lista os módulos da máquina. O notebook se chama `arch` e o PC de casa,
+`fedora`; máquina com outro nome precisa de um `.dotter/<nome>.toml`.
 
-| Módulo | O que tem | notebook (Arch, Hyprland) | casa (Fedora, KDE) |
+| Módulo | O que tem | `arch` (notebook, Hyprland) | `fedora` (casa, KDE) |
 |---|---|---|---|
 | `terminal` | bash, git, starship, fzf, mise, nvim, ghostty, fastfetch; clona e instala o `herdr-setup` | sim | sim |
 | `ai` | omp e Claude Code (perfil pessoal), skills, scripts do `~/.local/bin` | sim | sim |
@@ -23,11 +24,8 @@ enterprise, recarregar o Hyprland.
 ## Máquina nova
 
 ```bash
-sudo hostnamectl set-hostname notebook   # ou casa
 git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles
 ```
-
-Troque também o nome antigo na linha `127.0.1.1` do `/etc/hosts`.
 
 Instale o dotter: no Arch, `yay -S dotter-rs-bin`; no Fedora, que não tem pacote,
 baixe o `dotter-linux-x64-musl` do
@@ -48,7 +46,7 @@ Depois disso, para aplicar uma mudança, basta `cd ~/.dotfiles && dotter deploy`
 `DOTFILES_SO_LINKS=1 dotter deploy` cria só os links, sem instalar pacote nem
 mexer no `/etc` ou na sessão.
 
-### Casa
+### Casa (`fedora`)
 
 Antes de confiar nas regras do Fuxi-H3 com o dongle, confira se ele aparece
 igual ao cabo:
@@ -61,7 +59,7 @@ Se algum dos dois for diferente, ajuste a regra antes de aplicar.
 
 ## Testes
 
-`tests/maquinas.sh notebook`, `tests/maquinas.sh casa` e `tests/adotar.sh`
+`tests/maquinas.sh arch`, `tests/maquinas.sh fedora` e `tests/adotar.sh`
 aplicam num HOME falso e conferem o que cada máquina recebe.
 
 ## Segredos

@@ -11,10 +11,10 @@ DAC Fuxi-H3 no `sistema/`). A raiz tem 22 pacotes do stow soltos ao lado de
 O dono quer blocos mais claros e um arquivo que diga o que vai para cada
 máquina.
 
-| Máquina | Sistema | Papel |
+| Máquina (hostname) | Sistema | Papel |
 |---|---|---|
-| notebook | Arch + Hyprland | trabalho, programação, faculdade |
-| casa | Fedora + KDE | jogos, design, música |
+| notebook (`arch`) | Arch + Hyprland | trabalho, programação, faculdade |
+| casa (`fedora`) | Fedora + KDE | jogos, design, música |
 
 ## Objetivos
 
@@ -58,8 +58,8 @@ simbólico aceita `owner` e `recurse`.
 ```
 .dotter/
   global.toml        módulos: arquivo do repo -> destino, variáveis
-  notebook.toml      packages = [...] do notebook
-  casa.toml          packages = [...] da casa
+  arch.toml          packages = [...] do notebook
+  fedora.toml        packages = [...] da casa
   post_deploy.sh     pacotes da distro, /etc, gsettings, herdr-setup, perfil enterprise
   adotar.sh          primeira aplicação numa máquina que já tem config
 terminal/  bash git starship fzf mise nvim ghostty fastfetch
@@ -108,10 +108,10 @@ O tema `noctalia.json` do syncfast fica como está: quando o tema some, o
 syncfast cai no tema embutido claro ou escuro (`Themes::resolve`).
 
 ```toml
-# .dotter/notebook.toml
+# .dotter/arch.toml
 packages = ["terminal", "ai", "desktop", "hyprland", "trabalho"]
 
-# .dotter/casa.toml
+# .dotter/fedora.toml
 packages = ["terminal", "ai", "desktop"]
 ```
 
@@ -193,17 +193,16 @@ pacotes do Fedora.
 
 ### Hostname
 
-O dotter escolhe o arquivo pelo hostname, e o deste notebook é `arch`. A
-migração renomeia os dois PCs com `hostnamectl set-hostname notebook` e
-`hostnamectl set-hostname casa`.
+O dotter escolhe o arquivo pelo hostname. Os PCs mantêm os nomes que já têm
+(decisão do dono): o notebook é `arch` e a casa é `fedora`, então os arquivos
+se chamam `arch.toml` e `fedora.toml`.
 
 ### Instalação numa máquina nova
 
 ```
 git clone ... ~/.dotfiles && cd ~/.dotfiles
-# notebook: yay -S dotter-rs
+# notebook: yay -S dotter-rs-bin
 # casa: binário do release do GitHub em ~/.local/bin (não há pacote no dnf)
-sudo hostnamectl set-hostname <notebook|casa>
 dotter deploy
 ```
 

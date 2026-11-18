@@ -14,13 +14,13 @@ echo antigo >"$H/.config/nvim/init.lua"
 ln -s /etc/hostname "$H/.config/outro"
 echo meu >"$H/notas.txt"
 
-if HOME=$H DOTFILES_SO_LINKS=1 "$REPO/.dotter/adotar.sh" -l .dotter/nao-existe.toml \
+if HOME=$H DOTFILES_SO_LINKS=1 "$REPO/.dotter/adotar.sh" -g .dotter/nao-existe.toml \
   --cache-file "$T/cache.toml" --cache-directory "$T/cache" >/dev/null 2>&1; then
-  echo "FALHOU: adotar.sh passou sem arquivo da máquina"; exit 1
+  echo "FALHOU: adotar.sh passou com config inválida"; exit 1
 fi
 [[ -L $H/.bashrc && -L $H/.config/hypr/hyprland.lua ]] || { echo "FALHOU: config inválida e os links antigos sumiram"; exit 1; }
 
-HOME=$H DOTFILES_SO_LINKS=1 "$REPO/.dotter/adotar.sh" -l .dotter/notebook.toml \
+HOME=$H DOTFILES_SO_LINKS=1 "$REPO/.dotter/adotar.sh" -l .dotter/arch.toml \
   --cache-file "$T/cache.toml" --cache-directory "$T/cache"
 
 falhas=0

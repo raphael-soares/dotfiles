@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-maquina=${1:?uso: tests/maquinas.sh notebook|casa}
+maquina=${1:?uso: tests/maquinas.sh arch|fedora}
 REPO=$(cd "$(dirname "$0")/.." && pwd -P)
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
@@ -61,15 +61,15 @@ hook_tem() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
 so_notebook_no_hook=(hyprctl greetd enterprise)
 
 case $maquina in
-  notebook)
+  arch)
     for f in "${so_notebook[@]}"; do existe "$f"; done
     link_do_repo .config/hypr
     [[ -f $H/.config/hypr/hyprland.lua ]] || falha ".config/hypr não chega no hyprland.lua"
     for p in "${so_notebook_no_hook[@]}"; do hook_tem "$p" || falha "hook sem $p"; done
     ;;
-  casa)
+  fedora)
     for f in "${so_notebook[@]}"; do ausente "$f"; done
-    for p in "${so_notebook_no_hook[@]}"; do ! hook_tem "$p" || falha "hook da casa com $p"; done
+    for p in "${so_notebook_no_hook[@]}"; do ! hook_tem "$p" || falha "hook do fedora com $p"; done
     ;;
   *) echo "máquina desconhecida: $maquina"; exit 2 ;;
 esac
