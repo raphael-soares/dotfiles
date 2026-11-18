@@ -9,11 +9,12 @@ uso: pr-watch <owner/repo> <pr> [opções]
   --prazo SEG          tempo total máximo (padrão 3600)
   --sem-check SEG      nenhum check e nenhum run aberto nesse tempo após ver o commit: "não acionada" (padrão 300)
   --fila SEG           job parado na fila mais que isso: "parado" (padrão 900)
-  --intervalo SEG      intervalo entre leituras (padrão 30)
+  --intervalo SEG      intervalo entre leituras (padrão 15)
   --conta USUARIO      usa o token dessa conta do gh (sem GH_TOKEN, a org TEAjudo usa raphael-soares)
   --sem-notificacao    não chama notify-send no fim
 
-Só imprime quando o estado muda. Códigos de saída:
+Só imprime quando o estado muda. Sai na primeira falha, inclusive pelo step de um job que ainda roda.
+Códigos de saída:
   0 verde              todos os checks do commit atual passaram
   1 falha              check falhou com erro de código ou teste (trecho do log impresso)
   2 falha-infra        exit 137/143, rate limit, blob, cancelamento, runner perdido: vale rerun
@@ -28,7 +29,7 @@ EOF
 
 [ $# -ge 2 ] || { uso >&2; exit 64; }
 REPO=$1 PR=$2; shift 2
-PRAZO=3600 SEM_CHECK=300 FILA=900 INTERVALO=30 CONTA="" NOTIFICAR=1
+PRAZO=3600 SEM_CHECK=300 FILA=900 INTERVALO=15 CONTA="" NOTIFICAR=1
 while [ $# -gt 0 ]; do
   case $1 in
     --prazo) PRAZO=$2; shift 2 ;;
@@ -89,6 +90,16 @@ JQ_CHECKS='
        fase: (if .state == "SUCCESS" then "ok" elif .state | IN("PENDING","EXPECTED") then "rodando" else "falha" end)}
     end]'
 
+# O check só conclui quando o job acaba; um step falho seguido de step pulado já é falha confirmada.
+# Com continue-on-error o step seguinte roda em vez de pular, e isso não dispara.
+JQ_FALHA_STEP='
+  .jobs[]? | select(.status != "completed") | . as $j
+  | [.steps // [] | sort_by(.number)[] | select((.name | startswith("Post ") | not) and .name != "Complete job")]
+  | . as $s | range(0; length - 1) as $i
+  | select($s[$i].conclusion == "failure" and $s[$i + 1].conclusion == "skipped")
+  | {job: $j.name, step: $s[$i].name, url: $j.html_url, infra: ($s[$i].name | test("^Set up job$|checkout|cache"; "i"))}
+'
+
 inicio=$SECONDS
 sha="" sha_desde=0 ultimo_estado="" erros_gh=0
 declare -A fila_desde=()
@@ -136,6 +147,24 @@ while :; do
         [ "$mss" = DRAFT ] && motivo="$motivo; a PR é rascunho"
         fim 3 nao-acionada "$motivo"
       fi
+    fi
+  fi
+
+  if [ "$falha" -eq 0 ] && [ "$rodando" -gt 0 ]; then
+    achados="" runs_cedo=""
+    for run in $(jq -r '.[] | select(.fase == "rodando") | .url' <<<"$checks" | grep -oE '/runs/[0-9]+' | cut -d/ -f3 | sort -u); do
+      jobs=$(gh_ api "repos/$REPO/actions/runs/$run/jobs?filter=latest") || continue
+      novos=$(jq -c "$JQ_FALHA_STEP" <<<"$jobs" 2>/dev/null)
+      [ -n "$novos" ] && achados+="$novos"$'\n' runs_cedo+=" $run"
+    done
+    if [ -n "$achados" ]; then
+      jq -r '"- \(.job) (step \u0027\(.step)\u0027) \(.url)"' <<<"$achados"
+      if jq -se 'any(.[]; .infra | not)' <<<"$achados" >/dev/null; then
+        fim 1 falha "step falhou em ${sha:0:9}, job ainda rodando"
+      fi
+      dica="quando a run terminar:"
+      for run in $runs_cedo; do dica+=" gh run rerun $run --failed -R $REPO;"; done
+      fim 2 falha-infra "step de preparação falhou em ${sha:0:9}; $dica"
     fi
   fi
 
