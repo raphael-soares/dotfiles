@@ -1,0 +1,5 @@
+ttf-jetbrains-mono-nerd
+inter-font
+pipewire
+wireplumber
+alsa-utils

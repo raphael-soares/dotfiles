@@ -1,0 +1,4 @@
+rsms-inter-fonts
+pipewire
+wireplumber
+alsa-utils

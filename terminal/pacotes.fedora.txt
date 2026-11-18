@@ -1,0 +1,12 @@
+git
+neovim
+fzf
+fd-find
+ripgrep
+jq
+curl
+gh
+ImageMagick
+ghostscript
+golang
+fastfetch
