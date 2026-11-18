@@ -10,3 +10,5 @@ github-cli
 imagemagick
 ghostscript
 ghostty
+go
+fastfetch

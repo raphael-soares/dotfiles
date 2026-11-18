@@ -13,7 +13,7 @@ o resto: `git clone` do repo e `stow -t ~ <pasta>` de dentro dele.
 |---|---|---|---|
 | `bash` | `.bashrc` (histórico, aliases, PATH, mise, fzf, starship) e `.bash_profile` | bash | carrega `~/.config/shell/rc.d/*.sh`, `~/.env.local` e `~/.bash_profile.local` quando existem |
 | `ghostty` | terminal standalone (`Super+Return`) com a fonte, o padding e o tema do herdr-app | ghostty, JetBrainsMono Nerd Font | usa o tema `noctalia`, que o Noctalia gera em `~/.config/ghostty/themes` |
-| `herdr-app` | settings, atalhos, layouts e mods do herdr-app (sessionizer, ssh) | herdr-app | o sessionizer lê `SESSIONIZER_DIRS`; sem ela varre o home |
+| `herdr-app` | não é mais pasta daqui: settings, atalhos, layouts e mods do herdr-app moram em `~/Code/Personal/herdr-setup`, que o grupo `terminal` clona e instala | herdr-app | as pastas do sessionizer ficam em `roots`, no `mod.json` do mod `sessionizer` de lá |
 | `tmux` | legado: `tmux.conf`, sessionizer de projetos (`prefix + Tab`), de ssh e integração com o workmux | tmux, fzf | só pelo grupo `legado` |
 | `nvim` | config do Neovim com lazy.nvim, LSP, DAP e Java | neovim, git | os plugins se instalam na primeira abertura |
 | `git` | `.gitconfig` (nvimdiff, credencial pelo `gh`) e ignore global | git, gh | o `[user]` tem nome e e-mail do Raphael: troque |
@@ -30,14 +30,14 @@ o resto: `git clone` do repo e `stow -t ~ <pasta>` de dentro dele.
 | `noctalia` | plugins, estado e wallpaper do Noctalia | noctalia | o estado tem caminhos do Raphael: referência, não para instalar |
 | `audio` | WirePlumber só com A2DP no Bluetooth: caixa BT não cai em mono 16 kHz, mas nenhum fone BT tem microfone | pipewire, wireplumber | |
 | `vpn` | `~/.local/bin/vpn up\|down\|status`, VPN Fortinet SSL pelo NetworkManager | networkmanager-fortisslvpn | lê os `VPN_*` do `~/.env.local` |
-| `raphael` | `SESSIONIZER_DIRS`, `ompe` e config do syncfast | | só do Raphael |
+| `raphael` | `SESSIONIZER_DIRS` (do sessionizer do tmux), `ompe` e config do syncfast | | só do Raphael |
 
 O `install.sh` agrupa os pacotes e, rodado sem argumento, pergunta grupo por
 grupo. Dá para passar direto (`./install.sh terminal ai`):
 
 | Grupo | Pacotes do stow | Distros |
 |---|---|---|
-| `terminal` | bash git starship fzf mise nvim ghostty herdr-app | Arch, Fedora |
+| `terminal` | bash git starship fzf mise nvim ghostty, mais o repo `herdr-setup` | Arch, Fedora |
 | `ai` | ai | Arch, Fedora |
 | `desktop` | gtk fontes webapps | Arch, Fedora |
 | `hyprland` | hypr noctalia | Arch |
