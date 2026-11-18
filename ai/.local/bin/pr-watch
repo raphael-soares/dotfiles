@@ -90,14 +90,14 @@ JQ_CHECKS='
        fase: (if .state == "SUCCESS" then "ok" elif .state | IN("PENDING","EXPECTED") then "rodando" else "falha" end)}
     end]'
 
-# O check só conclui quando o job acaba; um step falho seguido de step pulado já é falha confirmada.
-# Com continue-on-error o step seguinte roda em vez de pular, e isso não dispara.
+# O check só conclui quando o job acaba; um step falho com algum step posterior pulado já é falha confirmada.
+# Com continue-on-error os steps seguintes rodam em vez de pular, e isso não dispara.
 JQ_FALHA_STEP='
   .jobs[]? | select(.status != "completed") | . as $j
   | [.steps // [] | sort_by(.number)[] | select((.name | startswith("Post ") | not) and .name != "Complete job")]
   | . as $s | range(0; length - 1) as $i
-  | select($s[$i].conclusion == "failure" and $s[$i + 1].conclusion == "skipped")
-  | {job: $j.name, step: $s[$i].name, url: $j.html_url, infra: ($s[$i].name | test("^Set up job$|checkout|cache"; "i"))}
+  | select($s[$i].conclusion == "failure" and any($s[$i + 1:][]; .conclusion == "skipped"))
+  | {job: $j.name, step: $s[$i].name, url: $j.html_url, infra: ($s[$i].name | test("^Set up job$|^Run actions/(checkout|cache)@"))}
 '
 
 inicio=$SECONDS

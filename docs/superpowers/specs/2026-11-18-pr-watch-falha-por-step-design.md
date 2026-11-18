@@ -24,11 +24,11 @@ e esse tempo é espera à toa.
 
 - A cada ciclo, para cada run com check `rodando`, ler
   `repos/{repo}/actions/runs/{run}/jobs`.
-- Falha confirmada: step com `conclusion: failure` e o próximo step que não é
-  post-step está `skipped`. Com `continue-on-error` o próximo roda, então não
-  dispara.
+- Falha confirmada: step com `conclusion: failure` e algum step posterior, fora
+  os post-steps, `skipped` (cobre `if: always()` logo depois do step falho). Com
+  `continue-on-error` os seguintes rodam, então não dispara.
 - Saída cedo imprime job, step e link. Código 2 (com a dica de rerun) quando o
-  step falho é "Set up job", checkout ou cache; senão código 1.
+  step falho é "Set up job" ou `actions/checkout`/`actions/cache`; senão código 1.
 - Job já concluído segue o caminho atual: trecho do log e classificação por
   regex.
 - Intervalo padrão: 30s passa a 15s.
