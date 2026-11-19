@@ -56,8 +56,10 @@ function M.window_open(state, class, ws, address)
   return { { kind = "move_window", address = address, ws = back(state) } }
 end
 
-function M.window_close(state, class)
-  if class ~= M.CLASS then
+-- Moonlight's splash and stream windows share CLASS and the splash unmaps once
+-- streaming starts, so a close only counts when no CLASS window is left.
+function M.window_close(state, class, stream_alive)
+  if class ~= M.CLASS or stream_alive then
     return {}
   end
   local lost = { kind = "notify", text = "Connection to desktop lost" }
@@ -65,6 +67,10 @@ function M.window_close(state, class)
     return { lost }
   end
   return { RESET, lost, { kind = "goto", ws = back(state) } }
+end
+
+function M.probe_timeout(state)
+  state.probing = false
 end
 
 function M.on_config_reloaded(state)

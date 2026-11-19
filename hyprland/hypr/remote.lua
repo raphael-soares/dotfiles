@@ -65,11 +65,17 @@ end
 
 local function toggle()
   run(R.toggle(state, ws_key(hl.get_active_workspace())))
+  if state.probing then
+    hl.timer(function()
+      R.probe_timeout(state)
+    end, { timeout = 5000, type = "oneshot" })
+  end
 end
 
-hl.bind(KEY, toggle)
+-- dont_inhibit: Moonlight's own keyboard grab (Ctrl+Alt+Shift+Z) would otherwise swallow the way out.
+hl.bind(KEY, toggle, { dont_inhibit = true })
 hl.define_submap("remote", function()
-  hl.bind(KEY, toggle)
+  hl.bind(KEY, toggle, { dont_inhibit = true })
 end)
 
 hl.window_rule({
@@ -85,8 +91,16 @@ end)
 hl.on("window.open", function(w)
   run(R.window_open(state, w.class, ws_key(w.workspace), w.address))
 end)
+local close_pending = false
 hl.on("window.close", function(w)
-  run(R.window_close(state, w.class))
+  if w.class ~= R.CLASS or close_pending then
+    return
+  end
+  close_pending = true
+  hl.timer(function()
+    close_pending = false
+    run(R.window_close(state, w.class, stream_running()))
+  end, { timeout = 1500, type = "oneshot" })
 end)
 hl.on("config.reloaded", function()
   run(R.on_config_reloaded(state))

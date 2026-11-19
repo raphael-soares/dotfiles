@@ -76,16 +76,24 @@ end
 
 do
   local s = inside("3")
-  check("stream closes while inside", R.window_close(s, R.CLASS), {
+  check("splash closing while the stream window lives is ignored", R.window_close(s, R.CLASS, true), {})
+  check("stream closes while inside", R.window_close(s, R.CLASS, false), {
     { kind = "submap", name = "reset" },
     { kind = "notify", text = "Connection to desktop lost" },
     { kind = "goto", ws = "3" },
   })
   local t = inside("3")
   R.workspace_active(t, "5")
-  check("stream closes while elsewhere", R.window_close(t, R.CLASS),
+  check("stream closes while elsewhere", R.window_close(t, R.CLASS, false),
     { { kind = "notify", text = "Connection to desktop lost" } })
-  check("other window closing is ignored", R.window_close(t, "firefox"), {})
+  check("other window closing is ignored", R.window_close(t, "firefox", false), {})
+end
+
+do
+  local s = R.new()
+  R.toggle(s, "3")
+  R.probe_timeout(s)
+  check("lost probe reply does not block the next toggle", R.toggle(s, "3"), { { kind = "probe" } })
 end
 
 do

@@ -127,17 +127,23 @@ else
 fi
 copy_etc home/sddm/autologin.conf /etc/sddm.conf.d/autologin.conf || true
 sudo systemctl enable --now sshd avahi-daemon
+# KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
+sunshine=$(readlink -f "$(command -v sunshine)")
+capped=0
+if ! getcap "$sunshine" | grep -q cap_sys_admin; then
+  sudo setcap cap_sys_admin+p "$sunshine"
+  capped=1
+fi
+unit_found=0
 for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
   if systemctl --user cat "$unit" >/dev/null 2>&1; then
     systemctl --user enable --now "$unit"
+    ((capped)) && systemctl --user restart "$unit"
+    unit_found=1
     break
   fi
 done
-# KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
-sunshine=$(readlink -f "$(command -v sunshine)")
-if ! getcap "$sunshine" | grep -q cap_sys_admin; then
-  sudo setcap cap_sys_admin+p "$sunshine"
-fi
+((unit_found)) || echo "==> No Sunshine user unit found; start it by hand and check its unit name"
 sudo firewall-cmd -q --permanent --add-service=ssh --add-service=mdns \
   --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
 sudo firewall-cmd -q --reload
