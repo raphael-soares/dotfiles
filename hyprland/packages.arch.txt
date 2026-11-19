@@ -22,3 +22,6 @@ adw-gtk-theme
 papirus-icon-theme
 greetd
 noctalia-greeter
+moonlight-qt
+nss-mdns
+avahi

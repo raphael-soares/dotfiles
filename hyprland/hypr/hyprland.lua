@@ -5,6 +5,7 @@ require("inputs")
 require("monitors")
 require("keymaps")
 require("windowrules")
+require("remote")
 
 hl.env("XCURSOR_THEME", "Adwaita")
 hl.env("XCURSOR_SIZE", "24")
