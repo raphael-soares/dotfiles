@@ -10,20 +10,22 @@ the laptop side lives in `hyprland/hypr/remote.lua`. Design:
 
 ## Once, on the desktop
 
-1. Authorize the laptop key before deploying, or SSH stays with passwords
-   (the deploy skips the key-only drop-in and says so):
+1. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables sshd,
+   Avahi and Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall,
+   sets SDDM autologin and turns off sleep and display off on AC. The screen
+   lock stays. SSH still takes passwords: there is no authorized key yet.
+2. From the laptop, authorize its key:
 
    ```bash
-   # on the laptop
    ssh-copy-id -i ~/.ssh/id_ed25519.pub raphael@fedora.local
    ```
 
-2. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables sshd,
-   Avahi and Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall,
-   sets SDDM autologin and turns off sleep and display off on AC. The screen
-   lock stays.
-3. Open <https://localhost:47990> and create Sunshine's admin user.
-4. Reboot once and check Plasma comes up logged in.
+3. `dotter deploy` again, so SSH only takes keys.
+4. Open <https://localhost:47990> and create Sunshine's admin user.
+5. Reboot once and check Plasma comes up logged in.
+
+The desktop is on Wi-Fi: keep Moonlight's bitrate around 10 Mbit/s, or the
+stream fills the link and the delay climbs to hundreds of milliseconds.
 
 ## Once, on the laptop
 
