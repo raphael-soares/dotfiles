@@ -29,7 +29,8 @@ end
 
 do
   local s = R.new()
-  check("toggle outside probes", R.toggle(s, "3"), { { kind = "probe" } })
+  check("toggle outside probes and says so", R.toggle(s, "3"),
+    { { kind = "notify", text = R.MSG.checking }, { kind = "probe" } })
   check("toggle remembers origin", s.origin, "3")
   check("second toggle while probing does nothing", R.toggle(s, "3"), {})
 end
@@ -38,7 +39,8 @@ do
   local s = R.new()
   R.toggle(s, "3")
   check("reachable launches", R.probe_result(s, true, true, false), {
-    { kind = "goto", ws = R.WS }, { kind = "launch" }, { kind = "submap", name = "remote" },
+    { kind = "goto", ws = R.WS }, { kind = "notify", text = R.MSG.opening }, { kind = "launch" },
+    { kind = "submap", name = "remote" },
   })
   local t = R.new()
   R.toggle(t, "3")
@@ -51,10 +53,11 @@ do
   local s = R.new()
   R.toggle(s, "3")
   check("ssh only", R.probe_result(s, false, true, false),
-    { { kind = "notify", text = "Desktop on, no graphical session" } })
-  check("probe done allows next toggle", R.toggle(s, "3"), { { kind = "probe" } })
+    { { kind = "notify", text = R.MSG.no_stream } })
+  check("probe done allows next toggle", R.toggle(s, "3"),
+    { { kind = "notify", text = R.MSG.checking }, { kind = "probe" } })
   check("nothing answers", R.probe_result(s, false, false, false),
-    { { kind = "notify", text = "Desktop unavailable" } })
+    { { kind = "notify", text = R.MSG.off } })
 end
 
 do
@@ -79,13 +82,13 @@ do
   check("splash closing while the stream window lives is ignored", R.window_close(s, R.CLASS, true), {})
   check("stream closes while inside", R.window_close(s, R.CLASS, false), {
     { kind = "submap", name = "reset" },
-    { kind = "notify", text = "Connection to desktop lost" },
+    { kind = "notify", text = R.MSG.closed },
     { kind = "goto", ws = "3" },
   })
   local t = inside("3")
   R.workspace_active(t, "5")
   check("stream closes while elsewhere", R.window_close(t, R.CLASS, false),
-    { { kind = "notify", text = "Connection to desktop lost" } })
+    { { kind = "notify", text = R.MSG.closed } })
   check("other window closing is ignored", R.window_close(t, "firefox", false), {})
 end
 
@@ -93,7 +96,8 @@ do
   local s = R.new()
   R.toggle(s, "3")
   R.probe_timeout(s)
-  check("lost probe reply does not block the next toggle", R.toggle(s, "3"), { { kind = "probe" } })
+  check("lost probe reply does not block the next toggle", R.toggle(s, "3"),
+    { { kind = "notify", text = R.MSG.checking }, { kind = "probe" } })
 end
 
 do

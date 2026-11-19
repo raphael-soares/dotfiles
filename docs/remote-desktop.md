@@ -61,4 +61,5 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
 - With the desktop on, `SUPER + grave` shows Plasma; `SUPER + 1` switches the
   desktop's virtual desktop, not the laptop's; `SUPER + grave` again returns
   to where you were.
-- With the desktop off, `SUPER + grave` notifies "Desktop unavailable".
+- With the desktop off, `SUPER + grave` says it is checking, then "Desktop is
+  off or not on the network".
