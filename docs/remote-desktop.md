@@ -38,6 +38,9 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
    10 Mbit/s, and "Capture system keyboard shortcuts" on, always. Without it
    Moonlight drops the Super key, so `SUPER + 1` never reaches Plasma;
    `SUPER + grave` still works because Hyprland binds it with `dont_inhibit`.
+   Also turn on "Optimize mouse for remote desktop instead of games": the
+   cursor then follows the laptop's own pointer instead of getting Plasma's
+   acceleration on top of the touchpad's.
 4. Add to `~/.ssh/config` (it is not in the repo):
 
    ```
