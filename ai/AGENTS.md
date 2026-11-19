@@ -265,7 +265,7 @@ perguntar qual era a minha fonte.
 
 **Como aplicar:** antes de dizer como o sistema se comporta, compare a cópia local
 com o que roda (`git log -1` local vs `origin/<branch>` e vs o commit do ambiente,
-ex. `ssh hml` no diretório da app). Divergiu, a fonte é a que roda. Chamada nossa
+ex. `ssh unimed-hml` no diretório da app). Divergiu, a fonte é a que roda. Chamada nossa
 a sistema externo não prova que o endpoint exista; só vale contrato do fornecedor,
 DTO do legado que funcionava ou resposta real observada. Comentário "inventado",
 "confirmar contra o real" ou similar quer dizer: não existe até prova. Quando o

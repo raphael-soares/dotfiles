@@ -52,6 +52,7 @@ default_target_type = "symbolic"
 [work.files]
 "work/bin" = "~/.local/bin"
 "work/shell/work.sh" = "~/.config/shell/rc.d/work.sh"
+"work/git/unimed" = "~/.config/git/unimed"
 "ai/.omp/overlays" = { type = "symbolic", target = "~/.omp/overlays", recurse = false }
 
 # Only /etc files and services (post_deploy.sh); nothing links into ~.

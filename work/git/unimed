@@ -1,0 +1,4 @@
+[user]
+	email = raphael.soares@unimedsc.coop.br
+[core]
+	sshCommand = ssh -i ~/.ssh/keys/unimed -o IdentitiesOnly=yes
