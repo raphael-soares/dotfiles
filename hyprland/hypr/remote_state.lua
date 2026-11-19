@@ -17,6 +17,14 @@ local function back(state)
   return state.origin or M.FALLBACK
 end
 
+M.MSG = {
+  checking = "Checking if the desktop is on...",
+  opening = "Desktop found, opening the stream",
+  no_stream = "Desktop is on, but Sunshine is not streaming: no monitor connected to it, or nobody logged in",
+  off = "Desktop is off or not on the network",
+  closed = "Desktop stream closed",
+}
+
 function M.toggle(state, current_ws)
   if current_ws == M.WS then
     return { RESET, { kind = "goto", ws = back(state) } }
@@ -26,18 +34,21 @@ function M.toggle(state, current_ws)
   end
   state.origin = current_ws
   state.probing = true
-  return { { kind = "probe" } }
+  return { { kind = "notify", text = M.MSG.checking }, { kind = "probe" } }
 end
 
 function M.probe_result(state, sunshine_ok, ssh_ok, stream_running)
   state.probing = false
+  if sunshine_ok and stream_running then
+    return { { kind = "goto", ws = M.WS }, { kind = "focus_stream" }, REMOTE }
+  end
   if sunshine_ok then
-    return { { kind = "goto", ws = M.WS }, { kind = stream_running and "focus_stream" or "launch" }, REMOTE }
+    return { { kind = "goto", ws = M.WS }, { kind = "notify", text = M.MSG.opening }, { kind = "launch" }, REMOTE }
   end
   if ssh_ok then
-    return { { kind = "notify", text = "Desktop on, no graphical session" } }
+    return { { kind = "notify", text = M.MSG.no_stream } }
   end
-  return { { kind = "notify", text = "Desktop unavailable" } }
+  return { { kind = "notify", text = M.MSG.off } }
 end
 
 function M.workspace_active(state, ws)
@@ -62,7 +73,7 @@ function M.window_close(state, class, stream_alive)
   if class ~= M.CLASS or stream_alive then
     return {}
   end
-  local lost = { kind = "notify", text = "Connection to desktop lost" }
+  local lost = { kind = "notify", text = M.MSG.closed }
   if not state.on_ws then
     return { lost }
   end

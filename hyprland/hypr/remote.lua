@@ -53,7 +53,10 @@ local function run(actions)
     elseif a.kind == "submap" then
       hl.dispatch(hl.dsp.submap(a.name))
     elseif a.kind == "notify" then
-      hl.exec_cmd("notify-send -a Desktop '" .. a.text .. "'")
+      -- The synchronous hint makes each step replace the previous one instead of stacking.
+      hl.exec_cmd(
+        "notify-send -a Desktop -h string:x-canonical-private-synchronous:remote-desktop Desktop '" .. a.text .. "'"
+      )
     elseif a.kind == "move_window" then
       hl.dispatch(hl.dsp.window.move({ workspace = a.ws, window = "address:" .. a.address, follow = false }))
     end
