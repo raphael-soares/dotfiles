@@ -59,7 +59,7 @@ else
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
 laptop_only_in_hook=(hyprctl greetd enterprise)
-desktop_only_in_hook=(sshd_config.d plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d)
+desktop_only_in_hook=(sshd_config.d plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms')
 
 case $machine in
   arch)

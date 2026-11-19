@@ -140,6 +140,10 @@ if ! sudo grubby --info=ALL | grep -q 'drm.edid_firmware=DP-1'; then
   sudo grubby --update-kernel=ALL --args="drm.edid_firmware=DP-1:edid/lg-ultragear.bin video=DP-1:e"
   echo "==> Reboot for the DP-1 EDID override"
 fi
+# Portal capture waits on a permission dialog nobody sees after an unattended boot.
+sunshine_conf=$HOME/.config/sunshine/sunshine.conf
+mkdir -p "${sunshine_conf%/*}"
+grep -qx 'capture = kms' "$sunshine_conf" 2>/dev/null || echo 'capture = kms' >>"$sunshine_conf"
 sudo systemctl enable --now sshd avahi-daemon
 # KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
 sunshine=$(readlink -f "$(command -v sunshine)")
