@@ -17,7 +17,7 @@ the laptop side lives in `hyprland/hypr/remote.lua`. Design:
 2. From the laptop, authorize its key:
 
    ```bash
-   ssh-copy-id -i ~/.ssh/id_ed25519.pub raphael@fedora.local
+   ssh-copy-id -i ~/.ssh/keys/personal.pub raphael@fedora.local
    ```
 
 3. `dotter deploy` again, so SSH only takes keys.
@@ -43,15 +43,9 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
    Also turn on "Optimize mouse for remote desktop instead of games": the
    cursor then follows the laptop's own pointer instead of getting Plasma's
    acceleration on top of the touchpad's.
-4. Add to `~/.ssh/config` (it is not in the repo):
-
-   ```
-   Host desktop
-       HostName fedora.local
-       User raphael
-       IdentityFile ~/.ssh/id_ed25519
-       IdentitiesOnly yes
-   ```
+4. The `desktop` host comes from the private `~/.ssh` repo
+   (`config.d/personal.conf`): `Host personal-desktop desktop`, user
+   `raphael`, key `~/.ssh/keys/personal`.
 
 5. herdr: Settings > Machines > Add machine > `desktop`.
 
