@@ -30,12 +30,13 @@ local function probe()
   local port = function(p)
     return "timeout 1 bash -c '</dev/tcp/" .. HOST .. "/" .. p .. "' 2>/dev/null && echo true || echo false"
   end
+  -- pgrep: a Moonlight just launched has no window yet, and a second press would start another.
   hl.exec_cmd(
     'hyprctl eval "require(\\"remote\\").probe_done($('
       .. port(47989)
       .. "), $("
       .. port(22)
-      .. '))"'
+      .. "), $(pgrep -x moonlight >/dev/null && echo true || echo false))\""
   )
 end
 
@@ -59,8 +60,8 @@ local function run(actions)
   end
 end
 
-function M.probe_done(sunshine_ok, ssh_ok)
-  run(R.probe_result(state, sunshine_ok, ssh_ok, stream_running()))
+function M.probe_done(sunshine_ok, ssh_ok, moonlight_running)
+  run(R.probe_result(state, sunshine_ok, ssh_ok, moonlight_running or stream_running()))
 end
 
 local function toggle()
