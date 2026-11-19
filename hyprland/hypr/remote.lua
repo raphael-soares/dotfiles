@@ -52,7 +52,8 @@ local function run(actions)
     elseif a.kind == "submap" then
       hl.dispatch(hl.dsp.submap(a.name))
     elseif a.kind == "notify" then
-      hl.exec_cmd("notify-send -a Desktop '" .. a.text .. "'")
+      -- Not notify-send: Do Not Disturb would hide the answer to a key the owner just pressed.
+      hl.notification.create({ text = a.text, timeout = 4000, icon = "warning" })
     elseif a.kind == "move_window" then
       hl.dispatch(hl.dsp.window.move({ workspace = a.ws, window = "address:" .. a.address, follow = false }))
     end
