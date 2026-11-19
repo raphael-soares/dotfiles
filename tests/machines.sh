@@ -59,6 +59,7 @@ else
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
 laptop_only_in_hook=(hyprctl greetd enterprise)
+desktop_only_in_hook=(sshd_config.d sddm.conf.d setcap powerdevilrc)
 
 case $machine in
   arch)
@@ -66,10 +67,12 @@ case $machine in
     repo_link .config/hypr
     [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
+    for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
     ;;
   fedora)
     for f in "${laptop_only[@]}"; do absent "$f"; done
     for p in "${laptop_only_in_hook[@]}"; do ! hook_has "$p" || fail "fedora hook has $p"; done
+    for p in "${desktop_only_in_hook[@]}"; do hook_has "$p" || fail "fedora hook lacks $p"; done
     ;;
   *) echo "unknown machine: $machine"; exit 2 ;;
 esac

@@ -111,6 +111,43 @@ if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
 fi
 {{/if}}
 
+{{#if dotter.packages.home}}
+install_packages home
+if ! rpm -q Sunshine >/dev/null 2>&1; then
+  sudo dnf copr enable -y lizardbyte/stable
+  sudo dnf install -y Sunshine
+fi
+# Key-only login without an authorized key would lock the laptop out.
+if [[ -s $HOME/.ssh/authorized_keys ]]; then
+  if copy_etc home/ssh/50-key-only.conf /etc/ssh/sshd_config.d/50-key-only.conf; then
+    sudo systemctl reload sshd 2>/dev/null || true
+  fi
+else
+  echo "==> Authorize the laptop key in ~/.ssh/authorized_keys, then deploy again (sshd_config.d left as is)"
+fi
+copy_etc home/sddm/autologin.conf /etc/sddm.conf.d/autologin.conf || true
+sudo systemctl enable --now sshd avahi-daemon
+for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
+  if systemctl --user cat "$unit" >/dev/null 2>&1; then
+    systemctl --user enable --now "$unit"
+    break
+  fi
+done
+# KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
+sunshine=$(readlink -f "$(command -v sunshine)")
+if ! getcap "$sunshine" | grep -q cap_sys_admin; then
+  sudo setcap cap_sys_admin+p "$sunshine"
+fi
+sudo firewall-cmd -q --permanent --add-service=ssh --add-service=mdns \
+  --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
+sudo firewall-cmd -q --reload
+# Never sleep or blank on AC; the screen lock stays as it is.
+kwriteconfig6 --file powerdevilrc --group AC --group SuspendAndShutdown --key AutoSuspendAction 0
+kwriteconfig6 --file powerdevilrc --group AC --group Display --key TurnOffDisplayWhenIdle false
+kwriteconfig6 --file powerdevilrc --group AC --group Display --key DimDisplayWhenIdle false
+systemctl --user restart plasma-powerdevil 2>/dev/null || true
+{{/if}}
+
 {{#if dotter.packages.work}}
 install_packages work
 # Enterprise omp profile: its own auth (agent.db), the rest shared with the default one.

@@ -1,1 +1,1 @@
-packages = ["terminal", "ai", "desktop"]
+packages = ["terminal", "ai", "desktop", "home"]
