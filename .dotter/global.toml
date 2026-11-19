@@ -54,5 +54,5 @@ default_target_type = "symbolic"
 "work/shell/work.sh" = "~/.config/shell/rc.d/work.sh"
 "ai/.omp/overlays" = { type = "symbolic", target = "~/.omp/overlays", recurse = false }
 
-# Only /etc files and services (post_deploy.sh); nothing links into ~.
 [home.files]
+"home/autostart/lock-on-login.desktop" = "~/.config/autostart/lock-on-login.desktop"

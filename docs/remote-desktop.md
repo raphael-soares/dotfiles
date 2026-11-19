@@ -12,8 +12,10 @@ the laptop side lives in `hyprland/hypr/remote.lua`. Design:
 
 1. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables sshd,
    Avahi and Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall,
-   sets Plasma Login Manager autologin and turns off sleep and display off on AC. The screen
-   lock stays. SSH still takes passwords: there is no authorized key yet.
+   sets Plasma Login Manager autologin and turns off sleep and display off on
+   AC. The session locks as soon as it starts, so you power the desktop on and
+   type your password in the lock screen through the stream. SSH still takes
+   passwords: there is no authorized key yet.
 2. From the laptop, authorize its key:
 
    ```bash
