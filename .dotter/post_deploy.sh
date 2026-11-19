@@ -81,7 +81,9 @@ if [[ $(cat "$STATE/wireplumber" 2>/dev/null) != "$rules" ]] && command -v syste
     echo "==> WirePlumber restarted; reconnect Bluetooth to renegotiate A2DP"
   fi
 fi
-if [[ $DISTRO == fedora ]] && ! fc-list | grep -qi 'JetBrainsMono Nerd'; then
+# grep -q closes the pipe early and, under pipefail, fc-list dying of SIGPIPE
+# would report the font as missing.
+if [[ $DISTRO == fedora ]] && ! fc-list | grep -i 'JetBrainsMono Nerd' >/dev/null; then
   echo "==> Install JetBrainsMono Nerd Font by hand (it is not in dnf)"
 fi
 {{/if}}
@@ -144,7 +146,9 @@ for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
   fi
 done
 ((unit_found)) || echo "==> No Sunshine user unit found; start it by hand and check its unit name"
-sudo firewall-cmd -q --permanent --add-service=ssh --add-service=mdns \
+# firewalld 2.4 rejects --add-service and --add-port in the same call.
+sudo firewall-cmd -q --permanent --add-service=ssh --add-service=mdns
+sudo firewall-cmd -q --permanent \
   --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
 sudo firewall-cmd -q --reload
 # Never sleep or blank on AC; the screen lock stays as it is.
