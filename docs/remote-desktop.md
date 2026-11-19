@@ -34,8 +34,10 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
    line, before `resolve`.
 2. Pair: run `moonlight pair fedora.local`, then type the PIN it shows in
    Sunshine's web UI (PIN tab).
-3. In Moonlight's settings: resolution matching the laptop screen, and
-   "Capture system keyboard shortcuts" off (Hyprland already forwards them).
+3. In Moonlight's settings: resolution matching the laptop screen, bitrate
+   10 Mbit/s, and "Capture system keyboard shortcuts" on, always. Without it
+   Moonlight drops the Super key, so `SUPER + 1` never reaches Plasma;
+   `SUPER + grave` still works because Hyprland binds it with `dont_inhibit`.
 4. Add to `~/.ssh/config` (it is not in the repo):
 
    ```
