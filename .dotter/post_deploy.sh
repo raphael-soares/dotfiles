@@ -129,6 +129,21 @@ else
 fi
 # Fedora 44 replaced SDDM with Plasma Login Manager, which reads the same keys from its own dir.
 copy_etc home/plasmalogin/autologin.conf /etc/plasmalogin.conf.d/autologin.conf || true
+# The monitor shows the laptop most of the time and then stops answering on DP-1,
+# leaving Plasma without a screen and Sunshine with nothing to stream. The kernel
+# replays the LG's own EDID there (amdgpu loads from the initramfs, hence dracut).
+edid_changed=0
+copy_etc home/edid/lg-ultragear.bin /usr/lib/firmware/edid/lg-ultragear.bin && edid_changed=1
+copy_etc home/dracut/edid.conf /etc/dracut.conf.d/edid.conf && edid_changed=1
+if ((edid_changed)); then sudo dracut -f --regenerate-all; fi
+if ! sudo grubby --info=ALL | grep -q 'drm.edid_firmware=DP-1'; then
+  sudo grubby --update-kernel=ALL --args="drm.edid_firmware=DP-1:edid/lg-ultragear.bin video=DP-1:e"
+  echo "==> Reboot for the DP-1 EDID override"
+fi
+# Portal capture waits on a permission dialog nobody sees after an unattended boot.
+sunshine_conf=$HOME/.config/sunshine/sunshine.conf
+mkdir -p "${sunshine_conf%/*}"
+grep -qx 'capture = kms' "$sunshine_conf" 2>/dev/null || echo 'capture = kms' >>"$sunshine_conf"
 sudo systemctl enable --now sshd avahi-daemon
 # KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
 sunshine=$(readlink -f "$(command -v sunshine)")
