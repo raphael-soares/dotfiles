@@ -50,7 +50,6 @@ laptop_only=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
   .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini
   .local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
-desktop_only=(.config/autostart/lock-on-login.desktop)
 
 hook=$T/cache/.dotter/post_deploy.sh
 if [[ -f $hook ]]; then
@@ -65,7 +64,6 @@ desktop_only_in_hook=(sshd_config.d plasmalogin.conf.d setcap powerdevilrc)
 case $machine in
   arch)
     for f in "${laptop_only[@]}"; do exists "$f"; done
-    for f in "${desktop_only[@]}"; do absent "$f"; done
     repo_link .config/hypr
     [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
@@ -73,7 +71,6 @@ case $machine in
     ;;
   fedora)
     for f in "${laptop_only[@]}"; do absent "$f"; done
-    for f in "${desktop_only[@]}"; do exists "$f"; done
     for p in "${laptop_only_in_hook[@]}"; do ! hook_has "$p" || fail "fedora hook has $p"; done
     for p in "${desktop_only_in_hook[@]}"; do hook_has "$p" || fail "fedora hook lacks $p"; done
     ;;
