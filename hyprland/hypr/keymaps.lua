@@ -102,10 +102,10 @@ hl.bind(
 -- Outside monitors.lua: when declared next to hl.monitor, they stop firing (hyprwm/Hyprland#14858).
 hl.bind("switch:on:Lid Switch", function()
   require("monitors").evaluate()
-end, { locked = true })
+end, { locked = true, submap_universal = true })
 hl.bind("switch:off:Lid Switch", function()
   require("monitors").evaluate()
-end, { locked = true })
+end, { locked = true, submap_universal = true })
 
 -- Print opens the raphael/hypr-shots plugin picker: area, monitor, window or
 -- annotation, chosen with arrow keys or 1-6.
