@@ -127,7 +127,8 @@ if [[ -s $HOME/.ssh/authorized_keys ]]; then
 else
   echo "==> Authorize the laptop key in ~/.ssh/authorized_keys, then deploy again (sshd_config.d left as is)"
 fi
-copy_etc home/sddm/autologin.conf /etc/sddm.conf.d/autologin.conf || true
+# Fedora 44 replaced SDDM with Plasma Login Manager, which reads the same keys from its own dir.
+copy_etc home/plasmalogin/autologin.conf /etc/plasmalogin.conf.d/autologin.conf || true
 sudo systemctl enable --now sshd avahi-daemon
 # KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
 sunshine=$(readlink -f "$(command -v sunshine)")

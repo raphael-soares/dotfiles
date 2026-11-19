@@ -12,7 +12,7 @@ the laptop side lives in `hyprland/hypr/remote.lua`. Design:
 
 1. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables sshd,
    Avahi and Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall,
-   sets SDDM autologin and turns off sleep and display off on AC. The screen
+   sets Plasma Login Manager autologin and turns off sleep and display off on AC. The screen
    lock stays. SSH still takes passwords: there is no authorized key yet.
 2. From the laptop, authorize its key:
 
@@ -22,7 +22,9 @@ the laptop side lives in `hyprland/hypr/remote.lua`. Design:
 
 3. `dotter deploy` again, so SSH only takes keys.
 4. Open <https://localhost:47990> and create Sunshine's admin user.
-5. Reboot once and check Plasma comes up logged in.
+5. Reboot once and check Plasma comes up logged in. With the monitor on the
+   laptop's input, the desktop's DisplayPort must stay connected
+   (`cat /sys/class/drm/card*-DP-1/status`), or Sunshine has no screen.
 
 The desktop is on Wi-Fi: keep Moonlight's bitrate around 10 Mbit/s, or the
 stream fills the link and the delay climbs to hundreds of milliseconds.
