@@ -35,6 +35,19 @@ install_packages() {
   esac
 }
 
+# Bloat the Fedora KDE installer brings and nothing here uses. Runs after
+# install_packages so the fonts and langpacks it would drag out are back in
+# place first.
+remove_packages() {
+  local list="$REPO/$1/remove.$DISTRO.txt" present=() p
+  [[ -f $list ]] || return 0
+  [[ $DISTRO == fedora ]] || return 0
+  for p in $(<"$list"); do rpm -q "$p" >/dev/null 2>&1 && present+=("$p"); done
+  ((${#present[@]})) || return 0
+  echo "==> Removing: ${present[*]}"
+  sudo dnf remove -y "${present[@]}"
+}
+
 warn_missing() {
   local missing=() cmd
   for cmd in "$@"; do command -v "$cmd" >/dev/null || missing+=("$cmd"); done
@@ -71,6 +84,7 @@ fi
 
 {{#if dotter.packages.desktop}}
 install_packages desktop
+remove_packages desktop
 if copy_etc desktop/audio/91-fuxi-h3-mixer.rules /etc/udev/rules.d/91-fuxi-h3-mixer.rules; then
   sudo udevadm control --reload
 fi

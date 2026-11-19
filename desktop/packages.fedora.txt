@@ -2,3 +2,9 @@ rsms-inter-fonts
 pipewire
 wireplumber
 alsa-utils
+liberation-sans-fonts
+liberation-serif-fonts
+liberation-mono-fonts
+langpacks-en
+glibc-langpack-en
+glibc-langpack-pt
