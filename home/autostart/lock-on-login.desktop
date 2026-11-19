@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Lock on login
+Comment=Autologin keeps a session for Sunshine; the password is still asked, through the stream or at the desk
+Exec=loginctl lock-session
+NoDisplay=true
+X-KDE-autostart-phase=2
