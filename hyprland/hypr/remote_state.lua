@@ -25,9 +25,18 @@ M.MSG = {
   closed = "Desktop stream closed",
 }
 
-function M.toggle(state, current_ws)
+local function enter_stream()
+  return { { kind = "goto", ws = M.WS }, { kind = "focus_stream" }, REMOTE }
+end
+
+function M.toggle(state, current_ws, stream_alive)
   if current_ws == M.WS then
     return { RESET, { kind = "goto", ws = back(state) } }
+  end
+  if stream_alive then
+    state.origin = current_ws
+    state.probing = false
+    return enter_stream()
   end
   if state.probing then
     return {}
@@ -38,9 +47,12 @@ function M.toggle(state, current_ws)
 end
 
 function M.probe_result(state, sunshine_ok, ssh_ok, stream_running)
+  if not state.probing then
+    return {}
+  end
   state.probing = false
   if sunshine_ok and stream_running then
-    return { { kind = "goto", ws = M.WS }, { kind = "focus_stream" }, REMOTE }
+    return enter_stream()
   end
   if sunshine_ok then
     return { { kind = "goto", ws = M.WS }, { kind = "notify", text = M.MSG.opening }, { kind = "launch" }, REMOTE }
