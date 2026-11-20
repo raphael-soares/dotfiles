@@ -63,6 +63,16 @@ end
 do
   local s = R.new()
   R.toggle(s, "3")
+  R.toggle(s, "3", true)
+  R.workspace_active(s, R.WS)
+  R.toggle(s, R.WS, true)
+  R.workspace_active(s, "3")
+  check("probe reply after a direct switch is ignored", R.probe_result(s, true, true, true), {})
+end
+
+do
+  local s = R.new()
+  R.toggle(s, "3")
   check("ssh only", R.probe_result(s, false, true, false),
     { { kind = "notify", text = R.MSG.no_stream } })
   check("probe done allows next toggle", R.toggle(s, "3"),

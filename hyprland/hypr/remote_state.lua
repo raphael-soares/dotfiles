@@ -35,6 +35,7 @@ function M.toggle(state, current_ws, stream_alive)
   end
   if stream_alive then
     state.origin = current_ws
+    state.probing = false
     return enter_stream()
   end
   if state.probing then
@@ -46,6 +47,9 @@ function M.toggle(state, current_ws, stream_alive)
 end
 
 function M.probe_result(state, sunshine_ok, ssh_ok, stream_running)
+  if not state.probing then
+    return {}
+  end
   state.probing = false
   if sunshine_ok and stream_running then
     return enter_stream()
