@@ -31,7 +31,7 @@ for f in .bashrc .bash_profile .gitconfig .config/git/ignore .config/starship.to
   .claude/CLAUDE.md .claude/settings.json .claude/skills .claude/hooks/rtk-rewrite.sh \
   .omp/agent/AGENTS.md .omp/agent/config.yml .omp/agent/skills .omp/agent/extensions \
   .omp/agent/rules .omp/agent/prompts .omp/agent/themes .local/bin/fila \
-  .config/fontconfig/conf.d/50-fonts.conf .local/share/applications/zapfast.desktop \
+  .config/fontconfig/conf.d/50-fonts.conf .local/share/applications/rocks.zapfast.ZapFast.desktop \
   .local/share/icons/hicolor/scalable/apps/whatsapp.svg \
   .config/wireplumber/wireplumber.conf.d/53-bluetooth-a2dp-only.conf \
   .config/wireplumber/wireplumber.conf.d/55-fuxi-soft-mixer.conf \

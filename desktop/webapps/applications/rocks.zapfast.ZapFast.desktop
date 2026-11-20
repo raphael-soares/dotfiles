@@ -1,0 +1,19 @@
+[Desktop Entry]
+Type=Application
+Name=WhatsApp
+GenericName=WhatsApp Client
+Comment=A native WhatsApp client
+Exec=/usr/bin/flatpak run --branch=master --arch=x86_64 --command=zapfast --file-forwarding rocks.zapfast.ZapFast @@u %U @@
+Icon=whatsapp
+Terminal=false
+Categories=Network;InstantMessaging;Chat;
+Keywords=whatsapp;chat;messaging;zapfast;
+StartupWMClass=rocks.zapfast.ZapFast
+MimeType=x-scheme-handler/whatsapp;x-scheme-handler/wa;
+SingleMainWindow=true
+Actions=quit;
+X-Flatpak=rocks.zapfast.ZapFast
+
+[Desktop Action quit]
+Name=Quit WhatsApp
+Exec=/usr/bin/flatpak run --branch=master --arch=x86_64 --command=zapfast rocks.zapfast.ZapFast quit

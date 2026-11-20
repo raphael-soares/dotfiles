@@ -71,7 +71,7 @@ hl.window_rule({
 
 hl.window_rule({
   name = "spotify-workspace",
-  match = { class = "^spotify$" },
+  match = { class = "^rocks\\.spotifast\\.Spotifast$" },
   workspace = "9 silent",
 })
 
