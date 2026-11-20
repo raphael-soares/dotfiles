@@ -4,12 +4,11 @@ Version=1.0
 Name=Spotify
 GenericName=Music Player
 Comment=A native Spotify client
-Exec=/usr/bin/flatpak run --branch=master --arch=x86_64 --command=spotifast --file-forwarding rocks.spotifast.Spotifast @@u %u @@
+Exec=spotifast %u
 Terminal=false
 Categories=AudioVideo;Audio;Player;Music;
 Keywords=spotify;music;player;streaming;spotifast;
 Icon=spotify
 StartupNotify=true
-StartupWMClass=rocks.spotifast.Spotifast
+StartupWMClass=spotifast
 MimeType=x-scheme-handler/spotify;
-X-Flatpak=rocks.spotifast.Spotifast
