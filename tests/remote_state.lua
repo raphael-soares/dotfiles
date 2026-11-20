@@ -51,6 +51,17 @@ end
 
 do
   local s = R.new()
+  check("toggle with stream alive goes straight in", R.toggle(s, "3", true), {
+    { kind = "goto", ws = R.WS }, { kind = "focus_stream" }, { kind = "submap", name = "remote" },
+  })
+  check("direct switch does not probe", s.probing, false)
+  R.workspace_active(s, R.WS)
+  check("direct switch remembers origin", R.toggle(s, R.WS, true),
+    { { kind = "submap", name = "reset" }, { kind = "goto", ws = "3" } })
+end
+
+do
+  local s = R.new()
   R.toggle(s, "3")
   check("ssh only", R.probe_result(s, false, true, false),
     { { kind = "notify", text = R.MSG.no_stream } })

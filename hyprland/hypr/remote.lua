@@ -28,7 +28,7 @@ end
 -- blocks it; the shell reports back through `hyprctl eval`.
 local function probe()
   local port = function(p)
-    return "timeout 1 bash -c '</dev/tcp/" .. HOST .. "/" .. p .. "' 2>/dev/null && echo true || echo false"
+    return "timeout 2 bash -c '</dev/tcp/" .. HOST .. "/" .. p .. "' 2>/dev/null && echo true || echo false"
   end
   -- pgrep: a Moonlight just launched has no window yet, and a second press would start another.
   hl.exec_cmd(
@@ -68,7 +68,7 @@ function M.probe_done(sunshine_ok, ssh_ok, moonlight_running)
 end
 
 local function toggle()
-  run(R.toggle(state, ws_key(hl.get_active_workspace())))
+  run(R.toggle(state, ws_key(hl.get_active_workspace()), stream_running()))
   if state.probing then
     hl.timer(function()
       R.probe_timeout(state)
