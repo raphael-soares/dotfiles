@@ -12,6 +12,7 @@ default_target_type = "symbolic"
 "terminal/nvim" = { type = "symbolic", target = "~/.config/nvim", recurse = false }
 "terminal/ghostty/config" = "~/.config/ghostty/config"
 "terminal/fastfetch/config.jsonc" = "~/.config/fastfetch/config.jsonc"
+"terminal/go/env" = "~/.config/go/env"
 
 [ai.files]
 "ai/.claude/CLAUDE.md" = "~/.claude/CLAUDE.md"
