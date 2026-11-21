@@ -1,0 +1,11 @@
+{
+  "radarr": "/home/raphael/Media/Downloads/radarr",
+  "sonarr": "/home/raphael/Media/Downloads/sonarr",
+  "Books": "/home/raphael/Media/Books",
+  "Mangas": "/home/raphael/Media/Mangas",
+  "Games": "/home/raphael/Games",
+  "Games/PC": "/home/raphael/Games/PC",
+  "Games/Switch": "/home/raphael/Games/Switch/Library",
+  "Games/PSP": "/home/raphael/Games/PSP",
+  "Games/PSX": "/home/raphael/Games/PSX"
+}

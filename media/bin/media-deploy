@@ -6,6 +6,7 @@ CONF=$HOME/.config/media
 ENV_FILE=$CONF/media.env
 STATE=$HOME/.local/share/media
 UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr qbittorrent)
+QBT=http://127.0.0.1:8080/api/v2
 
 ensure_env() {
   mkdir -p "$CONF"
@@ -39,7 +40,6 @@ start_units() {
   mkdir -p "$STATE/.applied"
   local u sum
   for u in "${UNITS[@]}"; do
-    [[ $u == qbittorrent && ! -f $STATE/qbittorrent/qBittorrent/qBittorrent.conf ]] && continue
     sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" | sha256sum)
     if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
       systemctl --user start "$u"
@@ -51,10 +51,44 @@ start_units() {
   systemctl --user enable --now podman-auto-update.timer
 }
 
+# Before the first start: without it the image writes its own config with a random WebUI password.
+seed_qbittorrent() {
+  local conf=$STATE/qbittorrent/qBittorrent/qBittorrent.conf
+  [[ -f $conf ]] && return
+  install -D -m 600 "$REPO/media/qbittorrent/qBittorrent.conf.seed" "$conf"
+  echo "media: created $conf"
+}
+
+configure_qbittorrent() {
+  local want=$REPO/media/qbittorrent/categories.json have name path i
+  for i in {1..60}; do
+    curl -fsS "$QBT/app/version" >/dev/null 2>&1 && break
+    sleep 1
+  done
+  curl -fsS "$QBT/app/version" >/dev/null
+  curl -fsS --data-urlencode "json=$(jq -c . "$REPO/media/qbittorrent/preferences.json")" "$QBT/app/setPreferences"
+  have=$(curl -fsS "$QBT/torrents/categories" | jq 'map_values(.savePath)')
+  while IFS=$'\t' read -r name path; do
+    if ! jq -e --arg n "$name" 'has($n)' <<<"$have" >/dev/null; then
+      curl -fsS --data-urlencode "category=$name" --data-urlencode "savePath=$path" "$QBT/torrents/createCategory"
+      echo "media: qbittorrent category $name created"
+    elif [[ $(jq -r --arg n "$name" '.[$n]' <<<"$have") != "$path" ]]; then
+      curl -fsS --data-urlencode "category=$name" --data-urlencode "savePath=$path" "$QBT/torrents/editCategory"
+      echo "media: qbittorrent category $name updated"
+    fi
+  done < <(jq -r 'to_entries[] | [.key, .value] | @tsv' "$want")
+  while IFS= read -r name; do
+    curl -fsS --data-urlencode "categories=$name" "$QBT/torrents/removeCategories"
+    echo "media: qbittorrent category $name removed"
+  done < <(jq -r --slurpfile w "$want" 'keys - ($w[0] | keys) | .[]' <<<"$have")
+}
+
 main() {
   ensure_env
   ensure_dirs
+  seed_qbittorrent
   start_units
+  configure_qbittorrent
 }
 
 [[ -n ${MEDIA_DEPLOY_LIB:-} ]] || main
