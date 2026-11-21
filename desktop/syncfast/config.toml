@@ -24,7 +24,7 @@ local = "/home/raphael/Udesc"
 remote = "Raphael:Udesc"
 enabled = true
 presets = ["system_junk", "dev_dirs"]
-filters = ["- /estrutura-de-dados-ii/trabalho-final/**", "- /_Archive/University-antigo/estrutura-de-dados-ii/trabalho-final/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
+filters = ["- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
 
 [[pair]]
 id = "design"
