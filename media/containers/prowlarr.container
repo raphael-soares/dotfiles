@@ -1,0 +1,21 @@
+[Unit]
+Description=Prowlarr indexer manager
+
+[Container]
+ContainerName=prowlarr
+AutoUpdate=registry
+Network=media.network
+UserNS=keep-id
+EnvironmentFile=%h/.config/media/media.env
+Environment=TZ=America/Sao_Paulo
+Image=lscr.io/linuxserver/prowlarr:latest
+Environment=PUID=1000 PGID=1000
+PublishPort=127.0.0.1:9696:9696
+Environment=PROWLARR__AUTH__METHOD=External
+Volume=%h/.local/share/media/prowlarr:/config:Z
+
+[Service]
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
