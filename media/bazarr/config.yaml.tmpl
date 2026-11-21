@@ -1,0 +1,24 @@
+auth:
+  apikey: ${BAZARR_API_KEY}
+general:
+  use_radarr: true
+  use_sonarr: true
+  enabled_providers:
+    - opensubtitlescom
+    - yifysubtitles
+    - embeddedsubtitles
+  movie_default_enabled: true
+  movie_default_profile: 1
+  serie_default_enabled: true
+  serie_default_profile: 1
+radarr:
+  ip: radarr
+  port: 7878
+  apikey: ${RADARR__AUTH__APIKEY}
+sonarr:
+  ip: sonarr
+  port: 8989
+  apikey: ${SONARR__AUTH__APIKEY}
+opensubtitlescom:
+  username: ${OPENSUBTITLESCOM_USERNAME}
+  password: ${OPENSUBTITLESCOM_PASSWORD}

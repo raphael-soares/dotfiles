@@ -230,6 +230,11 @@ for effect in scale fadedesktop kwin4_effect_geometry_change; do
 done
 {{/if}}
 
+{{#if dotter.packages.media}}
+install_packages media
+"$REPO/media/bin/media-deploy" "$REPO"
+{{/if}}
+
 {{#if dotter.packages.work}}
 install_packages work
 # Enterprise omp profile: its own auth (agent.db), the rest shared with the default one.

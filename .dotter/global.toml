@@ -60,3 +60,10 @@ default_target_type = "symbolic"
 
 [home.files]
 "home/kwin/geometry-change" = { type = "symbolic", target = "~/.local/share/kwin/effects/kwin4_effect_geometry_change", recurse = false }
+
+[media.files]
+"media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }
+"media/configarr" = { type = "symbolic", target = "~/.config/media/configarr", recurse = false }
+"media/systemd" = "~/.config/systemd/user"
+"media/bin" = "~/.local/bin"
+"media/applications" = "~/.local/share/applications"

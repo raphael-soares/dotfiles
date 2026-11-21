@@ -1,0 +1,7 @@
+[LegalNotice]
+Accepted=true
+
+[Preferences]
+WebUI\LocalHostAuth=false
+WebUI\AuthSubnetWhitelistEnabled=true
+WebUI\AuthSubnetWhitelist=10.89.42.0/24, 127.0.0.1/32

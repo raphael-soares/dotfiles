@@ -1,0 +1,3 @@
+[Network]
+NetworkName=media
+Subnet=10.89.42.0/24

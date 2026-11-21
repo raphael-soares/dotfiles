@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO=${1:?usage: media-deploy <repo>}
+CONF=$HOME/.config/media
+ENV_FILE=$CONF/media.env
+STATE=$HOME/.local/share/media
+UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr qbittorrent)
+QBT=http://127.0.0.1:8080/api/v2
+
+ensure_env() {
+  mkdir -p "$CONF"
+  if [[ ! -f $ENV_FILE ]]; then
+    install -m 600 "$REPO/media/media.env.example" "$ENV_FILE"
+    echo "media: created $ENV_FILE"
+  fi
+  local tmp line key changed=0
+  tmp=$(mktemp "$CONF/.media.env.XXXXXX")
+  while IFS= read -r line || [[ -n $line ]]; do
+    key=${line%%=*}
+    if [[ $line == "$key=" && $key =~ (APIKEY|API_KEY)$ ]]; then
+      line=$key=$(openssl rand -hex 16)
+      changed=1
+      echo "media: generated $key" >&2
+    fi
+    printf '%s\n' "$line"
+  done <"$ENV_FILE" >"$tmp"
+  if ((changed)); then mv "$tmp" "$ENV_FILE"; else rm "$tmp"; fi
+}
+
+env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
+
+wait_http() {
+  local i
+  for i in {1..90}; do
+    curl -fsS -o /dev/null "$@" 2>/dev/null && return
+    sleep 1
+  done
+  curl -fsS -o /dev/null "$@"
+}
+
+ensure_dirs() {
+  mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr,qbittorrent} \
+    "$HOME"/.cache/media/{jellyfin,configarr} \
+    "$HOME"/Media/{Movies,Series,Downloads/radarr,Downloads/sonarr} \
+    "$HOME"/Games "$HOME"/Personal/Torrents
+}
+
+# A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
+start_units() {
+  systemctl --user daemon-reload
+  mkdir -p "$STATE/.applied"
+  local u sum
+  for u in "${UNITS[@]}"; do
+    sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" | sha256sum)
+    if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
+      systemctl --user start "$u"
+    else
+      systemctl --user restart "$u"
+      echo "$sum" >"$STATE/.applied/$u"
+    fi
+  done
+  systemctl --user enable --now podman-auto-update.timer
+}
+
+# Before the first start: without it the image writes its own config with a random WebUI password.
+seed_qbittorrent() {
+  local conf=$STATE/qbittorrent/qBittorrent/qBittorrent.conf
+  [[ -f $conf ]] && return
+  install -D -m 600 "$REPO/media/qbittorrent/qBittorrent.conf.seed" "$conf"
+  echo "media: created $conf"
+}
+
+configure_qbittorrent() {
+  local want=$REPO/media/qbittorrent/categories.json have name path hashes
+  wait_http "$QBT/app/version"
+  curl -fsS --data-urlencode "json=$(jq -c . "$REPO/media/qbittorrent/preferences.json")" "$QBT/app/setPreferences"
+  have=$(curl -fsS "$QBT/torrents/categories" | jq 'map_values(.savePath)')
+  while IFS=$'\t' read -r name path; do
+    if ! jq -e --arg n "$name" 'has($n)' <<<"$have" >/dev/null; then
+      curl -fsS --data-urlencode "category=$name" --data-urlencode "savePath=$path" "$QBT/torrents/createCategory"
+      echo "media: qbittorrent category $name created"
+    elif [[ $(jq -r --arg n "$name" '.[$n]' <<<"$have") != "$path" ]]; then
+      curl -fsS --data-urlencode "category=$name" --data-urlencode "savePath=$path" "$QBT/torrents/editCategory"
+      echo "media: qbittorrent category $name updated"
+    fi
+  done < <(jq -r 'to_entries[] | [.key, .value] | @tsv' "$want")
+  while IFS= read -r name; do
+    hashes=$(curl -fsS --get --data-urlencode "category=$name" "$QBT/torrents/info" | jq -r 'map(.hash) | join("|")')
+    [[ -z $hashes ]] || curl -fsS -d "hashes=$hashes" -d enable=false "$QBT/torrents/setAutoManagement"
+    curl -fsS --data-urlencode "categories=$name" "$QBT/torrents/removeCategories"
+    echo "media: qbittorrent category $name removed"
+  done < <(jq -r --slurpfile w "$want" 'keys - ($w[0] | keys) | .[]' <<<"$have")
+}
+
+# Bazarr rewrites its config with every default on start, so the last render is compared, not the live file.
+render_bazarr() {
+  local dest=$STATE/bazarr/config/config.yaml applied=$STATE/.applied/bazarr.yaml new
+  new=$(
+    for k in RADARR__AUTH__APIKEY SONARR__AUTH__APIKEY BAZARR_API_KEY OPENSUBTITLESCOM_USERNAME OPENSUBTITLESCOM_PASSWORD; do
+      export "$k=$(env_get "$k")"
+    done
+    envsubst '$RADARR__AUTH__APIKEY $SONARR__AUTH__APIKEY $BAZARR_API_KEY $OPENSUBTITLESCOM_USERNAME $OPENSUBTITLESCOM_PASSWORD' \
+      <"$REPO/media/bazarr/config.yaml.tmpl"
+  )
+  [[ -f $dest && -f $applied && $(cat "$applied") == "$new" ]] && return
+  mkdir -p "${dest%/*}" "$STATE/.applied"
+  (umask 077 && printf '%s\n' "$new" >"$dest" && printf '%s\n' "$new" >"$applied")
+  if systemctl --user is-active -q bazarr; then systemctl --user restart bazarr; fi
+  echo "media: rendered $dest"
+}
+
+configure_bazarr() {
+  local api=http://127.0.0.1:6767/api key want have
+  key=$(env_get BAZARR_API_KEY)
+  wait_http -H "X-API-KEY: $key" "$api/system/status"
+  want=$(jq -cS . "$REPO/media/bazarr/languages-profiles.json")
+  have=$(curl -fsS -H "X-API-KEY: $key" "$api/system/languages/profiles" | jq -cS .)
+  [[ $want == "$have" ]] && return
+  curl -fsS -H "X-API-KEY: $key" --data-urlencode "languages-enabled=pb" \
+    --data-urlencode "languages-profiles=$want" "$api/system/settings"
+  echo "media: bazarr language profiles applied"
+}
+
+# Cloudflare-fronted indexers fail their first creation test until Prowlarr holds the clearance cookie.
+run_configarr() {
+  local port i
+  for port in 7878 8989 9696; do wait_http "http://127.0.0.1:$port/ping"; done
+  for i in 1 2 3; do
+    systemctl --user start configarr.service && break
+    ((i < 3)) || return 1
+    echo "media: configarr failed, retrying" >&2
+  done
+  systemctl --user enable --now configarr.timer
+}
+
+set_magnet_default() {
+  [[ $(xdg-mime query default x-scheme-handler/magnet) == qbt-magnet.desktop ]] && return
+  xdg-mime default qbt-magnet.desktop x-scheme-handler/magnet
+  echo "media: magnet links open the qBittorrent WebUI"
+}
+
+main() {
+  ensure_env
+  ensure_dirs
+  seed_qbittorrent
+  render_bazarr
+  start_units
+  configure_qbittorrent
+  configure_bazarr
+  run_configarr
+  set_magnet_default
+}
+
+[[ -n ${MEDIA_DEPLOY_LIB:-} ]] || main

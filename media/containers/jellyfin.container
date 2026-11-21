@@ -1,0 +1,25 @@
+[Unit]
+Description=Jellyfin media server
+
+[Container]
+ContainerName=jellyfin
+AutoUpdate=registry
+Network=media.network
+UserNS=keep-id
+EnvironmentFile=%h/.config/media/media.env
+Environment=TZ=America/Sao_Paulo
+Image=docker.io/jellyfin/jellyfin:latest
+SecurityLabelDisable=true
+AddDevice=/dev/dri/renderD128
+GroupAdd=keep-groups
+PublishPort=0.0.0.0:8096:8096
+Volume=%h/Media:%h/Media:ro
+Volume=%h/.local/share/media/jellyfin:/config
+Volume=%h/.cache/media/jellyfin:/cache
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

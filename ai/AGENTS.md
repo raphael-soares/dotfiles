@@ -101,9 +101,13 @@ uma linha aqui.
 - Foto fica só no Drive (`Raphael:Fotos`). Livro e mangá de leitura ficam em
   `~/Media`, no PC de casa, fora do sync.
 - `.torrent` vai sempre para `~/Personal/Torrents`, nunca junto do conteúdo: o
-  conteúdo não sincroniza, o ponteiro sim. O qBittorrent exporta direto para lá
-  e cada categoria dele cai na área certa: `Movies`, `Series`, `Books` e
-  `Mangas` em `~/Media/<nome>`, `Games/PC` e `Games/Switch` em `~/Games/<nome>`.
+  conteúdo não sincroniza, o ponteiro sim. O qBittorrent roda em container no
+  PC de casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para
+  lá e cada categoria dele cai na área certa: `Books` e `Mangas` em
+  `~/Media/<nome>`, `Games/PC` e `Games/Switch` em `~/Games/<nome>`. Filme e
+  série passam pelo Radarr e pelo Sonarr: baixam em `~/Media/Downloads` e
+  entram por hardlink em `~/Media/Movies` e `~/Media/Series`. Categoria nova
+  vai em `media/qbittorrent/categories.json`.
 - Mídia pesada (jogo, ROM, filme, série, sample, gravação de tela) mora em
   `~/Games`, `~/Media`, `~/Studio` e `~/Videos`, que não são pares do syncfast:
   nada ali sobe pro Drive. Os pares compartilhados ainda barram `*.mkv`,

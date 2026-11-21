@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=qBittorrent WebUI
+Comment=Add magnet links to qBittorrent
+Exec=qbt-magnet %u
+Icon=qbittorrent
+MimeType=x-scheme-handler/magnet;
+NoDisplay=true
+Terminal=false

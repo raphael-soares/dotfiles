@@ -1,0 +1,18 @@
+[Unit]
+Description=FlareSolverr Cloudflare solver for Prowlarr
+
+[Container]
+ContainerName=flaresolverr
+AutoUpdate=registry
+Network=media.network
+UserNS=keep-id
+EnvironmentFile=%h/.config/media/media.env
+Environment=TZ=America/Sao_Paulo
+Image=ghcr.io/flaresolverr/flaresolverr:latest
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,16 @@
+{
+  "listen_port": 9386,
+  "upnp": false,
+  "save_path": "/home/raphael/Media/Downloads",
+  "auto_tmm_enabled": true,
+  "max_ratio_enabled": false,
+  "max_seeding_time_enabled": false,
+  "encryption": 1,
+  "excluded_file_names_enabled": true,
+  "excluded_file_names": "*.scr\n*.lnk\n*.vbs\n*.pif\n*.cmd\n*.js\n*.jse\n*.wsf\n*.hta",
+  "bypass_local_auth": true,
+  "bypass_auth_subnet_whitelist_enabled": true,
+  "bypass_auth_subnet_whitelist": "10.89.42.0/24\n127.0.0.1/32",
+  "torrent_files_backup_enabled": true,
+  "torrent_files_backup_dir": "/home/raphael/Personal/Torrents"
+}
