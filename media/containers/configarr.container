@@ -12,6 +12,8 @@ UserNS=keep-id
 SecurityLabelDisable=true
 EnvironmentFile=%h/.config/media/media.env
 Environment=TZ=America/Sao_Paulo
+Environment=CONFIGARR_ENFORCE_CONFIG_VALIDATION=true
+Environment=STOP_ON_ERROR=true
 Volume=%h/.config/media/configarr:/app/config:ro
 Volume=%h/.cache/media/configarr:/app/repos
 

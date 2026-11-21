@@ -1,0 +1,167 @@
+trashGuideUrl: https://github.com/TRaSH-Guides/Guides
+recyclarrConfigUrl: https://github.com/recyclarr/config-templates
+
+radarr:
+  main:
+    base_url: http://radarr:7878
+    api_key: !env RADARR__AUTH__APIKEY
+
+    include:
+      - template: 64fb5f9858489bdac2af690e27c8f42f # TRaSH UHD Bluray + WEB
+        source: TRASH
+
+    renameQualityProfiles:
+      - from: UHD Bluray + WEB
+        to: 4K (1080p fallback)
+
+    custom_formats:
+      - trash_ids:
+          - 923b6abef9b17f937fab56cfcf89e1f1 # DV (w/o HDR fallback)
+        assign_scores_to:
+          - name: UHD Bluray + WEB
+            score: -10000
+
+    quality_profiles:
+      - name: UHD Bluray + WEB
+        upgrade:
+          allowed: true
+          until_quality: 2160p
+          until_score: 10000
+        qualities:
+          - name: 2160p
+            qualities:
+              - WEBDL-2160p
+              - WEBRip-2160p
+              - Bluray-2160p
+          - name: 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+              - Bluray-1080p
+
+    quality_definition:
+      type: movie
+      qualities:
+        - { quality: WEBDL-2160p, min: 34.5, preferred: 189.9, max: 190 }
+        - { quality: WEBRip-2160p, min: 34.5, preferred: 189.9, max: 190 }
+        - { quality: Bluray-2160p, min: 102, preferred: 189.9, max: 190 }
+
+    media_naming:
+      folder: default
+      movie:
+        rename: true
+        standard: standard
+
+    root_folders:
+      - /home/raphael/Media/Movies
+
+    download_clients:
+      data:
+        - name: qBittorrent
+          type: qbittorrent
+          enable: true
+          remove_completed_downloads: false
+          remove_failed_downloads: true
+          fields:
+            host: qbittorrent
+            port: 8080
+            movie_category: radarr
+      config:
+        enable_completed_download_handling: true
+
+sonarr:
+  main:
+    base_url: http://sonarr:8989
+    api_key: !env SONARR__AUTH__APIKEY
+
+    include:
+      - template: c4cadd6b35b95f62c3d47a408e53e2f7 # TRaSH WEB-2160p (Combined)
+        source: TRASH
+
+    renameQualityProfiles:
+      - from: WEB-2160p (Combined)
+        to: 1080p (4K when available)
+
+    custom_formats:
+      - trash_ids:
+          - 9b27ab6498ec0f31a3353992e19434ca # DV (w/o HDR fallback)
+        assign_scores_to:
+          - name: WEB-2160p (Combined)
+            score: -10000
+
+    quality_definition:
+      type: series
+      qualities:
+        - { quality: WEBDL-2160p, min: 25, preferred: 189.9, max: 190 }
+        - { quality: WEBRip-2160p, min: 25, preferred: 189.9, max: 190 }
+
+    media_naming:
+      series: default
+      season: default
+      episodes:
+        rename: true
+        standard: default
+        daily: default
+        anime: default
+
+    root_folders:
+      - /home/raphael/Media/Series
+
+    download_clients:
+      data:
+        - name: qBittorrent
+          type: qbittorrent
+          enable: true
+          remove_completed_downloads: false
+          remove_failed_downloads: true
+          fields:
+            host: qbittorrent
+            port: 8080
+            tv_category: sonarr
+      config:
+        enable_completed_download_handling: true
+
+prowlarr:
+  main:
+    base_url: http://prowlarr:9696
+    api_key: !env PROWLARR__AUTH__APIKEY
+
+    tags:
+      - flaresolverr
+
+    indexer_proxies:
+      data:
+        - name: FlareSolverr
+          type: FlareSolverr
+          fields:
+            host: http://flaresolverr:8191/
+            requestTimeout: 60
+          tags:
+            - flaresolverr
+
+    indexers:
+      data:
+        - { name: 1337x, definition: 1337x, enable: true, sync_profile: Standard, tags: [flaresolverr] }
+        - { name: The Pirate Bay, definition: thepiratebay, enable: true, sync_profile: Standard }
+        - { name: YTS, definition: yts, enable: true, sync_profile: Standard }
+        - { name: EZTV, definition: eztv, enable: true, sync_profile: Standard, tags: [flaresolverr] }
+        - { name: LimeTorrents, definition: limetorrents, enable: true, sync_profile: Standard }
+        - { name: Knaben, definition: Knaben, enable: true, sync_profile: Standard }
+
+    applications:
+      data:
+        - name: Radarr
+          type: Radarr
+          sync_level: fullSync
+          fields:
+            prowlarrUrl: http://prowlarr:9696
+            baseUrl: http://radarr:7878
+            apiKey: !env RADARR__AUTH__APIKEY
+        - name: Sonarr
+          type: Sonarr
+          sync_level: fullSync
+          fields:
+            prowlarrUrl: http://prowlarr:9696
+            baseUrl: http://sonarr:8989
+            apiKey: !env SONARR__AUTH__APIKEY
+      sync_indexers: true
