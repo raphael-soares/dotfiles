@@ -51,7 +51,7 @@ laptop_only=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
   .local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/qbt-magnet
-  .local/share/applications/qbt-magnet.desktop .config/systemd/user/media-upnp.timer)
+  .local/share/applications/qbt-magnet.desktop .config/systemd/user/configarr.timer)
 
 hook=$T/cache/.dotter/post_deploy.sh
 if [[ -f $hook ]]; then

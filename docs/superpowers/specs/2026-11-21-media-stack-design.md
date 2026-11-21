@@ -56,7 +56,8 @@ weak link); torrent automation UIs reachable from the LAN without need.
 - Home layout rules (`ai/AGENTS.md`): `~/Media/<Type>` per media type, no hidden
   folders, `.torrent` files go to `~/Personal/Torrents`, games to `~/Games`.
 - Current qBittorrent (flatpak, `~/.var/app/org.qbittorrent.qBittorrent`):
-  listen port 9386 with UPnP on (no `PortForwardingEnabled` override), torrent
+  listen port 9386 with UPnP on (no `PortForwardingEnabled` override, but the
+  router exposes no UPnP gateway, so nothing was ever mapped), torrent
   export to `~/Personal/Torrents`, categories `Movies`, `Series`, `Books`,
   `Mangas` under `~/Media`, `Games`, `Games/PC`, `Games/Switch`
   (`~/Games/Switch/Library`), `Games/PSP`, `Games/PSX`. It is the
@@ -85,16 +86,15 @@ weak link); torrent automation UIs reachable from the LAN without need.
 | Seerr | catalog to request titles (replaced Jellyseerr/Overseerr in Feb 2026) | LAN, 5055 |
 | Radarr, Sonarr | search, grab, rename and hardlink films and series | PC only |
 | Prowlarr | indexer list, synced to Radarr and Sonarr | PC only |
-| qBittorrent | the only torrent client, all categories; listen port 9386 kept | WebUI PC only; incoming peers keep working as today (UPnP) |
+| qBittorrent | the only torrent client, all categories; listen port 9386 kept | WebUI PC only; peer port published on the host as today |
 | Bazarr | pt-BR SRT subtitles for films and series | PC only |
 | FlareSolverr | lets Prowlarr reach public trackers behind Cloudflare | PC only (internal) |
 | Configarr | applies quality profiles, root folders, download clients and Prowlarr config from YAML | runs and exits |
 
 "PC only" means the port is published on `127.0.0.1`. Services reach each other
-by container name on the shared network. Rootless UPnP from a bridged container
-maps the router to an address the router cannot reach, so qBittorrent may need
-host networking to keep UPnP; then the others reach it through the host
-(builder's call, the requirement is the incoming-peer behavior).
+by container name on the shared network. The router has no UPnP gateway
+(`upnpc -s` finds no IGD), so no port mapping is attempted; the peer port is
+published on the host like the flatpak's was.
 
 ### Paths
 
