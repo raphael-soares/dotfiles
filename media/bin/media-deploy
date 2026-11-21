@@ -131,6 +131,12 @@ run_configarr() {
   systemctl --user enable --now configarr.timer
 }
 
+set_magnet_default() {
+  [[ $(xdg-mime query default x-scheme-handler/magnet) == qbt-magnet.desktop ]] && return
+  xdg-mime default qbt-magnet.desktop x-scheme-handler/magnet
+  echo "media: magnet links open the qBittorrent WebUI"
+}
+
 main() {
   ensure_env
   ensure_dirs
@@ -140,6 +146,7 @@ main() {
   configure_qbittorrent
   configure_bazarr
   run_configarr
+  set_magnet_default
 }
 
 [[ -n ${MEDIA_DEPLOY_LIB:-} ]] || main

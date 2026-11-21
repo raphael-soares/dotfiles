@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
+[[ $# -eq 1 ]] || { echo "usage: qbt-magnet <magnet-uri>" >&2; exit 2; }
+exec xdg-open "http://127.0.0.1:8080/#download=$(jq -rn --arg u "$1" '$u|@uri')"
