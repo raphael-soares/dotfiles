@@ -11,6 +11,8 @@ default_target_type = "symbolic"
 "terminal/mise/config.toml" = "~/.config/mise/config.toml"
 "terminal/nvim" = { type = "symbolic", target = "~/.config/nvim", recurse = false }
 "terminal/ghostty/config" = "~/.config/ghostty/config"
+"terminal/ghostty/themes/Herdr Graphite" = "~/.config/ghostty/themes/Herdr Graphite"
+"terminal/ghostty/themes/Herdr Paper" = "~/.config/ghostty/themes/Herdr Paper"
 "terminal/fastfetch/config.jsonc" = "~/.config/fastfetch/config.jsonc"
 "terminal/go/env" = "~/.config/go/env"
 
@@ -56,8 +58,8 @@ default_target_type = "symbolic"
 "work/git/unimed" = "~/.config/git/unimed"
 "ai/.omp/overlays" = { type = "symbolic", target = "~/.omp/overlays", recurse = false }
 
-# Only /etc files and services (post_deploy.sh); nothing links into ~.
 [home.files]
+"home/kwin/geometry-change" = { type = "symbolic", target = "~/.local/share/kwin/effects/kwin4_effect_geometry_change", recurse = false }
 
 [media.files]
 "media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }

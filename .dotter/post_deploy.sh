@@ -186,6 +186,48 @@ kwriteconfig6 --file powerdevilrc --group AC --group SuspendAndShutdown --key Au
 kwriteconfig6 --file powerdevilrc --group AC --group Display --key TurnOffDisplayWhenIdle false
 kwriteconfig6 --file powerdevilrc --group AC --group Display --key DimDisplayWhenIdle false
 systemctl --user restart plasma-powerdevil 2>/dev/null || true
+if ! rpm -q kwin-effect-roundcorners >/dev/null 2>&1; then
+  sudo dnf copr enable -y matinlotfali/KDE-Rounded-Corners
+  sudo dnf install -y kwin-effect-roundcorners
+fi
+# Inactive windows get the Plasma panel's border (1 px white, radius 6); the focused one a
+# stronger line (~30% white, Hyprland uses 25% plus a shadow KDE lacks here). Alpha is not
+# linear: 100 gives the panel's color, 0 hides the border and 28 nearly does.
+kwriteconfig6 --file kwinrc --group Plugins --key kwin4_effect_shapecornersEnabled true
+for kv in Size=6 InactiveCornerRadius=6 UseSquircleShape=false \
+  OutlineThickness=1 InactiveOutlineThickness=1 \
+  OutlineColor=255,255,255 InactiveOutlineColor=255,255,255 \
+  ActiveOutlineAlpha=150 InactiveOutlineAlpha=100 \
+  ActiveOutlineUsePalette=false InactiveOutlineUsePalette=false; do
+  kwriteconfig6 --file kwinrc --group Round-Corners --key "${kv%%=*}" "${kv#*=}"
+done
+# Hyprland dim_inactive with dim_strength 0.08.
+kwriteconfig6 --file kwinrc --group Plugins --key diminactiveEnabled true
+kwriteconfig6 --file kwinrc --group Effect-diminactive --key Strength 8
+# Meta+hjkl at the screen edge must stop there, not jump to the next desktop.
+kwriteconfig6 --file kwinrc --group Script-krohnkite --key focusMoveVDesktopsNormal false
+kwriteconfig6 --file kwinrc --group Script-krohnkite --key focusMoveVDesktopsMeta false
+# KWin's own reconfigure leaves this effect on its old settings.
+gdbus call --session --dest org.kde.KWin --object-path /Effects \
+  --method org.kde.kwin.Effects.reconfigureEffect kwin4_effect_shapecorners >/dev/null 2>&1 || true
+# Animations follow hyprland/hypr/animations.lua. Factor 1 keeps the durations below in real ms.
+kwriteconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor 1
+# windowsIn/Out "popin 90%": scale replaces fade for opening and closing windows.
+kwriteconfig6 --file kwinrc --group Plugins --key scaleEnabled true
+kwriteconfig6 --file kwinrc --group Plugins --key fadeEnabled false
+kwriteconfig6 --file kwinrc --group Effect-scale --key Duration 200
+kwriteconfig6 --file kwinrc --group Effect-scale --key InScale 0.9
+kwriteconfig6 --file kwinrc --group Effect-scale --key OutScale 0.9
+kwriteconfig6 --file kwinrc --group Plugins --key fadedesktopEnabled true
+kwriteconfig6 --file kwinrc --group Plugins --key slideEnabled false
+kwriteconfig6 --file kwinrc --group Effect-fadedesktop --key AnimationDuration 120
+kwriteconfig6 --file kwinrc --group Plugins --key kwin4_effect_geometry_changeEnabled true
+kwriteconfig6 --file kwinrc --group Effect-kwin4_effect_geometry_change --key Duration 180
+gdbus call --session --dest org.kde.KWin --object-path /KWin --method org.kde.KWin.reconfigure >/dev/null 2>&1 || true
+for effect in scale fadedesktop kwin4_effect_geometry_change; do
+  gdbus call --session --dest org.kde.KWin --object-path /Effects \
+    --method org.kde.kwin.Effects.reconfigureEffect "$effect" >/dev/null 2>&1 || true
+done
 {{/if}}
 
 {{#if dotter.packages.media}}
