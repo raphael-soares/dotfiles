@@ -9,8 +9,10 @@
   "excluded_file_names_enabled": true,
   "excluded_file_names": "*.scr\n*.lnk\n*.vbs\n*.pif\n*.cmd\n*.js\n*.jse\n*.wsf\n*.hta",
   "bypass_local_auth": true,
-  "bypass_auth_subnet_whitelist_enabled": true,
-  "bypass_auth_subnet_whitelist": "10.89.42.0/24\n127.0.0.1/32",
+  "bypass_auth_subnet_whitelist_enabled": false,
   "torrent_files_backup_enabled": true,
-  "torrent_files_backup_dir": "/home/raphael/Personal/Torrents"
+  "torrent_files_backup_dir": "/home/raphael/Personal/Torrents",
+  "web_ui_username": "media",
+  "web_ui_port": 8080,
+  "web_ui_upnp": false
 }

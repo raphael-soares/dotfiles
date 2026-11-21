@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=qBittorrent
-Comment=Downloads de torrent
-Exec=xdg-open http://localhost:8080
-Icon=qbittorrent
-Categories=AudioVideo;

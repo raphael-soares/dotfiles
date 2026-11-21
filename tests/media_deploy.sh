@@ -15,7 +15,7 @@ env_file=$HOME/.config/media/media.env
 
 ensure_env
 [[ $(stat -c %a "$env_file") == 600 ]] || fail "env file is not mode 600"
-for k in RADARR__AUTH__APIKEY SONARR__AUTH__APIKEY PROWLARR__AUTH__APIKEY BAZARR_API_KEY; do
+for k in RADARR__AUTH__APIKEY SONARR__AUTH__APIKEY PROWLARR__AUTH__APIKEY BAZARR_API_KEY QBITTORRENT_WEBUI_PASSWORD; do
   grep -Eq "^$k=[0-9a-f]{32}$" "$env_file" || fail "$k is not a 32 hex key"
 done
 grep -qx 'OPENSUBTITLESCOM_USERNAME=' "$env_file" || fail "empty non-key value was filled"
@@ -28,6 +28,10 @@ cmp -s "$env_file" "$T/first" || fail "second run changed the env file"
 sed -i 's/^RADARR__AUTH__APIKEY=.*/RADARR__AUTH__APIKEY=abc/' "$env_file"
 ensure_env
 grep -qx 'RADARR__AUTH__APIKEY=abc' "$env_file" || fail "pre-filled key was overwritten"
+
+sed -i '/^QBITTORRENT_WEBUI_PASSWORD=/d' "$env_file"
+ensure_env
+grep -Eq '^QBITTORRENT_WEBUI_PASSWORD=[0-9a-f]{32}$' "$env_file" || fail "key added to the example did not reach an existing env file"
 
 ensure_dirs
 while IFS= read -r src; do
@@ -48,5 +52,14 @@ PATH=$T/bin:$PATH bash -c 'MEDIA_DEPLOY_LIB=1 source "$1" "$2" && render_bazarr'
 bazarr_conf=$HOME/.local/share/media/bazarr/config/config.yaml
 grep -qx "  apikey: $(sed -n 's/^BAZARR_API_KEY=//p' "$env_file")" "$bazarr_conf" || fail "bazarr config lacks the Bazarr API key"
 [[ $(stat -c %a "$bazarr_conf") == 600 ]] || fail "bazarr config is not mode 600"
+
+seed_qbittorrent >/dev/null
+python3 - "$HOME/.config/qBittorrent/qBittorrent.conf" "$(sed -n 's/^QBITTORRENT_WEBUI_PASSWORD=//p' "$env_file")" <<'PY' ||
+import base64, hashlib, re, sys
+m = re.search(r'^WebUI\\Password_PBKDF2="@ByteArray\(([^:]+):([^)]+)\)"$', open(sys.argv[1]).read(), re.M)
+salt, key = map(base64.b64decode, m.groups())
+sys.exit(hashlib.pbkdf2_hmac("sha512", sys.argv[2].encode(), salt, 100000) != key)
+PY
+  fail "seeded qBittorrent WebUI password does not match the env file"
 
 ((failures == 0)) && echo "media_deploy: ok" || { echo "media_deploy: $failures failure(s)"; exit 1; }

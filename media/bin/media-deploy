@@ -5,7 +5,7 @@ REPO=${1:?usage: media-deploy <repo>}
 CONF=$HOME/.config/media
 ENV_FILE=$CONF/media.env
 STATE=$HOME/.local/share/media
-UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr qbittorrent)
+UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr)
 QBT=http://127.0.0.1:8080/api/v2
 
 ensure_env() {
@@ -15,10 +15,13 @@ ensure_env() {
     echo "media: created $ENV_FILE"
   fi
   local tmp line key changed=0
+  while IFS= read -r line; do
+    grep -q "^${line%%=*}=" "$ENV_FILE" || printf '%s\n' "$line" >>"$ENV_FILE"
+  done <"$REPO/media/media.env.example"
   tmp=$(mktemp "$CONF/.media.env.XXXXXX")
   while IFS= read -r line || [[ -n $line ]]; do
     key=${line%%=*}
-    if [[ $line == "$key=" && $key =~ (APIKEY|API_KEY)$ ]]; then
+    if [[ $line == "$key=" && $key =~ (APIKEY|API_KEY|WEBUI_PASSWORD)$ ]]; then
       line=$key=$(openssl rand -hex 16)
       changed=1
       echo "media: generated $key" >&2
@@ -40,7 +43,7 @@ wait_http() {
 }
 
 ensure_dirs() {
-  mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr,qbittorrent} \
+  mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr} \
     "$HOME"/.cache/media/{jellyfin,configarr} \
     "$HOME"/Media/{Movies,Series,Downloads/radarr,Downloads/sonarr} \
     "$HOME"/Games "$HOME"/Personal/Torrents
@@ -63,18 +66,30 @@ start_units() {
   systemctl --user enable --now podman-auto-update.timer
 }
 
-# Before the first start: without it the image writes its own config with a random WebUI password.
+# Before the first start: the desktop app keeps its WebUI, which Radarr and Sonarr use, off without credentials.
 seed_qbittorrent() {
-  local conf=$STATE/qbittorrent/qBittorrent/qBittorrent.conf
+  local conf=$HOME/.config/qBittorrent/qBittorrent.conf salt key
   [[ -f $conf ]] && return
+  salt=$(openssl rand -base64 16)
+  key=$(openssl kdf -binary -keylen 64 -kdfopt digest:SHA512 -kdfopt "pass:$(env_get QBITTORRENT_WEBUI_PASSWORD)" \
+    -kdfopt "hexsalt:$(base64 -d <<<"$salt" | od -An -tx1 | tr -d ' \n')" -kdfopt iter:100000 PBKDF2 | base64 -w0)
   install -D -m 600 "$REPO/media/qbittorrent/qBittorrent.conf.seed" "$conf"
+  printf 'WebUI\\Password_PBKDF2="@ByteArray(%s:%s)"\n' "$salt" "$key" >>"$conf"
   echo "media: created $conf"
 }
 
 configure_qbittorrent() {
   local want=$REPO/media/qbittorrent/categories.json have name path hashes
+  if ! curl -fsS -o /dev/null "$QBT/app/version" 2>/dev/null; then
+    if [[ -z ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]]; then
+      echo "media: qBittorrent is not running, its settings apply on the next deploy" >&2
+      return
+    fi
+    setsid -f qbittorrent --no-splash >/dev/null 2>&1
+  fi
   wait_http "$QBT/app/version"
-  curl -fsS --data-urlencode "json=$(jq -c . "$REPO/media/qbittorrent/preferences.json")" "$QBT/app/setPreferences"
+  curl -fsS --data-urlencode "json=$(jq -c --arg p "$(env_get QBITTORRENT_WEBUI_PASSWORD)" '.web_ui_password = $p' \
+    "$REPO/media/qbittorrent/preferences.json")" "$QBT/app/setPreferences"
   have=$(curl -fsS "$QBT/torrents/categories" | jq 'map_values(.savePath)')
   while IFS=$'\t' read -r name path; do
     if ! jq -e --arg n "$name" 'has($n)' <<<"$have" >/dev/null; then
@@ -135,9 +150,15 @@ run_configarr() {
 }
 
 set_magnet_default() {
-  [[ $(xdg-mime query default x-scheme-handler/magnet) == qbt-magnet.desktop ]] && return
-  xdg-mime default qbt-magnet.desktop x-scheme-handler/magnet
-  echo "media: magnet links open the qBittorrent WebUI"
+  local app=org.qbittorrent.qBittorrent.desktop
+  [[ $(xdg-mime query default x-scheme-handler/magnet) == "$app" ]] && return
+  xdg-mime default "$app" x-scheme-handler/magnet
+  echo "media: magnet links open qBittorrent"
+}
+
+ensure_flatpaks() {
+  flatpak info --user org.jellyfin.JellyfinDesktop >/dev/null 2>&1 && return
+  flatpak install --user -y --noninteractive flathub org.jellyfin.JellyfinDesktop
 }
 
 main() {
@@ -150,6 +171,7 @@ main() {
   configure_bazarr
   run_configarr
   set_magnet_default
+  ensure_flatpaks
 }
 
 [[ -n ${MEDIA_DEPLOY_LIB:-} ]] || main
