@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Jellyfin
+Comment=Filmes e séries
+Exec=xdg-open http://localhost:8096
+Icon=jellyfin
+Categories=AudioVideo;
