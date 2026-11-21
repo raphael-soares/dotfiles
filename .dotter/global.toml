@@ -11,6 +11,8 @@ default_target_type = "symbolic"
 "terminal/mise/config.toml" = "~/.config/mise/config.toml"
 "terminal/nvim" = { type = "symbolic", target = "~/.config/nvim", recurse = false }
 "terminal/ghostty/config" = "~/.config/ghostty/config"
+"terminal/ghostty/themes/Herdr Graphite" = "~/.config/ghostty/themes/Herdr Graphite"
+"terminal/ghostty/themes/Herdr Paper" = "~/.config/ghostty/themes/Herdr Paper"
 "terminal/fastfetch/config.jsonc" = "~/.config/fastfetch/config.jsonc"
 "terminal/go/env" = "~/.config/go/env"
 

@@ -1,6 +1,7 @@
 term = xterm-256color
 font-family = JetBrainsMono Nerd Font
 font-size = 10.5
+theme = light:Herdr Paper,dark:Herdr Graphite
 font-feature = -calt
 font-feature = -liga
 font-feature = -dlig
