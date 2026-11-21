@@ -4,8 +4,9 @@ Pick a film or series in Seerr; Radarr or Sonarr finds a release, qBittorrent
 downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Series`,
 Bazarr fetches pt-BR subtitles, and the Samsung TV plays it in the Jellyfin app.
 
-The `media` module (only on `fedora`) runs every service as a rootless Podman
-quadlet on the `media` network. Design:
+The `media` module (only on `fedora`) runs the services as rootless Podman
+quadlets on the `media` network. qBittorrent is the desktop app (Fedora RPM)
+and Jellyfin Desktop (flatpak) plays on this PC. Design:
 [`superpowers/specs/2026-11-21-media-stack-design.md`](superpowers/specs/2026-11-21-media-stack-design.md).
 
 ## What runs
@@ -14,7 +15,7 @@ quadlet on the `media` network. Design:
 |---|---|---|
 | Jellyfin | <http://fedora.local:8096> | LAN |
 | Seerr | <http://fedora.local:5055> | LAN |
-| qBittorrent WebUI | <http://127.0.0.1:8080> | this PC |
+| qBittorrent WebUI (used by Radarr and Sonarr) | `host.containers.internal:8080` | containers, password in `media.env` |
 | Radarr | <http://127.0.0.1:7878> | this PC |
 | Sonarr | <http://127.0.0.1:8989> | this PC |
 | Prowlarr | <http://127.0.0.1:9696> | this PC |
@@ -23,7 +24,7 @@ quadlet on the `media` network. Design:
 
 qBittorrent listens for peers on 9386 (TCP and UDP). The router has no UPnP
 gateway, so incoming peers only reach it if 9386 is forwarded by hand on the
-router, same as with the old flatpak.
+router.
 
 Inside the network, services reach each other by container name
 (`http://radarr:7878`). `podman-auto-update.timer` pulls new images daily;
@@ -43,22 +44,27 @@ Inside the network, services reach each other by container name
 
 `dotter deploy` runs `media/bin/media-deploy`, which:
 
-- fills empty `*APIKEY` values in `media.env`;
+- fills empty `*APIKEY` and `*WEBUI_PASSWORD` values in `media.env`, adding
+  keys that are new in `media.env.example`;
 - starts the units, restarting the ones whose quadlet changed;
-- applies `media/qbittorrent/preferences.json` and `categories.json`
-  (categories not in the file are removed);
+- seeds `~/.config/qBittorrent/qBittorrent.conf` when it does not exist
+  (WebUI on, starts hidden in the tray, monochrome tray icon), starts
+  qBittorrent if needed and applies `media/qbittorrent/preferences.json` and
+  `categories.json` (categories not in the file are removed);
 - renders Bazarr's config from `media/bazarr/config.yaml.tmpl` and applies the
   pt-BR language profile;
 - runs Configarr (`media/configarr/config.yml`): quality profiles, sizes,
   naming, root folders, the qBittorrent client, Prowlarr indexers and apps;
-- makes `qbt-magnet.desktop` the magnet link handler.
+- makes qBittorrent the magnet link handler and installs Jellyfin Desktop.
+
+`media/autostart` starts qBittorrent hidden at login.
 
 ## Once, after the first deploy
 
 1. Subtitles: create a free account at <https://www.opensubtitles.com>, put
    it in `media.env` (`OPENSUBTITLESCOM_USERNAME`, `OPENSUBTITLESCOM_PASSWORD`)
    and `dotter deploy` again.
-2. Jellyfin, at <http://127.0.0.1:8096>: run the wizard, add the libraries
+2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
    `Movies` (`/home/raphael/Media/Movies`) and `Series`
    (`/home/raphael/Media/Series`), preferred subtitle language Portuguese
    (Brazil). In Dashboard → Playback → Transcoding pick VAAPI with
@@ -87,8 +93,11 @@ forced the PC to convert it.
 
 ## qBittorrent
 
-Its WebUI has no password: only this PC and the containers reach it. Magnet
-links clicked in the browser open its add dialog, where you pick the category.
+Radarr and Sonarr reach the desktop app's WebUI at
+`host.containers.internal:8080` with user `media` and the password in
+`media.env`. The WebUI listens on every interface (containers reach the host
+through its LAN address), so the password is what keeps the LAN out.
+Closing the window keeps it in the tray.
 
 Films and series should come through Seerr or Radarr/Sonarr. A magnet added by
 hand with category `radarr` or `sonarr` shows up in that app's Activity queue
@@ -96,6 +105,4 @@ for a manual import.
 
 To add a category, add a `"Name": "/absolute/path"` line to
 `media/qbittorrent/categories.json` and `dotter deploy`. Subcategories use a
-slash (`Games/Switch`). The container only sees `~/Media`, `~/Games` and
-`~/Personal/Torrents`; another root needs a new `Volume=` in
-`media/containers/qbittorrent.container`.
+slash (`Games/Switch`).

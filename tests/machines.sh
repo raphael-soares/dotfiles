@@ -50,8 +50,8 @@ laptop_only=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
   .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini
   .local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
-desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/qbt-magnet
-  .local/share/applications/qbt-magnet.desktop .config/systemd/user/configarr.timer)
+desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/media-deploy
+  .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer)
 
 hook=$T/cache/.dotter/post_deploy.sh
 if [[ -f $hook ]]; then

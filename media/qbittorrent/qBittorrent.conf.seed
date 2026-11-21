@@ -1,7 +1,17 @@
 [LegalNotice]
 Accepted=true
 
+[GUI]
+StartUpWindowState=Hidden
+
 [Preferences]
+Advanced\TrayIconStyle=MonoLight
+General\CloseToTray=true
+General\Locale=pt_BR
+General\MinimizeToTray=true
+General\NoSplashScreen=true
+General\SystrayEnabled=true
+WebUI\Enabled=true
 WebUI\LocalHostAuth=false
-WebUI\AuthSubnetWhitelistEnabled=true
-WebUI\AuthSubnetWhitelist=10.89.42.0/24, 127.0.0.1/32
+WebUI\Port=8080
+WebUI\Username=media

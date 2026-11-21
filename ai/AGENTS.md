@@ -101,7 +101,7 @@ uma linha aqui.
 - Foto fica só no Drive (`Raphael:Fotos`). Livro e mangá de leitura ficam em
   `~/Media`, no PC de casa, fora do sync.
 - `.torrent` vai sempre para `~/Personal/Torrents`, nunca junto do conteúdo: o
-  conteúdo não sincroniza, o ponteiro sim. O qBittorrent roda em container no
+  conteúdo não sincroniza, o ponteiro sim. O qBittorrent é o app desktop do
   PC de casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para
   lá e cada categoria dele cai na área certa: `Books` e `Mangas` em
   `~/Media/<nome>`, `Games/PC` e `Games/Switch` em `~/Games/<nome>`. Filme e
