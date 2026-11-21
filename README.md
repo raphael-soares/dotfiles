@@ -27,6 +27,7 @@ dotter picks `.dotter/<hostname>.toml`.
 | `hyprland` | Hyprland, Noctalia, GTK, greetd | ✓ | |
 | `work` | VPN and the work omp profile | ✓ | |
 | `home` | SSH, Sunshine and autologin, so the laptop can reach it ([remote access](docs/remote-desktop.md)) | | ✓ |
+| `media` | Jellyfin, Seerr, Radarr, Sonarr and qBittorrent as Podman containers ([media](docs/media.md)) | | ✓ |
 
 ## Add a file
 

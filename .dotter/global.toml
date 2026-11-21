@@ -58,3 +58,10 @@ default_target_type = "symbolic"
 
 # Only /etc files and services (post_deploy.sh); nothing links into ~.
 [home.files]
+
+[media.files]
+"media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }
+"media/configarr" = { type = "symbolic", target = "~/.config/media/configarr", recurse = false }
+"media/systemd" = "~/.config/systemd/user"
+"media/bin" = "~/.local/bin"
+"media/applications" = "~/.local/share/applications"

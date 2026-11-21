@@ -188,6 +188,11 @@ kwriteconfig6 --file powerdevilrc --group AC --group Display --key DimDisplayWhe
 systemctl --user restart plasma-powerdevil 2>/dev/null || true
 {{/if}}
 
+{{#if dotter.packages.media}}
+install_packages media
+"$REPO/media/bin/media-deploy" "$REPO"
+{{/if}}
+
 {{#if dotter.packages.work}}
 install_packages work
 # Enterprise omp profile: its own auth (agent.db), the rest shared with the default one.
