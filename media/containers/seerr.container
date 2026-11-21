@@ -14,6 +14,7 @@ Volume=%h/.local/share/media/seerr:/app/config:Z
 
 [Service]
 Restart=on-failure
+TimeoutStartSec=900
 
 [Install]
 WantedBy=default.target

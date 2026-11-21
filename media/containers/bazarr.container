@@ -17,6 +17,7 @@ Volume=%h/.local/share/media/bazarr:/config
 
 [Service]
 Restart=on-failure
+TimeoutStartSec=900
 
 [Install]
 WantedBy=default.target

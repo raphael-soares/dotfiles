@@ -19,6 +19,7 @@ Volume=%h/.cache/media/jellyfin:/cache
 
 [Service]
 Restart=on-failure
+TimeoutStartSec=900
 
 [Install]
 WantedBy=default.target

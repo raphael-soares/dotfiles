@@ -16,6 +16,7 @@ Volume=%h/.local/share/media/prowlarr:/config:Z
 
 [Service]
 Restart=on-failure
+TimeoutStartSec=900
 
 [Install]
 WantedBy=default.target

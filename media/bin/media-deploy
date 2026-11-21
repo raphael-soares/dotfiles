@@ -42,7 +42,8 @@ wait_http() {
 ensure_dirs() {
   mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr,qbittorrent} \
     "$HOME"/.cache/media/{jellyfin,configarr} \
-    "$HOME"/Media/{Movies,Series,Downloads/radarr,Downloads/sonarr}
+    "$HOME"/Media/{Movies,Series,Downloads/radarr,Downloads/sonarr} \
+    "$HOME"/Games "$HOME"/Personal/Torrents
 }
 
 # A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
@@ -71,7 +72,7 @@ seed_qbittorrent() {
 }
 
 configure_qbittorrent() {
-  local want=$REPO/media/qbittorrent/categories.json have name path
+  local want=$REPO/media/qbittorrent/categories.json have name path hashes
   wait_http "$QBT/app/version"
   curl -fsS --data-urlencode "json=$(jq -c . "$REPO/media/qbittorrent/preferences.json")" "$QBT/app/setPreferences"
   have=$(curl -fsS "$QBT/torrents/categories" | jq 'map_values(.savePath)')
@@ -85,6 +86,8 @@ configure_qbittorrent() {
     fi
   done < <(jq -r 'to_entries[] | [.key, .value] | @tsv' "$want")
   while IFS= read -r name; do
+    hashes=$(curl -fsS --get --data-urlencode "category=$name" "$QBT/torrents/info" | jq -r 'map(.hash) | join("|")')
+    [[ -z $hashes ]] || curl -fsS -d "hashes=$hashes" -d enable=false "$QBT/torrents/setAutoManagement"
     curl -fsS --data-urlencode "categories=$name" "$QBT/torrents/removeCategories"
     echo "media: qbittorrent category $name removed"
   done < <(jq -r --slurpfile w "$want" 'keys - ($w[0] | keys) | .[]' <<<"$have")
@@ -103,7 +106,7 @@ render_bazarr() {
   [[ -f $dest && -f $applied && $(cat "$applied") == "$new" ]] && return
   mkdir -p "${dest%/*}" "$STATE/.applied"
   (umask 077 && printf '%s\n' "$new" >"$dest" && printf '%s\n' "$new" >"$applied")
-  systemctl --user try-restart bazarr
+  if systemctl --user is-active -q bazarr; then systemctl --user restart bazarr; fi
   echo "media: rendered $dest"
 }
 

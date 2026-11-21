@@ -29,4 +29,24 @@ sed -i 's/^RADARR__AUTH__APIKEY=.*/RADARR__AUTH__APIKEY=abc/' "$env_file"
 ensure_env
 grep -qx 'RADARR__AUTH__APIKEY=abc' "$env_file" || fail "pre-filled key was overwritten"
 
+ensure_dirs
+while IFS= read -r src; do
+  [[ -d $HOME$src ]] || fail "bind mount source ~$src missing after ensure_dirs"
+done < <(sed -n 's/^Volume=%h\([^:]*\):.*/\1/p' "$REPO"/media/containers/*.container | grep -vx '/.config/media/configarr')
+
+mkdir "$T/bin"
+cat >"$T/bin/systemctl" <<'EOF'
+#!/bin/sh
+case " $* " in
+  *" is-active "*) exit 4 ;;
+  *" restart "* | *" try-restart "*) echo "Unit bazarr.service not found." >&2; exit 5 ;;
+esac
+EOF
+chmod +x "$T/bin/systemctl"
+PATH=$T/bin:$PATH bash -c 'MEDIA_DEPLOY_LIB=1 source "$1" "$2" && render_bazarr' _ "$REPO/media/bin/media-deploy" "$REPO" >/dev/null ||
+  fail "render_bazarr fails while the bazarr unit does not exist yet"
+bazarr_conf=$HOME/.local/share/media/bazarr/config/config.yaml
+grep -qx "  apikey: $(sed -n 's/^BAZARR_API_KEY=//p' "$env_file")" "$bazarr_conf" || fail "bazarr config lacks the Bazarr API key"
+[[ $(stat -c %a "$bazarr_conf") == 600 ]] || fail "bazarr config is not mode 600"
+
 ((failures == 0)) && echo "media_deploy: ok" || { echo "media_deploy: $failures failure(s)"; exit 1; }

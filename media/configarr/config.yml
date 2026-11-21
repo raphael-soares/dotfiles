@@ -45,6 +45,9 @@ radarr:
         - { quality: WEBDL-2160p, min: 34.5, preferred: 189.9, max: 190 }
         - { quality: WEBRip-2160p, min: 34.5, preferred: 189.9, max: 190 }
         - { quality: Bluray-2160p, min: 102, preferred: 189.9, max: 190 }
+        - { quality: WEBDL-1080p, min: 12.5, preferred: 189.9, max: 190 }
+        - { quality: WEBRip-1080p, min: 12.5, preferred: 189.9, max: 190 }
+        - { quality: Bluray-1080p, min: 50.8, preferred: 189.9, max: 190 }
 
     media_naming:
       folder: default
@@ -94,6 +97,8 @@ sonarr:
       qualities:
         - { quality: WEBDL-2160p, min: 25, preferred: 189.9, max: 190 }
         - { quality: WEBRip-2160p, min: 25, preferred: 189.9, max: 190 }
+        - { quality: WEBDL-1080p, min: 15, preferred: 189.9, max: 190 }
+        - { quality: WEBRip-1080p, min: 15, preferred: 189.9, max: 190 }
 
     media_naming:
       series: default

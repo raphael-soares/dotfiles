@@ -19,3 +19,4 @@ Volume=%h/.cache/media/configarr:/app/repos
 
 [Service]
 Type=oneshot
+TimeoutStartSec=900
