@@ -59,7 +59,7 @@ else
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
 laptop_only_in_hook=(hyprctl greetd enterprise)
-desktop_only_in_hook=(sshd_config.d plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms')
+desktop_only_in_hook=(sshd_config.d plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms' shapecorners geometry_change)
 
 case $machine in
   arch)
@@ -68,11 +68,15 @@ case $machine in
     [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
     for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
+    absent .local/share/kwin/effects/kwin4_effect_geometry_change
     ;;
   fedora)
     for f in "${laptop_only[@]}"; do absent "$f"; done
     for p in "${laptop_only_in_hook[@]}"; do ! hook_has "$p" || fail "fedora hook has $p"; done
     for p in "${desktop_only_in_hook[@]}"; do hook_has "$p" || fail "fedora hook lacks $p"; done
+    repo_link .local/share/kwin/effects/kwin4_effect_geometry_change
+    [[ -f $H/.local/share/kwin/effects/kwin4_effect_geometry_change/metadata.json ]] ||
+      fail "geometry change link does not reach metadata.json"
     ;;
   *) echo "unknown machine: $machine"; exit 2 ;;
 esac
