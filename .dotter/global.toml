@@ -58,5 +58,5 @@ default_target_type = "symbolic"
 "work/git/unimed" = "~/.config/git/unimed"
 "ai/.omp/overlays" = { type = "symbolic", target = "~/.omp/overlays", recurse = false }
 
-# Only /etc files and services (post_deploy.sh); nothing links into ~.
 [home.files]
+"home/kwin/geometry-change" = { type = "symbolic", target = "~/.local/share/kwin/effects/kwin4_effect_geometry_change", recurse = false }
