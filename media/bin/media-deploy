@@ -1,2 +1,60 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+REPO=${1:?usage: media-deploy <repo>}
+CONF=$HOME/.config/media
+ENV_FILE=$CONF/media.env
+STATE=$HOME/.local/share/media
+UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr qbittorrent)
+
+ensure_env() {
+  mkdir -p "$CONF"
+  if [[ ! -f $ENV_FILE ]]; then
+    install -m 600 "$REPO/media/media.env.example" "$ENV_FILE"
+    echo "media: created $ENV_FILE"
+  fi
+  local tmp line key changed=0
+  tmp=$(mktemp "$CONF/.media.env.XXXXXX")
+  while IFS= read -r line || [[ -n $line ]]; do
+    key=${line%%=*}
+    if [[ $line == "$key=" && $key =~ (APIKEY|API_KEY)$ ]]; then
+      line=$key=$(openssl rand -hex 16)
+      changed=1
+      echo "media: generated $key" >&2
+    fi
+    printf '%s\n' "$line"
+  done <"$ENV_FILE" >"$tmp"
+  if ((changed)); then mv "$tmp" "$ENV_FILE"; else rm "$tmp"; fi
+}
+
+ensure_dirs() {
+  mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr,qbittorrent} \
+    "$HOME"/.cache/media/{jellyfin,configarr} \
+    "$HOME"/Media/{Movies,Series,Downloads/radarr,Downloads/sonarr}
+}
+
+# A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
+start_units() {
+  systemctl --user daemon-reload
+  mkdir -p "$STATE/.applied"
+  local u sum
+  for u in "${UNITS[@]}"; do
+    [[ $u == qbittorrent && ! -f $STATE/qbittorrent/qBittorrent/qBittorrent.conf ]] && continue
+    sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" | sha256sum)
+    if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
+      systemctl --user start "$u"
+    else
+      systemctl --user restart "$u"
+      echo "$sum" >"$STATE/.applied/$u"
+    fi
+  done
+  systemctl --user enable --now podman-auto-update.timer
+}
+
+main() {
+  ensure_env
+  ensure_dirs
+  start_units
+}
+
+[[ -n ${MEDIA_DEPLOY_LIB:-} ]] || main
