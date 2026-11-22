@@ -88,6 +88,17 @@ fi
 {{#if dotter.packages.desktop}}
 install_packages desktop
 remove_packages desktop
+# Spotifast and ZapFast have no dnf repo (on Arch they come from the AUR list):
+# install the latest release rpm straight from GitHub.
+if [[ $DISTRO == fedora ]]; then
+  for app in spotifast zapfast; do
+    rpm -q "$app" >/dev/null 2>&1 && continue
+    url=$(curl -fsSL "https://api.github.com/repos/crmne/$app/releases/latest" |
+      jq -r '.assets[].browser_download_url | select(endswith(".x86_64.rpm"))')
+    echo "==> Installing $app from $url"
+    sudo dnf install -y "$url"
+  done
+fi
 if copy_etc desktop/audio/91-fuxi-h3-mixer.rules /etc/udev/rules.d/91-fuxi-h3-mixer.rules; then
   sudo udevadm control --reload
 fi

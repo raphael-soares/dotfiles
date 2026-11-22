@@ -3,3 +3,5 @@ inter-font
 pipewire
 wireplumber
 alsa-utils
+spotifast-bin
+zapfast-bin

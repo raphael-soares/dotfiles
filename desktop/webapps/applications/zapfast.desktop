@@ -3,9 +3,16 @@ Type=Application
 Name=WhatsApp
 GenericName=WhatsApp Client
 Comment=A native WhatsApp client
-Exec=zapfast
+Exec=zapfast %U
 Icon=whatsapp
 Terminal=false
 Categories=Network;InstantMessaging;Chat;
 Keywords=whatsapp;chat;messaging;zapfast;
 StartupWMClass=zapfast
+MimeType=x-scheme-handler/whatsapp;x-scheme-handler/wa;
+SingleMainWindow=true
+Actions=quit;
+
+[Desktop Action quit]
+Name=Quit WhatsApp
+Exec=zapfast quit
