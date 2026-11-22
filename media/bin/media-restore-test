@@ -24,4 +24,4 @@ for key in RADARR__AUTH__APIKEY SONARR__AUTH__APIKEY JELLYFIN_TOKEN; do
   grep -q "^$key=." "$work/media/media.env" || { echo "media-restore-test: media.env lacks $key" >&2; fail=1; }
 done
 ((!fail)) || exit 1
-echo "media-restore-test: $latest restores ($(find "$work/media" -name '*.db' -o -name '*.sqlite3' | wc -l) databases intact)"
+log "$latest restores ($(find "$work/media" -name '*.db' -o -name '*.sqlite3' | wc -l) databases intact)"

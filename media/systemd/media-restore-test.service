@@ -1,5 +1,6 @@
 [Unit]
 Description=Check the latest media backup restores
+OnFailure=media-failure@%n.service
 
 [Service]
 Type=oneshot

@@ -33,7 +33,7 @@ fix() {
   # shellcheck disable=SC2086
   mkvpropedit -q "$tmp" $args
   mv "$tmp" "$path"
-  echo "media-original-audio: $language is now the default audio of $path"
+  log "$language is now the default audio of $path"
 }
 
 {

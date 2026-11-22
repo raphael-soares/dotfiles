@@ -21,7 +21,7 @@ ensure_env() {
   mkdir -p "$CONF"
   if [[ ! -f $ENV_FILE ]]; then
     install -m 600 "$REPO/media/media.env.example" "$ENV_FILE"
-    echo "media: created $ENV_FILE"
+    log "created $ENV_FILE"
   fi
   local tmp line key changed=0
   while IFS= read -r line; do
@@ -34,7 +34,7 @@ ensure_env() {
     if [[ $line == "$key=" && $key =~ (APIKEY|API_KEY|WEBUI_PASSWORD)$ ]]; then
       line=$key=$(openssl rand -hex 16)
       changed=1
-      echo "media: generated $key" >&2
+      log "generated $key"
     fi
     printf '%s\n' "$line"
   done <"$ENV_FILE" >"$tmp"
@@ -65,6 +65,37 @@ ensure_whisper_model() {
   mv "$model.part" "$model"
 }
 
+# Dotter needs sudo for the other packages, so media links its own files too; dotter adopts a link
+# that already points at its source.
+LINK_DIRS=(containers:.config/containers/systemd/media configarr:.config/media/configarr
+  prowlarr/definitions:.config/media/prowlarr-definitions whisper:.config/media/whisper)
+LINK_FILES=(bin:.local/bin systemd:.config/systemd/user applications:.local/share/applications autostart:.config/autostart)
+link() {
+  [[ $(readlink "$2") == "$1" ]] && return
+  if [[ -e $2 && ! -L $2 ]]; then
+    echo "media: $2 is not a link, leaving it" >&2
+  elif apply "link $2"; then
+    mkdir -p "${2%/*}"
+    ln -sfn "$1" "$2"
+    log "linked $2"
+  fi
+}
+
+link_files() {
+  local repo pair src dest rel
+  repo=$(readlink -f "$REPO")/media
+  for pair in "${LINK_DIRS[@]}"; do link "$repo/${pair%%:*}" "$HOME/${pair#*:}"; done
+  for pair in "${LINK_FILES[@]}"; do
+    src=$repo/${pair%%:*} dest=$HOME/${pair#*:}
+    while IFS= read -r rel; do link "$src/$rel" "$dest/$rel"; done < <(cd "$src" && find . -type f -printf '%P\n')
+    while IFS= read -r rel; do
+      apply "remove $rel (its file left the repo)" || continue
+      rm "$rel"
+      log "removed $rel"
+    done < <(find "$dest" -maxdepth 2 -xtype l -lname "$src/*" 2>/dev/null)
+  done
+}
+
 # A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
 start_units() {
   ((CHECK)) || systemctl --user daemon-reload
@@ -80,9 +111,12 @@ start_units() {
       echo "$sum" >"$STATE/.applied/$u"
     fi
   done
-  ((CHECK)) || systemctl --user enable --now podman-auto-update.timer media-original-audio.timer media-cleanup.timer \
-    media-backup.timer media-watchdog.timer media-drift.timer media-dub-search.timer media-restore-test.timer \
-    media-letterboxd.timer
+  local t
+  for t in podman-auto-update.timer "$REPO"/media/systemd/media-*.timer; do
+    if ! systemctl --user is-enabled --quiet "${t##*/}" && apply "timer ${t##*/} not enabled"; then
+      systemctl --user enable --now "${t##*/}"
+    fi
+  done
 }
 
 # Before the first start: the desktop app keeps its WebUI, which Radarr and Sonarr use, off without credentials.
@@ -94,7 +128,7 @@ seed_qbittorrent() {
     -kdfopt "hexsalt:$(base64 -d <<<"$salt" | od -An -tx1 | tr -d ' \n')" -kdfopt iter:100000 PBKDF2 | base64 -w0)
   install -D -m 600 "$REPO/media/qbittorrent/qBittorrent.conf.seed" "$conf"
   printf 'WebUI\\Password_PBKDF2="@ByteArray(%s:%s)"\n' "$salt" "$key" >>"$conf"
-  echo "media: created $conf"
+  log "created $conf"
 }
 
 configure_qbittorrent() {
@@ -112,7 +146,7 @@ configure_qbittorrent() {
     "$(jq -cS 'del(.web_ui_password)' <<<"$prefs")" ]] && apply "qbittorrent preferences"; then
     qbt /app/setPreferences --data-urlencode "json=$(jq -c --arg p "$(env_get QBITTORRENT_WEBUI_PASSWORD)" \
       '.web_ui_password = $p' <<<"$prefs")"
-    echo "media: qbittorrent preferences applied"
+    log "qbittorrent preferences applied"
   fi
   want=$(expand_home "$REPO/media/qbittorrent/categories.json")
   have=$(qbt /torrents/categories | jq 'map_values(.savePath)')
@@ -120,11 +154,11 @@ configure_qbittorrent() {
     if ! jq -e --arg n "$name" 'has($n)' <<<"$have" >/dev/null; then
       apply "qbittorrent category $name missing" || continue
       qbt /torrents/createCategory --data-urlencode "category=$name" --data-urlencode "savePath=$path"
-      echo "media: qbittorrent category $name created"
+      log "qbittorrent category $name created"
     elif [[ $(jq -r --arg n "$name" '.[$n]' <<<"$have") != "$path" ]]; then
       apply "qbittorrent category $name path" || continue
       qbt /torrents/editCategory --data-urlencode "category=$name" --data-urlencode "savePath=$path"
-      echo "media: qbittorrent category $name updated"
+      log "qbittorrent category $name updated"
     fi
   done < <(jq -r 'to_entries[] | [.key, .value] | @tsv' <<<"$want")
   while IFS= read -r name; do
@@ -132,7 +166,7 @@ configure_qbittorrent() {
     hashes=$(qbt /torrents/info --get --data-urlencode "category=$name" | jq -r 'map(.hash) | join("|")')
     [[ -z $hashes ]] || qbt /torrents/setAutoManagement -d "hashes=$hashes" -d enable=false
     qbt /torrents/removeCategories --data-urlencode "categories=$name"
-    echo "media: qbittorrent category $name removed"
+    log "qbittorrent category $name removed"
   done < <(jq -r --argjson w "$want" 'keys - ($w | keys) | .[]' <<<"$have")
 }
 
@@ -151,7 +185,7 @@ render_bazarr() {
   mkdir -p "${dest%/*}" "$STATE/.applied"
   (umask 077 && printf '%s\n' "$new" >"$dest" && printf '%s\n' "$new" >"$applied")
   if systemctl --user is-active -q bazarr; then systemctl --user restart bazarr; fi
-  echo "media: rendered $dest"
+  log "rendered $dest"
 }
 
 configure_bazarr() {
@@ -164,7 +198,7 @@ configure_bazarr() {
   apply "bazarr language profiles" || return 0
   curl -fsS -H "X-API-KEY: $key" -d languages-enabled=pb -d languages-enabled=en \
     --data-urlencode "languages-profiles=$want" "$api/system/settings"
-  echo "media: bazarr language profiles applied"
+  log "bazarr language profiles applied"
 }
 
 # sync <app> <path> <json> <what>: POSTs the JSON only when the server's copy differs.
@@ -172,7 +206,7 @@ sync() {
   [[ $(api "$1" GET "$2" | jq -cS .) == "$(jq -cS . <<<"$3")" ]] && return
   apply "$4" || return 0
   api "$1" POST "$2" -d "$3" >/dev/null
-  echo "media: $4 applied"
+  log "$4 applied"
 }
 
 # JELLYFIN_TOKEN comes out of the first-run wizard, so a fresh install gets these settings on the deploy after it.
@@ -189,7 +223,7 @@ configure_jellyfin() {
     apply "jellyfin plugin $name missing" || continue
     api jellyfin POST "/Packages/Installed/$(jq -rn --arg n "$name" '$n | @uri')"
     installed=1
-    echo "media: jellyfin plugin $name installed"
+    log "jellyfin plugin $name installed"
   done
   if ((installed)); then
     until api jellyfin GET /System/Info | jq -e .HasPendingRestart >/dev/null; do sleep 2; done
@@ -212,7 +246,7 @@ configure_jellyfin() {
     if [[ $(api jellyfin GET "/Users/$user" | jq -cS .Configuration) != "$(jq -cS . <<<"$want")" ]] &&
       apply "jellyfin playback settings"; then
       api jellyfin POST "/Users/$user/Configuration" -d "$want"
-      echo "media: jellyfin playback settings applied"
+      log "jellyfin playback settings applied"
     fi
     sync jellyfin "/DisplayPreferences/usersettings?userId=$user&client=emby" \
       "$(api jellyfin GET "/DisplayPreferences/usersettings?userId=$user&client=emby" |
@@ -223,7 +257,7 @@ configure_jellyfin() {
   if [[ -n $shows ]] && ! api jellyfin GET "/Items/$shows/Images/Primary" -o /dev/null 2>/dev/null &&
     apply "jellyfin Shows cover missing"; then
     base64 -w0 "$dir/shows.jpg" | API_TYPE=image/jpeg api jellyfin POST "/Items/$shows/Images/Primary" --data-binary @-
-    echo "media: jellyfin Shows cover uploaded"
+    log "jellyfin Shows cover uploaded"
   fi
 }
 
@@ -254,11 +288,11 @@ configure_seerr() {
     if [[ -z $have ]]; then
       apply "seerr $arr server missing" || continue
       api seerr POST "/settings/$arr" -d "$want" >/dev/null
-      echo "media: seerr $arr server added"
+      log "seerr $arr server added"
     elif [[ $(jq -cS . <<<"$have") != "$(jq -cS --argjson h "$have" '$h + .' <<<"$want")" ]]; then
       apply "seerr $arr server" || continue
       api seerr PUT "/settings/$arr/$(jq -r .id <<<"$have")" -d "$(jq -c --argjson h "$have" '$h + . | del(.id)' <<<"$want")" >/dev/null
-      echo "media: seerr $arr server applied"
+      log "seerr $arr server applied"
     fi
   done
 }
@@ -279,7 +313,7 @@ set_magnet_default() {
   local app=org.qbittorrent.qBittorrent.desktop
   [[ $(xdg-mime query default x-scheme-handler/magnet) == "$app" ]] && return
   xdg-mime default "$app" x-scheme-handler/magnet
-  echo "media: magnet links open qBittorrent"
+  log "magnet links open qBittorrent"
 }
 
 ensure_flatpaks() {
@@ -288,6 +322,7 @@ ensure_flatpaks() {
 }
 
 main() {
+  link_files
   ensure_env
   ensure_dirs
   seed_qbittorrent
@@ -306,6 +341,7 @@ main() {
 # Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every hour.
 check() {
   local problems
+  link_files
   start_units
   configure_qbittorrent
   render_bazarr

@@ -1,0 +1,6 @@
+[Unit]
+Description=Write the failure of %i to the media log
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/media-failure %i

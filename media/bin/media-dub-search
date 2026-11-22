@@ -11,5 +11,5 @@ for series in $(api sonarr GET /series | jq -r '.[] | select(.seriesType == "ani
     while read -r file; do api sonarr GET "/episode?episodeFileId=$file" | jq -r '.[] | select(.monitored) | .id'; done | jq -sc .)
   [[ $episodes == '[]' ]] && continue
   api sonarr POST /command -d "$(jq -nc --argjson e "$episodes" '{name: "EpisodeSearch", episodeIds: $e}')" >/dev/null
-  echo "media-dub-search: series $series, searching $(jq length <<<"$episodes") episodes without a pt-BR dub"
+  log "series $series, searching $(jq length <<<"$episodes") episodes without a pt-BR dub"
 done

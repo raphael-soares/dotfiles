@@ -37,7 +37,7 @@ replace() {
     id=$(api "$app" GET '/queue?pageSize=1000' | jq -r --arg h "$hash" '.records[] | select(.downloadId == $h) | .id' | head -1)
     [[ -n $id ]] || continue
     api "$app" DELETE "/queue/$id?removeFromClient=true&blocklist=true"
-    echo "media-torrents: $app is replacing stalled $2"
+    log "$app is replacing stalled $2"
     return 0
   done
   return 1
@@ -73,13 +73,13 @@ downgrade() {
   if [[ -n ${guid:-} ]]; then
     api radarr DELETE "/queue/$queue?removeFromClient=true&blocklist=true&skipRedownload=true"
     api radarr POST /release -d "$(jq -nc --arg g "$guid" --argjson i "$indexer" '{guid: $g, indexerId: $i}')" >/dev/null
-    echo "media-torrents: $name is too slow in 4K; grabbed $title"
+    log "$name is too slow in 4K; grabbed $title"
   elif [[ $(api radarr GET "/movie/$movie" | jq .hasFile) == true ]]; then
     api radarr DELETE "/queue/$queue?removeFromClient=true&blocklist=true&skipRedownload=true"
-    echo "media-torrents: dropped slow 4K upgrade $name"
+    log "dropped slow 4K upgrade $name"
   else
     mkdir -p "${KEPT%/*}" && echo "$hash" >>"$KEPT"
-    echo "media-torrents: $name is slow in 4K and no 1080p release would be faster; keeping it"
+    log "$name is slow in 4K and no 1080p release would be faster; keeping it"
   fi
 }
 

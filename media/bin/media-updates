@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+
+journalctl --user -u podman-auto-update.service --invocation=0 -o cat --no-pager |
+  awk '$1 ~ /\.service$/ && $NF ~ /^(true|rolled_back|failed)$/ {print $1, $NF}' |
+  while read -r unit result; do
+    case $result in
+      true) log "updated ${unit%.service} to its latest image" ;;
+      rolled_back) log "update of ${unit%.service} rolled back: the new image failed" ;;
+      failed) log "update of ${unit%.service} failed" ;;
+    esac
+  done

@@ -28,4 +28,4 @@ archive=$work/media-$(date +%F).tar.zst
 tar -C "$work" -cf - media | zstd -q -19 -T0 -o "$archive"
 rclone copy "$archive" "$REMOTE"
 rclone delete --min-age "${KEEP_DAYS}d" "$REMOTE"
-echo "media-backup: uploaded $(basename "$archive") ($(du -h "$archive" | cut -f1)) to $REMOTE"
+log "uploaded $(basename "$archive") ($(du -h "$archive" | cut -f1)) to $REMOTE"

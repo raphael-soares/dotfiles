@@ -10,6 +10,18 @@ JF=http://127.0.0.1:8096
 
 env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
 
+LOG=${MEDIA_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/media/media.log}
+
+# log <message>: one line in the journal and, with time and script name, in LOG, which keeps
+# about its last 5000 lines.
+log() {
+  local who=${0##*/}
+  echo "$who: $*" >&2
+  mkdir -p "${LOG%/*}"
+  printf '%s %s: %s\n' "$(date '+%F %T')" "$who" "$*" >>"$LOG"
+  (($(stat -c %s "$LOG") < 1048576)) || { tail -n 5000 "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"; }
+}
+
 # api <app> <method> <path> [curl args...]: path is relative to the app's API root.
 api() {
   local app=$1 method=$2 path=$3 url auth
