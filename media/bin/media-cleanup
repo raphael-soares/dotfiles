@@ -8,6 +8,7 @@ SEED_DAYS=${MEDIA_SEED_DAYS:-30}
 SEED_SWARM=${MEDIA_SEED_SWARM:-50}
 
 act() { [[ -n ${DRY_RUN:-} ]] || "$@"; }
+# shellcheck disable=SC2034  # LOG is read by log() from media-lib.sh
 [[ -z ${DRY_RUN:-} ]] || LOG=/dev/null
 
 # stdin: one {path, last} per user and file; prints the paths whose latest play by anyone is before $1.

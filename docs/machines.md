@@ -58,6 +58,9 @@ holds the agent rules. The official Bitwarden MCP server is registered for omp
 
 `tests/machines.sh arch`, `tests/machines.sh fedora` and `tests/adopt.sh`
 deploy into a fake HOME and check what each machine gets.
+Every PR and push to `main` runs `.github/workflows/checks.yml`: all of
+`tests/`, shellcheck at warning level and gitleaks on the tree and the new
+commits. Merge only when it is green.
 
 ## Visual
 

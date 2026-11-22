@@ -84,7 +84,7 @@ downgrade() {
 }
 
 main() {
-  local info stalled hash name category progress have want queue movie left swarm
+  local info stalled hash name progress have want queue movie left swarm
   qbt /torrents/createTags --data-urlencode "tags=$(IFS=,; echo "${TAGS[*]}")"
   info=$(qbt /torrents/info)
   while IFS=$'\t' read -r queue movie hash left swarm name; do
@@ -92,7 +92,7 @@ main() {
   done < <(slow_4k "$(api radarr GET '/queue?pageSize=1000' | jq -c .records)" "$(date +%s)" <<<"$info")
   info=$(qbt /torrents/info)
   stalled=$(stalled_torrents "$(date +%s)" <<<"$info")
-  while IFS=$'\t' read -r hash name category progress have; do
+  while IFS=$'\t' read -r hash name _ progress have; do
     want=
     if [[ $progress == 1 ]]; then
       if torrent_linked "$hash"; then want=library; else want=seeding-only; fi

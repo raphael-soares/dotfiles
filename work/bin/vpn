@@ -9,6 +9,7 @@ set -euo pipefail
 
 VPN_ENV=${VPN_ENV:-$HOME/Unimed/Envs/vpn.env}
 if [[ -f $VPN_ENV ]]; then
+    # shellcheck source=/dev/null
     source "$VPN_ENV"
 fi
 

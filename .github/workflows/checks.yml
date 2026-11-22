@@ -1,0 +1,58 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq jq lua5.4
+          sudo curl -sSfL -o /usr/local/bin/dotter \
+            https://github.com/SuperCuber/dotter/releases/download/v0.13.5/dotter-linux-x64-musl
+          sudo chmod +x /usr/local/bin/dotter
+      - run: bash tests/machines.sh arch
+      - run: bash tests/machines.sh fedora
+      - run: bash tests/adopt.sh
+      - run: bash tests/media_deploy.sh
+      - run: bash tests/media_cleanup.sh
+      - run: bash tests/media_torrents.sh
+      - run: bash tests/secrets.sh
+      - run: lua5.4 tests/remote_state.lua
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell scripts
+        run: |
+          # post_deploy.sh is a Handlebars template, not plain bash.
+          git ls-files -z | while IFS= read -rd '' f; do
+            [[ -f $f && $f != .dotter/post_deploy.sh ]] || continue
+            [[ $f == *.sh ]] || head -1 "$f" | grep -qE '^#!.*\b(ba)?sh\b' || continue
+            printf '%s\0' "$f"
+          done | xargs -0 shellcheck -S warning
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        env:
+          RANGE: ${{ github.event.pull_request.base.sha || github.event.before }}..${{ github.sha }}
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz |
+            sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks dir --redact --no-banner .
+          gitleaks git --redact --no-banner --log-opts="$RANGE" .

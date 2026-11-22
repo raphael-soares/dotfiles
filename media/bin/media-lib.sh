@@ -1,5 +1,6 @@
-# shellcheck shell=bash
-# Sourced by the media scripts. MEDIA_ENV and MEDIA_STATE point elsewhere in tests.
+# shellcheck shell=bash disable=SC2034
+# Sourced by the media scripts, which read the variables set here. MEDIA_ENV and MEDIA_STATE
+# point elsewhere in tests.
 
 ENV_FILE=${MEDIA_ENV:-$HOME/.config/media/media.env}
 STATE=${MEDIA_STATE:-$HOME/.local/share/media}
