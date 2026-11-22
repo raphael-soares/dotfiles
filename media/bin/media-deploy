@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO=${1:?usage: media-deploy <repo>}
-CONF=$HOME/.config/media
-ENV_FILE=$CONF/media.env
-STATE=$HOME/.local/share/media
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+REPO=${1:?usage: media-deploy <repo> [--check]}
+CHECK=0
+[[ ${2:-} == --check ]] && CHECK=1
+CONF=${ENV_FILE%/*}
 UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
-QBT=http://127.0.0.1:8080/api/v2
-JF=http://127.0.0.1:8096
-JF_PLUGINS=("Intro Skipper" "Jellyfin Enhanced" "File Transformation" "Plugin Pages")
-JF_ENHANCED=f69e946a4b3c4e9a8f0a8d7c1b2c4d9b
+
+# apply <what>: in --check mode reports the difference and fails, so the caller skips the change.
+apply() {
+  ((CHECK)) || return 0
+  echo "media: differs: $*"
+  return 1
+}
 
 ensure_env() {
   mkdir -p "$CONF"
@@ -33,8 +37,6 @@ ensure_env() {
   done <"$ENV_FILE" >"$tmp"
   if ((changed)); then mv "$tmp" "$ENV_FILE"; else rm "$tmp"; fi
 }
-
-env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
 
 wait_http() {
   local i
@@ -61,20 +63,20 @@ ensure_whisper_model() {
 
 # A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
 start_units() {
-  systemctl --user daemon-reload
+  ((CHECK)) || systemctl --user daemon-reload
   mkdir -p "$STATE/.applied"
   local u sum
   for u in "${UNITS[@]}"; do
     sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" \
       $([[ $u == whisper ]] && echo "$REPO/media/whisper/asr-shim.py") | sha256sum)
     if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
-      systemctl --user start "$u"
-    else
+      ((CHECK)) || systemctl --user start "$u"
+    elif apply "unit $u (quadlet changed since the last deploy)"; then
       systemctl --user restart "$u"
       echo "$sum" >"$STATE/.applied/$u"
     fi
   done
-  systemctl --user enable --now podman-auto-update.timer media-original-audio.timer media-cleanup.timer \
+  ((CHECK)) || systemctl --user enable --now podman-auto-update.timer media-original-audio.timer media-cleanup.timer \
     media-backup.timer media-watchdog.timer
 }
 
@@ -91,33 +93,42 @@ seed_qbittorrent() {
 }
 
 configure_qbittorrent() {
-  local want=$REPO/media/qbittorrent/categories.json have name path hashes
-  if ! curl -fsS -o /dev/null "$QBT/app/version" 2>/dev/null; then
-    if [[ -z ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]]; then
+  local want have name path hashes prefs
+  if ! qbt /app/version -o /dev/null 2>/dev/null; then
+    if ((CHECK)) || [[ -z ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]]; then
       echo "media: qBittorrent is not running, its settings apply on the next deploy" >&2
       return
     fi
     setsid -f qbittorrent --no-splash >/dev/null 2>&1
   fi
   wait_http "$QBT/app/version"
-  curl -fsS --data-urlencode "json=$(jq -c --arg p "$(env_get QBITTORRENT_WEBUI_PASSWORD)" '.web_ui_password = $p' \
-    "$REPO/media/qbittorrent/preferences.json")" "$QBT/app/setPreferences"
-  have=$(curl -fsS "$QBT/torrents/categories" | jq 'map_values(.savePath)')
+  prefs=$(expand_home "$REPO/media/qbittorrent/preferences.json")
+  if [[ $(qbt /app/preferences | jq -cS --argjson w "$prefs" 'with_entries(select(.key as $k | $w | has($k)))') != \
+    "$(jq -cS 'del(.web_ui_password)' <<<"$prefs")" ]] && apply "qbittorrent preferences"; then
+    qbt /app/setPreferences --data-urlencode "json=$(jq -c --arg p "$(env_get QBITTORRENT_WEBUI_PASSWORD)" \
+      '.web_ui_password = $p' <<<"$prefs")"
+    echo "media: qbittorrent preferences applied"
+  fi
+  want=$(expand_home "$REPO/media/qbittorrent/categories.json")
+  have=$(qbt /torrents/categories | jq 'map_values(.savePath)')
   while IFS=$'\t' read -r name path; do
     if ! jq -e --arg n "$name" 'has($n)' <<<"$have" >/dev/null; then
-      curl -fsS --data-urlencode "category=$name" --data-urlencode "savePath=$path" "$QBT/torrents/createCategory"
+      apply "qbittorrent category $name missing" || continue
+      qbt /torrents/createCategory --data-urlencode "category=$name" --data-urlencode "savePath=$path"
       echo "media: qbittorrent category $name created"
     elif [[ $(jq -r --arg n "$name" '.[$n]' <<<"$have") != "$path" ]]; then
-      curl -fsS --data-urlencode "category=$name" --data-urlencode "savePath=$path" "$QBT/torrents/editCategory"
+      apply "qbittorrent category $name path" || continue
+      qbt /torrents/editCategory --data-urlencode "category=$name" --data-urlencode "savePath=$path"
       echo "media: qbittorrent category $name updated"
     fi
-  done < <(jq -r 'to_entries[] | [.key, .value] | @tsv' "$want")
+  done < <(jq -r 'to_entries[] | [.key, .value] | @tsv' <<<"$want")
   while IFS= read -r name; do
-    hashes=$(curl -fsS --get --data-urlencode "category=$name" "$QBT/torrents/info" | jq -r 'map(.hash) | join("|")')
-    [[ -z $hashes ]] || curl -fsS -d "hashes=$hashes" -d enable=false "$QBT/torrents/setAutoManagement"
-    curl -fsS --data-urlencode "categories=$name" "$QBT/torrents/removeCategories"
+    apply "qbittorrent category $name not in the repo" || continue
+    hashes=$(qbt /torrents/info --get --data-urlencode "category=$name" | jq -r 'map(.hash) | join("|")')
+    [[ -z $hashes ]] || qbt /torrents/setAutoManagement -d "hashes=$hashes" -d enable=false
+    qbt /torrents/removeCategories --data-urlencode "categories=$name"
     echo "media: qbittorrent category $name removed"
-  done < <(jq -r --slurpfile w "$want" 'keys - ($w[0] | keys) | .[]' <<<"$have")
+  done < <(jq -r --argjson w "$want" 'keys - ($w | keys) | .[]' <<<"$have")
 }
 
 # Bazarr rewrites its config with every default on start, so the last render is compared, not the live file.
@@ -131,6 +142,7 @@ render_bazarr() {
       <"$REPO/media/bazarr/config.yaml.tmpl"
   )
   [[ -f $dest && -f $applied && $(cat "$applied") == "$new" ]] && return
+  apply "bazarr config" || return 0
   mkdir -p "${dest%/*}" "$STATE/.applied"
   (umask 077 && printf '%s\n' "$new" >"$dest" && printf '%s\n' "$new" >"$applied")
   if systemctl --user is-active -q bazarr; then systemctl --user restart bazarr; fi
@@ -144,22 +156,18 @@ configure_bazarr() {
   want=$(jq -cS . "$REPO/media/bazarr/languages-profiles.json")
   have=$(curl -fsS -H "X-API-KEY: $key" "$api/system/languages/profiles" | jq -cS .)
   [[ $want == "$have" ]] && return
+  apply "bazarr language profiles" || return 0
   curl -fsS -H "X-API-KEY: $key" -d languages-enabled=pb -d languages-enabled=en \
     --data-urlencode "languages-profiles=$want" "$api/system/settings"
   echo "media: bazarr language profiles applied"
 }
 
-jf() {
-  local method=$1 path=$2
-  shift 2
-  curl -fsS -X "$method" -H "Authorization: MediaBrowser Token=\"$(env_get JELLYFIN_TOKEN)\"" \
-    -H "Content-Type: ${JF_TYPE:-application/json}" "$@" "$JF$path"
-}
-
-# jf_apply <path> <json> POSTs only when the server's copy differs, and fails when it already matches.
-jf_apply() {
-  [[ $(jf GET "$1" | jq -cS .) == "$(jq -cS . <<<"$2")" ]] && return 1
-  jf POST "$1" -d "$2"
+# sync <app> <path> <json> <what>: POSTs the JSON only when the server's copy differs.
+sync() {
+  [[ $(api "$1" GET "$2" | jq -cS .) == "$(jq -cS . <<<"$3")" ]] && return
+  apply "$4" || return 0
+  api "$1" POST "$2" -d "$3" >/dev/null
+  echo "media: $4 applied"
 }
 
 # JELLYFIN_TOKEN comes out of the first-run wizard, so a fresh install gets these settings on the deploy after it.
@@ -170,42 +178,84 @@ configure_jellyfin() {
     return
   fi
   wait_http "$JF/health"
-  jf_apply /Repositories "$(jq -c 'map(. + {Enabled: true})' "$dir/repositories.json")" &&
-    echo "media: jellyfin plugin repositories applied"
+  sync jellyfin /Repositories "$(jq -c 'map(. + {Enabled: true})' "$dir/repositories.json")" "jellyfin plugin repositories"
   for name in "${JF_PLUGINS[@]}"; do
-    jf GET /Plugins | jq -e --arg n "$name" 'any(.[]; .Name == $n)' >/dev/null && continue
-    jf POST "/Packages/Installed/$(jq -rn --arg n "$name" '$n | @uri')"
+    api jellyfin GET /Plugins | jq -e --arg n "$name" 'any(.[]; .Name == $n)' >/dev/null && continue
+    apply "jellyfin plugin $name missing" || continue
+    api jellyfin POST "/Packages/Installed/$(jq -rn --arg n "$name" '$n | @uri')"
     installed=1
     echo "media: jellyfin plugin $name installed"
   done
   if ((installed)); then
-    until jf GET /System/Info | jq -e .HasPendingRestart >/dev/null; do sleep 2; done
+    until api jellyfin GET /System/Info | jq -e .HasPendingRestart >/dev/null; do sleep 2; done
     systemctl --user restart jellyfin
     wait_http "$JF/health"
   fi
-  want=$(jf GET /System/Configuration/branding | jq -c --rawfile css "$dir/custom.css" '.CustomCss = $css')
-  jf_apply /System/Configuration/branding "$want" && echo "media: jellyfin custom css applied"
-  want=$(jf GET "/Plugins/$JF_ENHANCED/Configuration" | jq -c --slurpfile w "$dir/enhanced.json" \
-    --arg seerr "$(jq -r .main.apiKey "$STATE/seerr/settings.json")" \
-    --arg sonarr "$(env_get SONARR__AUTH__APIKEY)" --arg radarr "$(env_get RADARR__AUTH__APIKEY)" \
-    '. * $w[0] + {JellyseerrApiKey: $seerr, SonarrApiKey: $sonarr, RadarrApiKey: $radarr}')
-  jf_apply "/Plugins/$JF_ENHANCED/Configuration" "$want" && echo "media: jellyfin enhanced settings applied"
-  for user in $(jf GET /Users | jq -r '.[].Id'); do
-    want=$(jf GET "/Users/$user" | jq -c --slurpfile w "$dir/user.json" '.Configuration + $w[0].configuration')
-    if [[ $(jf GET "/Users/$user" | jq -cS .Configuration) != "$(jq -cS . <<<"$want")" ]]; then
-      jf POST "/Users/$user/Configuration" -d "$want"
+  sync jellyfin /System/Configuration/branding \
+    "$(api jellyfin GET /System/Configuration/branding | jq -c --rawfile css "$dir/custom.css" '.CustomCss = $css')" \
+    "jellyfin custom css"
+  if api jellyfin GET /Plugins | jq -e --arg id "$JF_ENHANCED" 'any(.[]; .Id == $id)' >/dev/null; then
+    sync jellyfin "/Plugins/$JF_ENHANCED/Configuration" \
+      "$(api jellyfin GET "/Plugins/$JF_ENHANCED/Configuration" | jq -c --slurpfile w "$dir/enhanced.json" \
+        --arg seerr "$(jq -r .main.apiKey "$STATE/seerr/settings.json" 2>/dev/null)" \
+        --arg sonarr "$(env_get SONARR__AUTH__APIKEY)" --arg radarr "$(env_get RADARR__AUTH__APIKEY)" \
+        '. + $w[0] + {JellyseerrApiKey: $seerr, SonarrApiKey: $sonarr, RadarrApiKey: $radarr}')" \
+      "jellyfin enhanced settings"
+  fi
+  for user in $(api jellyfin GET /Users | jq -r '.[].Id'); do
+    want=$(api jellyfin GET "/Users/$user" | jq -c --slurpfile w "$dir/user.json" '.Configuration + $w[0].configuration')
+    if [[ $(api jellyfin GET "/Users/$user" | jq -cS .Configuration) != "$(jq -cS . <<<"$want")" ]] &&
+      apply "jellyfin playback settings"; then
+      api jellyfin POST "/Users/$user/Configuration" -d "$want"
       echo "media: jellyfin playback settings applied"
     fi
-    want=$(jf GET "/DisplayPreferences/usersettings?userId=$user&client=emby" |
-      jq -c --slurpfile w "$dir/user.json" '.CustomPrefs += $w[0].homeSections')
-    jf_apply "/DisplayPreferences/usersettings?userId=$user&client=emby" "$want" &&
-      echo "media: jellyfin home sections applied"
+    sync jellyfin "/DisplayPreferences/usersettings?userId=$user&client=emby" \
+      "$(api jellyfin GET "/DisplayPreferences/usersettings?userId=$user&client=emby" |
+        jq -c --slurpfile w "$dir/user.json" '.CustomPrefs += $w[0].homeSections')" \
+      "jellyfin home sections"
   done
-  shows=$(jf GET /Library/VirtualFolders | jq -r '.[] | select(.Name == "Shows") | .ItemId')
-  if [[ -n $shows ]] && ! jf GET "/Items/$shows/Images/Primary" -o /dev/null 2>/dev/null; then
-    base64 -w0 "$dir/shows.jpg" | JF_TYPE=image/jpeg jf POST "/Items/$shows/Images/Primary" --data-binary @-
+  shows=$(api jellyfin GET /Library/VirtualFolders | jq -r '.[] | select(.Name == "Shows") | .ItemId')
+  if [[ -n $shows ]] && ! api jellyfin GET "/Items/$shows/Images/Primary" -o /dev/null 2>/dev/null &&
+    apply "jellyfin Shows cover missing"; then
+    base64 -w0 "$dir/shows.jpg" | API_TYPE=image/jpeg api jellyfin POST "/Items/$shows/Images/Primary" --data-binary @-
     echo "media: jellyfin Shows cover uploaded"
   fi
+}
+
+# seerr_server <arr>: the repo's server entry with profile and tag ids looked up by name and the API key filled in.
+seerr_server() {
+  local arr=$1 profiles tags
+  profiles=$(api "$arr" GET /qualityprofile | jq -c 'map({(.name): .id}) | add')
+  tags=$(api "$arr" GET /tag | jq -c 'map({(.label): .id}) | add // {}')
+  expand_home "$REPO/media/seerr/$arr.json" | jq -c --argjson p "$profiles" --argjson t "$tags" \
+    --arg key "$(env_get "${arr^^}__AUTH__APIKEY")" '
+    .apiKey = $key | .activeProfileId = $p[.activeProfileName]
+    | if has("activeAnimeProfileName") then .activeAnimeProfileId = $p[.activeAnimeProfileName] else . end
+    | if has("animeTagLabels") then .animeTags = [.animeTagLabels[] | $t[.]] | del(.animeTagLabels) else . end'
+}
+
+# Seerr's first sign-in with the Jellyfin account is manual; until then it has no settings to sync.
+configure_seerr() {
+  local arr want have
+  if ! api seerr GET /settings/public 2>/dev/null | jq -e .initialized >/dev/null; then
+    echo "media: Seerr is not set up yet, its settings apply on the next deploy" >&2
+    return
+  fi
+  sync seerr /settings/main "$(api seerr GET /settings/main | jq -c --slurpfile w "$REPO/media/seerr/main.json" '. + $w[0]')" \
+    "seerr main settings"
+  for arr in radarr sonarr; do
+    want=$(seerr_server "$arr")
+    have=$(api seerr GET "/settings/$arr" | jq -c --argjson w "$want" 'map(select(.name == $w.name))[0] // empty')
+    if [[ -z $have ]]; then
+      apply "seerr $arr server missing" || continue
+      api seerr POST "/settings/$arr" -d "$want" >/dev/null
+      echo "media: seerr $arr server added"
+    elif [[ $(jq -cS . <<<"$have") != "$(jq -cS --argjson h "$have" '$h + .' <<<"$want")" ]]; then
+      apply "seerr $arr server" || continue
+      api seerr PUT "/settings/$arr/$(jq -r .id <<<"$have")" -d "$(jq -c --argjson h "$have" '$h + . | del(.id)' <<<"$want")" >/dev/null
+      echo "media: seerr $arr server applied"
+    fi
+  done
 }
 
 # Cloudflare-fronted indexers fail their first creation test until Prowlarr holds the clearance cookie.
@@ -241,10 +291,21 @@ main() {
   start_units
   configure_qbittorrent
   configure_bazarr
-  configure_jellyfin
   run_configarr
+  configure_seerr
+  configure_jellyfin
   set_magnet_default
   ensure_flatpaks
 }
 
-[[ -n ${MEDIA_DEPLOY_LIB:-} ]] || main
+# Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every hour.
+check() {
+  start_units
+  configure_qbittorrent
+  render_bazarr
+  configure_bazarr
+  configure_seerr
+  configure_jellyfin
+}
+
+[[ -n ${MEDIA_DEPLOY_LIB:-} ]] || if ((CHECK)); then check; else main; fi

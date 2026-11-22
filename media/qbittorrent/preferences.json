@@ -1,7 +1,7 @@
 {
   "listen_port": 9386,
   "upnp": false,
-  "save_path": "/home/raphael/Media/Downloads",
+  "save_path": "~/Media/Downloads",
   "auto_tmm_enabled": true,
   "max_ratio_enabled": false,
   "max_seeding_time_enabled": false,
@@ -10,7 +10,7 @@
   "excluded_file_names": "*.scr\n*.lnk\n*.vbs\n*.pif\n*.cmd\n*.js\n*.jse\n*.wsf\n*.hta",
   "bypass_local_auth": true,
   "bypass_auth_subnet_whitelist_enabled": false,
-  "export_dir": "/home/raphael/Personal/Torrents",
+  "export_dir": "~/Personal/Torrents",
   "use_category_paths_in_manual_mode": true,
   "auto_delete_mode": 0,
   "web_ui_username": "media",

@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+CACHE=${XDG_RUNTIME_DIR:-/tmp}/mediactl-releases.json
+
+usage() {
+  cat >&2 <<'EOF'
+usage: mediactl search <term>
+       mediactl request movie|tv <tmdb-id> [seasons: all | 1,2]
+       mediactl releases <term> [<season> <episode>] [--grep <regex>] [--limit N] [--why]
+       mediactl grab <n>
+       mediactl queue
+       mediactl audio <term>
+       mediactl import <series> <folder> [--grep <regex>]
+EOF
+  exit 2
+}
+
+uri() { jq -rn --arg s "$1" '$s | @uri'; }
+
+search() {
+  api seerr GET "/search?query=$(uri "$1")&page=1" | jq -r '.results[] | select(.mediaType == "movie" or .mediaType == "tv")
+    | [.mediaType, "tmdb=\(.id)", ((.releaseDate // .firstAirDate // "")[:4]), (.title // .name),
+       "[\({"1": "unknown", "2": "pending", "3": "downloading", "4": "partial", "5": "available", "6": "deleted"}[(.mediaInfo.status // 0) | tostring] // "not requested")]"]
+    | @tsv'
+}
+
+request() {
+  local type=$1 id=$2 seasons=${3:-all} body
+  body=$(jq -nc --arg t "$type" --argjson id "$id" --arg s "$seasons" \
+    '{mediaType: $t, mediaId: $id} + if $t == "tv" then {seasons: (if $s == "all" then "all" else $s | split(",") | map(tonumber) end)} else {} end')
+  api seerr POST /request -d "$body" | jq -r '"request \(.id) status=\(.status) (2 = approved, sent to Radarr/Sonarr)"'
+}
+
+# find_id <app> <term>: id of the first series or movie whose title contains the term.
+find_id() {
+  local path=/series
+  [[ $1 == radarr ]] && path=/movie
+  api "$1" GET "$path" | jq -er --arg t "$2" 'map(select(.title | ascii_downcase | contains($t | ascii_downcase)))[0].id' ||
+    { echo "mediactl: nothing matching '$2' in $1; search and request it first" >&2; exit 1; }
+}
+
+releases() {
+  local term=$1 season='' episode='' grep='' limit=20 why=0 app id rels
+  shift
+  if [[ ${1:-} =~ ^[0-9]+$ ]]; then season=$1 episode=${2:?episode}; shift 2; fi
+  while (($#)); do
+    case $1 in
+      --grep) grep=$2; shift 2 ;;
+      --limit) limit=$2; shift 2 ;;
+      --why) why=1; shift ;;
+      *) usage ;;
+    esac
+  done
+  if [[ -n $season ]]; then
+    app=sonarr
+    id=$(api sonarr GET "/episode?seriesId=$(find_id sonarr "$term")&seasonNumber=$season" |
+      jq -er --argjson e "$episode" 'map(select(.episodeNumber == $e))[0].id') ||
+      { echo "mediactl: S${season}E${episode} not found" >&2; exit 1; }
+    rels=$(api sonarr GET "/release?episodeId=$id" -m 300 | jq -c --argjson s "$season" --argjson e "$episode" '
+      ("S\($s | tostring | if length < 2 then "0" + . else . end)E\($e | tostring | if length < 2 then "0" + . else . end)") as $tag
+      | map(select(.title | test("\($tag)\\b|(?<!\\d)\($e | tostring | if length < 2 then "0" + . else . end)(?!\\d)"; "i")))')
+  else
+    app=radarr
+    rels=$(api radarr GET "/release?movieId=$(find_id radarr "$term")" -m 300)
+  fi
+  rels=$(jq -c --arg g "$grep" --argjson n "$limit" \
+    'map(select($g == "" or (.title | test($g)))) | sort_by(-(.seeders // 0)) | .[:$n]' <<<"$rels")
+  jq -c --arg app "$app" '{app: $app, items: map({guid, indexerId})}' <<<"$rels" >"$CACHE"
+  jq -r --argjson why "$why" 'to_entries[] | .key as $i | .value
+    | "\($i)\tseeds=\(.seeders // 0)\t\(.size / 1048576 | floor)MB\tscore=\(.customFormatScore // 0)\t\(if .rejected then "rejected" else "ok" end)\t\(.title[:110])"
+      + if $why == 1 and .rejected then "\n\t\(.rejections | join("; "))" else "" end' <<<"$rels"
+}
+
+grab() {
+  [[ -f $CACHE ]] || { echo "mediactl: run releases first" >&2; exit 1; }
+  api "$(jq -r .app "$CACHE")" POST /release -d "$(jq -ec --argjson n "$1" '.items[$n]' "$CACHE")" >/dev/null
+  echo "grabbed #$1; it reaches Jellyfin after the download and import"
+}
+
+queue() {
+  local app
+  for app in radarr sonarr; do
+    api "$app" GET '/queue?pageSize=100&includeUnknownMovieItems=true&includeUnknownSeriesItems=true' |
+      jq -r --arg app "$app" '.records[] | [$app, "\(if .size > 0 then (1000 - .sizeleft / .size * 1000 | floor) / 10 else 0 end)%",
+        .trackedDownloadState, .title[:80], ([.statusMessages[]?.messages[]] | join("; ") | .[:120])] | @tsv'
+  done
+}
+
+audio() {
+  api jellyfin GET "/Items?searchTerm=$(uri "$1")&Recursive=true&IncludeItemTypes=Movie,Episode&Fields=MediaStreams&Limit=50" |
+    jq -r '.Items[] | "\(.SeriesName // "") \(if .Type == "Episode" then "S\(.ParentIndexNumber)E\(.IndexNumber) " else "" end)\(.Name): audio \([.MediaStreams[] | select(.Type == "Audio") | .Language // "und"] | unique | join(","))"'
+}
+
+import() {
+  local series folder=$2 grep='' files
+  series=$(find_id sonarr "$1")
+  [[ ${3:-} == --grep ]] && grep=$4
+  files=$(api sonarr GET "/manualimport?folder=$(uri "$folder")&seriesId=$series&filterExistingFiles=false" |
+    jq -c --arg g "$grep" --argjson s "$series" 'map(select((.episodes | length) > 0 and ($g == "" or (.path | test($g))))
+      | {path, seriesId: $s, episodeIds: [.episodes[].id], quality, languages, releaseGroup, downloadId})')
+  [[ $files != '[]' ]] || { echo "mediactl: no file there matched an episode; check the folder and --grep" >&2; exit 1; }
+  api sonarr POST /command -d "$(jq -c '{name: "ManualImport", files: ., importMode: "auto"}' <<<"$files")" >/dev/null
+  jq -r '.[] | "importing \(.path)"' <<<"$files"
+}
+
+cmd=${1:-}
+(($#)) && shift
+case $cmd in
+  search) search "${1:?term}" ;;
+  request) request "${1:?movie or tv}" "${2:?tmdb id}" "${3:-all}" ;;
+  releases) releases "${1:?term}" "${@:2}" ;;
+  grab) grab "${1:?n}" ;;
+  queue) queue ;;
+  audio) audio "${1:?term}" ;;
+  import) import "${1:?series}" "${2:?folder}" "${@:3}" ;;
+  *) usage ;;
+esac

@@ -1,12 +1,12 @@
 {
-  "Movies": "/home/raphael/Media/Downloads/Movies",
-  "Series": "/home/raphael/Media/Downloads/Series",
-  "Anime": "/home/raphael/Media/Downloads/Anime",
-  "Books": "/home/raphael/Media/Books",
-  "Mangas": "/home/raphael/Media/Mangas",
-  "Games": "/home/raphael/Games",
-  "Games/PC": "/home/raphael/Games/PC",
-  "Games/Switch": "/home/raphael/Games/Switch/Library",
-  "Games/PSP": "/home/raphael/Games/PSP",
-  "Games/PSX": "/home/raphael/Games/PSX"
+  "Movies": "~/Media/Downloads/Movies",
+  "Series": "~/Media/Downloads/Series",
+  "Anime": "~/Media/Downloads/Anime",
+  "Books": "~/Media/Books",
+  "Mangas": "~/Media/Mangas",
+  "Games": "~/Games",
+  "Games/PC": "~/Games/PC",
+  "Games/Switch": "~/Games/Switch/Library",
+  "Games/PSP": "~/Games/PSP",
+  "Games/PSX": "~/Games/PSX"
 }
