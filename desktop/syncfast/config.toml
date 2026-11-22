@@ -5,7 +5,7 @@ conflict_resolve = "local"
 review = "automatic"
 
 [app]
-theme = "noctalia.json"
+theme = "dark"
 autostart = true
 
 [[pair]]
