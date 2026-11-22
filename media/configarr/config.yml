@@ -93,6 +93,17 @@ radarr:
       config:
         enable_completed_download_handling: true
 
+    notifications:
+      data:
+        - name: Jellyfin
+          type: MediaBrowser
+          events: { on_download: true, on_upgrade: true, on_rename: true, on_movie_delete: true, on_movie_file_delete: true }
+          fields:
+            host: jellyfin
+            port: 8096
+            apiKey: !env JELLYFIN_TOKEN
+            updateLibrary: true
+
 sonarr:
   main:
     base_url: http://sonarr:8989
@@ -173,6 +184,17 @@ sonarr:
             tv_category: Anime
       config:
         enable_completed_download_handling: true
+
+    notifications:
+      data:
+        - name: Jellyfin
+          type: MediaBrowser
+          events: { on_download: true, on_upgrade: true, on_rename: true, on_series_delete: true, on_episode_file_delete: true }
+          fields:
+            host: jellyfin
+            port: 8096
+            apiKey: !env JELLYFIN_TOKEN
+            updateLibrary: true
 
 prowlarr:
   main:
