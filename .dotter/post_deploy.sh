@@ -223,6 +223,13 @@ kwriteconfig6 --file kwinrc --group Plugins --key slideEnabled false
 kwriteconfig6 --file kwinrc --group Effect-fadedesktop --key AnimationDuration 120
 kwriteconfig6 --file kwinrc --group Plugins --key kwin4_effect_geometry_changeEnabled true
 kwriteconfig6 --file kwinrc --group Effect-kwin4_effect_geometry_change --key Duration 180
+# Solid desktop: no blur or background contrast behind the panel and popups.
+kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled false
+kwriteconfig6 --file kwinrc --group Plugins --key contrastEnabled false
+kwriteconfig6 --file plasmashellrc --group PlasmaViews --group "Panel 2" --key panelOpacity 1
+# Kickoff opens anchored to its icon; this script (vendored from
+# github.com/terminallywell/center-widget-popups) moves it to the screen's horizontal center.
+kwriteconfig6 --file kwinrc --group Plugins --key center-widget-popupsEnabled true
 gdbus call --session --dest org.kde.KWin --object-path /KWin --method org.kde.KWin.reconfigure >/dev/null 2>&1 || true
 for effect in scale fadedesktop kwin4_effect_geometry_change; do
   gdbus call --session --dest org.kde.KWin --object-path /Effects \

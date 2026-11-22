@@ -72,6 +72,7 @@ case $machine in
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
     for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
     absent .local/share/kwin/effects/kwin4_effect_geometry_change
+    absent .local/share/kwin/scripts/center-widget-popups
     ;;
   fedora)
     for f in "${laptop_only[@]}"; do absent "$f"; done
@@ -81,6 +82,7 @@ case $machine in
     repo_link .local/share/kwin/effects/kwin4_effect_geometry_change
     [[ -f $H/.local/share/kwin/effects/kwin4_effect_geometry_change/metadata.json ]] ||
       fail "geometry change link does not reach metadata.json"
+    repo_link .local/share/kwin/scripts/center-widget-popups
     ;;
   *) echo "unknown machine: $machine"; exit 2 ;;
 esac
