@@ -13,5 +13,5 @@
   "activeProfileName": "4K (1080p fallback)",
   "activeDirectory": "~/Media/Movies",
   "minimumAvailability": "released",
-  "externalUrl": "http://localhost:7878"
+  "externalUrl": "http://radarr.localhost"
 }

@@ -18,5 +18,5 @@
   "seriesType": "standard",
   "animeSeriesType": "anime",
   "enableSeasonFolders": true,
-  "externalUrl": "http://localhost:8989"
+  "externalUrl": "http://sonarr.localhost"
 }

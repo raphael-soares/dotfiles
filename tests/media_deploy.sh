@@ -47,6 +47,9 @@ while read -r upstream; do
 done < <(awk '$1 == "reverse_proxy" {print $2}' "$caddyfile" 2>/dev/null)
 grep -q 'PublishPort=127.0.0.1:80:80' "$REPO/media/containers/caddy.container" 2>/dev/null &&
   grep -q 'PublishPort=\[::1\]:80:80' "$REPO/media/containers/caddy.container" || fail "caddy does not listen on both loopback families"
+for arr in radarr sonarr; do
+  [[ $(jq -r .externalUrl "$REPO/media/seerr/$arr.json") == "http://$arr.localhost" ]] || fail "seerr links to $arr outside the proxy"
+done
 
 mkdir "$T/bin"
 cat >"$T/bin/systemctl" <<'EOF'
