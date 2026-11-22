@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ENV_FILE=$HOME/.config/media/media.env
+env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
+
+languages=$(mkvmerge --list-languages | awk -F'|' 'NR > 2 {
+  for (i = 1; i <= 4; i++) gsub(/^ +| +$/, "", $i); print $1 "\t" $2 " " $3 " " $4 }')
+
+codes_for() { awk -F'\t' -v n="$1" '$1 == n { print $2; exit }' <<<"$languages"; }
+
+# Copies before editing: the library file is a hardlink of the seeding torrent, whose bytes must not change.
+fix() {
+  local path=$1 language=$2 codes info target args tmp
+  codes=$(codes_for "$language")
+  [[ -n $codes ]] || return 0
+  info=$(mkvmerge -J "$path")
+  target=$(jq -r --arg c "$codes" '($c | split(" ") | map(select(. != ""))) as $codes
+    | [.tracks[] | select(.type == "audio")] | to_entries
+    | map(select(.value.properties | [.language, ((.language_ietf // "") | split("-")[0])]
+      | any(.[]; . as $l | $codes | index($l))))
+    | .[0].key // empty' <<<"$info")
+  [[ -n $target ]] || return 0
+  args=$(jq -r --argjson t "$target" '[.tracks[] | select(.type == "audio")] | to_entries
+    | if all(.[]; (.key == $t) == (.value.properties.default_track // false)) then empty
+      else .[] | "--edit track:a\(.key + 1) --set flag-default=\(if .key == $t then 1 else 0 end)" end' <<<"$info")
+  [[ -n $args ]] || return 0
+  tmp=$(dirname "$path")/.$(basename "$path").tmp
+  cp --reflink=auto "$path" "$tmp"
+  # shellcheck disable=SC2086
+  mkvpropedit -q "$tmp" $args
+  mv "$tmp" "$path"
+  echo "media-original-audio: $language is now the default audio of $path"
+}
+
+arr() { curl -fsS -H "X-Api-Key: $2" "http://127.0.0.1:$1/api/v3/$3"; }
+
+radarr_key=$(env_get RADARR__AUTH__APIKEY)
+sonarr_key=$(env_get SONARR__AUTH__APIKEY)
+{
+  arr 7878 "$radarr_key" movie | jq -r '.[] | select(.hasFile) | [.movieFile.path, .originalLanguage.name, .movieFile.mediaInfo.audioLanguages // ""] | @tsv'
+  arr 8989 "$sonarr_key" series | jq -r '.[] | [.id, .originalLanguage.name] | @tsv' |
+    while IFS=$'\t' read -r id language; do
+      arr 8989 "$sonarr_key" "episodefile?seriesId=$id" |
+        jq -r --arg l "$language" '.[] | [.path, $l, .mediaInfo.audioLanguages // ""] | @tsv'
+    done
+} | while IFS=$'\t' read -r path language audio; do
+  if [[ $path == *.mkv && $audio == */* && -f $path ]]; then fix "$path" "$language"; fi
+done

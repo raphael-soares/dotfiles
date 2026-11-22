@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ENV_FILE=$HOME/.config/media/media.env
+DAYS=${MEDIA_CLEANUP_DAYS:-90}
+QBT=http://127.0.0.1:8080/api/v2
+env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
+
+radarr_key=$(env_get RADARR__AUTH__APIKEY)
+sonarr_key=$(env_get SONARR__AUTH__APIKEY)
+jellyfin_token=$(env_get JELLYFIN_TOKEN)
+[[ -n $jellyfin_token ]] || { echo "media-cleanup: JELLYFIN_TOKEN is empty in $ENV_FILE" >&2; exit 1; }
+
+arr() {
+  local port=$1 key=$2 method=$3 path=$4
+  shift 4
+  curl -fsS -X "$method" -H "X-Api-Key: $key" -H 'Content-Type: application/json' "$@" "http://127.0.0.1:$port/api/v3/$path"
+}
+jellyfin() { curl -fsS -H "Authorization: MediaBrowser Token=\"$jellyfin_token\"" "http://127.0.0.1:8096$1"; }
+act() { [[ -n ${DRY_RUN:-} ]] || "$@"; }
+
+cutoff=$(date -u -d "-$DAYS days" +%FT%T)
+watched=$(
+  jellyfin /Users | jq -r '.[].Id' | while read -r user; do
+    jellyfin "/Users/$user/Items?Recursive=true&IncludeItemTypes=Movie,Episode&IsPlayed=true&Fields=Path&EnableUserData=true" |
+      jq -c '.Items[] | {path: .Path, last: (.UserData.LastPlayedDate // "")}'
+  done | jq -sc --arg cutoff "$cutoff" 'group_by(.path) | map(select(max_by(.last).last[:19] < $cutoff) | .[0].path)'
+)
+
+arr 7878 "$radarr_key" GET movie |
+  jq -r --argjson w "$watched" '.[] | select(.hasFile and (.movieFile.path as $p | $w | index($p))) | [.id, .title] | @tsv' |
+  while IFS=$'\t' read -r id title; do
+    echo "media-cleanup: removing $title"
+    act arr 7878 "$radarr_key" DELETE "movie/$id?deleteFiles=true&addImportExclusion=false"
+  done
+
+arr 8989 "$sonarr_key" GET series | jq -r '.[] | [.id, .title] | @tsv' | while IFS=$'\t' read -r series title; do
+  arr 8989 "$sonarr_key" GET "episodefile?seriesId=$series" |
+    jq -r --argjson w "$watched" '.[] | select(.path as $p | $w | index($p)) | [.id, .relativePath] | @tsv' |
+    while IFS=$'\t' read -r file name; do
+      episodes=$(arr 8989 "$sonarr_key" GET "episode?seriesId=$series" | jq -c --argjson f "$file" 'map(select(.episodeFileId == $f) | .id)')
+      echo "media-cleanup: removing $title: $name"
+      act arr 8989 "$sonarr_key" PUT episode/monitor -d "{\"episodeIds\":$episodes,\"monitored\":false}" -o /dev/null
+      act arr 8989 "$sonarr_key" DELETE "episodefile/$file"
+    done
+done
+
+# A torrent Radarr or Sonarr grabbed is spent once it left their queue and no library hardlink points at its files.
+grabbed=$(
+  for app in "7878 $radarr_key" "8989 $sonarr_key"; do
+    read -r port key <<<"$app"
+    arr "$port" "$key" GET 'history?eventType=1&pageSize=100000' | jq '[.records[].downloadId]'
+    arr "$port" "$key" GET 'queue?pageSize=100000&includeUnknownMovieItems=true&includeUnknownSeriesItems=true' |
+      jq '[.records[].downloadId] | map({queued: .})'
+  done | jq -sc 'add | {grabbed: map(strings | ascii_upcase), queued: map(objects | .queued | strings | ascii_upcase)}'
+)
+curl -fsS "$QBT/torrents/info?filter=completed" |
+  jq -r --argjson g "$grabbed" '.[] | select((.hash | ascii_upcase) as $h | ($g.grabbed | index($h)) and ($g.queued | index($h) | not))
+    | [.hash, .name] | @tsv' |
+  while IFS=$'\t' read -r hash name; do
+    dir=$(curl -fsS "$QBT/torrents/properties?hash=$hash" | jq -r .save_path)
+    linked=$(curl -fsS "$QBT/torrents/files?hash=$hash" | jq -r '.[].name' | while IFS= read -r f; do
+      [[ ! -e $dir/$f || $(stat -c %h "$dir/$f") == 1 ]] || echo linked
+    done)
+    [[ -z $linked ]] || continue
+    echo "media-cleanup: deleting torrent $name"
+    act curl -fsS -d "hashes=$hash" -d deleteFiles=true "$QBT/torrents/delete"
+  done

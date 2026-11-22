@@ -1,3 +1,4 @@
 podman
 gettext-envsubst
 qbittorrent
+mkvtoolnix

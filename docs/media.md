@@ -52,11 +52,25 @@ Inside the network, services reach each other by container name
   (WebUI on, starts hidden in the tray, monochrome tray icon), starts
   qBittorrent if needed and applies `media/qbittorrent/preferences.json` and
   `categories.json` (categories not in the file are removed);
-- renders Bazarr's config from `media/bazarr/config.yaml.tmpl` and applies the
-  pt-BR and English language profile;
+- renders Bazarr's config from `media/bazarr/config.yaml.tmpl` (subtitle
+  timing fixed with subsync when the match score is low) and applies the pt-BR
+  and English language profile;
 - runs Configarr (`media/configarr/config.yml`): quality profiles, sizes,
   naming, root folders, the qBittorrent client, Prowlarr indexers and apps;
-- makes qBittorrent the magnet link handler and installs Jellyfin Desktop.
+- makes qBittorrent the magnet link handler and installs Jellyfin Desktop;
+- enables two timers: `media-original-audio` (every 15 minutes) and
+  `media-cleanup` (daily).
+
+`media-original-audio` makes the film or series' original language the
+default audio track of MKV files that have more than one, so a dual audio
+release never starts dubbed. It edits a copy and swaps it in, since the
+library file is a hardlink of the torrent still seeding.
+
+`media-cleanup` removes films and episodes everyone finished watching 90 days
+ago (`MEDIA_CLEANUP_DAYS` in the unit) through Radarr and Sonarr, unmonitoring
+the episodes so they are not fetched again, then deletes the torrents those
+apps grabbed once no library file links to them. `DRY_RUN=1 media-cleanup`
+lists what it would remove.
 
 `media/autostart` starts qBittorrent hidden at login.
 
@@ -74,7 +88,11 @@ a custom one and only searches by IMDb id.
    `Movies` (`/home/raphael/Media/Movies`) and `Series`
    (`/home/raphael/Media/Series`), preferred subtitle language Portuguese
    (Brazil), subtitle mode Always. In Dashboard → Playback → Transcoding pick VAAPI with
-   `/dev/dri/renderD128`.
+   `/dev/dri/renderD128`. In Dashboard → API Keys create a key and put it in
+   `media.env` as `JELLYFIN_TOKEN` (`media-cleanup` reads watch history with
+   it). Turn on "Automatically add to collection" in the Movies library and
+   install Intro Skipper from the repository `https://intro-skipper.org/manifest.json`
+   (skip intro and credits buttons in series).
 3. Seerr, at <http://127.0.0.1:5055>: sign in with the Jellyfin account
    (server `http://jellyfin:8096`), then add Radarr (`radarr`, port 7878,
    profile `4K (1080p fallback)`, root `/home/raphael/Media/Movies`) and Sonarr

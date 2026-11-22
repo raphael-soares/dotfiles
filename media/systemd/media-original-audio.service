@@ -1,0 +1,6 @@
+[Unit]
+Description=Make the original language the default audio of new films and episodes
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/media-original-audio
