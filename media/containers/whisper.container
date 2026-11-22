@@ -1,19 +1,20 @@
 [Unit]
-Description=Whisper speech to text, makes subtitles for Bazarr when no site has them
+Description=Whisper API for Bazarr, forwards to whisper.cpp
+Wants=whisper-cpp.service
+After=whisper-cpp.service
 
 [Container]
 ContainerName=whisper
 AutoUpdate=registry
 Network=media.network
-Image=docker.io/onerahmet/openai-whisper-asr-webservice:latest
-Environment=ASR_ENGINE=faster_whisper ASR_MODEL=medium ASR_MODEL_PATH=/data/whisper
+Image=docker.io/library/python:3-alpine
+Exec=python3 /app/asr-shim.py
 PublishPort=127.0.0.1:9000:9000
 SecurityLabelDisable=true
-Volume=%h/.cache/media/whisper:/data/whisper
+Volume=%h/.config/media/whisper:/app:ro
 
 [Service]
 Restart=on-failure
-TimeoutStartSec=900
 
 [Install]
 WantedBy=default.target

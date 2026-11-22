@@ -99,7 +99,8 @@ Torrentio has no
 stock Prowlarr definition: `media/prowlarr/definitions/torrentio.yml` is
 mounted as a custom one and only searches by IMDb id.
 
-Bazarr asks Whisper (faster-whisper, `medium` model, on the CPU) only when no
+Bazarr asks Whisper (whisper.cpp, `medium` model, on the GPU through Vulkan;
+`media/whisper/asr-shim.py` keeps the API Bazarr speaks) only when no
 subtitle site has the episode or film. Whisper writes the language spoken in
 the audio or English, never a translation to Portuguese: a Japanese anime
 without pt-BR subtitles on the sites gets English ones made by Whisper.

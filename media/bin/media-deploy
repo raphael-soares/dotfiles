@@ -5,7 +5,7 @@ REPO=${1:?usage: media-deploy <repo>}
 CONF=$HOME/.config/media
 ENV_FILE=$CONF/media.env
 STATE=$HOME/.local/share/media
-UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper)
+UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
 QBT=http://127.0.0.1:8080/api/v2
 
 ensure_env() {
@@ -44,9 +44,16 @@ wait_http() {
 
 ensure_dirs() {
   mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr} \
-    "$HOME"/.cache/media/{jellyfin,configarr,whisper} \
+    "$HOME"/.cache/media/{jellyfin,configarr,whisper-cpp} \
     "$HOME"/Media/{Movies,Series,Anime,Downloads/Movies,Downloads/Series} \
     "$HOME"/Games "$HOME"/Personal/Torrents
+}
+
+ensure_whisper_model() {
+  local model=$HOME/.cache/media/whisper-cpp/ggml-medium.bin
+  [[ -f $model ]] && return
+  curl -fL -C - --retry 5 -o "$model.part" https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin
+  mv "$model.part" "$model"
 }
 
 # A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
@@ -55,7 +62,8 @@ start_units() {
   mkdir -p "$STATE/.applied"
   local u sum
   for u in "${UNITS[@]}"; do
-    sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" | sha256sum)
+    sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" \
+      $([[ $u == whisper ]] && echo "$REPO/media/whisper/asr-shim.py") | sha256sum)
     if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
       systemctl --user start "$u"
     else
@@ -167,6 +175,7 @@ main() {
   ensure_dirs
   seed_qbittorrent
   render_bazarr
+  ensure_whisper_model
   start_units
   configure_qbittorrent
   configure_bazarr
