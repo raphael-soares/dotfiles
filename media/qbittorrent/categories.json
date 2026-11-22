@@ -1,6 +1,6 @@
 {
-  "radarr": "/home/raphael/Media/Downloads/radarr",
-  "sonarr": "/home/raphael/Media/Downloads/sonarr",
+  "Movies": "/home/raphael/Media/Downloads/Movies",
+  "Series": "/home/raphael/Media/Downloads/Series",
   "Books": "/home/raphael/Media/Books",
   "Mangas": "/home/raphael/Media/Mangas",
   "Games": "/home/raphael/Games",

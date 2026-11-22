@@ -7,7 +7,7 @@ StartUpWindowState=Hidden
 [Preferences]
 Advanced\TrayIconStyle=MonoLight
 General\CloseToTray=true
-General\Locale=pt_BR
+General\Locale=en
 General\MinimizeToTray=true
 General\NoSplashScreen=true
 General\SystrayEnabled=true

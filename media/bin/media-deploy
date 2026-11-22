@@ -45,7 +45,7 @@ wait_http() {
 ensure_dirs() {
   mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr} \
     "$HOME"/.cache/media/{jellyfin,configarr} \
-    "$HOME"/Media/{Movies,Series,Downloads/radarr,Downloads/sonarr} \
+    "$HOME"/Media/{Movies,Series,Downloads/Movies,Downloads/Series} \
     "$HOME"/Games "$HOME"/Personal/Torrents
 }
 
