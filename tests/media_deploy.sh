@@ -47,6 +47,17 @@ while read -r upstream; do
 done < <(awk '$1 == "reverse_proxy" {print $2}' "$caddyfile" 2>/dev/null)
 grep -q 'PublishPort=127.0.0.1:80:80' "$REPO/media/containers/caddy.container" 2>/dev/null &&
   grep -q 'PublishPort=\[::1\]:80:80' "$REPO/media/containers/caddy.container" || fail "caddy does not listen on both loopback families"
+grep -Eq '^PublishPort=([0-9]{1,3}\.){3}[0-9]{1,3}:80:8080$' "$REPO/media/containers/caddy.container" 2>/dev/null ||
+  fail "caddy has no LAN entry on a fixed IPv4 address"
+while read -r site; do
+  case $site in
+    http://*.localhost:80) ;;
+    http://*.homelab.local:8080) ;;
+    *) fail "Caddyfile site $site is not a loopback name on :80 or a LAN name on :8080" ;;
+  esac
+done < <(grep -o '^http://[^ ]*' "$caddyfile" 2>/dev/null)
+grep -q '^http://jellyfin.homelab.local:8080' "$caddyfile" && grep -q '^http://seerr.homelab.local:8080' "$caddyfile" ||
+  fail "Jellyfin and Seerr have no LAN names"
 for arr in radarr sonarr; do
   [[ $(jq -r .externalUrl "$REPO/media/seerr/$arr.json") == "http://$arr.localhost" ]] || fail "seerr links to $arr outside the proxy"
 done

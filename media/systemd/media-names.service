@@ -1,0 +1,10 @@
+[Unit]
+Description=Announce the homelab.local names of the media services on the LAN
+
+[Service]
+ExecStart=%h/.local/bin/media-names
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/..
+ip=$(sed -n 's/^PublishPort=\([0-9.]*\):80:8080$/\1/p' "$repo/containers/caddy.container")
+[[ -n $ip ]] || { echo "media-names: no LAN PublishPort in caddy.container" >&2; exit 1; }
+
+pids=()
+while read -r name; do
+  avahi-publish -a -R "$name" "$ip" &
+  pids+=($!)
+done < <(sed -n 's|^http://\([^ :]*\.homelab\.local\):8080.*|\1|p' "$repo/caddy/Caddyfile")
+((${#pids[@]})) || { echo "media-names: no homelab.local site in the Caddyfile" >&2; exit 1; }
+
+trap 'kill "${pids[@]}" 2>/dev/null' EXIT
+wait -n
+echo "media-names: an avahi-publish exited" >&2
+exit 1

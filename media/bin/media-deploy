@@ -79,6 +79,15 @@ ensure_low_ports() {
   log "unprivileged ports start at 80"
 }
 
+# FedoraWorkstation opens only 1025-65535 to the LAN; caddy's LAN entry needs 80.
+ensure_lan_port() {
+  firewall-cmd -q --query-port=80/tcp && return
+  apply "firewall port 80/tcp closed" || return 0
+  sudo firewall-cmd -q --permanent --add-port=80/tcp
+  sudo firewall-cmd -q --reload
+  log "firewall port 80/tcp opened"
+}
+
 # Dotter needs sudo for the other packages, so media links its own files too; dotter adopts a link
 # that already points at its source.
 LINK_DIRS=(containers:.config/containers/systemd/media configarr:.config/media/configarr
@@ -126,6 +135,7 @@ start_units() {
       ((CHECK)) || systemctl --user start "$u"
     elif apply "unit $u (quadlet changed since the last deploy)"; then
       systemctl --user restart "$u"
+      [[ $u != caddy ]] || systemctl --user try-restart media-names.service
       echo "$sum" >"$STATE/.applied/$u"
     fi
   done
@@ -135,6 +145,9 @@ start_units() {
       systemctl --user enable --now "${t##*/}"
     fi
   done
+  if ! systemctl --user is-enabled --quiet media-names.service && apply "media-names.service not enabled"; then
+    systemctl --user enable --now media-names.service
+  fi
 }
 
 # Before the first start: the desktop app keeps its WebUI, which Radarr and Sonarr use, off without credentials.
@@ -347,6 +360,7 @@ main() {
   render_bazarr
   ensure_whisper_model
   ensure_low_ports
+  ensure_lan_port
   start_units
   configure_qbittorrent
   configure_bazarr
@@ -362,6 +376,7 @@ check() {
   local problems
   link_files
   ensure_low_ports
+  ensure_lan_port
   start_units
   configure_qbittorrent
   render_bazarr

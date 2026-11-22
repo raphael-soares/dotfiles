@@ -14,8 +14,8 @@ and Jellyfin Desktop (flatpak) plays on this PC. Design:
 
 | Service | Address | Reachable from |
 |---|---|---|
-| Jellyfin | <http://fedora.local:8096> | LAN |
-| Seerr | <http://fedora.local:5055> | LAN |
+| Jellyfin | <http://jellyfin.homelab.local> (or <http://fedora.local:8096>) | LAN |
+| Seerr | <http://seerr.homelab.local> (or <http://fedora.local:5055>) | LAN |
 | qBittorrent WebUI (used by Radarr and Sonarr) | `host.containers.internal:8080` | containers, password in `media.env` |
 | Radarr | <http://radarr.localhost> | this PC |
 | Sonarr | <http://sonarr.localhost> | this PC |
@@ -24,11 +24,24 @@ and Jellyfin Desktop (flatpak) plays on this PC. Design:
 | FlareSolverr | `flaresolverr:8191` | containers only |
 | Whisper (speech to text for Bazarr) | <http://whisper.localhost> | this PC |
 
-The `<app>.localhost` names go through the `caddy` container
-(`media/caddy/Caddyfile`), the only one publishing a port on this PC besides
-Jellyfin and Seerr. It listens on loopback port 80, which rootless podman can
-use because the deploy sets `net.ipv4.ip_unprivileged_port_start=80` in
-`/etc/sysctl.d/90-media-unprivileged-ports.conf` (asks for sudo once).
+The names go through the `caddy` container (`media/caddy/Caddyfile`), the
+only one publishing a port on this PC besides Jellyfin and Seerr. It has two
+entries, kept apart by container port because rootless podman hides the
+client address:
+
+- loopback port 80 serves every `<app>.localhost` name, admin tools included;
+- `192.168.1.250:80` (the LAN) serves only `jellyfin.homelab.local` and
+  `seerr.homelab.local`. `media-names.service` announces those names over
+  Avahi, reading the IP from `caddy.container`.
+
+The deploy sets `net.ipv4.ip_unprivileged_port_start=80` in
+`/etc/sysctl.d/90-media-unprivileged-ports.conf` and opens 80/tcp in
+firewalld (asks for sudo once each).
+
+`192.168.1.250` is a static address set on this PC (NetworkManager, the
+"Adriana 2.4G" connection), not a router reservation: the router panel
+password is unknown. If the PC gets another IP, caddy fails to start
+(`journalctl --user -u caddy`); fix the address in `caddy.container`.
 
 qBittorrent listens for peers on 9386 (TCP and UDP). The router has no UPnP
 gateway, so incoming peers only reach it if 9386 is forwarded by hand on the

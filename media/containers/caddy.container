@@ -1,5 +1,5 @@
 [Unit]
-Description=Caddy, names the media admin tools as <app>.localhost
+Description=Caddy, names the media services as <app>.localhost here and <app>.homelab.local on the LAN
 
 [Container]
 ContainerName=caddy
@@ -9,6 +9,7 @@ Network=media.network
 Image=docker.io/library/caddy:2
 PublishPort=127.0.0.1:80:80
 PublishPort=[::1]:80:80
+PublishPort=192.168.1.250:80:8080
 SecurityLabelDisable=true
 Volume=%h/.config/media/caddy:/etc/caddy:ro
 
