@@ -173,7 +173,9 @@ category `Anime`); Seerr adds that tag to anime requests. The untagged client
 (priority 2) takes everything else. A torrent added by hand
 with one of those categories is imported the same way when its film or series
 is already in Radarr or Sonarr (request it in Seerr first); otherwise it waits
-in that app's Activity queue for a manual import.
+in that app's Activity queue for a manual import. After each import Radarr and
+Sonarr ask Jellyfin to rescan (Connect > Jellyfin, using `JELLYFIN_TOKEN`), so
+new files show up without waiting for the library's file watcher.
 
 To add a category, add a `"Name": "/absolute/path"` line to
 `media/qbittorrent/categories.json` and `dotter deploy`. Subcategories use a
