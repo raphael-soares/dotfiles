@@ -10,7 +10,7 @@ AutoUpdate=registry
 Network=media.network
 Image=docker.io/library/python:3-alpine
 Exec=python3 /app/asr-shim.py
-PublishPort=127.0.0.1:9000:9000
+RunInit=true
 SecurityLabelDisable=true
 Volume=%h/.config/media/whisper:/app:ro
 
