@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+STALL_HOURS=${MEDIA_STALL_HOURS:-6}
+CATEGORIES='["Movies","Series","Anime"]'
+TAGS=(library seeding-only stalled)
+
+# stdin: qBittorrent's torrents; $1: now in epoch seconds. Prints the hashes of downloads in the
+# Radarr and Sonarr categories that moved no data for STALL_HOURS (queued ones are only waiting).
+stalled_torrents() {
+  jq -r --argjson now "$1" --argjson secs $((STALL_HOURS * 3600)) --argjson c "$CATEGORIES" '.[]
+    | select(.category as $k | $c | index($k))
+    | select(.state == "metaDL" or .state == "forcedMetaDL" or .state == "stalledDL")
+    | select($now - ([.added_on, .last_activity] | max) >= $secs)
+    | .hash'
+}
+
+# tag <hash> <current tags> <wanted tag or empty>: leaves exactly the wanted one of TAGS on the torrent.
+tag() {
+  local hash=$1 have=$2 want=$3 t drop=()
+  for t in "${TAGS[@]}"; do
+    [[ $t != "$want" && ", $have, " == *", $t, "* ]] && drop+=("$t")
+  done
+  ((${#drop[@]} == 0)) || qbt /torrents/removeTags -d "hashes=$hash" --data-urlencode "tags=$(IFS=,; echo "${drop[*]}")"
+  [[ -z $want || ", $have, " == *", $want, "* ]] || qbt /torrents/addTags -d "hashes=$hash" --data-urlencode "tags=$want"
+}
+
+# A stalled download Radarr or Sonarr grabbed goes to the blocklist, which also makes the app search
+# for another release. One added by hand only gets the tag.
+replace() {
+  local hash=${1^^} app id
+  for app in radarr sonarr; do
+    id=$(api "$app" GET '/queue?pageSize=1000' | jq -r --arg h "$hash" '.records[] | select(.downloadId == $h) | .id' | head -1)
+    [[ -n $id ]] || continue
+    api "$app" DELETE "/queue/$id?removeFromClient=true&blocklist=true"
+    echo "media-torrents: $app is replacing stalled $2"
+    return 0
+  done
+  return 1
+}
+
+main() {
+  local info stalled hash name category progress have want
+  qbt /torrents/createTags --data-urlencode "tags=$(IFS=,; echo "${TAGS[*]}")"
+  info=$(qbt /torrents/info)
+  stalled=$(stalled_torrents "$(date +%s)" <<<"$info")
+  while IFS=$'\t' read -r hash name category progress have; do
+    want=
+    if [[ $progress == 1 ]]; then
+      if torrent_linked "$hash"; then want=library; else want=seeding-only; fi
+    elif grep -qx "$hash" <<<"$stalled"; then
+      replace "$hash" "$name" && continue
+      want=stalled
+    fi
+    tag "$hash" "$have" "$want"
+  done < <(jq -r --argjson c "$CATEGORIES" '.[] | select(.category as $k | $c | index($k))
+    | [.hash, .name, .category, (if .progress == 1 then 1 else 0 end), .tags] | @tsv' <<<"$info")
+}
+
+[[ -n ${MEDIA_TORRENTS_LIB:-} ]] || main

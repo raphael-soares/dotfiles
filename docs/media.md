@@ -97,13 +97,15 @@ playback key has to be added to the file by hand to be tracked).
 default audio track of MKV files that have more than one, so a dual audio
 release never starts dubbed. Anime is the exception: a Portuguese track wins
 when there is one. It edits a copy and swaps it in, since the library file is
-a hardlink of the torrent still seeding.
+a hardlink of the torrent still seeding; until that torrent is deleted, the
+file takes its space twice.
 
 `media-cleanup` removes films and episodes everyone finished watching 14 days
 ago (`MEDIA_CLEANUP_DAYS` in the unit) through Radarr and Sonarr, unmonitoring
 the episodes so they are not fetched again. A torrent those apps grabbed is
-deleted once no library file links to it and it has seeded to ratio 1 or for
-30 days (`MEDIA_SEED_RATIO`, `MEDIA_SEED_DAYS`). `DRY_RUN=1 media-cleanup`
+deleted once no library file links to it and it has seeded to ratio 1, for
+30 days, or its swarm has 50 seeders or more (`MEDIA_SEED_RATIO`,
+`MEDIA_SEED_DAYS`, `MEDIA_SEED_SWARM`). `DRY_RUN=1 media-cleanup`
 lists what it would remove; `tests/media_cleanup.sh` covers the rules.
 
 `media-backup` copies the databases (`sqlite3 .backup`, safe while the
@@ -120,8 +122,9 @@ downloads the newest archive, unpacks it and checks every database with
 
 `media-watchdog` restarts a service whose web page stopped answering for two
 checks in a row (a crashed one is restarted by systemd itself), reopens
-qBittorrent in the tray when it was closed, and runs `media-unstick`: a
-finished download stuck waiting for a manual import is imported when Radarr
+qBittorrent in the tray when it was closed, and runs `media-unstick` and
+`media-torrents` (see qBittorrent). `media-unstick` imports a
+finished download stuck waiting for a manual import when Radarr
 or Sonarr grabbed it itself (its history names the film or series) and has no
 objection to the files, so a release with an odd title no longer waits.
 
@@ -196,6 +199,18 @@ Radarr and Sonarr reach the desktop app's WebUI at
 `media.env`. The WebUI listens on every interface (containers reach the host
 through its LAN address), so the password is what keeps the LAN out.
 Closing the window keeps it in the tray.
+
+Five downloads run at once; a slow one does not hold a slot. Every new torrent
+also gets the public trackers from
+<https://ngosang.github.io/trackerslist/trackers_best.txt>, which finds more
+peers and unsticks metadata.
+
+Torrents in `Movies`, `Series` and `Anime` carry one tag, kept by
+`media-torrents` from the watchdog: `library` (a library file is a hardlink of
+it), `seeding-only` (it left the library and waits for the seeding rule) or
+`stalled` (a download that moved nothing for 6 hours, `MEDIA_STALL_HOURS`).
+A stalled download Radarr or Sonarr grabbed is removed and blocklisted
+instead, and the app searches for another release. Games are left alone.
 
 Radarr and Sonarr download into the qBittorrent categories `Movies`, `Series`
 and `Anime` (`~/Media/Downloads/<category>`) and hardlink the finished file

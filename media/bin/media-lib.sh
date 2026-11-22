@@ -30,3 +30,19 @@ qbt() { local path=$1; shift; curl -fsS "$@" "$QBT$path"; }
 
 # Repo JSON keeps paths as ~/...; this expands them for the running user.
 expand_home() { jq --arg h "$HOME" 'walk(if type == "string" and startswith("~/") then $h + .[1:] else . end)' "$@"; }
+
+# linked <dir> <file>...: succeeds when a library hardlink still points at one of the torrent's files.
+linked() {
+  local dir=$1 f
+  shift
+  for f in "$@"; do
+    [[ -e $dir/$f && $(stat -c %h "$dir/$f") -gt 1 ]] && return 0
+  done
+  return 1
+}
+
+torrent_linked() {
+  local files
+  mapfile -t files < <(qbt "/torrents/files?hash=$1" | jq -r '.[].name')
+  linked "$(qbt "/torrents/properties?hash=$1" | jq -r .save_path)" "${files[@]}"
+}
