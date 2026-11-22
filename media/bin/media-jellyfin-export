@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+REPO=${1:?usage: media-jellyfin-export <repo>}
+dir=$REPO/media/jellyfin
+plugin=/Plugins/$JF_ENHANCED/Configuration
+
+api jellyfin GET /System/Configuration/branding | jq -j .CustomCss >"$dir/custom.css"
+api jellyfin GET /Repositories | jq 'map({Name, Url})' >"$dir/repositories.json"
+
+# The plugin has no defaults endpoint: an empty config resets it, and the live copy goes back right after.
+live=$(api jellyfin GET "$plugin")
+trap 'api jellyfin POST "$plugin" -d "$live"' EXIT
+api jellyfin POST "$plugin" -d '{}'
+defaults=$(api jellyfin GET "$plugin")
+api jellyfin POST "$plugin" -d "$live"
+trap - EXIT
+jq -S --argjson d "$defaults" 'with_entries(select(.value != $d[.key] and .value != []))
+  | del(.JellyseerrApiKey, .SonarrApiKey, .RadarrApiKey, .ClearTranslationCacheTimestamp)' <<<"$live" >"$dir/enhanced.json"
+
+user=$(api jellyfin GET /Users | jq -r 'map(select(.Policy.IsAdministrator))[0].Id')
+jq --argjson c "$(api jellyfin GET "/Users/$user" | jq .Configuration)" \
+  --argjson p "$(api jellyfin GET "/DisplayPreferences/usersettings?userId=$user&client=emby" | jq .CustomPrefs)" \
+  '.homeSections = ($p | with_entries(select(.key | startswith("homesection"))))
+  | .configuration |= with_entries(.value = $c[.key])' "$dir/user.json" >"$dir/user.json.new"
+mv "$dir/user.json.new" "$dir/user.json"
+
+shows=$(api jellyfin GET /Library/VirtualFolders | jq -r '.[] | select(.Name == "Shows") | .ItemId')
+[[ -z $shows ]] || api jellyfin GET "/Items/$shows/Images/Primary" -o "$dir/shows.jpg"
+
+git -C "$REPO" status --short -- media/jellyfin

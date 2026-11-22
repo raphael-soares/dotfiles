@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENV_FILE=$HOME/.config/media/media.env
-env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 
 languages=$(mkvmerge --list-languages | awk -F'|' 'NR > 2 {
   for (i = 1; i <= 4; i++) gsub(/^ +| +$/, "", $i); print $1 "\t" $2 " " $3 " " $4 }')
@@ -37,16 +36,12 @@ fix() {
   echo "media-original-audio: $language is now the default audio of $path"
 }
 
-arr() { curl -fsS -H "X-Api-Key: $2" "http://127.0.0.1:$1/api/v3/$3"; }
-
-radarr_key=$(env_get RADARR__AUTH__APIKEY)
-sonarr_key=$(env_get SONARR__AUTH__APIKEY)
 {
-  arr 7878 "$radarr_key" movie | jq -r '.[] | select(.hasFile) | [.movieFile.path, .originalLanguage.name, .movieFile.mediaInfo.audioLanguages // ""] | @tsv'
-  arr 8989 "$sonarr_key" series |
+  api radarr GET /movie | jq -r '.[] | select(.hasFile) | [.movieFile.path, .originalLanguage.name, .movieFile.mediaInfo.audioLanguages // ""] | @tsv'
+  api sonarr GET /series |
     jq -r '.[] | [.id, (if .seriesType == "anime" then "Portuguese," else "" end) + .originalLanguage.name] | @tsv' |
     while IFS=$'\t' read -r id language; do
-      arr 8989 "$sonarr_key" "episodefile?seriesId=$id" |
+      api sonarr GET "/episodefile?seriesId=$id" |
         jq -r --arg l "$language" '.[] | [.path, $l, .mediaInfo.audioLanguages // ""] | @tsv'
     done
 } | while IFS=$'\t' read -r path language audio; do

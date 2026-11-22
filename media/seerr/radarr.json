@@ -1,0 +1,17 @@
+{
+  "name": "Radarr",
+  "hostname": "radarr",
+  "port": 7878,
+  "useSsl": false,
+  "baseUrl": "",
+  "is4k": false,
+  "isDefault": true,
+  "syncEnabled": true,
+  "preventSearch": false,
+  "tags": [],
+  "tagRequests": false,
+  "activeProfileName": "4K (1080p fallback)",
+  "activeDirectory": "~/Media/Movies",
+  "minimumAvailability": "released",
+  "externalUrl": "http://localhost:7878"
+}

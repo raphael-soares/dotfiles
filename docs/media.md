@@ -62,15 +62,33 @@ Inside the network, services reach each other by container name
   naming, root folders, the qBittorrent client, Prowlarr indexers and apps;
 - once `JELLYFIN_TOKEN` is set, applies `media/jellyfin` to Jellyfin: plugin
   repositories and plugins (Intro Skipper, Jellyfin Enhanced and its
-  dependencies), the custom CSS on top of the default theme, Jellyfin
-  Enhanced settings with the Seerr, Radarr and Sonarr keys filled in, every
-  user's home sections and subtitle preferences (pt-BR, Always), and the
-  Shows library cover when it has none. Backdrops in Jellyfin Desktop and on
-  the phone are a per-device setting (Settings → Display → Backdrops);
+  dependencies), the custom CSS on top of the default theme, the Jellyfin
+  Enhanced settings that differ from its defaults (`enhanced.json`) with the
+  Seerr, Radarr and Sonarr keys filled in, every user's home sections and
+  subtitle preferences (pt-BR, Always), and the Shows library cover when it
+  has none. Backdrops in Jellyfin Desktop and on the phone are a per-device
+  setting (Settings → Display → Backdrops);
+- once Seerr is signed in, applies `media/seerr`: Application URL and the
+  Radarr and Sonarr servers;
 - makes qBittorrent the magnet link handler and installs Jellyfin Desktop;
 - enables four timers: `media-original-audio` (every 15 minutes),
   `media-cleanup` and `media-backup` (daily) and `media-watchdog` (every 5
   minutes).
+
+`media-deploy ~/.dotfiles --check` changes nothing and prints one
+`media: differs:` line for each unit, qBittorrent, Bazarr, Seerr or Jellyfin
+setting that is not what the repo says (Configarr is left out: its timer
+re-applies Radarr, Sonarr and Prowlarr every hour).
+
+After changing Jellyfin in its dashboard, `media-jellyfin-export ~/.dotfiles`
+writes the tracked settings back into `media/jellyfin`: the custom CSS, plugin
+repositories, the Jellyfin Enhanced settings that differ from its defaults,
+the admin's home sections and the playback keys already in `user.json` (a new
+playback key has to be added to the file by hand to be tracked).
+
+`mediactl` searches, requests and grabs releases from the terminal (see the
+`midia-buscar` skill). It and the other scripts share `media/bin/media-lib.sh`
+(`api <app> <method> <path>`, `qbt`, `env_get`).
 
 `media-original-audio` makes the film or series' original language the
 default audio track of MKV files that have more than one, so a dual audio
@@ -80,9 +98,10 @@ a hardlink of the torrent still seeding.
 
 `media-cleanup` removes films and episodes everyone finished watching 14 days
 ago (`MEDIA_CLEANUP_DAYS` in the unit) through Radarr and Sonarr, unmonitoring
-the episodes so they are not fetched again, then deletes the torrents those
-apps grabbed once no library file links to them. `DRY_RUN=1 media-cleanup`
-lists what it would remove.
+the episodes so they are not fetched again. A torrent those apps grabbed is
+deleted once no library file links to it and it has seeded to ratio 1 or for
+30 days (`MEDIA_SEED_RATIO`, `MEDIA_SEED_DAYS`). `DRY_RUN=1 media-cleanup`
+lists what it would remove; `tests/media_cleanup.sh` covers the rules.
 
 `media-backup` copies the databases (`sqlite3 .backup`, safe while the
 services run), the rest of each service's settings, `media.env` and
@@ -118,9 +137,8 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
    it in `media.env` (`OPENSUBTITLESCOM_USERNAME`, `OPENSUBTITLESCOM_PASSWORD`)
    and `dotter deploy` again.
 2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
-   `Movies` (`/home/raphael/Media/Movies`), `Shows`
-   (`/home/raphael/Media/Series`) and `Anime` (`/home/raphael/Media/Anime`,
-   type Shows). In Dashboard → Playback → Transcoding pick VAAPI with
+   `Movies` (`~/Media/Movies`), `Shows` (`~/Media/Series`) and `Anime`
+   (`~/Media/Anime`, type Shows). In Dashboard → Playback → Transcoding pick VAAPI with
    `/dev/dri/renderD128`. In Dashboard → API Keys create a key and put it in
    `media.env` as `JELLYFIN_TOKEN` (`media-cleanup` reads watch history with
    it). Turn on "Automatically add to collection" in the Movies library. The
@@ -128,13 +146,9 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
    step 3 (see below).
 3. Seerr, at <http://127.0.0.1:5055>: sign in with the Jellyfin account
    (server `http://jellyfin:8096`, external URL `http://fedora.local:8096`),
-   set Settings → General → Application URL to `http://fedora.local:5055`,
-   then add Radarr (`radarr`, port 7878,
-   profile `4K (1080p fallback)`, root `/home/raphael/Media/Movies`) and Sonarr
-   (`sonarr`, port 8989, profile `1080p (4K when available)`, root
-   `/home/raphael/Media/Series`, anime profile `Anime`, anime root
-   `/home/raphael/Media/Anime`). The API keys are in `media.env`. Then
-   `dotter deploy` again for the Jellyfin settings.
+   then `dotter deploy` again. The deploy sets the Application URL and adds
+   Radarr and Sonarr from `media/seerr` (profiles and roots by name, keys from
+   `media.env`), then applies the Jellyfin settings.
 4. TV: on Samsung models from 2021 on, install Jellyfin from the app store.
    On 2018 to 2020 models, sideload it with Apps2Samsung. Point it at
    `http://fedora.local:8096` (or `http://192.168.1.211:8096`).
@@ -151,7 +165,9 @@ Anime (Seerr sends a series there when TMDB tags it as anime) uses `Anime`,
 the TRaSH anime profile: Bluray and WEB from the fansub and release groups
 TRaSH ranks. On top of that, a release with a
 Portuguese dub (`Dublado`, `PT-BR`, `Dual Audio PT`, or a Portuguese audio
-track) scores 2000, so a dubbed version wins whenever one exists.
+track) scores 2000, so a dubbed version wins whenever one exists. A Netflix
+`MULTi` release scores 1500: VARYG and ToonsHub put the pt-BR dub in it
+without naming it (Tsundere-Raws' `MULTi` is French and does not count).
 
 To check the TV plays without transcoding, start something and open
 Dashboard → Activity in Jellyfin: the session should say "Direct Playing".
@@ -178,6 +194,6 @@ in that app's Activity queue for a manual import. After each import Radarr and
 Sonarr ask Jellyfin to rescan (Connect > Jellyfin, using `JELLYFIN_TOKEN`), so
 new files show up without waiting for the library's file watcher.
 
-To add a category, add a `"Name": "/absolute/path"` line to
+To add a category, add a `"Name": "~/path"` line to
 `media/qbittorrent/categories.json` and `dotter deploy`. Subcategories use a
 slash (`Games/Switch`).

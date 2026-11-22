@@ -1,68 +1,80 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENV_FILE=$HOME/.config/media/media.env
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 DAYS=${MEDIA_CLEANUP_DAYS:-14}
-QBT=http://127.0.0.1:8080/api/v2
-env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
+SEED_RATIO=${MEDIA_SEED_RATIO:-1}
+SEED_DAYS=${MEDIA_SEED_DAYS:-30}
 
-radarr_key=$(env_get RADARR__AUTH__APIKEY)
-sonarr_key=$(env_get SONARR__AUTH__APIKEY)
-jellyfin_token=$(env_get JELLYFIN_TOKEN)
-[[ -n $jellyfin_token ]] || { echo "media-cleanup: JELLYFIN_TOKEN is empty in $ENV_FILE" >&2; exit 1; }
-
-arr() {
-  local port=$1 key=$2 method=$3 path=$4
-  shift 4
-  curl -fsS -X "$method" -H "X-Api-Key: $key" -H 'Content-Type: application/json' "$@" "http://127.0.0.1:$port/api/v3/$path"
-}
-jellyfin() { curl -fsS -H "Authorization: MediaBrowser Token=\"$jellyfin_token\"" "http://127.0.0.1:8096$1"; }
 act() { [[ -n ${DRY_RUN:-} ]] || "$@"; }
 
-cutoff=$(date -u -d "-$DAYS days" +%FT%T)
-watched=$(
-  jellyfin /Users | jq -r '.[].Id' | while read -r user; do
-    jellyfin "/Users/$user/Items?Recursive=true&IncludeItemTypes=Movie,Episode&IsPlayed=true&Fields=Path&EnableUserData=true" |
-      jq -c '.Items[] | {path: .Path, last: (.UserData.LastPlayedDate // "")}'
-  done | jq -sc --arg cutoff "$cutoff" 'group_by(.path) | map(select(max_by(.last).last[:19] < $cutoff) | .[0].path)'
-)
+# stdin: one {path, last} per user and file; prints the paths whose latest play by anyone is before $1.
+watched_before() {
+  jq -sc --arg cutoff "$1" 'group_by(.path) | map(select(max_by(.last).last[:19] < $cutoff) | .[0].path)'
+}
 
-arr 7878 "$radarr_key" GET movie |
-  jq -r --argjson w "$watched" '.[] | select(.hasFile and (.movieFile.path as $p | $w | index($p))) | [.id, .title] | @tsv' |
-  while IFS=$'\t' read -r id title; do
-    echo "media-cleanup: removing $title"
-    act arr 7878 "$radarr_key" DELETE "movie/$id?deleteFiles=true&addImportExclusion=false"
+# stdin: qBittorrent's completed torrents; $1: {grabbed, queued} hash lists from Radarr and Sonarr.
+# Prints the torrents those apps grabbed, already imported, that seeded enough.
+spent_torrents() {
+  jq -r --argjson g "$1" --argjson ratio "$SEED_RATIO" --argjson secs $((SEED_DAYS * 86400)) '.[]
+    | select((.hash | ascii_upcase) as $h | ($g.grabbed | index($h)) and ($g.queued | index($h) | not))
+    | select(.ratio >= $ratio or .seeding_time >= $secs)
+    | [.hash, .name] | @tsv'
+}
+
+# linked <dir> <file>...: succeeds when a library hardlink still points at one of the torrent's files.
+linked() {
+  local dir=$1 f
+  shift
+  for f in "$@"; do
+    [[ -e $dir/$f && $(stat -c %h "$dir/$f") -gt 1 ]] && return 0
   done
+  return 1
+}
 
-arr 8989 "$sonarr_key" GET series | jq -r '.[] | [.id, .title] | @tsv' | while IFS=$'\t' read -r series title; do
-  arr 8989 "$sonarr_key" GET "episodefile?seriesId=$series" |
-    jq -r --argjson w "$watched" '.[] | select(.path as $p | $w | index($p)) | [.id, .relativePath] | @tsv' |
-    while IFS=$'\t' read -r file name; do
-      episodes=$(arr 8989 "$sonarr_key" GET "episode?seriesId=$series" | jq -c --argjson f "$file" 'map(select(.episodeFileId == $f) | .id)')
-      echo "media-cleanup: removing $title: $name"
-      act arr 8989 "$sonarr_key" PUT episode/monitor -d "{\"episodeIds\":$episodes,\"monitored\":false}" -o /dev/null
-      act arr 8989 "$sonarr_key" DELETE "episodefile/$file"
+main() {
+  [[ -n $(env_get JELLYFIN_TOKEN) ]] || { echo "media-cleanup: JELLYFIN_TOKEN is empty in $ENV_FILE" >&2; exit 1; }
+  local watched grabbed id title series file name episodes hash dir files
+
+  watched=$(
+    api jellyfin GET /Users | jq -r '.[].Id' | while read -r user; do
+      api jellyfin GET "/Users/$user/Items?Recursive=true&IncludeItemTypes=Movie,Episode&IsPlayed=true&Fields=Path&EnableUserData=true" |
+        jq -c '.Items[] | {path: .Path, last: (.UserData.LastPlayedDate // "")}'
+    done | watched_before "$(date -u -d "-$DAYS days" +%FT%T)"
+  )
+
+  api radarr GET /movie |
+    jq -r --argjson w "$watched" '.[] | select(.hasFile and (.movieFile.path as $p | $w | index($p))) | [.id, .title] | @tsv' |
+    while IFS=$'\t' read -r id title; do
+      echo "media-cleanup: removing $title"
+      act api radarr DELETE "/movie/$id?deleteFiles=true&addImportExclusion=false"
     done
-done
 
-# A torrent Radarr or Sonarr grabbed is spent once it left their queue and no library hardlink points at its files.
-grabbed=$(
-  for app in "7878 $radarr_key" "8989 $sonarr_key"; do
-    read -r port key <<<"$app"
-    arr "$port" "$key" GET 'history?eventType=1&pageSize=100000' | jq '[.records[].downloadId]'
-    arr "$port" "$key" GET 'queue?pageSize=100000&includeUnknownMovieItems=true&includeUnknownSeriesItems=true' |
-      jq '[.records[].downloadId] | map({queued: .})'
-  done | jq -sc 'add | {grabbed: map(strings | ascii_upcase), queued: map(objects | .queued | strings | ascii_upcase)}'
-)
-curl -fsS "$QBT/torrents/info?filter=completed" |
-  jq -r --argjson g "$grabbed" '.[] | select((.hash | ascii_upcase) as $h | ($g.grabbed | index($h)) and ($g.queued | index($h) | not))
-    | [.hash, .name] | @tsv' |
-  while IFS=$'\t' read -r hash name; do
-    dir=$(curl -fsS "$QBT/torrents/properties?hash=$hash" | jq -r .save_path)
-    linked=$(curl -fsS "$QBT/torrents/files?hash=$hash" | jq -r '.[].name' | while IFS= read -r f; do
-      [[ ! -e $dir/$f || $(stat -c %h "$dir/$f") == 1 ]] || echo linked
-    done)
-    [[ -z $linked ]] || continue
-    echo "media-cleanup: deleting torrent $name"
-    act curl -fsS -d "hashes=$hash" -d deleteFiles=true "$QBT/torrents/delete"
+  api sonarr GET /series | jq -r '.[] | [.id, .title] | @tsv' | while IFS=$'\t' read -r series title; do
+    api sonarr GET "/episodefile?seriesId=$series" |
+      jq -r --argjson w "$watched" '.[] | select(.path as $p | $w | index($p)) | [.id, .relativePath] | @tsv' |
+      while IFS=$'\t' read -r file name; do
+        episodes=$(api sonarr GET "/episode?seriesId=$series" | jq -c --argjson f "$file" 'map(select(.episodeFileId == $f) | .id)')
+        echo "media-cleanup: removing $title: $name"
+        act api sonarr PUT /episode/monitor -d "{\"episodeIds\":$episodes,\"monitored\":false}" -o /dev/null
+        act api sonarr DELETE "/episodefile/$file"
+      done
   done
+
+  grabbed=$(
+    for app in radarr sonarr; do
+      api "$app" GET '/history?eventType=1&pageSize=100000' | jq '[.records[].downloadId]'
+      api "$app" GET '/queue?pageSize=100000&includeUnknownMovieItems=true&includeUnknownSeriesItems=true' |
+        jq '[.records[].downloadId] | map({queued: .})'
+    done | jq -sc 'add | {grabbed: map(strings | ascii_upcase), queued: map(objects | .queued | strings | ascii_upcase)}'
+  )
+  qbt '/torrents/info?filter=completed' | spent_torrents "$grabbed" | while IFS=$'\t' read -r hash name; do
+    dir=$(qbt "/torrents/properties?hash=$hash" | jq -r .save_path)
+    mapfile -t files < <(qbt "/torrents/files?hash=$hash" | jq -r '.[].name')
+    linked "$dir" "${files[@]}" && continue
+    echo "media-cleanup: deleting torrent $name"
+    act qbt /torrents/delete -d "hashes=$hash" -d deleteFiles=true
+  done
+}
+
+[[ -n ${MEDIA_CLEANUP_LIB:-} ]] || main
