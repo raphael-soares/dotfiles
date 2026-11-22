@@ -2,7 +2,8 @@
 
 Pick a film or series in Seerr; Radarr or Sonarr finds a release, qBittorrent
 downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Series`,
-Bazarr fetches pt-BR subtitles, and the Samsung TV plays it in the Jellyfin app.
+Bazarr fetches pt-BR and English subtitles (never the hearing-impaired kind),
+and the Samsung TV plays it in the Jellyfin app.
 
 The `media` module (only on `fedora`) runs the services as rootless Podman
 quadlets on the `media` network. qBittorrent is the desktop app (Fedora RPM)
@@ -52,7 +53,7 @@ Inside the network, services reach each other by container name
   qBittorrent if needed and applies `media/qbittorrent/preferences.json` and
   `categories.json` (categories not in the file are removed);
 - renders Bazarr's config from `media/bazarr/config.yaml.tmpl` and applies the
-  pt-BR language profile;
+  pt-BR and English language profile;
 - runs Configarr (`media/configarr/config.yml`): quality profiles, sizes,
   naming, root folders, the qBittorrent client, Prowlarr indexers and apps;
 - makes qBittorrent the magnet link handler and installs Jellyfin Desktop.
@@ -72,7 +73,7 @@ a custom one and only searches by IMDb id.
 2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
    `Movies` (`/home/raphael/Media/Movies`) and `Series`
    (`/home/raphael/Media/Series`), preferred subtitle language Portuguese
-   (Brazil). In Dashboard → Playback → Transcoding pick VAAPI with
+   (Brazil), subtitle mode Always. In Dashboard → Playback → Transcoding pick VAAPI with
    `/dev/dri/renderD128`.
 3. Seerr, at <http://127.0.0.1:5055>: sign in with the Jellyfin account
    (server `http://jellyfin:8096`), then add Radarr (`radarr`, port 7878,

@@ -132,7 +132,7 @@ configure_bazarr() {
   want=$(jq -cS . "$REPO/media/bazarr/languages-profiles.json")
   have=$(curl -fsS -H "X-API-KEY: $key" "$api/system/languages/profiles" | jq -cS .)
   [[ $want == "$have" ]] && return
-  curl -fsS -H "X-API-KEY: $key" --data-urlencode "languages-enabled=pb" \
+  curl -fsS -H "X-API-KEY: $key" -d languages-enabled=pb -d languages-enabled=en \
     --data-urlencode "languages-profiles=$want" "$api/system/settings"
   echo "media: bazarr language profiles applied"
 }
