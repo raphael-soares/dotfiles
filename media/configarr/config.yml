@@ -149,6 +149,7 @@ sonarr:
         - name: qBittorrent
           type: qbittorrent
           enable: true
+          priority: 2
           remove_completed_downloads: false
           remove_failed_downloads: true
           fields:
@@ -157,6 +158,19 @@ sonarr:
             password: !env QBITTORRENT_WEBUI_PASSWORD
             port: 8080
             tv_category: Series
+        - name: qBittorrent Anime
+          type: qbittorrent
+          enable: true
+          priority: 1
+          remove_completed_downloads: false
+          remove_failed_downloads: true
+          tags: [anime]
+          fields:
+            host: host.containers.internal
+            username: media
+            password: !env QBITTORRENT_WEBUI_PASSWORD
+            port: 8080
+            tv_category: Anime
       config:
         enable_completed_download_handling: true
 
