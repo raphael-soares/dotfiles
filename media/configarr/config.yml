@@ -71,7 +71,7 @@ radarr:
             username: media
             password: !env QBITTORRENT_WEBUI_PASSWORD
             port: 8080
-            movie_category: radarr
+            movie_category: Movies
       config:
         enable_completed_download_handling: true
 
@@ -128,7 +128,7 @@ sonarr:
             username: media
             password: !env QBITTORRENT_WEBUI_PASSWORD
             port: 8080
-            tv_category: sonarr
+            tv_category: Series
       config:
         enable_completed_download_handling: true
 
@@ -163,7 +163,7 @@ prowlarr:
           enable: true
           sync_profile: Standard
           fields:
-            default_opts: "providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,comando,bludv,torrent9,ilcorsaronero,mejortorrent,wolfmax4k,cinecalidad,besttorrents|language=portuguese|sort=qualitysize|qualityfilter=scr,cam"
+            default_opts: "providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,comando,bludv,torrent9,ilcorsaronero,mejortorrent,wolfmax4k,cinecalidad,besttorrents|sort=qualitysize|qualityfilter=scr,cam"
 
     applications:
       data:

@@ -38,7 +38,7 @@ Inside the network, services reach each other by container name
 | Secrets (API keys, OpenSubtitles login) | `~/.config/media/media.env`, mode 600, generated on first deploy |
 | App state and databases | `~/.local/share/media/<service>` |
 | Caches (Jellyfin transcodes, TRaSH repos) | `~/.cache/media` |
-| Downloads | `~/Media/Downloads/{radarr,sonarr}` |
+| Downloads | `~/Media/Downloads/{Movies,Series}` |
 | Library | `~/Media/Movies`, `~/Media/Series` |
 | `.torrent` copies | `~/Personal/Torrents` |
 
@@ -60,8 +60,7 @@ Inside the network, services reach each other by container name
 `media/autostart` starts qBittorrent hidden at login.
 
 Prowlarr searches 1337x, The Pirate Bay, YTS, EZTV, LimeTorrents, Knaben and
-Torrentio, the same addon Stremio uses, set to prefer Portuguese releases
-(BluDV and Comando dual audio come through it). Torrentio has no stock
+Torrentio, the same addon Stremio uses. Torrentio has no stock
 Prowlarr definition: `media/prowlarr/definitions/torrentio.yml` is mounted as
 a custom one and only searches by IMDb id.
 
@@ -105,9 +104,12 @@ Radarr and Sonarr reach the desktop app's WebUI at
 through its LAN address), so the password is what keeps the LAN out.
 Closing the window keeps it in the tray.
 
-Films and series should come through Seerr or Radarr/Sonarr. A magnet added by
-hand with category `radarr` or `sonarr` shows up in that app's Activity queue
-for a manual import.
+Radarr and Sonarr download into the qBittorrent categories `Movies` and
+`Series` (`~/Media/Downloads/{Movies,Series}`) and hardlink the finished file
+into `~/Media/Movies` or `~/Media/Series`, renamed. A torrent added by hand
+with one of those categories is imported the same way when its film or series
+is already in Radarr or Sonarr (request it in Seerr first); otherwise it waits
+in that app's Activity queue for a manual import.
 
 To add a category, add a `"Name": "/absolute/path"` line to
 `media/qbittorrent/categories.json` and `dotter deploy`. Subcategories use a
