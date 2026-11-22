@@ -5,9 +5,10 @@ source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 
 # Sonarr only replaces a file when a release scores higher, and the Anime profile scores a pt-BR dub
 # highest, so searching every anime episode without a Portuguese track grabs dubs that came out late.
+# An unmonitored episode is one nobody wants upgraded any more, so it is skipped.
 for series in $(api sonarr GET /series | jq -r '.[] | select(.seriesType == "anime") | .id'); do
   episodes=$(api sonarr GET "/episodefile?seriesId=$series" | jq -r '.[] | select((.mediaInfo.audioLanguages // "") | test("por") | not) | .id' |
-    while read -r file; do api sonarr GET "/episode?episodeFileId=$file" | jq -r '.[].id'; done | jq -sc .)
+    while read -r file; do api sonarr GET "/episode?episodeFileId=$file" | jq -r '.[] | select(.monitored) | .id'; done | jq -sc .)
   [[ $episodes == '[]' ]] && continue
   api sonarr POST /command -d "$(jq -nc --argjson e "$episodes" '{name: "EpisodeSearch", episodeIds: $e}')" >/dev/null
   echo "media-dub-search: series $series, searching $(jq length <<<"$episodes") episodes without a pt-BR dub"
