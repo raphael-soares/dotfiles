@@ -37,7 +37,16 @@ grep -Eq '^QBITTORRENT_WEBUI_PASSWORD=[0-9a-f]{32}$' "$env_file" || fail "key ad
 ensure_dirs
 while IFS= read -r src; do
   [[ -d $HOME$src ]] || fail "bind mount source ~$src missing after ensure_dirs"
-done < <(sed -n 's/^Volume=%h\([^:]*\):.*/\1/p' "$REPO"/media/containers/*.container | grep -vx -e '/.config/media/configarr' -e '/.config/media/prowlarr-definitions' -e '/.config/media/whisper')
+done < <(sed -n 's/^Volume=%h\([^:]*\):.*/\1/p' "$REPO"/media/containers/*.container | grep -vx -e '/.config/media/configarr' -e '/.config/media/prowlarr-definitions' -e '/.config/media/whisper' -e '/.config/media/caddy')
+
+caddyfile=$REPO/media/caddy/Caddyfile
+[[ -f $caddyfile ]] || fail "media/caddy/Caddyfile is missing"
+names=$(sed -n 's/^ContainerName=//p' "$REPO"/media/containers/*.container)
+while read -r upstream; do
+  grep -qx "${upstream%:*}" <<<"$names" || fail "Caddyfile proxies to $upstream, which is not a media container"
+done < <(awk '$1 == "reverse_proxy" {print $2}' "$caddyfile" 2>/dev/null)
+grep -q 'PublishPort=127.0.0.1:80:80' "$REPO/media/containers/caddy.container" 2>/dev/null &&
+  grep -q 'PublishPort=\[::1\]:80:80' "$REPO/media/containers/caddy.container" || fail "caddy does not listen on both loopback families"
 
 mkdir "$T/bin"
 cat >"$T/bin/systemctl" <<'EOF'

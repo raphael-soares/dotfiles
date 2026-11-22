@@ -28,11 +28,11 @@ api() {
   local app=$1 method=$2 path=$3 url auth
   shift 3
   case $app in
-    radarr) url=http://127.0.0.1:7878/api/v3 auth="X-Api-Key: $(env_get RADARR__AUTH__APIKEY)" ;;
-    sonarr) url=http://127.0.0.1:8989/api/v3 auth="X-Api-Key: $(env_get SONARR__AUTH__APIKEY)" ;;
-    prowlarr) url=http://127.0.0.1:9696/api/v1 auth="X-Api-Key: $(env_get PROWLARR__AUTH__APIKEY)" ;;
+    radarr) url=http://radarr.localhost/api/v3 auth="X-Api-Key: $(env_get RADARR__AUTH__APIKEY)" ;;
+    sonarr) url=http://sonarr.localhost/api/v3 auth="X-Api-Key: $(env_get SONARR__AUTH__APIKEY)" ;;
+    prowlarr) url=http://prowlarr.localhost/api/v1 auth="X-Api-Key: $(env_get PROWLARR__AUTH__APIKEY)" ;;
     seerr) url=http://127.0.0.1:5055/api/v1 auth="X-Api-Key: $(jq -r .main.apiKey "$STATE/seerr/settings.json")" ;;
-    bazarr) url=http://127.0.0.1:6767/api auth="X-API-KEY: $(env_get BAZARR_API_KEY)" ;;
+    bazarr) url=http://bazarr.localhost/api auth="X-API-KEY: $(env_get BAZARR_API_KEY)" ;;
     jellyfin) url=$JF auth="Authorization: MediaBrowser Token=\"$(env_get JELLYFIN_TOKEN)\"" ;;
     *) echo "api: unknown app $app" >&2; return 2 ;;
   esac
@@ -68,7 +68,7 @@ health() {
     api "$app" GET /health 2>/dev/null | jq -r --arg a "$app" '.[] | select(.type != "ok") | "\($a): \(.message)"' ||
       echo "$app: not answering"
   done
-  curl -fsS -H "X-API-KEY: $(env_get BAZARR_API_KEY)" http://127.0.0.1:6767/api/providers 2>/dev/null |
+  curl -fsS -H "X-API-KEY: $(env_get BAZARR_API_KEY)" http://bazarr.localhost/api/providers 2>/dev/null |
     jq -r '.data[] | select(.status != "Good") | "bazarr: \(.name) is paused (\(.status), retry \(.retry))"' ||
     echo "bazarr: not answering"
   qbt /transfer/info 2>/dev/null | jq -r 'select(.connection_status != "connected") | "qbittorrent: \(.connection_status)"' ||

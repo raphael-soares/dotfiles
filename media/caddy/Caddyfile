@@ -1,0 +1,32 @@
+{
+	auto_https off
+	admin off
+}
+
+http://sonarr.localhost {
+	reverse_proxy sonarr:8989
+}
+
+http://radarr.localhost {
+	reverse_proxy radarr:7878
+}
+
+http://prowlarr.localhost {
+	reverse_proxy prowlarr:9696
+}
+
+http://bazarr.localhost {
+	reverse_proxy bazarr:6767
+}
+
+http://whisper.localhost {
+	reverse_proxy whisper:9000
+}
+
+http://jellyfin.localhost {
+	reverse_proxy jellyfin:8096
+}
+
+http://seerr.localhost {
+	reverse_proxy seerr:5055
+}

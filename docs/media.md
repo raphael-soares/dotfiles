@@ -17,12 +17,18 @@ and Jellyfin Desktop (flatpak) plays on this PC. Design:
 | Jellyfin | <http://fedora.local:8096> | LAN |
 | Seerr | <http://fedora.local:5055> | LAN |
 | qBittorrent WebUI (used by Radarr and Sonarr) | `host.containers.internal:8080` | containers, password in `media.env` |
-| Radarr | <http://127.0.0.1:7878> | this PC |
-| Sonarr | <http://127.0.0.1:8989> | this PC |
-| Prowlarr | <http://127.0.0.1:9696> | this PC |
-| Bazarr | <http://127.0.0.1:6767> | this PC |
+| Radarr | <http://radarr.localhost> | this PC |
+| Sonarr | <http://sonarr.localhost> | this PC |
+| Prowlarr | <http://prowlarr.localhost> | this PC |
+| Bazarr | <http://bazarr.localhost> | this PC |
 | FlareSolverr | `flaresolverr:8191` | containers only |
-| Whisper (speech to text for Bazarr) | <http://127.0.0.1:9000> | this PC |
+| Whisper (speech to text for Bazarr) | <http://whisper.localhost> | this PC |
+
+The `<app>.localhost` names go through the `caddy` container
+(`media/caddy/Caddyfile`), the only one publishing a port on this PC besides
+Jellyfin and Seerr. It listens on loopback port 80, which rootless podman can
+use because the deploy sets `net.ipv4.ip_unprivileged_port_start=80` in
+`/etc/sysctl.d/90-media-unprivileged-ports.conf` (asks for sudo once).
 
 qBittorrent listens for peers on 9386 (TCP and UDP). The router has no UPnP
 gateway, so incoming peers only reach it if 9386 is forwarded by hand on the
@@ -183,7 +189,7 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 1. Subtitles: create a free account at <https://www.opensubtitles.com>, put
    its username (not the email) in `media.env` (`OPENSUBTITLESCOM_USERNAME`,
    `OPENSUBTITLESCOM_PASSWORD`) and `dotter deploy` again.
-2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
+2. Jellyfin, at <http://jellyfin.localhost> (or Jellyfin Desktop): run the wizard, add the libraries
    `Movies` (`~/Media/Movies`), `Shows` (`~/Media/Series`) and `Anime`
    (`~/Media/Anime`, type Shows). In Dashboard → Playback → Transcoding pick VAAPI with
    `/dev/dri/renderD128`. In Dashboard → API Keys create a key and put it in
@@ -191,7 +197,7 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
    it). Turn on "Automatically add to collection" in the Movies library. The
    rest of Jellyfin comes from `media/jellyfin` on the `dotter deploy` after
    step 3 (see below).
-3. Seerr, at <http://127.0.0.1:5055>: sign in with the Jellyfin account
+3. Seerr, at <http://seerr.localhost>: sign in with the Jellyfin account
    (server `http://jellyfin:8096`, external URL `http://fedora.local:8096`),
    then `dotter deploy` again. The deploy sets the Application URL and adds
    Radarr and Sonarr from `media/seerr` (profiles and roots by name, keys from

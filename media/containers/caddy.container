@@ -1,0 +1,19 @@
+[Unit]
+Description=Caddy, names the media admin tools as <app>.localhost
+
+[Container]
+ContainerName=caddy
+StopTimeout=10
+AutoUpdate=registry
+Network=media.network
+Image=docker.io/library/caddy:2
+PublishPort=127.0.0.1:80:80
+PublishPort=[::1]:80:80
+SecurityLabelDisable=true
+Volume=%h/.config/media/caddy:/etc/caddy:ro
+
+[Service]
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

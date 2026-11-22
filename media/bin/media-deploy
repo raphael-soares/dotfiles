@@ -6,7 +6,7 @@ REPO=${1:?usage: media-deploy <repo> [--check]}
 CHECK=0
 [[ ${2:-} == --check ]] && CHECK=1
 CONF=${ENV_FILE%/*}
-UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
+UNITS=(caddy jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
 
 # apply <what>: in --check mode reports the difference and fails, so the caller skips the change.
 DRIFT=0
@@ -69,10 +69,20 @@ ensure_whisper_model() {
   mv "$model.part" "$model"
 }
 
+# Rootless podman can publish caddy on port 80 only after this.
+ensure_low_ports() {
+  local conf=/etc/sysctl.d/90-media-unprivileged-ports.conf
+  (($(sysctl -n net.ipv4.ip_unprivileged_port_start) <= 80)) && return
+  apply "unprivileged ports start above 80" || return 0
+  echo 'net.ipv4.ip_unprivileged_port_start=80' | sudo tee "$conf" >/dev/null
+  sudo sysctl -q --load "$conf"
+  log "unprivileged ports start at 80"
+}
+
 # Dotter needs sudo for the other packages, so media links its own files too; dotter adopts a link
 # that already points at its source.
 LINK_DIRS=(containers:.config/containers/systemd/media configarr:.config/media/configarr
-  prowlarr/definitions:.config/media/prowlarr-definitions whisper:.config/media/whisper)
+  prowlarr/definitions:.config/media/prowlarr-definitions whisper:.config/media/whisper caddy:.config/media/caddy)
 LINK_FILES=(bin:.local/bin systemd:.config/systemd/user applications:.local/share/applications autostart:.config/autostart)
 link() {
   [[ $(readlink "$2") == "$1" ]] && return
@@ -107,7 +117,10 @@ start_units() {
   local u sum extra
   for u in "${UNITS[@]}"; do
     extra=()
-    [[ $u != whisper ]] || extra=("$REPO/media/whisper/asr-shim.py")
+    case $u in
+      whisper) extra=("$REPO/media/whisper/asr-shim.py") ;;
+      caddy) extra=("$REPO/media/caddy/Caddyfile") ;;
+    esac
     sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" "${extra[@]}" | sha256sum)
     if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
       ((CHECK)) || systemctl --user start "$u"
@@ -194,7 +207,7 @@ render_bazarr() {
 }
 
 configure_bazarr() {
-  local api=http://127.0.0.1:6767/api key want have
+  local api=http://bazarr.localhost/api key want have
   key=$(env_get BAZARR_API_KEY)
   wait_http -H "X-API-KEY: $key" "$api/system/status"
   want=$(jq -cS . "$REPO/media/bazarr/languages-profiles.json")
@@ -304,8 +317,8 @@ configure_seerr() {
 
 # Cloudflare-fronted indexers fail their first creation test until Prowlarr holds the clearance cookie.
 run_configarr() {
-  local port i
-  for port in 7878 8989 9696; do wait_http "http://127.0.0.1:$port/ping"; done
+  local app i
+  for app in radarr sonarr prowlarr; do wait_http "http://$app.localhost/ping"; done
   for i in 1 2 3; do
     systemctl --user start configarr.service && break
     ((i < 3)) || return 1
@@ -333,6 +346,7 @@ main() {
   seed_qbittorrent
   render_bazarr
   ensure_whisper_model
+  ensure_low_ports
   start_units
   configure_qbittorrent
   configure_bazarr
@@ -347,6 +361,7 @@ main() {
 check() {
   local problems
   link_files
+  ensure_low_ports
   start_units
   configure_qbittorrent
   render_bazarr
