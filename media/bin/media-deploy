@@ -25,6 +25,7 @@ ensure_env() {
   fi
   local tmp line key changed=0
   while IFS= read -r line; do
+    [[ $line == *=* && $line != \#* ]] || continue
     grep -q "^${line%%=*}=" "$ENV_FILE" || printf '%s\n' "$line" >>"$ENV_FILE"
   done <"$REPO/media/media.env.example"
   tmp=$(mktemp "$CONF/.media.env.XXXXXX")
