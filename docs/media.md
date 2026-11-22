@@ -60,6 +60,13 @@ Inside the network, services reach each other by container name
   provider) and applies the pt-BR and English language profile;
 - runs Configarr (`media/configarr/config.yml`): quality profiles, sizes,
   naming, root folders, the qBittorrent client, Prowlarr indexers and apps;
+- once `JELLYFIN_TOKEN` is set, applies `media/jellyfin` to Jellyfin: plugin
+  repositories and plugins (Intro Skipper, Jellyfin Enhanced and its
+  dependencies), the custom CSS on top of the default theme, Jellyfin
+  Enhanced settings with the Seerr, Radarr and Sonarr keys filled in, every
+  user's home sections and subtitle preferences (pt-BR, Always), and the
+  Shows library cover when it has none. Backdrops in Jellyfin Desktop and on
+  the phone are a per-device setting (Settings → Display → Backdrops);
 - makes qBittorrent the magnet link handler and installs Jellyfin Desktop;
 - enables four timers: `media-original-audio` (every 15 minutes),
   `media-cleanup` and `media-backup` (daily) and `media-watchdog` (every 5
@@ -113,20 +120,12 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
    `Movies` (`/home/raphael/Media/Movies`), `Shows`
    (`/home/raphael/Media/Series`) and `Anime` (`/home/raphael/Media/Anime`,
-   type Shows), preferred subtitle language Portuguese
-   (Brazil), subtitle mode Always. In Dashboard → Playback → Transcoding pick VAAPI with
+   type Shows). In Dashboard → Playback → Transcoding pick VAAPI with
    `/dev/dri/renderD128`. In Dashboard → API Keys create a key and put it in
    `media.env` as `JELLYFIN_TOKEN` (`media-cleanup` reads watch history with
-   it). Turn on "Automatically add to collection" in the Movies library and
-   install Intro Skipper from the repository `https://intro-skipper.org/manifest.json`
-   (skip intro and credits buttons in series).
-   Add the repository `https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/manifest.json`,
-   install Jellyfin Enhanced and, in its settings, turn on Seerr with URL
-   `http://seerr:5055` and Seerr's API key: Jellyfin's own search then lists
-   what is not in the library and requests it. For the look, paste
-   `@import url("https://cdn.jsdelivr.net/gh/lscambo13/ElegantFin@main/Theme/ElegantFin-jellyfin-theme-build-latest-minified.css");`
-   in Dashboard → Branding → Custom CSS (ElegantFin; it needs the legacy
-   desktop layout, which Jellyfin Desktop uses).
+   it). Turn on "Automatically add to collection" in the Movies library. The
+   rest of Jellyfin comes from `media/jellyfin` on the `dotter deploy` after
+   step 3 (see below).
 3. Seerr, at <http://127.0.0.1:5055>: sign in with the Jellyfin account
    (server `http://jellyfin:8096`, external URL `http://fedora.local:8096`),
    set Settings → General → Application URL to `http://fedora.local:5055`,
@@ -134,7 +133,8 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
    profile `4K (1080p fallback)`, root `/home/raphael/Media/Movies`) and Sonarr
    (`sonarr`, port 8989, profile `1080p (4K when available)`, root
    `/home/raphael/Media/Series`, anime profile `Anime`, anime root
-   `/home/raphael/Media/Anime`). The API keys are in `media.env`.
+   `/home/raphael/Media/Anime`). The API keys are in `media.env`. Then
+   `dotter deploy` again for the Jellyfin settings.
 4. TV: on Samsung models from 2021 on, install Jellyfin from the app store.
    On 2018 to 2020 models, sideload it with Apps2Samsung. Point it at
    `http://fedora.local:8096` (or `http://192.168.1.211:8096`).

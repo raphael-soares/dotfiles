@@ -1,0 +1,18 @@
+[
+  {
+    "Name": "Jellyfin Stable",
+    "Url": "https://repo.jellyfin.org/files/plugin/manifest.json"
+  },
+  {
+    "Name": "Intro Skipper",
+    "Url": "https://intro-skipper.org/manifest.json"
+  },
+  {
+    "Name": "n00bcodr",
+    "Url": "https://raw.githubusercontent.com/n00bcodr/jellyfin-plugins/main/manifest.json"
+  },
+  {
+    "Name": "IAmParadox",
+    "Url": "https://www.iamparadox.dev/jellyfin/plugins/manifest.json"
+  }
+]
