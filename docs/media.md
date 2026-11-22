@@ -113,6 +113,10 @@ deleted once no library file links to it and it has seeded to ratio 1, for
 `MEDIA_SEED_DAYS`, `MEDIA_SEED_SWARM`). `DRY_RUN=1 media-cleanup`
 lists what it would remove; `tests/media_cleanup.sh` covers the rules.
 
+Deleting a film or episode in Jellyfin deletes its library file. Radarr and
+Sonarr unmonitor what lost its file and remove empty folders, so it is not
+fetched again; the torrent keeps seeding and leaves through the rule above.
+
 `media-backup` copies the databases (`sqlite3 .backup`, safe while the
 services run), the rest of each service's settings, `media.env` and
 qBittorrent's config and torrent state into one `media-YYYY-MM-DD.tar.zst` on
@@ -182,8 +186,9 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 ## Quality
 
 Films use `4K (1080p fallback)`: 2160p WEB or Bluray encode first, 1080p when
-there is none, no Remux, at most 190 MB per minute (about 23 GB for two hours).
-Series use `1080p (4K when available)`: WEB 2160p above WEB 1080p, same cap.
+there is none, no Remux, at most 120 MB per minute (about 14 GB for two hours).
+Series use `1080p (4K when available)`: WEB 2160p above WEB 1080p; series and
+anime have the same cap per minute of episode.
 Dolby Vision without an HDR fallback is rejected, since the TV would show it
 with wrong colors.
 
