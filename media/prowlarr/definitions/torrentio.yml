@@ -36,15 +36,17 @@ settings:
     label: IMDb id of a show used when Sonarr tests the indexer
     default: "tt0903747"
 
+# Text searches append the keywords to the test id, so Torrentio gets an
+# unknown id and returns nothing instead of the test title's streams.
 search:
   paths:
-    - path: "{{ .Config.default_opts }}/stream/movie/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_movie }}{{ end }}.json"
+    - path: "{{ .Config.default_opts }}/stream/movie/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_movie }}{{ re_replace .Keywords \"[^a-zA-Z0-9]+\" \"\" }}{{ end }}.json"
       method: get
       response:
         type: json
         noResultsMessage: '"streams":[]'
       categories: [Movies]
-    - path: "{{ .Config.default_opts }}/stream/series/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_tv }}{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}:{{ if .Query.Ep }}{{ .Query.Ep }}{{ else }}1{{ end }}.json"
+    - path: "{{ .Config.default_opts }}/stream/series/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_tv }}{{ re_replace .Keywords \"[^a-zA-Z0-9]+\" \"\" }}{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}:{{ if .Query.Ep }}{{ .Query.Ep }}{{ else }}1{{ end }}.json"
       method: get
       response:
         type: json
