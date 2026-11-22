@@ -165,9 +165,12 @@ Radarr and Sonarr reach the desktop app's WebUI at
 through its LAN address), so the password is what keeps the LAN out.
 Closing the window keeps it in the tray.
 
-Radarr and Sonarr download into the qBittorrent categories `Movies` and
-`Series` (`~/Media/Downloads/{Movies,Series}`) and hardlink the finished file
-into `~/Media/Movies` or `~/Media/Series`, renamed. A torrent added by hand
+Radarr and Sonarr download into the qBittorrent categories `Movies`, `Series`
+and `Anime` (`~/Media/Downloads/<category>`) and hardlink the finished file
+into `~/Media/Movies`, `~/Media/Series` or `~/Media/Anime`, renamed. Series
+tagged `anime` in Sonarr go through the `qBittorrent Anime` client (priority 1,
+category `Anime`); Seerr adds that tag to anime requests. The untagged client
+(priority 2) takes everything else. A torrent added by hand
 with one of those categories is imported the same way when its film or series
 is already in Radarr or Sonarr (request it in Seerr first); otherwise it waits
 in that app's Activity queue for a manual import.
