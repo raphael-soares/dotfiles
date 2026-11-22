@@ -13,6 +13,8 @@ Environment=PUID=1000 PGID=1000
 PublishPort=127.0.0.1:9696:9696
 Environment=PROWLARR__AUTH__METHOD=External
 Volume=%h/.local/share/media/prowlarr:/config:Z
+Volume=%h/.config/media/prowlarr-definitions:/config/Definitions/Custom:ro
+SecurityLabelDisable=true
 
 [Service]
 Restart=on-failure

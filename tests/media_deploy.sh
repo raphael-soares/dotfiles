@@ -36,7 +36,7 @@ grep -Eq '^QBITTORRENT_WEBUI_PASSWORD=[0-9a-f]{32}$' "$env_file" || fail "key ad
 ensure_dirs
 while IFS= read -r src; do
   [[ -d $HOME$src ]] || fail "bind mount source ~$src missing after ensure_dirs"
-done < <(sed -n 's/^Volume=%h\([^:]*\):.*/\1/p' "$REPO"/media/containers/*.container | grep -vx '/.config/media/configarr')
+done < <(sed -n 's/^Volume=%h\([^:]*\):.*/\1/p' "$REPO"/media/containers/*.container | grep -vx -e '/.config/media/configarr' -e '/.config/media/prowlarr-definitions')
 
 mkdir "$T/bin"
 cat >"$T/bin/systemctl" <<'EOF'

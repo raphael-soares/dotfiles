@@ -59,6 +59,12 @@ Inside the network, services reach each other by container name
 
 `media/autostart` starts qBittorrent hidden at login.
 
+Prowlarr searches 1337x, The Pirate Bay, YTS, EZTV, LimeTorrents, Knaben and
+Torrentio, the same addon Stremio uses, set to prefer Portuguese releases
+(BluDV and Comando dual audio come through it). Torrentio has no stock
+Prowlarr definition: `media/prowlarr/definitions/torrentio.yml` is mounted as
+a custom one and only searches by IMDb id.
+
 ## Once, after the first deploy
 
 1. Subtitles: create a free account at <https://www.opensubtitles.com>, put
