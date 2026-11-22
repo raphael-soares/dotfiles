@@ -1,0 +1,24 @@
+{
+  "homeSections": {
+    "homesection0": "librarybuttons",
+    "homesection1": "resume",
+    "homesection2": "nextup",
+    "homesection3": "latestmedia",
+    "homesection4": "none",
+    "homesection5": "none",
+    "homesection6": "none",
+    "homesection7": "none",
+    "homesection8": "none",
+    "homesection9": "none"
+  },
+  "configuration": {
+    "SubtitleLanguagePreference": "por",
+    "SubtitleMode": "Always",
+    "PlayDefaultAudioTrack": true,
+    "HidePlayedInLatest": true,
+    "RememberAudioSelections": true,
+    "RememberSubtitleSelections": true,
+    "EnableNextEpisodeAutoPlay": true,
+    "DisplayMissingEpisodes": false
+  }
+}

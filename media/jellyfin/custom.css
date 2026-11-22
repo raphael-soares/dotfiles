@@ -1,0 +1,12 @@
+.page { overflow-x: hidden !important; }
+::-webkit-scrollbar { width: 6px; height: 0; background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+::-webkit-scrollbar-button, ::-webkit-scrollbar-corner { display: none; }
+* { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.15) transparent; }
+
+.cardImageContainer, .cardContent, .itemDetailImage, .listItemImage { border-radius: 8px; }
+.card:focus .cardBox, .card:hover .cardBox { transform: scale(1.03); transition: transform 0.15s ease; }
+.cardBox { transition: transform 0.15s ease; }
+.sectionTitle { font-weight: 600; letter-spacing: 0.01em; }
+.emby-button.homeLibraryButton { border-radius: 8px; }
