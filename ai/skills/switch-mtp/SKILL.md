@@ -1,7 +1,7 @@
 ---
 name: switch-mtp
 description: >
-  Operar o Nintendo Switch com CFW (CNX pack) pelo MTP do DBI a partir do Linux/KDE:
+  Operar o Nintendo Switch com CFW (Atmosphere + Hekate, instalacao limpa) pelo MTP do DBI a partir do Linux/KDE:
   instalar jogo (NSP/NSZ/XCI/XCZ), listar e baixar arquivos do cartao, backup de save
   e screenshot, e pente fino em crash de homebrew (crash_reports do Atmosphere, log do
   Ship of Harkinian, save corrompido). Use quando o usuario falar de Switch, MTP, DBI,
@@ -10,8 +10,18 @@ description: >
 
 # Switch por MTP (DBI + KIO)
 
-Console deste usuario: CNX pack `22.5.0-2` (Atmosphere + hekate + emuMMC), DBI como
-gerenciador de titulos, sphaira como menu de homebrew.
+Console deste usuario: Switch Lite (Mariko, picofly), instalacao limpa sem pack:
+Hekate 6.5.5, Atmosphere 1.12.2 + Horizon OC 2.6.1, sys-patch, Ultrahand, emuMMC em
+arquivo (`emuMMC/SD00`, FW 20.1.1, criado do zero em 2026-11). Sphaira e o menu de
+homebrew (substitui o `hbmenu.nro` da raiz) e o DBI e o gerenciador de titulos.
+
+Boot pelo Hekate: `emuMMC` (com Horizon OC), `emuMMC safe` (sem OC, para isolar
+problema) e `ORIGINAL` (sysMMC stock). Nada online: `atmosphere/hosts/emummc.txt`
+bloqueia `*nintendo*`.
+
+DBI, RetroArch, SoH e 2Ship precisam de memoria cheia. Pelo album (modo applet) eles
+crasham com `2168-0002` no `hbloader`/`010000000000100d`. Abra pelo forwarder na tela
+inicial (Sphaira > item > Install Forwarder) ou segurando R ao abrir um jogo.
 
 ## Como funciona aqui
 
@@ -40,7 +50,7 @@ source .omp/skills/switch-mtp/helpers.sh
 sdconn                          # USB + storages
 sdls switch/soh_debug           # listar
 sdtree switch 2                 # arvore com profundidade
-sdcat cnx.txt                   # ler texto
+sdcat config/sys-patch/log.ini # ler texto
 sdget switch/soh_debug/logs /tmp/           # baixar
 sdput ./switch ""                           # enviar para a raiz do cartao
 sdsize switch/soh_debug/soh.nro             # bytes
@@ -70,7 +80,7 @@ sdlogs /tmp/switch-logs                     # puxa todos os logs de crash
 SD="mtp:/DBI MTP Responder/1: SD Card"
 kioclient ls    "$SD/switch"
 kioclient stat  "$SD/switch/soh_debug/soh.nro"       # SIZE, FILE_TYPE
-kioclient cat   "$SD/cnx.txt"
+kioclient cat   "$SD/config/sys-patch/log.ini"
 kioclient copy  "$SD/arquivo" /tmp/                  # baixar
 kioclient copy  ./pasta "$SD/destino/"               # enviar, recursivo
 kioclient mkdir "$SD/nova"
@@ -195,17 +205,23 @@ logo, sem mensagem na tela.
 ## Cartao deste console
 
 ```
-/switch          apps homebrew (DBI, sphaira, JKSV, soh_debug, 2ship, ...)
-/atmosphere      CFW: contents (sysmodules), config, crash_reports, erpt_reports
-/bootloader      hekate: ini, payloads (fusee.bin, Lockpick_RCM.bin, TegraExplorer.bin)
-/config          config dos homebrew (sys-clk, sys-patch, MissionControl, sphaira, ...)
+/switch          apps homebrew (DBI, sphaira, soh_debug, 2ship, retroarch_switch.nro, ...)
+/retroarch       cores e assets do RetroArch (pacote completo, 1.22.2)
+/atmosphere      CFW: contents (sysmodules), kips/hoc.kip, hosts, crash_reports
+/bootloader      hekate: hekate_ipl.ini, payloads (fusee, Lockpick_RCM, TegraExplorer, picofly_toolbox)
+/config          config dos homebrew (horizon-oc, sys-patch, ultrahand, ...)
 /emuMMC          NAND virtual do emuMMC
-/cnx.txt         versao do pacote CNX
 ```
+
+Sysmodules com `boot2.flag` (sobem no boot): sys-patch `420000000000000B`, Horizon OC
+`00FF0000636C6BFF`, nx-ovlloader `420000000007E51A`. switch-frame-tap (`0100000000000C21`)
+e SaltyNX (`0000000000534C56`) ficam instalados sem flag, desligados de proposito.
+Console nao sobe depois de ligar um deles: apague o `boot2.flag` pelo UMS do Hekate.
 
 Ship of Harkinian mora em `switch/soh_debug` (arquivos `.o2r`, mods em `mods/`, saves em
 `Save/`), e o Majora's Mask em `switch/2ship`. Os dois convivem. O forwarder na tela
-inicial aponta para `soh_debug`, nunca para `soh`.
+inicial aponta para `soh_debug`, nunca para `soh`. Pacotes de origem no PC:
+`~/Games/Switch/SD/`.
 
 ## Nao faca
 

@@ -65,7 +65,7 @@ _sdtree() {
 # Tamanho em bytes de um arquivo do cartao. sdsize switch/soh_debug/soh.nro
 sdsize() { kioclient stat "$(sdurl "$1")" 2>/dev/null | awk '/^SIZE/{print $2}'; }
 
-# Conteudo de um arquivo de texto. sdcat cnx.txt
+# Conteudo de um arquivo de texto. sdcat config/sys-patch/log.ini
 sdcat() { kioclient cat "$(sdurl "$1")" 2>&1; }
 
 # Baixa do cartao. sdget switch/soh_debug/logs/*.log /tmp/
