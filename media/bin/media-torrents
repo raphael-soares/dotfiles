@@ -3,6 +3,9 @@ set -euo pipefail
 
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 STALL_HOURS=${MEDIA_STALL_HOURS:-6}
+SLOW_4K_HOURS=${MEDIA_SLOW_4K_HOURS:-12}
+MIN_SEEDS=${MEDIA_MIN_SEEDS:-5}
+KEPT=$STATE/slow-4k-kept
 CATEGORIES='["Movies","Series","Anime"]'
 TAGS=(library seeding-only stalled)
 
@@ -40,9 +43,53 @@ replace() {
   return 1
 }
 
+# stdin: qBittorrent's torrents; $1: Radarr's queue records; $2: now. Prints queue id, movie id, hash,
+# bytes left, swarm seeders and name of 4K downloads that ran 30 minutes and still expect more than
+# SLOW_4K_HOURS.
+slow_4k() {
+  jq -r --argjson q "$1" --argjson now "$2" --argjson secs $((SLOW_4K_HOURS * 3600)) '
+    (map({key: (.hash | ascii_upcase), value: .}) | from_entries) as $t
+    | $q[] | select(.quality.quality.resolution == 2160) | . as $r | $t[$r.downloadId] // empty
+    | select(.progress < 1 and $now - .added_on >= 1800 and .eta >= $secs)
+    | [$r.id, $r.movieId, $r.downloadId, .amount_left, .num_complete, .name] | @tsv'
+}
+
+# stdin: Radarr's releases for a movie; $1: bytes the 4K download still needs; $2: its swarm's
+# seeders. Prints guid, indexer id and title of the best 1080p release that is smaller than what is
+# left, has more seeders than the 4K (and at least MIN_SEEDS), and that Radarr only turns down
+# because the 4K one is in the queue.
+pick_1080p() {
+  jq -r --argjson left "$1" --argjson swarm "$2" --argjson min "$MIN_SEEDS" '[.[]
+    | select(.quality.quality.resolution == 1080 and .size < $left and (.seeders // 0) >= ([$min, $swarm] | max))
+    | select(all(.rejections[]?; startswith("Release in queue")))]
+    | sort_by(-.customFormatScore, -.seeders) | first // empty | [.guid, .indexerId, .title] | @tsv'
+}
+
+# A 4K download that would take too long becomes the best faster 1080p release; Radarr can still
+# upgrade to a faster 4K later. Without such a release it keeps going and is not checked again.
+downgrade() {
+  local queue=$1 movie=$2 hash=$3 left=$4 swarm=$5 name=$6 guid indexer title
+  IFS=$'\t' read -r guid indexer title < <(api radarr GET "/release?movieId=$movie" | pick_1080p "$left" "$swarm") || true
+  if [[ -n ${guid:-} ]]; then
+    api radarr DELETE "/queue/$queue?removeFromClient=true&blocklist=true&skipRedownload=true"
+    api radarr POST /release -d "$(jq -nc --arg g "$guid" --argjson i "$indexer" '{guid: $g, indexerId: $i}')" >/dev/null
+    echo "media-torrents: $name is too slow in 4K; grabbed $title"
+  elif [[ $(api radarr GET "/movie/$movie" | jq .hasFile) == true ]]; then
+    api radarr DELETE "/queue/$queue?removeFromClient=true&blocklist=true&skipRedownload=true"
+    echo "media-torrents: dropped slow 4K upgrade $name"
+  else
+    mkdir -p "${KEPT%/*}" && echo "$hash" >>"$KEPT"
+    echo "media-torrents: $name is slow in 4K and no 1080p release would be faster; keeping it"
+  fi
+}
+
 main() {
-  local info stalled hash name category progress have want
+  local info stalled hash name category progress have want queue movie left swarm
   qbt /torrents/createTags --data-urlencode "tags=$(IFS=,; echo "${TAGS[*]}")"
+  info=$(qbt /torrents/info)
+  while IFS=$'\t' read -r queue movie hash left swarm name; do
+    grep -qsx "$hash" "$KEPT" || downgrade "$queue" "$movie" "$hash" "$left" "$swarm" "$name"
+  done < <(slow_4k "$(api radarr GET '/queue?pageSize=1000' | jq -c .records)" "$(date +%s)" <<<"$info")
   info=$(qbt /torrents/info)
   stalled=$(stalled_torrents "$(date +%s)" <<<"$info")
   while IFS=$'\t' read -r hash name category progress have; do

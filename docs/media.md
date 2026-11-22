@@ -187,6 +187,14 @@ Series use `1080p (4K when available)`: WEB 2160p above WEB 1080p, same cap.
 Dolby Vision without an HDR fallback is rejected, since the TV would show it
 with wrong colors.
 
+A 4K film download that ran 30 minutes and still expects more than 12 hours
+(`MEDIA_SLOW_4K_HOURS`) is swapped by `media-torrents` for the best 1080p
+release that is smaller than what is left and has more seeders (at least 5,
+`MEDIA_MIN_SEEDS`); the 4K one is blocklisted and Radarr can still upgrade to
+a faster 4K later. When no 1080p release is faster the 4K keeps going and is
+not checked again (`~/.local/share/media/slow-4k-kept`); a slow 4K upgrade of
+a film that already has a file is dropped.
+
 Anime (Seerr sends a series there when TMDB tags it as anime) uses `Anime`,
 the TRaSH anime profile: Bluray and WEB from the fansub and release groups
 TRaSH ranks. On top of that, a release with a
