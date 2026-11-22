@@ -1,5 +1,6 @@
 [Unit]
 Description=Remove films and episodes watched 14 days ago
+OnFailure=media-failure@%n.service
 
 [Service]
 Type=oneshot

@@ -20,7 +20,7 @@ unstick() {
           + if $k == "seriesId" then {episodeIds: [.episodes[].id]} else {} end)')
     [[ -n $files && $files != '[]' ]] || continue
     api "$app" POST /command -d "$(jq -c '{name: "ManualImport", files: ., importMode: "auto"}' <<<"$files")" >/dev/null
-    jq -r --arg app "$app" '.[] | "media-unstick: \($app) importing \(.path)"' <<<"$files"
+    while IFS= read -r path; do log "$app importing $path"; done < <(jq -r '.[].path' <<<"$files")
   done < <(api "$app" GET '/queue?pageSize=200&includeUnknownMovieItems=true&includeUnknownSeriesItems=true' |
     jq -r '.records[] | select(.status == "completed" and (.trackedDownloadState == "importBlocked" or .trackedDownloadState == "importPending"))
       | [.downloadId, .outputPath] | @tsv' | sort -u)

@@ -1,5 +1,6 @@
 [Unit]
 Description=Back up the media stack settings and watch history to Google Drive
+OnFailure=media-failure@%n.service
 
 [Service]
 Type=oneshot

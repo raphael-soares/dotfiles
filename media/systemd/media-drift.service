@@ -1,5 +1,6 @@
 [Unit]
 Description=Report media settings that drifted from the dotfiles
+OnFailure=media-failure@%n.service
 
 [Service]
 Type=oneshot

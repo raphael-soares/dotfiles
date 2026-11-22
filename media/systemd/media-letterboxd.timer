@@ -1,5 +1,5 @@
 [Unit]
-Description=Check the Letterboxd watchlist every 6 hours
+Description=Check the Letterboxd Jellyfin list every 6 hours
 
 [Timer]
 OnCalendar=00/6:00

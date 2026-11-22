@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 FAILS=${XDG_RUNTIME_DIR:-/tmp}/media-watchdog
 mkdir -p "$FAILS"
 
@@ -21,7 +22,7 @@ check() {
     rm -f "$FAILS/$unit"
   elif [[ -f $FAILS/$unit ]]; then
     rm -f "$FAILS/$unit"
-    echo "media-watchdog: $unit is not answering, restarting it"
+    log "$unit is not answering, restarting it"
     systemctl --user restart "$unit" || true
   else
     touch "$FAILS/$unit"
@@ -37,9 +38,9 @@ check bazarr http://127.0.0.1:6767/
 check whisper http://127.0.0.1:9000/docs
 
 if [[ -n ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]] && ! pgrep -u "$USER" -x qbittorrent >/dev/null; then
-  echo "media-watchdog: qBittorrent was closed, starting it in the tray"
+  log "qBittorrent was closed, starting it in the tray"
   systemd-run --user --collect --quiet qbittorrent --no-splash
 fi
 
-"$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-unstick" || echo "media-watchdog: media-unstick failed" >&2
-"$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-torrents" || echo "media-watchdog: media-torrents failed" >&2
+"$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-unstick" || log "media-unstick failed"
+"$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-torrents" || log "media-torrents failed"

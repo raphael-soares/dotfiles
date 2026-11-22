@@ -2,6 +2,7 @@
 Description=Configarr sync of Radarr, Sonarr and Prowlarr
 Wants=radarr.service sonarr.service prowlarr.service
 After=radarr.service sonarr.service prowlarr.service
+OnFailure=media-failure@%n.service
 
 [Container]
 ContainerName=configarr

@@ -6,6 +6,7 @@ T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 export HOME=$T/home
 mkdir -p "$HOME"
+export MEDIA_LOG=$T/media.log
 
 MEDIA_DEPLOY_LIB=1 source "$REPO/media/bin/media-deploy" "$REPO"
 
@@ -61,5 +62,24 @@ salt, key = map(base64.b64decode, m.groups())
 sys.exit(hashlib.pbkdf2_hmac("sha512", sys.argv[2].encode(), salt, 100000) != key)
 PY
   fail "seeded qBittorrent WebUI password does not match the env file"
+
+link_files 2>/dev/null
+[[ $(readlink "$HOME/.local/bin/media-failure") == "$REPO/media/bin/media-failure" ]] || fail "a media/bin script was not linked"
+[[ $(readlink "$HOME/.config/systemd/user/media-failure@.service") == "$REPO/media/systemd/media-failure@.service" ]] ||
+  fail "a media/systemd unit was not linked"
+[[ $(readlink "$HOME/.config/containers/systemd/media") == "$REPO/media/containers" ]] || fail "the quadlet directory was not linked"
+[[ -z $(CHECK=1 link_files) ]] || fail "--check reports links that link_files just made"
+rm "$HOME/.local/bin/mediactl"
+ln -s "$REPO/media/bin/media-removed" "$HOME/.local/bin/media-removed"
+rm "$HOME/.local/bin/media-backup" && echo mine >"$HOME/.local/bin/media-backup"
+report=$(CHECK=1 link_files 2>&1)
+grep -q "differs: link $HOME/.local/bin/mediactl" <<<"$report" || fail "--check does not report a missing link"
+grep -q "differs: remove $HOME/.local/bin/media-removed" <<<"$report" || fail "--check does not report a link to a removed script"
+link_files 2>/dev/null
+[[ -L $HOME/.local/bin/mediactl && ! -L $HOME/.local/bin/media-removed ]] || fail "link_files did not restore and prune links"
+[[ $(cat "$HOME/.local/bin/media-backup") == mine ]] || fail "link_files replaced a file that is not a link"
+
+(source "$REPO/media/bin/media-lib.sh" && for i in {1..13000}; do printf '%0100d\n' "$i"; done >"$MEDIA_LOG" && log "last")
+[[ $(wc -l <"$MEDIA_LOG") -le 5000 && $(tail -n1 "$MEDIA_LOG") == *": last" ]] || fail "the log is not trimmed to its latest lines"
 
 ((failures == 0)) && echo "media_deploy: ok" || { echo "media_deploy: $failures failure(s)"; exit 1; }

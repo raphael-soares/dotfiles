@@ -46,6 +46,11 @@ Inside the network, services reach each other by container name
 
 `dotter deploy` runs `media/bin/media-deploy`, which:
 
+- links every file in `media/bin`, `media/systemd`, `media/applications` and
+  `media/autostart` and the `media/containers`, `media/configarr`,
+  `media/prowlarr/definitions` and `media/whisper` directories, and removes
+  links whose file left the repo, so a new script or timer works without
+  `dotter deploy` (which needs sudo): `media-deploy ~/.dotfiles` is enough;
 - fills empty `*APIKEY` and `*WEBUI_PASSWORD` values in `media.env`, adding
   keys that are new in `media.env.example`;
 - starts the units, restarting the ones whose quadlet changed;
@@ -71,20 +76,28 @@ Inside the network, services reach each other by container name
 - once Seerr is signed in, applies `media/seerr`: Application URL and the
   Radarr and Sonarr servers;
 - makes qBittorrent the magnet link handler and installs Jellyfin Desktop;
-- enables the timers: `media-original-audio` (every 15 minutes),
+- enables every `media-*.timer` in `media/systemd` and
+  `podman-auto-update.timer`: `media-original-audio` (every 15 minutes),
   `media-watchdog` (every 5 minutes), `media-letterboxd` (every 6 hours),
   `media-cleanup`, `media-backup` and `media-drift` (daily), and
   `media-dub-search` and `media-restore-test` (weekly).
 
 `media-deploy ~/.dotfiles --check` changes nothing, prints one
-`media: differs:` line for each unit, qBittorrent, Bazarr, Seerr or Jellyfin
-setting that is not what the repo says, and exits 1 when there is any
-(Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every
-hour). It also prints a `media: unhealthy:` line for each problem a service
-reports (a Radarr, Sonarr or Prowlarr health warning, a paused Bazarr
-subtitle site, qBittorrent offline, a failed unit) and exits 1 for those
-too. `media-drift` runs it daily, so either shows in
-`systemctl --user --failed`.
+`media: differs:` line for each link, timer, unit, qBittorrent, Bazarr, Seerr
+or Jellyfin setting that is not what the repo says, and exits 1 when there is
+any (Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr
+every hour). It also prints a `media: unhealthy:` line for each problem a
+service reports (a Radarr, Sonarr or Prowlarr health warning, a paused Bazarr
+subtitle site, qBittorrent offline, a failed unit) and exits 1 for those too.
+`media-drift` runs it daily, so either lands in the media log.
+
+The media log, `~/.local/state/media/media.log`, is one timeline of what the
+stack did and what broke: every change a script or the deploy made (a torrent
+replaced or deleted, a film removed, a backup uploaded, a setting applied, a
+service restarted) with its time and script, and every failed `media-*` or
+Configarr run with the last lines it printed. It keeps about its last 5000
+lines. `mediactl log` shows the end of it (`mediactl log 200`, or
+`mediactl log -f` to follow); the same lines are also in the journal.
 
 After changing Jellyfin in its dashboard, `media-jellyfin-export ~/.dotfiles`
 writes the tracked settings back into `media/jellyfin`: the custom CSS, plugin
@@ -93,10 +106,11 @@ the admin's home sections and the playback keys already in `user.json` (a new
 playback key has to be added to the file by hand to be tracked).
 
 `mediactl` searches, requests and grabs releases from the terminal (see the
-`midia-buscar` skill); `mediactl status` shows disk, torrent tags, downloads
-and health problems at once. It and the other scripts share
+`midia-buscar` skill); `mediactl status` shows disk, torrent tags, downloads,
+health problems and the runs that failed in the last 7 days at once. It and
+the other scripts share
 `media/bin/media-lib.sh` (`api <app> <method> <path>`, `qbt`, `env_get`,
-`health`).
+`health`, `log`).
 
 `media-original-audio` makes the film or series' original language the
 default audio track of MKV files that have more than one, so a dual audio
@@ -141,8 +155,9 @@ objection to the files, so a release with an odd title no longer waits.
 file has no Portuguese track; Sonarr only swaps the file when a dub turns up.
 
 `media-letterboxd` (every 6 hours) requests in Seerr the films on the
-Letterboxd watchlist of `MEDIA_LETTERBOXD_USER` (set in the unit). Taking a
-film off the watchlist does not remove it.
+Letterboxd list in `MEDIA_LETTERBOXD_LIST` (set in the unit, now
+`prayplagues/list/jellyfin-library`; `<user>/watchlist` also works). Taking a
+film off the list does not remove it.
 
 `media/autostart` starts qBittorrent hidden at login.
 

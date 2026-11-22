@@ -8,6 +8,7 @@ SEED_DAYS=${MEDIA_SEED_DAYS:-30}
 SEED_SWARM=${MEDIA_SEED_SWARM:-50}
 
 act() { [[ -n ${DRY_RUN:-} ]] || "$@"; }
+[[ -z ${DRY_RUN:-} ]] || LOG=/dev/null
 
 # stdin: one {path, last} per user and file; prints the paths whose latest play by anyone is before $1.
 watched_before() {
@@ -39,7 +40,7 @@ main() {
   api radarr GET /movie |
     jq -r --argjson w "$watched" '.[] | select(.hasFile and (.movieFile.path as $p | $w | index($p))) | [.id, .title] | @tsv' |
     while IFS=$'\t' read -r id title; do
-      echo "media-cleanup: removing $title"
+      log "removing $title"
       act api radarr DELETE "/movie/$id?deleteFiles=true&addImportExclusion=false"
     done
 
@@ -48,7 +49,7 @@ main() {
       jq -r --argjson w "$watched" '.[] | select(.path as $p | $w | index($p)) | [.id, .relativePath] | @tsv' |
       while IFS=$'\t' read -r file name; do
         episodes=$(api sonarr GET "/episode?seriesId=$series" | jq -c --argjson f "$file" 'map(select(.episodeFileId == $f) | .id)')
-        echo "media-cleanup: removing $title: $name"
+        log "removing $title: $name"
         act api sonarr PUT /episode/monitor -d "{\"episodeIds\":$episodes,\"monitored\":false}" -o /dev/null
         act api sonarr DELETE "/episodefile/$file"
       done
@@ -63,7 +64,7 @@ main() {
   )
   qbt '/torrents/info?filter=completed' | spent_torrents "$grabbed" | while IFS=$'\t' read -r hash name; do
     torrent_linked "$hash" && continue
-    echo "media-cleanup: deleting torrent $name"
+    log "deleting torrent $name"
     act qbt /torrents/delete -d "hashes=$hash" -d deleteFiles=true
   done
 }

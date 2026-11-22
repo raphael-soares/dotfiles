@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+unit=${1:?usage: media-failure <unit>}
+
+log "$unit failed"
+journalctl --user -u "$unit" --invocation=0 -o cat -n 8 --no-pager 2>/dev/null |
+  { grep -v -e "^$unit: " -e '^Failed to start ' -e '^Starting ' -e '^Started ' || true; } |
+  while IFS= read -r line; do log "  $line"; done

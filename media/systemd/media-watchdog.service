@@ -1,5 +1,6 @@
 [Unit]
 Description=Restart media services that stopped answering and reopen qBittorrent
+OnFailure=media-failure@%n.service
 
 [Service]
 Type=oneshot

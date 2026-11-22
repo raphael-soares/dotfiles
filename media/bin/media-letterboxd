@@ -2,14 +2,14 @@
 set -euo pipefail
 
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
-USER_NAME=${MEDIA_LETTERBOXD_USER:?MEDIA_LETTERBOXD_USER is not set}
+LIST=${MEDIA_LETTERBOXD_LIST:?MEDIA_LETTERBOXD_LIST is not set}
 IDS=$STATE/letterboxd-tmdb.json
 
 [[ -f $IDS ]] || echo '{}' >"$IDS"
 page=1
 while :; do
-  # Past the last page Letterboxd answers 404 with no films in it, which ends the loop.
-  slugs=$(curl -sS "https://letterboxd.com/$USER_NAME/watchlist/page/$page/" | { grep -o 'data-item-slug="[^"]*"' || true; } | cut -d'"' -f2 | sort -u)
+  # Past the last page Letterboxd answers with no films in it, which ends the loop.
+  slugs=$(curl -sS "https://letterboxd.com/$LIST/page/$page/" | { grep -o 'data-item-slug="[^"]*"' || true; } | cut -d'"' -f2 | sort -u)
   [[ -n $slugs ]] || break
   for slug in $slugs; do
     tmdb=$(jq -r --arg s "$slug" '.[$s] // empty' "$IDS")
@@ -21,7 +21,7 @@ while :; do
     fi
     [[ $(api seerr GET "/movie/$tmdb" | jq -r '.mediaInfo.status // 1') == 1 ]] || continue
     api seerr POST /request -d "{\"mediaType\":\"movie\",\"mediaId\":$tmdb}" >/dev/null
-    echo "media-letterboxd: requested $slug"
+    log "requested $slug"
   done
   page=$((page + 1))
 done

@@ -1,5 +1,6 @@
 [Unit]
 Description=Make the original language the default audio of new films and episodes
+OnFailure=media-failure@%n.service
 
 [Service]
 Type=oneshot
