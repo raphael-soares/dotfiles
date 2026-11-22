@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+REMOTE=${MEDIA_BACKUP_REMOTE:-Raphael:Backups/media}
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+latest=$(rclone lsf --include 'media-*.tar.zst' "$REMOTE" | sort | tail -1)
+[[ -n $latest ]] || { echo "media-restore-test: no archive in $REMOTE" >&2; exit 1; }
+rclone copy "$REMOTE/$latest" "$work"
+zstd -dcq "$work/$latest" | tar -C "$work" -xf -
+
+fail=0
+for db in $(cd "$work/media" && find . \( -name '*.db' -o -name '*.sqlite3' \) -printf '%P\n'); do
+  [[ $(sqlite3 "$work/media/$db" 'PRAGMA integrity_check') == ok ]] || { echo "media-restore-test: $db is corrupt" >&2; fail=1; }
+done
+for svc in radarr sonarr prowlarr jellyfin seerr; do
+  find "$work/media/$svc" \( -name '*.db' -o -name '*.sqlite3' \) | grep -q . ||
+    { echo "media-restore-test: no $svc database" >&2; fail=1; }
+done
+tar -tf "$work/media/files.tar" >/dev/null && tar -tf "$work/media/qbittorrent.tar" >/dev/null || fail=1
+for key in RADARR__AUTH__APIKEY SONARR__AUTH__APIKEY JELLYFIN_TOKEN; do
+  grep -q "^$key=." "$work/media/media.env" || { echo "media-restore-test: media.env lacks $key" >&2; fail=1; }
+done
+((!fail)) || exit 1
+echo "media-restore-test: $latest restores ($(find "$work/media" -name '*.db' -o -name '*.sqlite3' | wc -l) databases intact)"

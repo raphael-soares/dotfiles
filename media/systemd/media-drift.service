@@ -1,0 +1,6 @@
+[Unit]
+Description=Report media settings that drifted from the dotfiles
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/media-deploy %h/.dotfiles --check

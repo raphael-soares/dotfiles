@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
+
+# The film or series comes from the app's own grab history or, for a torrent added by hand, from the
+# download folder's name, which usually parses where the torrent's display name (a Torrentio label)
+# did not. Files are imported only when the app has no objection to them, so nothing is downgraded.
+unstick() {
+  local app=$1 id_key=$2 id files
+  while IFS=$'\t' read -r download folder; do
+    id=$(api "$app" GET "/history?eventType=1&downloadId=$download&pageSize=1" | jq -r --arg k "$id_key" '.records[0][$k] // empty')
+    [[ -n $id ]] || id=$(api "$app" GET "/parse?title=$(jq -rn --arg t "${folder##*/}" '$t | @uri')" |
+      jq -r '(.movie // .series).id // empty')
+    [[ -n $id ]] || continue
+    files=$(api "$app" GET "/manualimport?downloadId=$download&$id_key=$id&filterExistingFiles=false" | jq -c \
+      --arg k "$id_key" --argjson id "$id" --arg d "$download" '
+      map(select((.rejections | length) == 0 and ($k == "movieId" or (.episodes | length) > 0))
+        | {path, quality, languages, releaseGroup, downloadId: $d, ($k): $id}
+          + if $k == "seriesId" then {episodeIds: [.episodes[].id]} else {} end)')
+    [[ -n $files && $files != '[]' ]] || continue
+    api "$app" POST /command -d "$(jq -c '{name: "ManualImport", files: ., importMode: "auto"}' <<<"$files")" >/dev/null
+    jq -r --arg app "$app" '.[] | "media-unstick: \($app) importing \(.path)"' <<<"$files"
+  done < <(api "$app" GET '/queue?pageSize=200&includeUnknownMovieItems=true&includeUnknownSeriesItems=true' |
+    jq -r '.records[] | select(.status == "completed" and (.trackedDownloadState == "importBlocked" or .trackedDownloadState == "importPending"))
+      | [.downloadId, .outputPath] | @tsv' | sort -u)
+}
+
+unstick radarr movieId
+unstick sonarr seriesId

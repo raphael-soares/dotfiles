@@ -9,9 +9,11 @@ CONF=${ENV_FILE%/*}
 UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
 
 # apply <what>: in --check mode reports the difference and fails, so the caller skips the change.
+DRIFT=0
 apply() {
   ((CHECK)) || return 0
   echo "media: differs: $*"
+  DRIFT=1
   return 1
 }
 
@@ -77,7 +79,8 @@ start_units() {
     fi
   done
   ((CHECK)) || systemctl --user enable --now podman-auto-update.timer media-original-audio.timer media-cleanup.timer \
-    media-backup.timer media-watchdog.timer
+    media-backup.timer media-watchdog.timer media-drift.timer media-dub-search.timer media-restore-test.timer \
+    media-letterboxd.timer
 }
 
 # Before the first start: the desktop app keeps its WebUI, which Radarr and Sonarr use, off without credentials.
@@ -306,6 +309,7 @@ check() {
   configure_bazarr
   configure_seerr
   configure_jellyfin
+  ((!DRIFT))
 }
 
 [[ -n ${MEDIA_DEPLOY_LIB:-} ]] || if ((CHECK)); then check; else main; fi

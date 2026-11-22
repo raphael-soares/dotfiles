@@ -71,14 +71,17 @@ Inside the network, services reach each other by container name
 - once Seerr is signed in, applies `media/seerr`: Application URL and the
   Radarr and Sonarr servers;
 - makes qBittorrent the magnet link handler and installs Jellyfin Desktop;
-- enables four timers: `media-original-audio` (every 15 minutes),
-  `media-cleanup` and `media-backup` (daily) and `media-watchdog` (every 5
-  minutes).
+- enables the timers: `media-original-audio` (every 15 minutes),
+  `media-watchdog` (every 5 minutes), `media-letterboxd` (every 6 hours),
+  `media-cleanup`, `media-backup` and `media-drift` (daily), and
+  `media-dub-search` and `media-restore-test` (weekly).
 
-`media-deploy ~/.dotfiles --check` changes nothing and prints one
+`media-deploy ~/.dotfiles --check` changes nothing, prints one
 `media: differs:` line for each unit, qBittorrent, Bazarr, Seerr or Jellyfin
-setting that is not what the repo says (Configarr is left out: its timer
-re-applies Radarr, Sonarr and Prowlarr every hour).
+setting that is not what the repo says, and exits 1 when there is any
+(Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every
+hour). `media-drift` runs it daily, so drift shows in
+`systemctl --user --failed`.
 
 After changing Jellyfin in its dashboard, `media-jellyfin-export ~/.dotfiles`
 writes the tracked settings back into `media/jellyfin`: the custom CSS, plugin
@@ -111,11 +114,23 @@ deletes archives older than 30 days. To restore on a fresh install: deploy,
 stop the units, `rclone copy` the archive down, unpack it, put each
 `.db`/`.sqlite3` back under `~/.local/share/media/<service>`, untar
 `files.tar` there and `qbittorrent.tar` in `~`, copy `media.env` to
-`~/.config/media/`, then start the units.
+`~/.config/media/`, then start the units. `media-restore-test` (weekly)
+downloads the newest archive, unpacks it and checks every database with
+`PRAGMA integrity_check`, so a broken backup fails its unit.
 
 `media-watchdog` restarts a service whose web page stopped answering for two
-checks in a row (a crashed one is restarted by systemd itself) and reopens
-qBittorrent in the tray when it was closed.
+checks in a row (a crashed one is restarted by systemd itself), reopens
+qBittorrent in the tray when it was closed, and runs `media-unstick`: a
+finished download stuck waiting for a manual import is imported when Radarr
+or Sonarr grabbed it itself (its history names the film or series) and has no
+objection to the files, so a release with an odd title no longer waits.
+
+`media-dub-search` (weekly) asks Sonarr to search every anime episode whose
+file has no Portuguese track; Sonarr only swaps the file when a dub turns up.
+
+`media-letterboxd` (every 6 hours) requests in Seerr the films on the
+Letterboxd watchlist of `MEDIA_LETTERBOXD_USER` (set in the unit). Taking a
+film off the watchlist does not remove it.
 
 `media/autostart` starts qBittorrent hidden at login.
 
