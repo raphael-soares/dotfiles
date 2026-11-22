@@ -6,6 +6,8 @@ general:
   enabled_providers:
     - opensubtitlescom
     - yifysubtitles
+    - subf2m
+    - gestdown
     - embeddedsubtitles
     - whisperai
   minimum_score: 66
@@ -25,6 +27,9 @@ sonarr:
 opensubtitlescom:
   username: ${OPENSUBTITLESCOM_USERNAME}
   password: ${OPENSUBTITLESCOM_PASSWORD}
+subf2m:
+  user_agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+  verify_ssl: true
 subsync:
   use_subsync: true
   use_subsync_threshold: true

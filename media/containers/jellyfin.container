@@ -3,6 +3,7 @@ Description=Jellyfin media server
 
 [Container]
 ContainerName=jellyfin
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 UserNS=keep-id

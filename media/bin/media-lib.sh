@@ -46,3 +46,20 @@ torrent_linked() {
   mapfile -t files < <(qbt "/torrents/files?hash=$1" | jq -r '.[].name')
   linked "$(qbt "/torrents/properties?hash=$1" | jq -r .save_path)" "${files[@]}"
 }
+
+# Prints one line per problem the services report about themselves; nothing when all is well.
+health() {
+  local app
+  for app in radarr sonarr prowlarr; do
+    api "$app" GET /health 2>/dev/null | jq -r --arg a "$app" '.[] | select(.type != "ok") | "\($a): \(.message)"' ||
+      echo "$app: not answering"
+  done
+  curl -fsS -H "X-API-KEY: $(env_get BAZARR_API_KEY)" http://127.0.0.1:6767/api/providers 2>/dev/null |
+    jq -r '.data[] | select(.status != "Good") | "bazarr: \(.name) is paused (\(.status), retry \(.retry))"' ||
+    echo "bazarr: not answering"
+  qbt /transfer/info 2>/dev/null | jq -r 'select(.connection_status != "connected") | "qbittorrent: \(.connection_status)"' ||
+    echo "qbittorrent: not answering"
+  systemctl --user list-units --failed --plain --no-legend 'media-*' configarr.service jellyfin.service seerr.service \
+    radarr.service sonarr.service prowlarr.service bazarr.service flaresolverr.service whisper.service whisper-cpp.service |
+    awk '{print "systemd: " $1 " failed"}'
+}

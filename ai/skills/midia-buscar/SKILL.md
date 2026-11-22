@@ -22,6 +22,7 @@ Tudo passa por `mediactl` (no PATH, vem de `media/bin` do dotfiles), que usa o
 | Filtrar releases (regex, maiúscula importa) | `--grep '\bMULTi\b'`, `--limit 10`, `--why` mostra o motivo da rejeição |
 | Baixar o release N da última lista | `mediactl grab 3` |
 | Acompanhar downloads | `mediactl queue` |
+| Ver disco, tags, downloads e problemas de uma vez | `mediactl status` |
 | Ver idiomas de áudio do que já está no Jellyfin | `mediactl audio "Frightening Monsters"` |
 | Importar à força um arquivo baixado | `mediactl import jojo ~/Media/Downloads/Anime/<pasta> --grep S06E10` |
 

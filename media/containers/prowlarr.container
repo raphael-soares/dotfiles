@@ -3,6 +3,7 @@ Description=Prowlarr indexer manager
 
 [Container]
 ContainerName=prowlarr
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 UserNS=keep-id

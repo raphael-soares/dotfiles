@@ -5,6 +5,7 @@ After=whisper-cpp.service
 
 [Container]
 ContainerName=whisper
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 Image=docker.io/library/python:3-alpine

@@ -3,6 +3,7 @@ Description=Bazarr subtitle manager
 
 [Container]
 ContainerName=bazarr
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 UserNS=keep-id
