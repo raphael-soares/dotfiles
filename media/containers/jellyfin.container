@@ -14,7 +14,7 @@ SecurityLabelDisable=true
 AddDevice=/dev/dri/renderD128
 GroupAdd=keep-groups
 PublishPort=0.0.0.0:8096:8096
-Volume=%h/Media:%h/Media:ro
+Volume=%h/Media:%h/Media
 Volume=%h/.local/share/media/jellyfin:/config
 Volume=%h/.cache/media/jellyfin:/cache
 
