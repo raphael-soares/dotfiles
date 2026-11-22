@@ -78,7 +78,7 @@ release never starts dubbed. Anime is the exception: a Portuguese track wins
 when there is one. It edits a copy and swaps it in, since the library file is
 a hardlink of the torrent still seeding.
 
-`media-cleanup` removes films and episodes everyone finished watching 90 days
+`media-cleanup` removes films and episodes everyone finished watching 14 days
 ago (`MEDIA_CLEANUP_DAYS` in the unit) through Radarr and Sonarr, unmonitoring
 the episodes so they are not fetched again, then deletes the torrents those
 apps grabbed once no library file links to them. `DRY_RUN=1 media-cleanup`
