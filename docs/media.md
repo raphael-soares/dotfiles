@@ -80,7 +80,10 @@ Inside the network, services reach each other by container name
 `media: differs:` line for each unit, qBittorrent, Bazarr, Seerr or Jellyfin
 setting that is not what the repo says, and exits 1 when there is any
 (Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every
-hour). `media-drift` runs it daily, so drift shows in
+hour). It also prints a `media: unhealthy:` line for each problem a service
+reports (a Radarr, Sonarr or Prowlarr health warning, a paused Bazarr
+subtitle site, qBittorrent offline, a failed unit) and exits 1 for those
+too. `media-drift` runs it daily, so either shows in
 `systemctl --user --failed`.
 
 After changing Jellyfin in its dashboard, `media-jellyfin-export ~/.dotfiles`
@@ -90,8 +93,10 @@ the admin's home sections and the playback keys already in `user.json` (a new
 playback key has to be added to the file by hand to be tracked).
 
 `mediactl` searches, requests and grabs releases from the terminal (see the
-`midia-buscar` skill). It and the other scripts share `media/bin/media-lib.sh`
-(`api <app> <method> <path>`, `qbt`, `env_get`).
+`midia-buscar` skill); `mediactl status` shows disk, torrent tags, downloads
+and health problems at once. It and the other scripts share
+`media/bin/media-lib.sh` (`api <app> <method> <path>`, `qbt`, `env_get`,
+`health`).
 
 `media-original-audio` makes the film or series' original language the
 default audio track of MKV files that have more than one, so a dual audio
@@ -143,6 +148,9 @@ Torrentio has no
 stock Prowlarr definition: `media/prowlarr/definitions/torrentio.yml` is
 mounted as a custom one and only searches by IMDb id.
 
+Bazarr looks for subtitles on OpenSubtitles, YIFY, Subf2m and Gestdown
+(series only), and on the tracks inside the file.
+
 Bazarr asks Whisper (whisper.cpp, `medium` model, on the GPU through Vulkan;
 `media/whisper/asr-shim.py` keeps the API Bazarr speaks) only when no
 subtitle site has the episode or film. Whisper writes the language spoken in
@@ -152,8 +160,8 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 ## Once, after the first deploy
 
 1. Subtitles: create a free account at <https://www.opensubtitles.com>, put
-   it in `media.env` (`OPENSUBTITLESCOM_USERNAME`, `OPENSUBTITLESCOM_PASSWORD`)
-   and `dotter deploy` again.
+   its username (not the email) in `media.env` (`OPENSUBTITLESCOM_USERNAME`,
+   `OPENSUBTITLESCOM_PASSWORD`) and `dotter deploy` again.
 2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
    `Movies` (`~/Media/Movies`), `Shows` (`~/Media/Series`) and `Anime`
    (`~/Media/Anime`, type Shows). In Dashboard → Playback → Transcoding pick VAAPI with

@@ -3,6 +3,7 @@ Description=whisper.cpp speech to text on the GPU (Vulkan), behind the whisper A
 
 [Container]
 ContainerName=whisper-cpp
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 Image=ghcr.io/ggml-org/whisper.cpp:main-vulkan

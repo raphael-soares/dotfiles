@@ -304,12 +304,15 @@ main() {
 
 # Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every hour.
 check() {
+  local problems
   start_units
   configure_qbittorrent
   render_bazarr
   configure_bazarr
   configure_seerr
   configure_jellyfin
+  problems=$(health)
+  [[ -z $problems ]] || { sed 's/^/media: unhealthy: /' <<<"$problems"; DRIFT=1; }
   ((!DRIFT))
 }
 

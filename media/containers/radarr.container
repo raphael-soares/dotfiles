@@ -3,6 +3,7 @@ Description=Radarr movie manager
 
 [Container]
 ContainerName=radarr
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 UserNS=keep-id

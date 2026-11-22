@@ -11,6 +11,7 @@ usage: mediactl search <term>
        mediactl releases <term> [<season> <episode>] [--grep <regex>] [--limit N] [--why]
        mediactl grab <n>
        mediactl queue
+       mediactl status
        mediactl audio <term>
        mediactl import <series> <folder> [--grep <regex>]
 EOF
@@ -88,6 +89,16 @@ queue() {
   done
 }
 
+status() {
+  local problems
+  df -h --output=used,avail,pcent "$HOME/Media" | awk 'NR == 2 {print "disk: " $1 " used, " $2 " free (" $3 ")"}'
+  qbt /torrents/info | jq -r '"torrents: " + (group_by(.tags) | map("\(.[0].tags | if . == "" then "untagged" else . end) \(length)") | join(", "))'
+  echo "downloads:"
+  queue | sed 's/^/  /'
+  problems=$(health)
+  if [[ -z $problems ]]; then echo "health: ok"; else echo "health:"; sed 's/^/  /' <<<"$problems"; fi
+}
+
 audio() {
   api jellyfin GET "/Items?searchTerm=$(uri "$1")&Recursive=true&IncludeItemTypes=Movie,Episode&Fields=MediaStreams&Limit=50" |
     jq -r '.Items[] | "\(.SeriesName // "") \(if .Type == "Episode" then "S\(.ParentIndexNumber)E\(.IndexNumber) " else "" end)\(.Name): audio \([.MediaStreams[] | select(.Type == "Audio") | .Language // "und"] | unique | join(","))"'
@@ -113,6 +124,7 @@ case $cmd in
   releases) releases "${1:?term}" "${@:2}" ;;
   grab) grab "${1:?n}" ;;
   queue) queue ;;
+  status) status ;;
   audio) audio "${1:?term}" ;;
   import) import "${1:?series}" "${2:?folder}" "${@:3}" ;;
   *) usage ;;

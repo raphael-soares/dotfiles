@@ -3,6 +3,7 @@ Description=Seerr request manager
 
 [Container]
 ContainerName=seerr
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 UserNS=keep-id

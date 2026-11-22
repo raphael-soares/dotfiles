@@ -3,6 +3,7 @@ Description=FlareSolverr Cloudflare solver for Prowlarr
 
 [Container]
 ContainerName=flaresolverr
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 UserNS=keep-id

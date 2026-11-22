@@ -3,6 +3,7 @@ Description=Sonarr series manager
 
 [Container]
 ContainerName=sonarr
+StopTimeout=60
 AutoUpdate=registry
 Network=media.network
 UserNS=keep-id
