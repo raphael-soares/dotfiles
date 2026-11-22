@@ -11,15 +11,19 @@ codes_for() { awk -F'\t' -v n="$1" '$1 == n { print $2; exit }' <<<"$languages";
 
 # Copies before editing: the library file is a hardlink of the seeding torrent, whose bytes must not change.
 fix() {
-  local path=$1 language=$2 codes info target args tmp
-  codes=$(codes_for "$language")
-  [[ -n $codes ]] || return 0
+  local path=$1 language codes info target='' args tmp
   info=$(mkvmerge -J "$path")
-  target=$(jq -r --arg c "$codes" '($c | split(" ") | map(select(. != ""))) as $codes
-    | [.tracks[] | select(.type == "audio")] | to_entries
-    | map(select(.value.properties | [.language, ((.language_ietf // "") | split("-")[0])]
-      | any(.[]; . as $l | $codes | index($l))))
-    | .[0].key // empty' <<<"$info")
+  IFS=, read -ra wanted <<<"$2"
+  for language in "${wanted[@]}"; do
+    codes=$(codes_for "$language")
+    [[ -n $codes ]] || continue
+    target=$(jq -r --arg c "$codes" '($c | split(" ") | map(select(. != ""))) as $codes
+      | [.tracks[] | select(.type == "audio")] | to_entries
+      | map(select(.value.properties | [.language, ((.language_ietf // "") | split("-")[0])]
+        | any(.[]; . as $l | $codes | index($l))))
+      | .[0].key // empty' <<<"$info")
+    [[ -z $target ]] || break
+  done
   [[ -n $target ]] || return 0
   args=$(jq -r --argjson t "$target" '[.tracks[] | select(.type == "audio")] | to_entries
     | if all(.[]; (.key == $t) == (.value.properties.default_track // false)) then empty
@@ -39,7 +43,8 @@ radarr_key=$(env_get RADARR__AUTH__APIKEY)
 sonarr_key=$(env_get SONARR__AUTH__APIKEY)
 {
   arr 7878 "$radarr_key" movie | jq -r '.[] | select(.hasFile) | [.movieFile.path, .originalLanguage.name, .movieFile.mediaInfo.audioLanguages // ""] | @tsv'
-  arr 8989 "$sonarr_key" series | jq -r '.[] | [.id, .originalLanguage.name] | @tsv' |
+  arr 8989 "$sonarr_key" series |
+    jq -r '.[] | [.id, (if .seriesType == "anime" then "Portuguese," else "" end) + .originalLanguage.name] | @tsv' |
     while IFS=$'\t' read -r id language; do
       arr 8989 "$sonarr_key" "episodefile?seriesId=$id" |
         jq -r --arg l "$language" '.[] | [.path, $l, .mediaInfo.audioLanguages // ""] | @tsv'

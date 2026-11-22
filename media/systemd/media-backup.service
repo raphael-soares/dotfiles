@@ -1,0 +1,6 @@
+[Unit]
+Description=Back up the media stack settings and watch history to Google Drive
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/media-backup

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE=$HOME/.local/share/media
+REMOTE=${MEDIA_BACKUP_REMOTE:-Raphael:Backups/media}
+KEEP_DAYS=${MEDIA_BACKUP_KEEP_DAYS:-30}
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+mkdir "$work/media"
+
+# sqlite3 .backup takes a consistent copy of a database the service is still writing.
+find "$STATE" \( -name '*.db' -o -name '*.sqlite3' \) ! -name logs.db ! -name '*cache*' -printf '%P\n' |
+  while IFS= read -r db; do
+    mkdir -p "$work/media/$(dirname "$db")"
+    sqlite3 "$STATE/$db" ".backup '$work/media/$db'"
+  done
+
+tar -C "$STATE" -cf "$work/media/files.tar" \
+  --exclude='*.db' --exclude='*.db-*' --exclude='*.sqlite3*' \
+  --exclude=log --exclude=logs --exclude=cache --exclude=Sentry --exclude=MediaCover \
+  --exclude=metadata --exclude=trickplay --exclude=SQLiteBackups --exclude=Backups --exclude=transcodes .
+cp "$HOME/.config/media/media.env" "$work/media/"
+tar -C "$HOME" -cf "$work/media/qbittorrent.tar" --exclude=ipc-socket --exclude=lockfile --exclude=logs \
+  .config/qBittorrent .local/share/qBittorrent
+
+archive=$work/media-$(date +%F).tar.zst
+tar -C "$work" -cf - media | zstd -q -19 -T0 -o "$archive"
+rclone copy "$archive" "$REMOTE"
+rclone delete --min-age "${KEEP_DAYS}d" "$REMOTE"
+echo "media-backup: uploaded $(basename "$archive") ($(du -h "$archive" | cut -f1)) to $REMOTE"
