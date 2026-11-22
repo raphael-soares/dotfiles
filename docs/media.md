@@ -105,12 +105,14 @@ repositories, the Jellyfin Enhanced settings that differ from its defaults,
 the admin's home sections and the playback keys already in `user.json` (a new
 playback key has to be added to the file by hand to be tracked).
 
-`mediactl` searches, requests and grabs releases from the terminal (see the
-`midia-buscar` skill); `mediactl status` shows disk, torrent tags, downloads,
-health problems and the runs that failed in the last 7 days at once. It and
-the other scripts share
-`media/bin/media-lib.sh` (`api <app> <method> <path>`, `qbt`, `env_get`,
-`health`, `log`).
+`mediactl` drives the stack from the terminal, and the `midia` skill teaches
+agents to use it: search, request, releases and grab, `info` (file, quality,
+audio and subtitles), `subs` (missing subtitles), `research` (search again),
+`watched` (what each Jellyfin user played last), `delete` (unmonitor, then
+delete the file), `queue`, `log` and `status` (disk, torrent tags, downloads,
+health problems and the runs that failed in the last 7 days). It and the
+other scripts share `media/bin/media-lib.sh` (`api <app> <method> <path>`,
+`qbt`, `env_get`, `health`, `log`).
 
 `media-original-audio` makes the film or series' original language the
 default audio track of MKV files that have more than one, so a dual audio
