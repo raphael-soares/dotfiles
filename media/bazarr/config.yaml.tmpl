@@ -7,6 +7,9 @@ general:
     - opensubtitlescom
     - yifysubtitles
     - embeddedsubtitles
+    - whisperai
+  minimum_score: 66
+  minimum_score_movie: 50
   movie_default_enabled: true
   movie_default_profile: 1
   serie_default_enabled: true
@@ -26,3 +29,6 @@ subsync:
   use_subsync: true
   use_subsync_threshold: true
   use_subsync_movie_threshold: true
+whisperai:
+  endpoint: http://whisper:9000
+  timeout: 14400

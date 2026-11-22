@@ -5,7 +5,7 @@ REPO=${1:?usage: media-deploy <repo>}
 CONF=$HOME/.config/media
 ENV_FILE=$CONF/media.env
 STATE=$HOME/.local/share/media
-UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr)
+UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper)
 QBT=http://127.0.0.1:8080/api/v2
 
 ensure_env() {
@@ -44,8 +44,8 @@ wait_http() {
 
 ensure_dirs() {
   mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr} \
-    "$HOME"/.cache/media/{jellyfin,configarr} \
-    "$HOME"/Media/{Movies,Series,Downloads/Movies,Downloads/Series} \
+    "$HOME"/.cache/media/{jellyfin,configarr,whisper} \
+    "$HOME"/Media/{Movies,Series,Anime,Downloads/Movies,Downloads/Series} \
     "$HOME"/Games "$HOME"/Personal/Torrents
 }
 
@@ -63,7 +63,8 @@ start_units() {
       echo "$sum" >"$STATE/.applied/$u"
     fi
   done
-  systemctl --user enable --now podman-auto-update.timer media-original-audio.timer media-cleanup.timer
+  systemctl --user enable --now podman-auto-update.timer media-original-audio.timer media-cleanup.timer \
+    media-backup.timer media-watchdog.timer
 }
 
 # Before the first start: the desktop app keeps its WebUI, which Radarr and Sonarr use, off without credentials.

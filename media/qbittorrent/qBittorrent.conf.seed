@@ -1,15 +1,27 @@
 [LegalNotice]
 Accepted=true
 
+[AddNewTorrentDialog]
+RememberLastSavePath=false
+
+[Appearance]
+Style=Breeze
+
+[Application]
+GUI\Notifications\TorrentAdded=false
+
 [GUI]
+DownloadTrackerFavicon=false
 StartUpWindowState=Hidden
 
 [Preferences]
 Advanced\TrayIconStyle=MonoLight
+Advanced\useSystemIconTheme=true
 General\CloseToTray=true
 General\Locale=en
 General\MinimizeToTray=true
 General\NoSplashScreen=true
+General\StatusbarDisplayed=false
 General\SystrayEnabled=true
 WebUI\Enabled=true
 WebUI\LocalHostAuth=false

@@ -1,0 +1,19 @@
+[Unit]
+Description=Whisper speech to text, makes subtitles for Bazarr when no site has them
+
+[Container]
+ContainerName=whisper
+AutoUpdate=registry
+Network=media.network
+Image=docker.io/onerahmet/openai-whisper-asr-webservice:latest
+Environment=ASR_ENGINE=faster_whisper ASR_MODEL=medium ASR_MODEL_PATH=/data/whisper
+PublishPort=127.0.0.1:9000:9000
+SecurityLabelDisable=true
+Volume=%h/.cache/media/whisper:/data/whisper
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

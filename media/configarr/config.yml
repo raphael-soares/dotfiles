@@ -1,6 +1,24 @@
 trashGuideUrl: https://github.com/TRaSH-Guides/Guides
 recyclarrConfigUrl: https://github.com/recyclarr/config-templates
 
+customFormatDefinitions:
+  - trash_id: custom-portuguese-dub
+    name: Portuguese Dub
+    includeCustomFormatWhenRenaming: false
+    specifications:
+      - name: Dubbed release name
+        implementation: ReleaseTitleSpecification
+        negate: false
+        required: false
+        fields:
+          value: '(?i)\b(dublado|dual[ ._-]?(audio[ ._-]?)?(pt|br)|pt[ ._-]?br|portugu[eê]s)\b'
+      - name: Portuguese (Brazil)
+        implementation: LanguageSpecification
+        negate: false
+        required: false
+        fields:
+          value: 33
+
 radarr:
   main:
     base_url: http://radarr:7878
@@ -83,10 +101,14 @@ sonarr:
     include:
       - template: c4cadd6b35b95f62c3d47a408e53e2f7 # TRaSH WEB-2160p (Combined)
         source: TRASH
+      - template: 20e0fc959f1f1704bed501f23bdae76f # TRaSH [Anime] Remux-1080p
+        source: TRASH
 
     renameQualityProfiles:
       - from: WEB-2160p (Combined)
         to: 1080p (4K when available)
+      - from: "[Anime] Remux-1080p"
+        to: Anime
 
     custom_formats:
       - trash_ids:
@@ -94,6 +116,11 @@ sonarr:
         assign_scores_to:
           - name: WEB-2160p (Combined)
             score: -10000
+      - trash_ids:
+          - custom-portuguese-dub
+        assign_scores_to:
+          - name: "[Anime] Remux-1080p"
+            score: 2000
 
     quality_definition:
       type: series
@@ -114,6 +141,7 @@ sonarr:
 
     root_folders:
       - /home/raphael/Media/Series
+      - /home/raphael/Media/Anime
 
     download_clients:
       update_password: true
@@ -158,6 +186,7 @@ prowlarr:
         - { name: EZTV, definition: eztv, enable: true, sync_profile: Standard, tags: [flaresolverr] }
         - { name: LimeTorrents, definition: limetorrents, enable: true, sync_profile: Standard }
         - { name: Knaben, definition: Knaben, enable: true, sync_profile: Standard }
+        - { name: Nyaa, definition: nyaasi, enable: true, sync_profile: Standard }
         - name: Torrentio
           definition: torrentio
           enable: true

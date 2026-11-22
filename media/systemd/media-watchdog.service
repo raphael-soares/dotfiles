@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart media services that stopped answering and reopen qBittorrent
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/media-watchdog

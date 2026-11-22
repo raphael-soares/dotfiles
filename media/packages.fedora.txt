@@ -2,3 +2,5 @@ podman
 gettext-envsubst
 qbittorrent
 mkvtoolnix
+rclone
+sqlite
