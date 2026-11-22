@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ENV_FILE=$HOME/.config/media/media.env
-DAYS=${MEDIA_CLEANUP_DAYS:-90}
+DAYS=${MEDIA_CLEANUP_DAYS:-14}
 QBT=http://127.0.0.1:8080/api/v2
 env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
 

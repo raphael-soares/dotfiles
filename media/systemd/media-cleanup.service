@@ -1,7 +1,7 @@
 [Unit]
-Description=Remove films and episodes watched 90 days ago
+Description=Remove films and episodes watched 14 days ago
 
 [Service]
 Type=oneshot
-Environment=MEDIA_CLEANUP_DAYS=90
+Environment=MEDIA_CLEANUP_DAYS=14
 ExecStart=%h/.local/bin/media-cleanup
