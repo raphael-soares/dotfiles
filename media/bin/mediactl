@@ -15,6 +15,11 @@ usage: mediactl search <term>
        mediactl log [lines | -f]
        mediactl audio <term>
        mediactl import <series> <folder> [--grep <regex>]
+       mediactl info <term>
+       mediactl watched [N]
+       mediactl subs [<term>]
+       mediactl research <term> [<season> [<episode>]]
+       mediactl delete <term> [<season> <episode>]
 EOF
   exit 2
 }
@@ -124,6 +129,92 @@ import() {
   jq -r '.[] | "importing \(.path)"' <<<"$files"
 }
 
+# locate <term>: "radarr <id>" for a film, else "sonarr <id>" for a series.
+locate() {
+  local id
+  if id=$(find_id radarr "$1" 2>/dev/null); then echo "radarr $id"; return; fi
+  id=$(find_id sonarr "$1") || return
+  echo "sonarr $id"
+}
+
+episode() {
+  api sonarr GET "/episode?seriesId=$1&seasonNumber=$2" | jq -ec --argjson e "$3" 'map(select(.episodeNumber == $e))[0]' ||
+    { echo "mediactl: S${2}E${3} not found" >&2; exit 1; }
+}
+
+info() {
+  local app id
+  loc=$(locate "$1")
+  read -r app id <<<"$loc"
+  if [[ $app == radarr ]]; then
+    api radarr GET "/movie/$id" | jq -r '"\(.title) (\(.year)) monitored=\(.monitored) profile=\(.qualityProfileId)",
+      if .hasFile then .movieFile | "  \(.quality.quality.name) \(.size / 1073741824 * 10 | floor / 10)GB \(.mediaInfo.resolution) audio=\(.mediaInfo.audioLanguages) subs=\(.mediaInfo.subtitles)\n  \(.relativePath)"
+      else "  no file" end'
+  else
+    api sonarr GET "/series/$id" | jq -r '"\(.title) (\(.year)) monitored=\(.monitored) profile=\(.qualityProfileId)",
+      (.seasons[] | "  season \(.seasonNumber): \(.statistics.episodeFileCount)/\(.statistics.totalEpisodeCount) files, monitored=\(.monitored)")'
+    api sonarr GET "/episodefile?seriesId=$id" | jq -r 'sort_by(.relativePath)[] |
+      "  \(.relativePath): \(.quality.quality.name) \(.size / 1073741824 * 10 | floor / 10)GB audio=\(.mediaInfo.audioLanguages) subs=\(.mediaInfo.subtitles)"'
+  fi
+}
+
+watched() {
+  local user name
+  while IFS=$'\t' read -r user name; do
+    api jellyfin GET "/Users/$user/Items?Recursive=true&Filters=IsPlayed&SortBy=DatePlayed&SortOrder=Descending&IncludeItemTypes=Movie,Episode&Limit=${1:-20}&Fields=UserData" |
+      jq -r --arg u "$name" '.Items[] | [$u, .UserData.LastPlayedDate[:10],
+        (if .Type == "Episode" then "\(.SeriesName) S\(.ParentIndexNumber)E\(.IndexNumber) \(.Name)" else "\(.Name) (\(.ProductionYear))" end)] | @tsv'
+  done < <(api jellyfin GET /Users | jq -r '.[] | [.Id, .Name] | @tsv')
+}
+
+subs() {
+  local app id
+  if [[ -z ${1:-} ]]; then
+    api bazarr GET '/movies/wanted?length=-1' | jq -r '.data[] | "wanted: \(.title): \([.missing_subtitles[].code2] | join(","))"'
+    api bazarr GET '/episodes/wanted?length=-1' | jq -r '.data[] | "wanted: \(.seriesTitle) \(.episode_number): \([.missing_subtitles[].code2] | join(","))"'
+    return
+  fi
+  loc=$(locate "$1")
+  read -r app id <<<"$loc"
+  if [[ $app == radarr ]]; then
+    api bazarr GET "/movies?radarrid%5B%5D=$id" | jq -r '.data[] | "\(.title): has \([.subtitles[].code2] | unique | join(",")), missing \([.missing_subtitles[].code2] | join(","))"'
+  else
+    api bazarr GET "/episodes?seriesid%5B%5D=$id" | jq -r '.data[] | "S\(.season)E\(.episode) \(.title): has \([.subtitles[].code2] | unique | join(",")), missing \([.missing_subtitles[].code2] | join(","))"'
+  fi
+}
+
+research() {
+  local app id body
+  loc=$(locate "$1")
+  read -r app id <<<"$loc"
+  if [[ $app == radarr ]]; then body="{\"name\":\"MoviesSearch\",\"movieIds\":[$id]}"
+  elif [[ -n ${3:-} ]]; then body="{\"name\":\"EpisodeSearch\",\"episodeIds\":[$(episode "$id" "$2" "$3" | jq .id)]}"
+  elif [[ -n ${2:-} ]]; then body="{\"name\":\"SeasonSearch\",\"seriesId\":$id,\"seasonNumber\":$2}"
+  else body="{\"name\":\"SeriesSearch\",\"seriesId\":$id}"; fi
+  api "$app" POST /command -d "$body" >/dev/null
+  echo "$app is searching; mediactl queue shows what it grabs"
+}
+
+# Unmonitors before deleting, so the app does not fetch it again; the torrent leaves through media-cleanup.
+delete() {
+  local app id ep file
+  loc=$(locate "$1")
+  read -r app id <<<"$loc"
+  if [[ $app == radarr ]]; then
+    file=$(api radarr GET "/movie/$id" | jq -er '.movieFile.id') || { echo "mediactl: that film has no file" >&2; exit 1; }
+    api radarr PUT /movie/editor -d "{\"movieIds\":[$id],\"monitored\":false}" >/dev/null
+    api radarr DELETE "/moviefile/$file"
+    log "deleted the file of $(api radarr GET "/movie/$id" | jq -r .title)"
+  else
+    [[ -n ${3:-} ]] || { echo "mediactl: give the season and episode to delete from a series" >&2; exit 1; }
+    ep=$(episode "$id" "$2" "$3")
+    file=$(jq -er 'select(.hasFile) | .episodeFileId' <<<"$ep") || { echo "mediactl: that episode has no file" >&2; exit 1; }
+    api sonarr PUT /episode/monitor -d "{\"episodeIds\":[$(jq .id <<<"$ep")],\"monitored\":false}" >/dev/null
+    api sonarr DELETE "/episodefile/$file"
+    log "deleted S${2}E${3} of $(api sonarr GET "/series/$id" | jq -r .title)"
+  fi
+}
+
 cmd=${1:-}
 (($#)) && shift
 case $cmd in
@@ -136,5 +227,10 @@ case $cmd in
   log) show_log "${1:-}" ;;
   audio) audio "${1:?term}" ;;
   import) import "${1:?series}" "${2:?folder}" "${@:3}" ;;
+  info) info "${1:?term}" ;;
+  watched) watched "${1:-20}" ;;
+  subs) subs "${1:-}" ;;
+  research) research "${1:?term}" "${2:-}" "${3:-}" ;;
+  delete) delete "${1:?term}" "${2:-}" "${3:-}" ;;
   *) usage ;;
 esac
