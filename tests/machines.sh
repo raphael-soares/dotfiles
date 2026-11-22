@@ -60,8 +60,10 @@ else
   fail "hook was not rendered"
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
+shared_in_hook=(sshd_config.d avahi-daemon)
 laptop_only_in_hook=(hyprctl greetd enterprise)
-desktop_only_in_hook=(sshd_config.d plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms' shapecorners geometry_change media-deploy)
+desktop_only_in_hook=(plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms' shapecorners geometry_change media-deploy)
+for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
 
 case $machine in
   arch)

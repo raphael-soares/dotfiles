@@ -135,6 +135,19 @@ local function dockAttached()
   return false
 end
 
+local MAINS = {}
+for _, line in ipairs(lines("ls -1 /sys/class/power_supply 2>/dev/null")) do
+  local dir = "/sys/class/power_supply/" .. line .. "/"
+  if trim(readFile(dir .. "type") or "") == "Mains" then table.insert(MAINS, dir .. "online") end
+end
+
+local function onAC()
+  for _, online in ipairs(MAINS) do
+    if trim(readFile(online) or "") == "1" then return true end
+  end
+  return false
+end
+
 local function target()
   local anyExt = anyExternalConnected()
   local extOn = pref ~= "internal" or internal == nil
@@ -234,10 +247,11 @@ hl.on("monitor.added", schedule)
 hl.on("monitor.removed", schedule)
 
 -- The hub blinks for ~3 s when its power fluctuates: only suspends after LID_SUSPEND_MS
--- in a row with the lid closed, no external monitor and no dock.
+-- in a row with the lid closed, no external monitor, no dock and no charger.
+-- On the charger it stays awake so the desktop can reach it over SSH.
 local undockedPolls = 0
 hl.timer(function()
-  if not lidClosed() or anyExternalConnected() or dockAttached() then
+  if not lidClosed() or anyExternalConnected() or dockAttached() or onAC() then
     undockedPolls = 0
     return
   end

@@ -1,26 +1,31 @@
-# Remote access to the home desktop
+# Remote access between the laptop and the desktop
 
 From the laptop, `SUPER + grave` shows the `fedora` desktop's screen on a
 workspace of its own and forwards every key there; the same key brings you
-back. herdr reaches the desktop over SSH for terminals.
+back. herdr reaches the desktop over SSH for terminals. The other way round,
+the desktop reaches the laptop over SSH only, for herdr (see
+[From the desktop to the laptop](#from-the-desktop-to-the-laptop)).
 
-The `home` module (only on `fedora`) installs and configures the desktop side;
-the laptop side lives in `hyprland/hypr/remote.lua`. Design:
+The `sshd` module (both machines) sets up key-only SSH, Avahi and the
+firewall. The `home` module (only on `fedora`) installs and configures the
+stream on the desktop side; the laptop side lives in
+`hyprland/hypr/remote.lua`. Design:
 [`superpowers/specs/2026-11-18-remote-desktop-access-design.md`](superpowers/specs/2026-11-18-remote-desktop-access-design.md).
 
 ## Once, on the desktop
 
-1. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables sshd,
-   Avahi and Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall,
-   sets Plasma Login Manager autologin and turns off sleep and display off on AC. The screen
-   lock stays. SSH still takes passwords: there is no authorized key yet.
-2. From the laptop, authorize its key:
+1. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables Avahi and
+   Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall, sets Plasma
+   Login Manager autologin and turns off sleep and display off on AC. The
+   screen lock stays. sshd stays off: there is no authorized key yet.
+2. Authorize the `personal` key, the same pair the laptop uses (it comes with
+   the private `~/.ssh` repo):
 
    ```bash
-   ssh-copy-id -i ~/.ssh/keys/personal.pub raphael@fedora.local
+   cat ~/.ssh/keys/personal.pub >>~/.ssh/authorized_keys
    ```
 
-3. `dotter deploy` again, so SSH only takes keys.
+3. `dotter deploy` again: sshd starts, taking keys only.
 4. Open <https://localhost:47990> and create Sunshine's admin user.
 5. Reboot once and check Plasma comes up logged in. With the monitor on the
    laptop's input, the desktop's DisplayPort must stay connected
@@ -59,3 +64,31 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
   notification.
 - With the desktop off, `SUPER + grave` says it is checking, then "Desktop is
   off or not on the network".
+
+## From the desktop to the laptop
+
+Terminals only: no stream of the laptop's screen. Design:
+[`superpowers/specs/2026-11-22-laptop-ssh-access-design.md`](superpowers/specs/2026-11-22-laptop-ssh-access-design.md).
+
+1. On the laptop, authorize the `personal` key, the same pair the desktop
+   uses:
+
+   ```bash
+   cat ~/.ssh/keys/personal.pub >>~/.ssh/authorized_keys
+   ```
+
+2. On the laptop, `dotter deploy`. It installs `openssh`, enables Avahi and
+   starts sshd with keys only (without step 1 it leaves sshd off).
+3. Check the drop-in applied: `sudo sshd -T | grep -i passwordauthentication`
+   prints `no`.
+4. The `laptop` host comes from the private `~/.ssh` repo
+   (`config.d/personal.conf`): `Host personal-laptop laptop`,
+   `HostName arch.local`.
+5. herdr on the desktop: Settings > Machines > Add machine > `laptop`.
+
+With the lid closed and no monitor or dock, the laptop suspends 10 s later
+unless it is on the charger (`hyprland/hypr/monitors.lua`). Suspended, it
+does not answer SSH: open the lid or plug it in.
+
+Check: `ssh laptop true` on the desktop returns without asking for a
+password, also with the lid closed on the charger.

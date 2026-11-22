@@ -130,19 +130,28 @@ if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
 fi
 {{/if}}
 
+{{#if dotter.packages.sshd}}
+install_packages sshd
+# Without an authorized key sshd would take passwords on any network the laptop joins.
+if [[ -s $HOME/.ssh/authorized_keys ]]; then
+  if copy_etc sshd/50-key-only.conf /etc/ssh/sshd_config.d/50-key-only.conf; then
+    sudo systemctl reload sshd 2>/dev/null || true
+  fi
+  sudo systemctl enable --now sshd
+else
+  echo "==> sshd left off: add ~/.ssh/keys/personal.pub to ~/.ssh/authorized_keys, then deploy again"
+fi
+sudo systemctl enable --now avahi-daemon
+if command -v firewall-cmd >/dev/null; then
+  sudo firewall-cmd -q --permanent --add-service=ssh --add-service=mdns
+  sudo firewall-cmd -q --reload
+fi
+{{/if}}
+
 {{#if dotter.packages.home}}
-install_packages home
 if ! rpm -q Sunshine >/dev/null 2>&1; then
   sudo dnf copr enable -y lizardbyte/stable
   sudo dnf install -y Sunshine
-fi
-# Key-only login without an authorized key would lock the laptop out.
-if [[ -s $HOME/.ssh/authorized_keys ]]; then
-  if copy_etc home/ssh/50-key-only.conf /etc/ssh/sshd_config.d/50-key-only.conf; then
-    sudo systemctl reload sshd 2>/dev/null || true
-  fi
-else
-  echo "==> Authorize the laptop key in ~/.ssh/authorized_keys, then deploy again (sshd_config.d left as is)"
 fi
 # Fedora 44 replaced SDDM with Plasma Login Manager, which reads the same keys from its own dir.
 copy_etc home/plasmalogin/autologin.conf /etc/plasmalogin.conf.d/autologin.conf || true
@@ -161,7 +170,6 @@ fi
 sunshine_conf=$HOME/.config/sunshine/sunshine.conf
 mkdir -p "${sunshine_conf%/*}"
 grep -qx 'capture = kms' "$sunshine_conf" 2>/dev/null || echo 'capture = kms' >>"$sunshine_conf"
-sudo systemctl enable --now sshd avahi-daemon
 # KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
 sunshine=$(readlink -f "$(command -v sunshine)")
 capped=0
@@ -179,8 +187,6 @@ for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
   fi
 done
 ((unit_found)) || echo "==> No Sunshine user unit found; start it by hand and check its unit name"
-# firewalld 2.4 rejects --add-service and --add-port in the same call.
-sudo firewall-cmd -q --permanent --add-service=ssh --add-service=mdns
 sudo firewall-cmd -q --permanent \
   --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
 sudo firewall-cmd -q --reload
