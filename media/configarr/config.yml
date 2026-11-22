@@ -187,6 +187,7 @@ prowlarr:
         - { name: LimeTorrents, definition: limetorrents, enable: true, sync_profile: Standard }
         - { name: Knaben, definition: Knaben, enable: true, sync_profile: Standard }
         - { name: Nyaa, definition: nyaasi, enable: true, sync_profile: Standard }
+        - { name: Anime Tosho, definition: animetosho-xyz, enable: true, sync_profile: Standard }
         - name: Torrentio
           definition: torrentio
           enable: true

@@ -94,7 +94,8 @@ qBittorrent in the tray when it was closed.
 `media/autostart` starts qBittorrent hidden at login.
 
 Prowlarr searches 1337x, The Pirate Bay, YTS, EZTV, LimeTorrents, Knaben,
-Nyaa (anime) and Torrentio, the same addon Stremio uses. Torrentio has no
+Nyaa and Anime Tosho (anime) and Torrentio, the same addon Stremio uses.
+Torrentio has no
 stock Prowlarr definition: `media/prowlarr/definitions/torrentio.yml` is
 mounted as a custom one and only searches by IMDb id.
 
