@@ -104,10 +104,11 @@ link_files() {
 start_units() {
   ((CHECK)) || systemctl --user daemon-reload
   mkdir -p "$STATE/.applied"
-  local u sum
+  local u sum extra
   for u in "${UNITS[@]}"; do
-    sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" \
-      $([[ $u == whisper ]] && echo "$REPO/media/whisper/asr-shim.py") | sha256sum)
+    extra=()
+    [[ $u != whisper ]] || extra=("$REPO/media/whisper/asr-shim.py")
+    sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" "${extra[@]}" | sha256sum)
     if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
       ((CHECK)) || systemctl --user start "$u"
     elif apply "unit $u (quadlet changed since the last deploy)"; then

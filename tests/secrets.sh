@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # secrets against a fake rbw whose vault is a directory of files.
+# shellcheck disable=SC2034  # $out is read inside the strings expect evals
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
