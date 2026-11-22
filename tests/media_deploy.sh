@@ -19,7 +19,7 @@ for k in RADARR__AUTH__APIKEY SONARR__AUTH__APIKEY PROWLARR__AUTH__APIKEY BAZARR
   grep -Eq "^$k=[0-9a-f]{32}$" "$env_file" || fail "$k is not a 32 hex key"
 done
 grep -qx 'OPENSUBTITLESCOM_USERNAME=' "$env_file" || fail "empty non-key value was filled"
-! grep -Evq '^[A-Z_]+=' "$env_file" || fail "env file has a line that is not KEY=VALUE"
+! grep -Evq '^([A-Z_]+=|#|$)' "$env_file" || fail "env file has a line that is not KEY=VALUE, a comment or blank"
 
 cp "$env_file" "$T/first"
 ensure_env
