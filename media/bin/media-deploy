@@ -54,6 +54,7 @@ ensure_dirs() {
     "$HOME"/.cache/media/{jellyfin,configarr,whisper-cpp} \
     "$HOME"/Media/{Movies,Series,Anime,Downloads/Movies,Downloads/Series} \
     "$HOME"/Games "$HOME"/Personal/Torrents
+  grep -qsx Downloads "$HOME/Media/.hidden" || echo Downloads >>"$HOME/Media/.hidden"
 }
 
 ensure_whisper_model() {
