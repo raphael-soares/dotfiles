@@ -1,0 +1,7 @@
+[Unit]
+Description=Request the films on the Letterboxd watchlist
+
+[Service]
+Type=oneshot
+Environment=MEDIA_LETTERBOXD_USER=prayplagues
+ExecStart=%h/.local/bin/media-letterboxd

@@ -1,0 +1,6 @@
+[Unit]
+Description=Check the latest media backup restores
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/media-restore-test
