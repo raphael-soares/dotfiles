@@ -42,3 +42,4 @@ if [[ -n ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]] && ! pgrep -u "$USER" -x qbittorren
 fi
 
 "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-unstick" || echo "media-watchdog: media-unstick failed" >&2
+"$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-torrents" || echo "media-watchdog: media-torrents failed" >&2
