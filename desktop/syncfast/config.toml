@@ -42,7 +42,7 @@ local = "/home/raphael/TEAjudo"
 remote = "Raphael:TEAjudo"
 enabled = true
 presets = ["system_junk", "dev_dirs"]
-filters = ["- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
+filters = ["- /Env/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
 
 [[pair]]
 id = "unimed"
@@ -51,4 +51,4 @@ local = "/home/raphael/Unimed"
 remote = "Raphael:Unimed"
 enabled = true
 presets = ["system_junk", "dev_dirs"]
-filters = ["- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
+filters = ["- /Envs/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]

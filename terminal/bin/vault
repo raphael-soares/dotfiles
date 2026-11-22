@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# Bitwarden vault for people and agents. Listing commands print metadata only (name, folder,
+# username, URIs, dates): passwords, notes, fields and TOTP never reach stdout, so an agent can
+# organize the vault without reading secrets. `run` hands one secret to one command.
+set -euo pipefail
+
+SESSION_FILE=${XDG_RUNTIME_DIR:-/tmp}/vault-session
+TTL=${VAULT_TTL:-28800}
+PATH=$PATH:${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims
+
+usage() {
+  cat >&2 <<'EOF'
+usage: vault unlock | lock | status
+       vault ls [search]             items without secrets (id, name, folder, user, uris, date)
+       vault folders
+       vault dupes                   items sharing a name or a host
+       vault mv <id> <folder>        folder is created when missing
+       vault rename <id> <name>
+       vault rm <id>                 to the trash (30 days)
+       vault add <name> [--user U] [--uri U] [--folder F] (--generate [N] | --from-env VAR | --from-file F)
+       vault run <name> [--field F] <VAR> -- <command>...
+       vault note <folder> <name> <file>  store a file as a secure note, byte for byte
+EOF
+  exit 2
+}
+
+die() { echo "vault: $*" >&2; exit 1; }
+
+session() {
+  [[ -f $SESSION_FILE ]] || return 1
+  (($(date +%s) - $(stat -c %Y "$SESSION_FILE") < TTL)) || { rm -f "$SESSION_FILE"; return 1; }
+  cat "$SESSION_FILE"
+}
+
+ask_password() {
+  printf 'SETTITLE vault\nSETDESC Bitwarden master password\nSETPROMPT Password:\nGETPIN\nBYE\n' |
+    pinentry 2>/dev/null | sed -n 's/^D //p'
+}
+
+unlock() {
+  local status pw
+  status=$(bw status | jq -r .status)
+  [[ $status != unauthenticated ]] || die "run 'bw login' once on this machine"
+  session >/dev/null && return 0
+  pw=$(ask_password)
+  [[ -n $pw ]] || die "unlock cancelled"
+  (umask 077; VAULT_PW=$pw bw unlock --raw --passwordenv VAULT_PW >"$SESSION_FILE") ||
+    { rm -f "$SESSION_FILE"; die "unlock failed"; }
+  bw sync --session "$(cat "$SESSION_FILE")" >/dev/null
+}
+
+bwx() {
+  local s
+  s=$(session) || { unlock; s=$(session); }
+  bw "$@" --session "$s"
+}
+
+folder_id() {
+  local id
+  id=$(bwx list folders | jq -r --arg n "$1" '.[] | select(.name == $n) | .id' | head -1)
+  if [[ -z $id ]]; then
+    id=$(bwx get template folder | jq --arg n "$1" '.name = $n' | bwx encode | bwx create folder | jq -r .id)
+  fi
+  echo "$id"
+}
+
+META='map({id, name, folder: ($folders[.folderId // ""] // ""), user: (.login.username // ""),
+  uris: [(.login.uris // [])[].uri], type: ({"1":"login","2":"note","3":"card","4":"identity","5":"ssh"}[.type|tostring]),
+  updated: .revisionDate[:10]})'
+
+ls_items() {
+  local folders
+  folders=$(bwx list folders | jq 'map({(.id // ""): .name}) | add')
+  bwx list items ${1:+--search "$1"} | jq --argjson folders "$folders" "$META"
+}
+
+edit_item() {
+  local id=$1 filter=$2
+  shift 2
+  bwx get item "$id" | jq "$@" "$filter" | bwx encode | bwx edit item "$id" | jq '{id, name}'
+}
+
+add() {
+  local name=$1 user='' uri='' folder='' secret='' len item
+  shift
+  while (($#)); do
+    case $1 in
+      --user) user=$2; shift 2 ;;
+      --uri) uri=$2; shift 2 ;;
+      --folder) folder=$2; shift 2 ;;
+      --generate) len=${2:-32}; [[ $len =~ ^[0-9]+$ ]] && shift 2 || { len=32; shift; }
+        secret=$(bw generate -ulns --length "$len") ;;
+      --from-env) secret=${!2:-}; shift 2 ;;
+      --from-file) secret=$(<"$2"); shift 2 ;;
+      *) usage ;;
+    esac
+  done
+  [[ -n $secret ]] || die "no secret: use --generate, --from-env or --from-file"
+  item=$(bwx get template item | jq --arg n "$name" --arg u "$user" --arg uri "$uri" --arg p "$secret" \
+    '.name = $n | .notes = null | .login = {username: $u, password: $p, uris: (if $uri == "" then [] else [{uri: $uri}] end)}')
+  [[ -z $folder ]] || item=$(jq --arg f "$(folder_id "$folder")" '.folderId = $f' <<<"$item")
+  bwx encode <<<"$item" | bwx create item | jq '{id, name}'
+}
+
+run() {
+  local name=$1 field=password var value
+  shift
+  [[ ${1:-} == --field ]] && { field=$2; shift 2; }
+  var=${1:?}; shift
+  [[ ${1:-} == -- ]] && shift
+  (($#)) || usage
+  if [[ $field == password ]]; then value=$(rbw get "$name"); else value=$(rbw get --field "$field" "$name"); fi
+  export "$var=$value"
+  exec "$@"
+}
+
+note() {
+  local fid id
+  fid=$(folder_id "$1")
+  id=$(bwx list items --folderid "$fid" | jq -r --arg n "$2" '.[] | select(.name == $n) | .id' | head -1)
+  if [[ -n $id ]]; then
+    edit_item "$id" '.notes = $c' --rawfile c "$3"
+  else
+    bwx get template item | jq --arg n "$2" --arg f "$fid" --rawfile c "$3" \
+      '.type = 2 | .name = $n | .folderId = $f | .notes = $c | .secureNote = {type: 0} | del(.login)' |
+      bwx encode | bwx create item | jq '{id, name}'
+  fi
+}
+
+cmd=${1:-}; shift || true
+case $cmd in
+  unlock) unlock ;;
+  lock) rm -f "$SESSION_FILE"; bw lock >/dev/null; rbw lock 2>/dev/null || true ;;
+  status) bw status | jq '{status, userEmail, lastSync}'; session >/dev/null && echo unlocked || echo locked ;;
+  ls) ls_items "${1:-}" ;;
+  folders) bwx list folders | jq -r '.[].name' ;;
+  dupes) ls_items | jq 'group_by(.name | ascii_downcase) + group_by(.uris[0] // "" | sub("^[a-z]+://"; "") | sub("/.*"; "") | sub("^www\\."; ""))
+    | map(select(length > 1 and (.[0].uris[0] // .[0].name) != "")) | unique' ;;
+  mv) (($# == 2)) || usage; edit_item "$1" '.folderId = $f' --arg f "$(folder_id "$2")" ;;
+  rename) (($# == 2)) || usage; edit_item "$1" '.name = $n' --arg n "$2" ;;
+  rm) (($# == 1)) || usage; bwx delete item "$1" && echo "vault: $1 in the trash" ;;
+  add) (($#)) || usage; add "$@" ;;
+  run) (($# >= 3)) || usage; run "$@" ;;
+  note) (($# == 3)) || usage; note "$@" ;;
+  *) usage ;;
+esac

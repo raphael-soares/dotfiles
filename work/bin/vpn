@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Fortinet SSL VPN through NetworkManager (networkmanager-fortisslvpn plugin).
-# Everything company-specific comes from ~/.env.local (VPN_*, see .env.example).
+# Everything company-specific comes from $VPN_ENV (default ~/Unimed/Envs/vpn.env, kept in the
+# Bitwarden vault by `secrets`): VPN_NAME, VPN_HOST, VPN_PORT, VPN_USER, VPN_PASSWORD and the
+# optional VPN_DNS and VPN_DNS_SEARCH (internal DNS and "~" suffixes for split DNS).
 # Usage: vpn [up|down|status]
 
 set -euo pipefail
 
-if [[ -f ~/.env.local ]]; then
-    source ~/.env.local
+VPN_ENV=${VPN_ENV:-$HOME/Unimed/Envs/vpn.env}
+if [[ -f $VPN_ENV ]]; then
+    source "$VPN_ENV"
 fi
 
 CONN_NAME="${VPN_NAME:-VPN}"
@@ -22,8 +25,7 @@ require_env() {
         [[ -z "${!var:-}" ]] && missing+=("$var")
     done
     if [[ ${#missing[@]} -gt 0 ]]; then
-        echo "Missing from ~/.env.local: ${missing[*]}" >&2
-        echo "See .env.example in the dotfiles for what to fill in." >&2
+        echo "Missing from $VPN_ENV: ${missing[*]}" >&2
         exit 1
     fi
 }
@@ -64,7 +66,7 @@ ensure_connection() {
     # push on the phone, autoconnect would raise a notification you did not ask for.
     nmcli connection modify "$CONN_NAME" connection.autoconnect no
 
-    # The password always comes fresh from .env.local at this point, it does not depend on
+    # The password always comes fresh from $VPN_ENV at this point, it does not depend on
     # what is cached in the secret agent (KWallet/gnome-keyring).
     nmcli connection modify "$CONN_NAME" vpn.secrets "password=${VPN_PASSWORD}"
 }

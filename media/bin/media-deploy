@@ -38,7 +38,11 @@ ensure_env() {
     fi
     printf '%s\n' "$line"
   done <"$ENV_FILE" >"$tmp"
-  if ((changed)); then mv "$tmp" "$ENV_FILE"; else rm "$tmp"; fi
+  ((changed)) || { rm "$tmp"; return 0; }
+  mv "$tmp" "$ENV_FILE"
+  if command -v secrets >/dev/null; then
+    secrets push "$ENV_FILE" || log "media.env changed: run 'secrets push $ENV_FILE'"
+  fi
 }
 
 wait_http() {
@@ -350,6 +354,7 @@ check() {
   configure_jellyfin
   problems=$(health)
   [[ -z $problems ]] || { sed 's/^/media: unhealthy: /' <<<"$problems"; DRIFT=1; }
+  if command -v secrets >/dev/null; then secrets check || DRIFT=1; fi
   ((!DRIFT))
 }
 

@@ -4,6 +4,7 @@ default_target_type = "symbolic"
 [terminal.files]
 "terminal/bash/bashrc" = "~/.bashrc"
 "terminal/bash/bash_profile" = "~/.bash_profile"
+"terminal/bin" = "~/.local/bin"
 "terminal/git/gitconfig" = "~/.gitconfig"
 "terminal/git/ignore" = "~/.config/git/ignore"
 "terminal/starship/starship.toml" = "~/.config/starship.toml"
@@ -27,6 +28,7 @@ default_target_type = "symbolic"
 "ai/.omp/agent/keybindings.yml" = "~/.omp/agent/keybindings.yml"
 "ai/.omp/agent/lsp.json" = "~/.omp/agent/lsp.json"
 "ai/.omp/agent/skills" = { type = "symbolic", target = "~/.omp/agent/skills", recurse = false }
+"ai/.omp/agent/mcp.json" = "~/.omp/agent/mcp.json"
 "ai/.omp/agent/extensions" = { type = "symbolic", target = "~/.omp/agent/extensions", recurse = false }
 "ai/.omp/agent/rules" = { type = "symbolic", target = "~/.omp/agent/rules", recurse = false }
 "ai/.omp/agent/prompts" = { type = "symbolic", target = "~/.omp/agent/prompts", recurse = false }
