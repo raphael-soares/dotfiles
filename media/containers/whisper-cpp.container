@@ -1,0 +1,21 @@
+[Unit]
+Description=whisper.cpp speech to text on the GPU (Vulkan), behind the whisper API shim
+
+[Container]
+ContainerName=whisper-cpp
+AutoUpdate=registry
+Network=media.network
+Image=ghcr.io/ggml-org/whisper.cpp:main-vulkan
+Entrypoint=whisper-server
+Exec=--model /models/ggml-medium.bin --host 0.0.0.0 --port 8080
+AddDevice=/dev/dri
+GroupAdd=keep-groups
+SecurityLabelDisable=true
+Volume=%h/.cache/media/whisper-cpp:/models:ro
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
