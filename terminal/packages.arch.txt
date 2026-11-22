@@ -12,3 +12,6 @@ ghostty
 go
 fastfetch
 dotter-rs-bin
+rbw
+direnv
+zenity

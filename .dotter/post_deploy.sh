@@ -64,10 +64,9 @@ copy_etc() {
 
 {{#if dotter.packages.terminal}}
 install_packages terminal
-warn_missing starship mise ghostty
-if [[ ! -f $HOME/.env.local ]]; then
-  cp "$REPO/.env.example" "$HOME/.env.local"
-  echo "==> ~/.env.local created from .env.example, fill in the keys"
+warn_missing starship mise ghostty rbw direnv
+if rbw unlocked 2>/dev/null || [[ -t 0 ]]; then
+  "$REPO/terminal/bin/secrets" pull || echo "==> secrets: run 'secrets setup' then 'secrets pull'"
 fi
 herdr_setup=$HOME/Code/Personal/herdr-setup
 [[ -d $herdr_setup ]] || git clone https://github.com/raphael-soares/herdr-setup "$herdr_setup"
@@ -79,6 +78,10 @@ install_packages ai
 warn_missing omp claude rtk
 if command -v omp >/dev/null; then
   omp plugin install github:obra/superpowers#v7.0.2
+fi
+if command -v claude >/dev/null && ! claude mcp get bitwarden >/dev/null 2>&1; then
+  claude mcp add -s user bitwarden -e BW_CLI_PATH="$HOME/.local/share/mise/shims/bw" \
+    -- npx -y @bitwarden/mcp-server@2026.7.0
 fi
 {{/if}}
 

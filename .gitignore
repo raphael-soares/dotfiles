@@ -1,6 +1,5 @@
 # Machine config, with API keys and local paths. Lives in the home; the rule
 # here is a safety net for the day a copy lands inside the repo.
-# .env.example, on the other hand, is versioned.
 .env
 .env.local
 *.env.local

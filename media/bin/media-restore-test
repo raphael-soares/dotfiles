@@ -20,8 +20,5 @@ for svc in radarr sonarr prowlarr jellyfin seerr; do
     { echo "media-restore-test: no $svc database" >&2; fail=1; }
 done
 tar -tf "$work/media/files.tar" >/dev/null && tar -tf "$work/media/qbittorrent.tar" >/dev/null || fail=1
-for key in RADARR__AUTH__APIKEY SONARR__AUTH__APIKEY JELLYFIN_TOKEN; do
-  grep -q "^$key=." "$work/media/media.env" || { echo "media-restore-test: media.env lacks $key" >&2; fail=1; }
-done
 ((!fail)) || exit 1
 log "$latest restores ($(find "$work/media" -name '*.db' -o -name '*.sqlite3' | wc -l) databases intact)"

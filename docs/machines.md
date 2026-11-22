@@ -29,8 +29,30 @@ cable does:
 
 ## Secrets
 
-Kept out of the repo, in `~/.env.local` (created from `.env.example` on the
-first deploy) and `~/.bash_profile.local`.
+Secret files never enter the repo. Each one is an item in the Bitwarden folder
+`dotfiles`: the item name is its path under `$HOME` and the notes hold the
+content. `secrets` (in `terminal/bin`, on both machines) moves them with `rbw`:
+
+- `secrets setup` once per machine: email, 8 hour unlock, `rbw` and `bw` login;
+- `secrets pull` writes every item to its path with mode 600 (the deploy runs
+  it);
+- `secrets push <file>` stores a file in the vault (new or changed);
+- `secrets check` needs no unlocked vault and reports a secret file others can
+  read, one not in the vault (`~/.config/secrets/*`, `~/.config/media/media.env`,
+  `~/*/Env/*.env`, `~/*/Envs/*.env`) or one missing here; `media-drift` runs it.
+
+`~/.config/secrets/shell.env` is loaded by the bashrc (keep it to keys every
+shell needs). The VPN reads `~/Unimed/Envs/vpn.env`. A project loads its own
+`.env` with direnv (`.envrc` with `dotenv ~/TEAjudo/Env/api-local.env`). The
+`Env` and `Envs` folders are not synced to Google Drive. `~/.bash_profile.local`
+stays a local file.
+
+`vault` (also `terminal/bin`) is the vault for people and agents: `ls`,
+`folders` and `dupes` print metadata only, `mv`/`rename`/`rm` organize, `add`
+stores a generated or file/variable secret without echoing it, and
+`vault run <item> VAR -- cmd` hands one secret to one command. The `cofre` skill
+holds the agent rules. The official Bitwarden MCP server is registered for omp
+(`ai/.omp/agent/mcp.json`) and Claude Code (post-deploy) for what `vault` lacks.
 
 ## Tests
 

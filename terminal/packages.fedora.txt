@@ -10,3 +10,6 @@ ImageMagick
 ghostscript
 golang
 fastfetch
+rbw
+direnv
+zenity

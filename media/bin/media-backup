@@ -20,7 +20,6 @@ tar -C "$STATE" -cf "$work/media/files.tar" \
   --exclude='*.db' --exclude='*.db-*' --exclude='*.sqlite3*' \
   --exclude=log --exclude=logs --exclude=cache --exclude=Sentry --exclude=MediaCover \
   --exclude=metadata --exclude=trickplay --exclude=SQLiteBackups --exclude=Backups --exclude=transcodes .
-cp "$HOME/.config/media/media.env" "$work/media/"
 tar -C "$HOME" -cf "$work/media/qbittorrent.tar" --exclude=ipc-socket --exclude=lockfile --exclude=logs \
   .config/qBittorrent .local/share/qBittorrent
 
