@@ -59,6 +59,7 @@ radarr:
       - /home/raphael/Media/Movies
 
     download_clients:
+      update_password: true
       data:
         - name: qBittorrent
           type: qbittorrent
@@ -115,6 +116,7 @@ sonarr:
       - /home/raphael/Media/Series
 
     download_clients:
+      update_password: true
       data:
         - name: qBittorrent
           type: qbittorrent
