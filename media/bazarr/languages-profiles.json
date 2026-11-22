@@ -1,10 +1,11 @@
 [
   {
     "profileId": 1,
-    "name": "Português (Brasil)",
+    "name": "Portuguese (Brazil) and English",
     "cutoff": null,
     "items": [
-      { "id": 1, "language": "pb", "forced": "False", "hi": "False", "audio_exclude": "False", "audio_only_include": "False" }
+      { "id": 1, "language": "pb", "forced": "False", "hi": "False", "audio_exclude": "False", "audio_only_include": "False" },
+      { "id": 2, "language": "en", "forced": "False", "hi": "False", "audio_exclude": "False", "audio_only_include": "False" }
     ],
     "mustContain": [],
     "mustNotContain": [],
