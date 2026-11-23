@@ -28,3 +28,4 @@ adw-gtk3-theme
 papirus-icon-theme
 yaru-icon-theme
 yaru-gtk3-theme
+qt6ct

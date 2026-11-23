@@ -46,18 +46,3 @@ clipboard_position = "auto"
 [control_center]
 hidden_tabs = [ "media", "weather", "screen-time", "power" ]
 shortcuts = [ { type = "wifi" }, { type = "bluetooth" }, { type = "caffeine" }, { type = "nightlight" }, { type = "notification" } ]
-
-[desktop_widgets]
-enabled = true
-widget_order = [ "desktop-widget-0000000000000002", "desktop-files" ]
-
-    [desktop_widgets.widget.desktop-files]
-    type = "raphael/desktop-files:files"
-    output = "DP-1"
-    cx = 306.0
-    cy = 438.0
-    placement_width = 1920.0
-    placement_height = 1080.0
-
-        [desktop_widgets.widget.desktop-files.settings]
-        background = false

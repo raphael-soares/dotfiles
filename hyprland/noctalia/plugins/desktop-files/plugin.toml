@@ -22,16 +22,12 @@ entry = "widget.luau"
     key = "rows"
     type = "int"
     label_key = "settings.rows.label"
-    default = 8
-    min = 1
     max = 30
 
     [[desktop_widget.setting]]
     key = "columns"
     type = "int"
     label_key = "settings.columns.label"
-    default = 6
-    min = 1
     max = 30
 
     [[desktop_widget.setting]]

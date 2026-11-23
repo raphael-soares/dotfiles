@@ -20,3 +20,4 @@ ddcutil
 nwg-look
 adw-gtk-theme
 papirus-icon-theme
+qt6ct

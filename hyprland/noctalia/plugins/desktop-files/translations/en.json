@@ -1,8 +1,6 @@
 {
   "settings": {
     "directory": { "label": "Folder" },
-    "rows": { "label": "Rows" },
-    "columns": { "label": "Columns" },
     "icon_size": { "label": "Icon size" }
   }
 }

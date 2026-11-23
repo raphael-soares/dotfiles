@@ -34,16 +34,12 @@ local function layoutPath()
   return dir and dir .. "/layout.tsv" or nil
 end
 
--- One "cell<TAB>name" line per item; cells count down each column, then across.
 local function loadLayout()
   local layout = {}
   local path = layoutPath()
   local content = path and noctalia.readFile(path)
   if content then
     for line in content:gmatch("[^\n]+") do
-      local cell, name = line:match("^(%d+)\t(.+)$")
-      if cell then
-        layout[name] = tonumber(cell)
       end
     end
   end
@@ -57,7 +53,6 @@ local function saveLayout()
   end
   local lines = {}
   for cell, item in pairs(cells) do
-    table.insert(lines, string.format("%d\t%s", cell, item.key))
   end
   table.sort(lines)
   noctalia.writeFile(path, table.concat(lines, "\n") .. "\n")
@@ -145,15 +140,6 @@ local function fillFileIcons(files, done)
     end
     done()
   end)
-end
-
-local function cellCount()
-  local rows = setting("rows", 8)
-  local count = rows * setting("columns", 6)
-  if #items > count then
-    count = math.ceil(#items / rows) * rows
-  end
-  return count
 end
 
 local function placeItems()
@@ -345,8 +331,6 @@ local function emptyTile(cell)
     minHeight = TILE_HEIGHT,
     radius = 10,
     fill = target and hovered == key and "primary/0.2" or nil,
-    border = target and "on_surface/0.15" or nil,
-    borderWidth = target and 1 or 0,
     onClick = target and function()
       dropOn(cell)
       render()
@@ -362,26 +346,14 @@ local function toggleArranging()
 end
 
 render = function()
-  local rows = setting("rows", 8)
   local columns = {}
   local column = {}
   for cell = 1, cellCount() do
     local item = cells[cell]
     table.insert(column, item and itemTile(item, cell) or emptyTile(cell))
-    if #column == rows then
-      table.insert(columns, ui.column({ gap = 4, align = "start" }, column))
       column = {}
     end
   end
-  desktopWidget.render(ui.column({ gap = 4, align = "start" }, {
-    ui.row({ gap = 4, align = "start" }, columns),
-    ui.button({
-      glyph = arranging and "check" or "layout-grid",
-      variant = arranging and "primary" or "ghost",
-      controlSize = "sm",
-      onClick = toggleArranging,
-    }),
-  }))
 end
 
 function update()
@@ -389,7 +361,6 @@ function update()
     return
   end
   local names = visibleNames()
-  local signature = table.concat(names, "\n")
   if signature ~= scannedNames then
     scan(names, signature)
   end

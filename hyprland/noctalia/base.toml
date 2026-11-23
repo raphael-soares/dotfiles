@@ -514,7 +514,7 @@ browser_placement = "floating"
 w-engine-panel_position = "center"
 
 [plugins]
-enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots", "raphael/desktop-files" ]
+enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots" ]
 
     [[plugins.source]]
     kind = "git"
@@ -585,7 +585,7 @@ mode = "dark"
 source = "builtin"
 
     [theme.templates]
-    builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4" ]
+    builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4", "qt" ]
     community_ids = [ "spotifast", "discord", "zapfast", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
 [wallpaper]
