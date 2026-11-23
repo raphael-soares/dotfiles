@@ -588,7 +588,8 @@ source = "builtin"
     builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4" ]
     community_ids = [ "spotifast", "discord", "zapfast", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
-        # Yaru accent closest to the palette, for Qt (qt6ct.conf) and every other reader (icon-theme.sh).
+        # Yaru accent closest to the palette, for Qt (qt6ct.conf) and every other reader (icon-theme.sh),
+        # plus the palette's text color for the symbolic icons Qt apps get.
         [theme.templates.user.qt6ct]
         input_path = "$XDG_CONFIG_HOME/noctalia/templates/qt6ct.conf"
         output_path = "$XDG_CONFIG_HOME/qt6ct/qt6ct.conf"
@@ -605,15 +606,13 @@ source = "builtin"
             { name = "Yaru-yellow", color = "#C88800" },
             { name = "Yaru-wartybrown", color = "#B39169" },
         ]
-        post_hook = "bash ~/.config/noctalia/icon-theme.sh '{{ closest_color }}{{ mode | replace: \"dark\", \"-dark\" | replace: \"light\", \"\" }}'"
+        post_hook = "bash ~/.config/noctalia/icon-theme.sh '{{ closest_color }}{{ mode | replace: \"dark\", \"-dark\" | replace: \"light\", \"\" }}' '{{ colors.on_surface.default.hex }}'"
 
-        [theme.templates.user.kvantum-svg]
-        input_path_modes = { dark = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-dark.svg", light = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-light.svg" }
-        output_path = "$XDG_CONFIG_HOME/Kvantum/Noctalia/Noctalia.svg"
-
-        [theme.templates.user.kvantum-kvconfig]
-        input_path_modes = { dark = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-dark.kvconfig", light = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-light.kvconfig" }
-        output_path = "$XDG_CONFIG_HOME/Kvantum/Noctalia/Noctalia.kvconfig"
+        # Palette for the Breeze style. Replaces the builtin "qt" template, whose disabled
+        # group repeats the active colors, so disabled widgets looked enabled.
+        [theme.templates.user.qt6ct-colors]
+        input_path = "$XDG_CONFIG_HOME/noctalia/templates/qt6ct-colors.conf"
+        output_path = "$XDG_CONFIG_HOME/qt6ct/colors/noctalia-breeze.conf"
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"

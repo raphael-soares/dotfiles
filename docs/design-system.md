@@ -201,10 +201,19 @@ Rules:
   Yaru and breeze `index.theme` files in `~/.local/share/icons` so
   nothing falls back to Breeze (Fedora's qt6ct links KIconThemes, which sets
   breeze as the Qt fallback theme).
+- Qt apps get `Yaru-symbolic`, built by the same hook in
+  `~/.local/share/icons`: Yaru's symbolic glyphs under plain names, in the
+  palette's text color, inheriting the Yaru variant. Qt never asks for
+  `-symbolic` names and does not recolor SVGs.
 - `settings.ini` keeps a neutral `Yaru-dark` for apps outside Wayland.
-- **Qt style**: Kvantum with a recolored KvLibadwaita
-  (`hyprland/noctalia/templates/kvantum-{dark,light}.{svg,kvconfig}`), so Qt
-  apps look like the libadwaita ones and follow the palette.
+- **Qt style**: Breeze over the Noctalia palette
+  (`hyprland/noctalia/templates/qt6ct-colors.conf`). No Kvantum theme close to
+  libadwaita held up: all of them fork KvLibadwaita, and each one broke
+  something (fields invisible on cards, clipped combos, a light background in
+  dark mode).
+- **qBittorrent** has its own theme (`media/qbittorrent/theme`): libadwaita
+  dark colors and shapes, Yaru symbolic icons drawn by `media-deploy`. Dark
+  only, because qBittorrent reads a theme's palette from a single section.
 - **Shell glyphs** (Noctalia bar and panels): embedded Tabler font. The config
   chooses which glyph goes where (`launcher_icon`, `glyph` of the session
   actions), but the set does not change: Noctalia only loads the package's
@@ -222,7 +231,7 @@ Rules:
 | Motion | `hyprland/hypr/animations.lua` | Written |
 | Font family | `desktop/fonts/50-fonts.conf` | Written |
 | Font in GTK, icons outside Wayland | `hyprland/gtk/gtk-{3,4}.0/settings.ini` | Written |
-| Qt style, Qt font, icon theme | `~/.config/qt6ct/qt6ct.conf`, `~/.config/Kvantum/Noctalia/` | Generated, outside git |
+| Qt style, Qt font, icon theme | `~/.config/qt6ct/qt6ct.conf`, `~/.config/qt6ct/colors/noctalia-breeze.conf`, `~/.local/share/icons/Yaru-symbolic/` | Generated, outside git |
 | Ghostty theme | `~/.config/ghostty/themes/noctalia` | Generated, outside git |
 | herdr-app theme | `~/.config/herdr-app/themes/noctalia.json` | Generated, outside git |
 
