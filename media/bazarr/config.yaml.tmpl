@@ -10,6 +10,10 @@ general:
     - gestdown
     - embeddedsubtitles
     - whisperai
+  # Image subtitles (PGS, VobSub) don't count: the Samsung TV app can't draw them, so
+  # Jellyfin burns them in and re-encodes the whole movie. Bazarr fetches a text one instead.
+  ignore_pgs_subs: true
+  ignore_vobsub_subs: true
   minimum_score: 66
   minimum_score_movie: 50
   movie_default_enabled: true

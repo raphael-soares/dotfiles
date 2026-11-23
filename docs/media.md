@@ -196,16 +196,30 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
    then `dotter deploy` again. The deploy sets the Application URL and adds
    Radarr and Sonarr from `media/seerr` (profiles and roots by name, keys from
    `media.env`), then applies the Jellyfin settings.
-4. TV: on Samsung models from 2021 on, install Jellyfin from the app store.
-   On 2018 to 2020 models, sideload it with Apps2Samsung. Point it at
-   `http://fedora.local:8096` (or `http://192.168.1.211:8096`).
+4. TV (Samsung QN55Q80A, `192.168.1.78`): the store app doesn't show up on
+   this set, so it is sideloaded. Turn on Developer Mode (Apps, then `12345`
+   from the SmartThings remote) with host IP `192.168.1.250`, restart the TV
+   and run `podman run --rm ghcr.io/georift/install-jellyfin-tizen 192.168.1.78`.
+   The sideloaded app never updates itself; run the same command again for a
+   new version. Server address: `http://192.168.1.250:8096` (the TV can't
+   resolve `.local` names).
 
 ## Quality
 
 Films use `4K (1080p fallback)`: 2160p WEB or Bluray encode first, 1080p when
-there is none, no Remux, at most 120 MB per minute (about 14 GB for two hours).
-Series use `1080p (4K when available)`: WEB 2160p above WEB 1080p; series and
-anime have the same cap per minute of episode.
+there is none, no Remux. 4K is capped at 200 MB per minute (about 24 GB for
+two hours, 27 Mbit/s on average, which the 2.4 GHz Wi-Fi to the TV carries);
+1080p at 120 MB per minute. Series use `1080p (4K when available)`: WEB 2160p
+above WEB 1080p, with the same caps per minute of episode.
+
+YTS, YIFY and the other `LQ` groups score -10000 and are never grabbed: they
+squeeze a film into 2 Mbit/s.
+
+Embedded image subtitles (PGS, VobSub) don't satisfy Bazarr: the Samsung app
+can't draw them, so Jellyfin would burn them in and re-encode the film to SDR
+H.264, which looks visibly worse. Bazarr downloads a text subtitle instead,
+and with that the TV plays the file untouched.
+
 Dolby Vision without an HDR fallback is rejected, since the TV would show it
 with wrong colors.
 
