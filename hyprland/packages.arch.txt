@@ -22,3 +22,4 @@ adw-gtk-theme
 papirus-icon-theme
 yaru-icon-theme
 qt6ct
+kvantum

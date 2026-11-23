@@ -136,10 +136,10 @@ fi
 if systemctl --user cat fumon.service >/dev/null 2>&1; then
   systemctl --user mask --now fumon.service
 fi
-# libadwaita apps read font and icons from dconf, not from settings.ini.
+# libadwaita apps read the font from dconf, not from settings.ini. The icon theme comes
+# from the Noctalia qt6ct template hook (noctalia/icon-theme.sh).
 gsettings set org.gnome.desktop.interface font-name 'Sans 10'
 gsettings set org.gnome.desktop.interface monospace-font-name 'Monospace 10'
-gsettings set org.gnome.desktop.interface icon-theme 'Yaru-olive-dark'
 gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita'
 gsettings set org.gnome.desktop.wm.preferences button-layout ':'
 systemctl --user enable --now gcr-ssh-agent.socket

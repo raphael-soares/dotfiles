@@ -26,7 +26,7 @@ system.
 | Typography | macOS | Inter in the role of SF Pro, mono only for code |
 | Bar | macOS | Menu bar: straight, full width, hairline only at the bottom, no shadow |
 | Motion | M3 | M3 curves and a critically damped spring |
-| Icons | Papirus | Papirus-Dark in apps, Tabler in the shell |
+| Icons | Yaru | Yaru accent closest to the palette in apps, Papirus as fallback, Tabler in the shell |
 
 ## Color
 
@@ -189,11 +189,21 @@ Rules:
 
 ## Icons
 
-- **App** (launcher, tray, dock, file manager): Papirus-Dark, from the
-  `papirus-icon-theme` package.
-- Who reads the theme: GTK (`settings.ini`), libadwaita apps (gsettings) and
-  Noctalia (reads `gtk-3.0/settings.ini`). `.dotter/post_deploy.sh` adjusts
-  the two that live outside the repo.
+- **App** (launcher, tray, dock, file manager): the Yaru accent variant
+  closest to the palette primary (`-dark` in dark mode), chosen by the
+  `qt6ct` user template in `base.toml` on every theme change. Papirus is the
+  only fallback.
+- Who reads the theme: Qt (`qt6ct.conf`, rendered from
+  `hyprland/noctalia/templates/qt6ct.conf`), GTK, libadwaita apps and
+  Noctalia (gsettings), KDE libraries (`kdeglobals`). The template hook
+  `hyprland/noctalia/icon-theme.sh` writes the last three, and shadows the
+  Yaru, Papirus and breeze `index.theme` files in `~/.local/share/icons` so
+  nothing falls back to Breeze (Fedora's qt6ct links KIconThemes, which sets
+  breeze as the Qt fallback theme).
+- `settings.ini` keeps a neutral `Yaru-dark` for apps outside Wayland.
+- **Qt style**: Kvantum with a recolored KvLibadwaita
+  (`hyprland/noctalia/templates/kvantum-{dark,light}.{svg,kvconfig}`), so Qt
+  apps look like the libadwaita ones and follow the palette.
 - **Shell glyphs** (Noctalia bar and panels): embedded Tabler font. The config
   chooses which glyph goes where (`launcher_icon`, `glyph` of the session
   actions), but the set does not change: Noctalia only loads the package's
@@ -210,7 +220,8 @@ Rules:
 | Shell opacity | `[bar]`, `[osd]`, `[shell]` and `[shell.panel]` in `settings.toml` | Written |
 | Motion | `hyprland/hypr/animations.lua` | Written |
 | Font family | `desktop/fonts/50-fonts.conf` | Written |
-| Font and icons in GTK | `hyprland/gtk/gtk-{3,4}.0/settings.ini` | Written |
+| Font in GTK, icons outside Wayland | `hyprland/gtk/gtk-{3,4}.0/settings.ini` | Written |
+| Qt style, Qt font, icon theme | `~/.config/qt6ct/qt6ct.conf`, `~/.config/Kvantum/Noctalia/` | Generated, outside git |
 | Ghostty theme | `~/.config/ghostty/themes/noctalia` | Generated, outside git |
 | herdr-app theme | `~/.config/herdr-app/themes/noctalia.json` | Generated, outside git |
 
