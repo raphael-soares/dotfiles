@@ -211,9 +211,9 @@ Rules:
   libadwaita held up: all of them fork KvLibadwaita, and each one broke
   something (fields invisible on cards, clipped combos, a light background in
   dark mode).
-- **qBittorrent** has its own theme (`media/qbittorrent/theme`): libadwaita
-  dark colors and shapes, Yaru symbolic icons drawn by `media-deploy`. Dark
-  only, because qBittorrent reads a theme's palette from a single section.
+- **qBittorrent** follows the Qt style and the system icons, like the other
+  Qt apps. A libadwaita theme for it lives in a separate repo and is not
+  deployed from here yet.
 - **Shell glyphs** (Noctalia bar and panels): embedded Tabler font. The config
   chooses which glyph goes where (`launcher_icon`, `glyph` of the session
   actions), but the set does not change: Noctalia only loads the package's

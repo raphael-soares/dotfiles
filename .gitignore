@@ -18,6 +18,3 @@ desktop/syncfast/config.toml.v*
 
 # Noctalia writes it with each machine's theme colors.
 hyprland/hypr/hyprtoolkit.conf
-
-# media-deploy draws them from the installed Yaru.
-media/qbittorrent/theme/icons/

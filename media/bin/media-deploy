@@ -132,25 +132,8 @@ seed_qbittorrent() {
   key=$(openssl kdf -binary -keylen 64 -kdfopt digest:SHA512 -kdfopt "pass:$(env_get QBITTORRENT_WEBUI_PASSWORD)" \
     -kdfopt "hexsalt:$(base64 -d <<<"$salt" | od -An -tx1 | tr -d ' \n')" -kdfopt iter:100000 PBKDF2 | base64 -w0)
   install -D -m 600 "$REPO/media/qbittorrent/qBittorrent.conf.seed" "$conf"
-  printf 'WebUI\\Password_PBKDF2="@ByteArray(%s:%s)"\nGeneral\\CustomUIThemePath=%s\n' "$salt" "$key" \
-    "$REPO/media/qbittorrent/theme/config.json" >>"$conf"
+  printf 'WebUI\\Password_PBKDF2="@ByteArray(%s:%s)"\n' "$salt" "$key" >>"$conf"
   log "created $conf"
-}
-
-# The theme's icons are Yaru's symbolic ones in white, made from the installed Yaru instead of committed.
-theme_qbittorrent() {
-  local out=$REPO/media/qbittorrent/theme/icons id name src svg
-  rm -rf "$out"
-  mkdir -p "$out"
-  while read -r id name; do
-    src=(/usr/share/icons/Yaru/scalable/*/"$name"-symbolic.svg)
-    IFS= read -r -d '' svg <"${src[0]}" || true
-    svg=${svg//#808080/#ffffff}
-    svg=${svg//#bebebe/#ffffff}
-    svg=${svg//fill=\"gray\"/fill=\"#ffffff\"}
-    svg=${svg//fill=\"#666\"/fill=\"#ffffff\"}
-    printf '%s' "$svg" >"$out/$id.svg"
-  done <"$REPO/media/qbittorrent/icons.map"
 }
 
 configure_qbittorrent() {
@@ -348,7 +331,6 @@ main() {
   ensure_env
   ensure_dirs
   seed_qbittorrent
-  theme_qbittorrent
   render_bazarr
   ensure_whisper_model
   start_units
