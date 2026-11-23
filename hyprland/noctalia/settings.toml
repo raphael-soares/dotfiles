@@ -601,7 +601,7 @@ wallpaper_scheme = "m3-content"
 
     [theme.templates]
     builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4" ]
-    community_ids = [ "spotifast", "discord", "zapfast", "fastfetch", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
+    community_ids = [ "spotifast", "discord", "zapfast", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"
