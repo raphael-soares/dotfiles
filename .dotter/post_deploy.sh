@@ -126,6 +126,11 @@ if [[ $DISTRO == fedora ]]; then
   sudo dnf config-manager setopt copr:copr.fedorainfracloud.org:nett00n:hyprland.includepkgs=satty
 fi
 install_packages hyprland
+# Fedora's hyprland pulls in uwsm, whose %post starts its failed-unit notifier in every
+# graphical session, Plasma included. Neither session here runs under uwsm.
+if systemctl --user cat fumon.service >/dev/null 2>&1; then
+  systemctl --user mask --now fumon.service
+fi
 # libadwaita apps read font and icons from dconf, not from settings.ini.
 gsettings set org.gnome.desktop.interface font-name 'Sans 10'
 gsettings set org.gnome.desktop.interface monospace-font-name 'Monospace 10'
