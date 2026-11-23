@@ -181,6 +181,14 @@ if ! rpm -q Sunshine >/dev/null 2>&1; then
   sudo dnf copr enable -y lizardbyte/stable
   sudo dnf install -y Sunshine
 fi
+install_packages home
+# Sunshine needs a session after an unattended boot. Plasma stays in the greeter until it is removed.
+copy_etc home/greetd/config.toml /etc/greetd/config.toml || true
+if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
+  sudo systemctl disable plasmalogin.service
+  sudo systemctl enable greetd.service
+  echo "==> Reboot to log in through greetd"
+fi
 # Fedora 44 replaced SDDM with Plasma Login Manager, which reads the same keys from its own dir.
 copy_etc home/plasmalogin/autologin.conf /etc/plasmalogin.conf.d/autologin.conf || true
 # kded's gtkconfig rewrites settings.ini on every Plasma login, and here it links into the repo.

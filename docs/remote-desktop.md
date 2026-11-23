@@ -15,9 +15,10 @@ stream on the desktop side; the laptop side lives in
 ## Once, on the desktop
 
 1. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables Avahi and
-   Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall, sets Plasma
-   Login Manager autologin and turns off sleep and display off on AC. The
-   screen lock stays. sshd stays off: there is no authorized key yet.
+   Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall and logs the
+   desktop into Hyprland through greetd autologin. Noctalia never turns the
+   screen off there and nothing suspends it; the screen lock stays. sshd stays
+   off: there is no authorized key yet.
 2. Authorize the `personal` key, the same pair the laptop uses (it comes with
    the private `~/.ssh` repo):
 
@@ -27,9 +28,14 @@ stream on the desktop side; the laptop side lives in
 
 3. `dotter deploy` again: sshd starts, taking keys only.
 4. Open <https://localhost:47990> and create Sunshine's admin user.
-5. Reboot once and check Plasma comes up logged in. With the monitor on the
+5. Reboot once and check Hyprland comes up logged in. With the monitor on the
    laptop's input, the desktop's DisplayPort must stay connected
    (`cat /sys/class/drm/card*-DP-1/status`), or Sunshine has no screen.
+
+Back to Plasma, while it is still installed: pick it in the greeter after
+logging out, or for good run
+`sudo systemctl disable greetd && sudo systemctl enable plasmalogin` and
+reboot. The next deploy switches back to greetd.
 
 The desktop is on Wi-Fi: keep Moonlight's bitrate around 10 Mbit/s, or the
 stream fills the link and the delay climbs to hundreds of milliseconds.
@@ -43,11 +49,11 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
    Sunshine's web UI (PIN tab).
 3. In Moonlight's settings: resolution matching the laptop screen, bitrate
    10 Mbit/s, and "Capture system keyboard shortcuts" on, always. Without it
-   Moonlight drops the Super key, so `SUPER + 1` never reaches Plasma;
+   Moonlight drops the Super key, so `SUPER + 1` never reaches the desktop;
    `SUPER + grave` still works because Hyprland binds it with `dont_inhibit`.
    Also turn on "Optimize mouse for remote desktop instead of games": the
-   cursor then follows the laptop's own pointer instead of getting Plasma's
-   acceleration on top of the touchpad's.
+   cursor then follows the laptop's own pointer instead of getting the
+   desktop's acceleration on top of the touchpad's.
 4. The `desktop` host comes from the private `~/.ssh` repo
    (`config.d/personal.conf`): `Host personal-desktop desktop`, user
    `raphael`, key `~/.ssh/keys/personal`.
@@ -57,8 +63,8 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
 ## Check
 
 - `ssh desktop true` returns without asking for a password.
-- With the desktop on, `SUPER + grave` shows Plasma; `SUPER + 1` switches the
-  desktop's virtual desktop, not the laptop's; `SUPER + grave` again returns
+- With the desktop on, `SUPER + grave` shows its Hyprland; `SUPER + 1` switches
+  the desktop's workspace, not the laptop's; `SUPER + grave` again returns
   to where you were.
 - With the stream open, `SUPER + grave` switches at once, without the checking
   notification.
