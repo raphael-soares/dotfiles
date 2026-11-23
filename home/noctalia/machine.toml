@@ -32,6 +32,11 @@ icon_scale = 1.3
 item_spacing = 10
 pinned_opacity = 0.5
 
+[shell.panel]
+open_near_click_control_center = true
+open_near_click_clipboard = true
+clipboard_position = "auto"
+
 # The desktop always runs on the performance profile, so its switch goes.
 [control_center]
 hidden_tabs = [ "media", "weather", "screen-time", "power" ]
