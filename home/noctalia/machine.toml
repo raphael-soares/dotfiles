@@ -26,6 +26,11 @@ type = "control-center"
 custom_image = "~/.config/noctalia/icons/fedora-symbolic.svg"
 custom_image_colorize = true
 
+# Through IPC the panel gets no click anchor and opens centered above the bar,
+# while the audio and network icons keep opening theirs next to the icon.
+[widget.fedora.actions]
+left = "exec noctalia msg panel-toggle control-center"
+
 [widget.taskbar]
 pinned = [ "org.gnome.Nautilus", "herdr-app", "discord", "steam", "zapfast", "spotifast", "org.qbittorrent.qBittorrent" ]
 icon_scale = 1.3
