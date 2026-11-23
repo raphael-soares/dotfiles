@@ -210,6 +210,18 @@ xdg-mime default org.gnome.Papers.desktop application/pdf
 xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
   video/quicktime video/x-msvideo video/mpeg
 xdg-mime default org.gnome.TextEditor.desktop text/plain
+# Fedora has no syncfast-nautilus package (AUR only): take the extension from the
+# tag of the installed Flatpak, so it speaks the same D-Bus API.
+sf_ver=$(flatpak info io.github.raphael_soares.syncfast 2>/dev/null | awk '/Version:/ {print $2}')
+if [[ -n $sf_ver && $(cat "$STATE/syncfast-nautilus" 2>/dev/null) != "$sf_ver" ]]; then
+  ext=$HOME/.local/share/nautilus-python/extensions
+  mkdir -p "$ext"
+  curl -fsSL -o "$ext/syncfast_nautilus.py.new" \
+    "https://raw.githubusercontent.com/raphael-soares/syncfast/v$sf_ver/packaging/nautilus/syncfast_nautilus.py"
+  mv "$ext/syncfast_nautilus.py.new" "$ext/syncfast_nautilus.py"
+  echo "$sf_ver" > "$STATE/syncfast-nautilus"
+  nautilus -q 2>/dev/null || true
+fi
 # The monitor shows the laptop most of the time and then stops answering on DP-1,
 # leaving the session without a screen and Sunshine with nothing to stream. The kernel
 # replays the LG's own EDID there (amdgpu loads from the initramfs, hence dracut).
