@@ -514,7 +514,7 @@ browser_placement = "floating"
 w-engine-panel_position = "center"
 
 [plugins]
-enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots" ]
+enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots", "raphael/desktop-files" ]
 
     [[plugins.source]]
     kind = "git"

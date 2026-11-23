@@ -45,6 +45,7 @@ default_target_type = "symbolic"
 [hyprland.files]
 "hyprland/hypr" = { type = "symbolic", target = "~/.config/hypr", recurse = false }
 "hyprland/portal/hyprland-portals.conf" = "~/.config/xdg-desktop-portal/hyprland-portals.conf"
+"hyprland/noctalia/plugins/desktop-files" = { type = "symbolic", target = "~/.config/noctalia-plugins/desktop-files", recurse = false }
 "hyprland/noctalia/plugins/hypr-active-workspace" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-active-workspace", recurse = false }
 "hyprland/noctalia/plugins/hypr-displays" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-displays", recurse = false }
 "hyprland/noctalia/plugins/hypr-shots" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-shots", recurse = false }

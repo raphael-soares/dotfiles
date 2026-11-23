@@ -1,0 +1,43 @@
+id = "raphael/desktop-files"
+name = "Desktop Files"
+version = "1.0.0"
+plugin_api = 24
+author = "raphael"
+license = "MIT"
+icon = "folder"
+description = "The files and launchers in ~/Desktop as icons on the desktop, opened with a click."
+tags = ["desktop", "files", "utility"]
+
+[[desktop_widget]]
+id = "files"
+entry = "widget.luau"
+
+    [[desktop_widget.setting]]
+    key = "directory"
+    type = "string"
+    label_key = "settings.directory.label"
+    default = "~/Desktop"
+
+    [[desktop_widget.setting]]
+    key = "rows"
+    type = "int"
+    label_key = "settings.rows.label"
+    default = 8
+    min = 1
+    max = 30
+
+    [[desktop_widget.setting]]
+    key = "columns"
+    type = "int"
+    label_key = "settings.columns.label"
+    default = 6
+    min = 1
+    max = 30
+
+    [[desktop_widget.setting]]
+    key = "icon_size"
+    type = "int"
+    label_key = "settings.icon_size.label"
+    default = 48
+    min = 16
+    max = 128
