@@ -541,9 +541,6 @@ show_close_buttons = false
     [shell.animation]
     speed = 2.0000000298023224
 
-    [shell.greeter_sync]
-    auto_sync = true
-
     [shell.keyboard_layout.custom_labels]
     "English (US)" = "EN"
     "Portuguese (Brazil)" = "BR"
@@ -582,12 +579,20 @@ show_close_buttons = false
     [shell.shadow]
     alpha = 0.34999999999999998
 
+[theme]
+builtin = "Gruvbox"
+mode = "dark"
+source = "builtin"
+
     [theme.templates]
     builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4" ]
     community_ids = [ "spotifast", "discord", "zapfast", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"
+
+    [wallpaper.default]
+    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
 
     [[wallpaper.favorite]]
     community_palette = "Paradise"

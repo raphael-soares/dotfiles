@@ -32,11 +32,6 @@ stream on the desktop side; the laptop side lives in
    laptop's input, the desktop's DisplayPort must stay connected
    (`cat /sys/class/drm/card*-DP-1/status`), or Sunshine has no screen.
 
-Back to Plasma, while it is still installed: pick it in the greeter after
-logging out, or for good run
-`sudo systemctl disable greetd && sudo systemctl enable plasmalogin` and
-reboot. The next deploy switches back to greetd.
-
 The desktop is on Wi-Fi: keep Moonlight's bitrate around 10 Mbit/s, or the
 stream fills the link and the delay climbs to hundreds of milliseconds.
 

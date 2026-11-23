@@ -251,3 +251,32 @@ both machines, and `hyprtoolkit.conf` being untracked.
   machine file.
 - Qt apps under Hyprland: `QT_QPA_PLATFORMTHEME=gtk3` is set and Fedora ships
   `libqgtk3.so` in `qt6-qtbase-gui`; check OpenRGB and qBittorrent look right.
+
+## Revision after the first boot (owner)
+
+Hyprland logged in unattended on the first try, so the owner pulled the
+Plasma removal into this PR and asked that the repo keep no volatile state.
+
+- **No state in the repo.** `~/.local/state/noctalia/settings.toml` is no
+  longer linked; it is each machine's own file, written by Noctalia's
+  interface (theme, wallpaper, bar layout). The repo keeps defaults only:
+  the shared base gains `[theme]` (builtin Gruvbox, dark) and
+  `wallpaper.default` (forest-4). Per-machine behavior that is config, not
+  taste, goes to `~/.config/noctalia/machine.toml`, linked from
+  `laptop/noctalia/machine.toml` (hooks, idle) or `home/noctalia/machine.toml`
+  (idle). Noctalia merges every `*.toml` in its config dir (`config_service.cpp`,
+  `sortedConfigTomlFiles`), then the state file on top.
+- **Migration.** Before deploying, each machine replaces the state link with a
+  copy of its target, so nothing changes on screen and dotter skips a target
+  that is no longer its link.
+- **Plasma removal (desktop).** `home/remove.fedora.txt` lists Plasma, KWin,
+  Plasma Login Manager, KWallet and the KDE apps; `remove_packages home` drops
+  them with `clean_requirements_on_remove` off, so tuned and fonts stay.
+  `fedora-release-identity-kde-desktop` protects `plasma-desktop`; the hook
+  rebuilds the protected list from `/etc/dnf/protected.d` without it (swapping
+  the identity would downgrade `fedora-release-common`). The Haruna flatpak goes
+  too. KDE libraries left behind stay: `dnf autoremove` would take tuned.
+- **Repo cleanup.** `home/kwin`, `home/plasmalogin`, the kded, powerdevil,
+  roundcorners and kwinrc lines leave the home hook; greetd is enabled with
+  `systemctl enable --force` (it takes over `display-manager.service` without
+  naming the old manager).

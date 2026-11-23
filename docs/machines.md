@@ -27,12 +27,16 @@ and by `home` on `fedora`. It returns `monitors` (rules by output name, read by
 the directory runs the shared config with the wildcard monitor rule.
 
 Noctalia works the same way. `hyprland/noctalia/settings.toml` is the shared
-base in `~/.config/noctalia/`. Each machine links its own state file,
-`laptop/noctalia/settings.toml` or `home/noctalia/settings.toml`, to
-`~/.local/state/noctalia/settings.toml`; it holds the theme, wallpaper, idle and
-hooks, and wins over the base. Noctalia's interface writes only to the state
-file, so a change made there stays on that machine. To share one, move the key
-to the base by hand.
+base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and
+wallpaper. Each machine links its own `machine.toml` next to it
+(`laptop/noctalia/machine.toml` or `home/noctalia/machine.toml`) for settings
+that belong to that machine: idle, hooks, greeter sync. Noctalia merges every
+`*.toml` in that directory, so a key lives in one file only.
+
+The repo keeps no state. Noctalia's interface writes theme, wallpaper and bar
+changes to `~/.local/state/noctalia/settings.toml`, a plain file on each
+machine that wins over the config and never reaches git. To make a change the
+new default, copy the key into the base or the machine's `machine.toml`.
 
 ## Fuxi-H3 on the `fedora` machine
 

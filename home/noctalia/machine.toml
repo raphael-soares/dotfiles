@@ -1,0 +1,9 @@
+[idle.behavior.lock]
+enabled = true
+
+[idle.behavior.screen-off]
+enabled = false
+
+# Each sync runs as root through polkit and asks for the password; the desktop logs in alone anyway.
+[shell.greeter_sync]
+auto_sync = false

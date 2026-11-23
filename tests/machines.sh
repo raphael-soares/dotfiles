@@ -45,7 +45,7 @@ done
 [[ -f $H/.claude/skills/discussao/SKILL.md ]] || fail ".claude/skills does not reach the skills"
 
 hypr_shared=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
-  .config/noctalia-plugins/hypr-shots .local/state/noctalia/settings.toml
+  .config/noctalia-plugins/hypr-shots
   .config/noctalia/settings.toml
   Pictures/Wallpaper/forest-4.jpg .config/ghostty/machine.conf
   .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini .config/hypr-machine)
@@ -64,8 +64,10 @@ hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
 shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/config.toml io.missioncenter.MissionCenter
   'remote-add --user --if-not-exists flathub')
 laptop_only_in_hook=(enterprise)
-desktop_only_in_hook=(plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms' shapecorners geometry_change media-deploy
-  Module-gtkconfig home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable greetd' 'xdg-mime default')
+desktop_only_in_hook=(setcap drm.edid_firmware dracut.conf.d 'capture = kms' media-deploy remove_packages\ home
+  home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' 'xdg-mime default' org.kde.haruna)
+gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners)
+for p in "${gone_from_hook[@]}"; do ! hook_has "$p" || fail "$machine hook still has $p"; done
 for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
 for f in "${hypr_shared[@]}"; do exists "$f"; done
 repo_link .config/hypr
@@ -76,34 +78,27 @@ links_to .config/noctalia/settings.toml hyprland/noctalia/settings.toml
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||
   fail "hyprtoolkit.conf is tracked, and Noctalia rewrites it with each machine's colors"
 git -C "$REPO" check-ignore -q hyprland/hypr/hyprtoolkit.conf || fail "hyprtoolkit.conf is not ignored"
-# Without it Noctalia runs every migration since version 0 on the state file and rewrites it.
-base_version=$(grep -m1 '^config_version' "$REPO/hyprland/noctalia/settings.toml")
-[[ $(head -1 "$H/.local/state/noctalia/settings.toml") == "$base_version" ]] ||
-  fail "Noctalia state file does not start with $base_version"
+[[ ! -e $H/.local/state/noctalia/settings.toml ]] ||
+  fail "Noctalia's state file is deployed, and its interface writes theme and wallpaper there"
+[[ ! -e $H/.local/share/kwin ]] || fail "KWin files are still deployed"
 
 case $machine in
   arch)
     for f in "${laptop_only[@]}"; do exists "$f"; done
     for f in "${desktop_only[@]}"; do absent "$f"; done
     [[ -f $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine does not reach remote.lua"
-    links_to .local/state/noctalia/settings.toml laptop/noctalia/settings.toml
+    links_to .config/noctalia/machine.toml laptop/noctalia/machine.toml
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
     for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
-    absent .local/share/kwin/effects/kwin4_effect_geometry_change
-    absent .local/share/kwin/scripts/center-widget-popups
     ;;
   fedora)
     for f in "${laptop_only[@]}"; do absent "$f"; done
     for f in "${desktop_only[@]}"; do repo_link "$f"; done
     for p in "${laptop_only_in_hook[@]}"; do ! hook_has "$p" || fail "fedora hook has $p"; done
     for p in "${desktop_only_in_hook[@]}"; do hook_has "$p" || fail "fedora hook lacks $p"; done
-    repo_link .local/share/kwin/effects/kwin4_effect_geometry_change
     [[ -f $H/.config/hypr-machine/machine.lua ]] || fail "hypr-machine does not reach machine.lua"
-    links_to .local/state/noctalia/settings.toml home/noctalia/settings.toml
+    links_to .config/noctalia/machine.toml home/noctalia/machine.toml
     [[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "fedora got the remote toggle"
-    [[ -f $H/.local/share/kwin/effects/kwin4_effect_geometry_change/metadata.json ]] ||
-      fail "geometry change link does not reach metadata.json"
-    repo_link .local/share/kwin/scripts/center-widget-popups
     ;;
   *) echo "unknown machine: $machine"; exit 2 ;;
 esac
