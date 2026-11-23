@@ -243,7 +243,9 @@ QListWidget#categoriesList::item:hover, TransferListFiltersWidget QAbstractItemV
 QListWidget#categoriesList::item:selected, TransferListFiltersWidget QAbstractItemView::item:selected {
     background: rgba(255, 255, 255, 26);
 }
+TransferListFiltersWidget QTreeView { show-decoration-selected: 0; }
 TransferListFiltersWidget QTreeView::branch,
+TransferListFiltersWidget QTreeView::branch:hover,
 TransferListFiltersWidget QTreeView::branch:selected { background: palette(dark); }
 TransferListFiltersWidget QCheckBox { font-weight: bold; padding: 6px 8px 2px 8px; }
 
