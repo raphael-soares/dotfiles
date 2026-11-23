@@ -217,7 +217,7 @@ edid_changed=0
 copy_etc home/edid/lg-ultragear.bin /usr/lib/firmware/edid/lg-ultragear.bin && edid_changed=1
 copy_etc home/dracut/edid.conf /etc/dracut.conf.d/edid.conf && edid_changed=1
 if ((edid_changed)); then sudo dracut -f --regenerate-all; fi
-if ! sudo grubby --info=ALL | grep -q 'drm.edid_firmware=DP-1'; then
+if ! sudo grubby --info=ALL | grep 'drm.edid_firmware=DP-1' >/dev/null; then
   sudo grubby --update-kernel=ALL --args="drm.edid_firmware=DP-1:edid/lg-ultragear.bin video=DP-1:e"
   echo "==> Reboot for the DP-1 EDID override"
 fi
