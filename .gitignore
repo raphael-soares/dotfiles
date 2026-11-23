@@ -15,3 +15,6 @@ __pycache__/
 
 # syncfast keeps a copy of the config before migrating versions.
 desktop/syncfast/config.toml.v*
+
+# Noctalia writes it with each machine's theme colors.
+hyprland/hypr/hyprtoolkit.conf

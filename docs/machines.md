@@ -26,6 +26,14 @@ and by `home` on `fedora`. It returns `monitors` (rules by output name, read by
 `monitors.lua`) and `setup`, which `hyprland.lua` calls last. A machine without
 the directory runs the shared config with the wildcard monitor rule.
 
+Noctalia works the same way. `hyprland/noctalia/settings.toml` is the shared
+base in `~/.config/noctalia/`. Each machine links its own state file,
+`laptop/noctalia/settings.toml` or `home/noctalia/settings.toml`, to
+`~/.local/state/noctalia/settings.toml`; it holds the theme, wallpaper, idle and
+hooks, and wins over the base. Noctalia's interface writes only to the state
+file, so a change made there stays on that machine. To share one, move the key
+to the base by hand.
+
 ## Fuxi-H3 on the `fedora` machine
 
 Before trusting the rules with the dongle, check that it shows up like the

@@ -76,16 +76,6 @@ widget_order = [ "desktop-widget-0000000000000002" ]
 [dock]
 background_opacity = 0.99999997764825821
 
-[hooks]
-session_locked = "if [ \"$(pactl get-sink-mute alsa_output.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Speaker__sink)\" = \"Mute: no\" ]; then pactl set-sink-mute alsa_output.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Speaker__sink 1 && touch \"$XDG_RUNTIME_DIR/lock-muted-speaker\"; fi; for p in $(busctl --user list --no-legend | awk '$1 ~ /^org[.]mpris[.]MediaPlayer2[.]/ {print $1}'); do busctl --user call \"$p\" /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player Pause; done"
-session_unlocked = "if [ -e \"$XDG_RUNTIME_DIR/lock-muted-speaker\" ]; then pactl set-sink-mute alsa_output.pci-0000_00_1f.3-platform-skl_hda_dsp_generic.HiFi__Speaker__sink 0; rm -f \"$XDG_RUNTIME_DIR/lock-muted-speaker\"; fi"
-
-[idle.behavior.lock]
-enabled = true
-
-[idle.behavior.screen-off]
-enabled = true
-
 [location]
 auto_locate = true
 
@@ -592,34 +582,12 @@ show_close_buttons = false
     [shell.shadow]
     alpha = 0.34999999999999998
 
-[theme]
-builtin = "Gruvbox"
-community_palette = "Paradise"
-mode = "dark"
-source = "community"
-wallpaper_scheme = "m3-content"
-
     [theme.templates]
     builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4" ]
     community_ids = [ "spotifast", "discord", "zapfast", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"
-
-    [wallpaper.default]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
-
-    [wallpaper.last]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
-
-    [wallpaper.monitors.DP-1]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
-
-    [wallpaper.monitors.HEADLESS-3]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/32. One Dark.png"
-
-    [wallpaper.monitors.eDP-1]
-    path = "/home/raphael/Pictures/Wallpaper/wallz/One Dark/16. One Dark.png"
 
     [[wallpaper.favorite]]
     community_palette = "Paradise"

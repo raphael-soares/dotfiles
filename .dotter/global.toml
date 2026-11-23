@@ -48,7 +48,7 @@ default_target_type = "symbolic"
 "hyprland/noctalia/plugins/hypr-active-workspace" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-active-workspace", recurse = false }
 "hyprland/noctalia/plugins/hypr-displays" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-displays", recurse = false }
 "hyprland/noctalia/plugins/hypr-shots" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-shots", recurse = false }
-"hyprland/noctalia/settings.toml" = "~/.local/state/noctalia/settings.toml"
+"hyprland/noctalia/settings.toml" = "~/.config/noctalia/settings.toml"
 "hyprland/noctalia/forest-4.jpg" = "~/Pictures/Wallpaper/forest-4.jpg"
 "hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/machine.conf"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
@@ -56,6 +56,7 @@ default_target_type = "symbolic"
 
 [laptop.files]
 "laptop/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
+"laptop/noctalia/settings.toml" = "~/.local/state/noctalia/settings.toml"
 
 [work.files]
 "work/bin" = "~/.local/bin"
@@ -70,6 +71,7 @@ default_target_type = "symbolic"
 "home/kwin/geometry-change" = { type = "symbolic", target = "~/.local/share/kwin/effects/kwin4_effect_geometry_change", recurse = false }
 "home/kwin/center-widget-popups" = { type = "symbolic", target = "~/.local/share/kwin/scripts/center-widget-popups", recurse = false }
 "home/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
+"home/noctalia/settings.toml" = "~/.local/state/noctalia/settings.toml"
 
 [media.files]
 "media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }
