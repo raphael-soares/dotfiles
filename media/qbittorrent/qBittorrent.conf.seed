@@ -4,9 +4,6 @@ Accepted=true
 [AddNewTorrentDialog]
 RememberLastSavePath=false
 
-[Appearance]
-Style=Breeze
-
 [Application]
 GUI\Notifications\TorrentAdded=false
 
@@ -18,11 +15,13 @@ StartUpWindowState=Hidden
 Advanced\TrayIconStyle=MonoLight
 Advanced\useSystemIconTheme=true
 General\CloseToTray=true
+General\CustomUIThemePath=/home/raphael/.config/qBittorrent/noctalia/config.json
 General\Locale=en
 General\MinimizeToTray=true
 General\NoSplashScreen=true
 General\StatusbarDisplayed=false
 General\SystrayEnabled=true
+General\UseCustomUITheme=true
 WebUI\Enabled=true
 WebUI\LocalHostAuth=false
 WebUI\Port=8080

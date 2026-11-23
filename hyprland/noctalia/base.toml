@@ -615,6 +615,12 @@ source = "builtin"
         input_path_modes = { dark = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-dark.kvconfig", light = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-light.kvconfig" }
         output_path = "$XDG_CONFIG_HOME/Kvantum/Noctalia/Noctalia.kvconfig"
 
+        # qBittorrent reads it with General\UseCustomUITheme (media/qbittorrent/qBittorrent.conf.seed).
+        [theme.templates.user.qbittorrent]
+        input_path = "$XDG_CONFIG_HOME/noctalia/templates/qbittorrent.json"
+        output_path = "$XDG_CONFIG_HOME/qBittorrent/noctalia/config.json"
+        requires_path = "$XDG_CONFIG_HOME/qBittorrent"
+
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"
 
