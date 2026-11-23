@@ -48,7 +48,7 @@ default_target_type = "symbolic"
 "hyprland/noctalia/plugins/hypr-active-workspace" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-active-workspace", recurse = false }
 "hyprland/noctalia/plugins/hypr-displays" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-displays", recurse = false }
 "hyprland/noctalia/plugins/hypr-shots" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-shots", recurse = false }
-"hyprland/noctalia/settings.toml" = "~/.config/noctalia/settings.toml"
+"hyprland/noctalia/base.toml" = "~/.config/noctalia/base.toml"
 "hyprland/noctalia/forest-4.jpg" = "~/Pictures/Wallpaper/forest-4.jpg"
 "hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/machine.conf"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
@@ -70,6 +70,7 @@ default_target_type = "symbolic"
 [home.files]
 "home/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
 "home/noctalia/machine.toml" = "~/.config/noctalia/machine.toml"
+"home/noctalia/fedora-symbolic.svg" = "~/.config/noctalia/icons/fedora-symbolic.svg"
 
 [media.files]
 "media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }

@@ -31,7 +31,7 @@ system.
 ## Color
 
 The palette comes from Noctalia (default `[theme]` in
-`hyprland/noctalia/settings.toml`, each machine's choice in its state file),
+`hyprland/noctalia/base.toml`, each machine's choice in its state file),
 either from the wallpaper or from a ready-made scheme. What the system fixes
 is the **roles**, not the values:
 changing the palette in the Noctalia UI has to change the whole desktop
@@ -203,7 +203,7 @@ Rules:
 
 | Token | File | Written or generated |
 |---|---|---|
-| Palette and templates | `hyprland/noctalia/settings.toml` (defaults), `~/.local/state/noctalia/settings.toml` (each machine's choice) | Written (by the Noctalia UI, outside the repo) |
+| Palette and templates | `hyprland/noctalia/base.toml` (defaults), `~/.local/state/noctalia/settings.toml` (each machine's choice) | Written (by the Noctalia UI, outside the repo) |
 | Colors in Hyprland | `hyprland/hypr/noctalia.lua` | Generated, not used |
 | Window border | `hyprland/hypr/borders.lua` | Written |
 | Radius, shadow, gaps, blur off | `hyprland/hypr/look.lua` | Written |

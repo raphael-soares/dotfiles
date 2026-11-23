@@ -26,12 +26,13 @@ and by `home` on `fedora`. It returns `monitors` (rules by output name, read by
 `monitors.lua`) and `setup`, which `hyprland.lua` calls last. A machine without
 the directory runs the shared config with the wildcard monitor rule.
 
-Noctalia works the same way. `hyprland/noctalia/settings.toml` is the shared
+Noctalia works the same way. `hyprland/noctalia/base.toml` is the shared
 base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and
 wallpaper. Each machine links its own `machine.toml` next to it
 (`laptop/noctalia/machine.toml` or `home/noctalia/machine.toml`) for settings
-that belong to that machine: idle, hooks, greeter sync. Noctalia merges every
-`*.toml` in that directory, so a key lives in one file only.
+that belong to that machine: idle, hooks, greeter sync, the desktop's bottom
+bar. Noctalia merges every `*.toml` there in name order, so `machine.toml`
+wins over `base.toml`.
 
 The repo keeps no state. Noctalia's interface writes theme, wallpaper and bar
 changes to `~/.local/state/noctalia/settings.toml`, a plain file on each

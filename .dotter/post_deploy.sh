@@ -245,6 +245,9 @@ done
 sudo firewall-cmd -q --permanent \
   --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
 sudo firewall-cmd -q --reload
+if [[ $(tuned-adm active 2>/dev/null) != *throughput-performance ]]; then
+  sudo tuned-adm profile throughput-performance
+fi
 {{/if}}
 
 {{#if dotter.packages.media}}

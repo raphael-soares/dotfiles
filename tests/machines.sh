@@ -46,7 +46,7 @@ done
 
 hypr_shared=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
   .config/noctalia-plugins/hypr-shots
-  .config/noctalia/settings.toml
+  .config/noctalia/base.toml
   Pictures/Wallpaper/forest-4.jpg .config/ghostty/machine.conf
   .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini .config/hypr-machine)
 laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
@@ -65,7 +65,8 @@ shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/co
   'remote-add --user --if-not-exists flathub')
 laptop_only_in_hook=(enterprise)
 desktop_only_in_hook=(setcap drm.edid_firmware dracut.conf.d 'capture = kms' media-deploy remove_packages\ home
-  home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' 'xdg-mime default' org.kde.haruna)
+  home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' 'xdg-mime default' org.kde.haruna
+  'tuned-adm profile throughput-performance')
 gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners)
 for p in "${gone_from_hook[@]}"; do ! hook_has "$p" || fail "$machine hook still has $p"; done
 for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
@@ -74,7 +75,7 @@ repo_link .config/hypr
 [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
 [[ ! -e $H/.config/hypr/remote.lua ]] || fail "remote.lua is still shared"
 links_to() { [[ $(readlink -f "$H/$1") == "$REPO/$2" ]] || fail "$1 does not point to $2"; }
-links_to .config/noctalia/settings.toml hyprland/noctalia/settings.toml
+links_to .config/noctalia/base.toml hyprland/noctalia/base.toml
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||
   fail "hyprtoolkit.conf is tracked, and Noctalia rewrites it with each machine's colors"
 git -C "$REPO" check-ignore -q hyprland/hypr/hyprtoolkit.conf || fail "hyprtoolkit.conf is not ignored"
