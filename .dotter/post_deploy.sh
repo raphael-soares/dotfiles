@@ -118,8 +118,6 @@ fi
 
 {{#if dotter.packages.hyprland}}
 install_packages hyprland
-copy_etc hyprland/greetd/config.toml /etc/greetd/config.toml || true
-copy_etc hyprland/greetd/pam /etc/pam.d/greetd || true
 # libadwaita apps read font and icons from dconf, not from settings.ini.
 gsettings set org.gnome.desktop.interface font-name 'Sans 10'
 gsettings set org.gnome.desktop.interface monospace-font-name 'Monospace 10'
@@ -139,6 +137,12 @@ if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
   hyprctl reload >/dev/null && { noctalia msg config-reload || true; }
   hyprctl configerrors
 fi
+{{/if}}
+
+{{#if dotter.packages.laptop}}
+install_packages laptop
+copy_etc laptop/greetd/config.toml /etc/greetd/config.toml || true
+copy_etc laptop/greetd/pam /etc/pam.d/greetd || true
 {{/if}}
 
 {{#if dotter.packages.sshd}}

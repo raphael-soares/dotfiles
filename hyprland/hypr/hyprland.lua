@@ -5,7 +5,6 @@ require("inputs")
 require("monitors")
 require("keymaps")
 require("windowrules")
-require("remote")
 
 hl.env("XCURSOR_THEME", "Adwaita")
 hl.env("XCURSOR_SIZE", "24")
@@ -22,4 +21,9 @@ if not (":" .. os.getenv("PATH") .. ":"):find(":" .. local_bin .. ":", 1, true) 
 end
 
 require("borders")
+
+local host = require("host")
+if host.setup then
+  host.setup()
+end
 

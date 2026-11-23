@@ -9,7 +9,7 @@ the desktop reaches the laptop over SSH only, for herdr (see
 The `sshd` module (both machines) sets up key-only SSH, Avahi and the
 firewall. The `home` module (only on `fedora`) installs and configures the
 stream on the desktop side; the laptop side lives in
-`hyprland/hypr/remote.lua`. Design:
+`laptop/hypr/remote.lua`. Design:
 [`superpowers/specs/2026-11-18-remote-desktop-access-design.md`](superpowers/specs/2026-11-18-remote-desktop-access-design.md).
 
 ## Once, on the desktop

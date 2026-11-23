@@ -54,6 +54,9 @@ default_target_type = "symbolic"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
 "hyprland/gtk/gtk-4.0/settings.ini" = "~/.config/gtk-4.0/settings.ini"
 
+[laptop.files]
+"laptop/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
+
 [work.files]
 "work/bin" = "~/.local/bin"
 "work/shell/work.sh" = "~/.config/shell/rc.d/work.sh"

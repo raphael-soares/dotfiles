@@ -1,4 +1,4 @@
-package.path = arg[0]:gsub("tests/remote_state.lua$", "") .. "hyprland/hypr/?.lua;" .. package.path
+package.path = arg[0]:gsub("tests/remote_state.lua$", "") .. "laptop/hypr/?.lua;" .. package.path
 local R = require("remote_state")
 
 local failures = 0

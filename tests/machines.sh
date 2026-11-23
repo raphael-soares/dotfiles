@@ -49,7 +49,7 @@ laptop_only=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
   Pictures/Wallpaper/forest-4.jpg .config/ghostty/machine.conf
   .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini
   .local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
-  .config/shell/rc.d/work.sh)
+  .config/shell/rc.d/work.sh .config/hypr-machine)
 desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/media-deploy
   .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer)
 
@@ -71,6 +71,8 @@ case $machine in
     for f in "${desktop_only[@]}"; do absent "$f"; done
     repo_link .config/hypr
     [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
+    [[ -f $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine does not reach remote.lua"
+    [[ ! -e $H/.config/hypr/remote.lua ]] || fail "remote.lua is still shared"
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
     for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
     absent .local/share/kwin/effects/kwin4_effect_geometry_change

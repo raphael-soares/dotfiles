@@ -18,6 +18,14 @@ the machine has:
 real file in the way to `~/.dotfiles-backup/<date>/` and deploys. Nothing is
 deleted.
 
+## Hyprland per machine
+
+`hyprland` is the same config on both machines. What only one of them needs
+lives in its `~/.config/hypr-machine/machine.lua`, linked by `laptop` on `arch`
+and by `home` on `fedora`. It returns `monitors` (rules by output name, read by
+`monitors.lua`) and `setup`, which `hyprland.lua` calls last. A machine without
+the directory runs the shared config with the wildcard monitor rule.
+
 ## Fuxi-H3 on the `fedora` machine
 
 Before trusting the rules with the dongle, check that it shows up like the
