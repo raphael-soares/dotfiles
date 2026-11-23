@@ -84,9 +84,9 @@ radarr:
     quality_definition:
       type: movie
       qualities:
-        - { quality: WEBDL-2160p, min: 34.5, preferred: 119.9, max: 120 }
-        - { quality: WEBRip-2160p, min: 34.5, preferred: 119.9, max: 120 }
-        - { quality: Bluray-2160p, min: 102, preferred: 119.9, max: 120 }
+        - { quality: WEBDL-2160p, min: 34.5, preferred: 199.9, max: 200 }
+        - { quality: WEBRip-2160p, min: 34.5, preferred: 199.9, max: 200 }
+        - { quality: Bluray-2160p, min: 102, preferred: 199.9, max: 200 }
         - { quality: WEBDL-1080p, min: 12.5, preferred: 119.9, max: 120 }
         - { quality: WEBRip-1080p, min: 12.5, preferred: 119.9, max: 120 }
         - { quality: Bluray-1080p, min: 50.8, preferred: 119.9, max: 120 }
@@ -169,8 +169,8 @@ sonarr:
     quality_definition:
       type: series
       qualities:
-        - { quality: WEBDL-2160p, min: 25, preferred: 119.9, max: 120 }
-        - { quality: WEBRip-2160p, min: 25, preferred: 119.9, max: 120 }
+        - { quality: WEBDL-2160p, min: 25, preferred: 199.9, max: 200 }
+        - { quality: WEBRip-2160p, min: 25, preferred: 199.9, max: 200 }
         - { quality: WEBDL-1080p, min: 15, preferred: 119.9, max: 120 }
         - { quality: WEBRip-1080p, min: 15, preferred: 119.9, max: 120 }
         - { quality: HDTV-1080p, min: 15, preferred: 119.9, max: 120 }
