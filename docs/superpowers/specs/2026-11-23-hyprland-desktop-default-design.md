@@ -64,8 +64,10 @@ proof that nothing depends on it.
 
 - Fedora's greetd runs the greeter as user `greetd`; Arch uses `greeter`. The
   laptop's `laptop/greetd/config.toml` cannot be shared as is.
-- Fedora's `/etc/pam.d/greetd` already loads `pam_gnome_keyring`; the laptop's
-  `laptop/greetd/pam` is written for Arch (`system-local-login`).
+- Fedora's own `/etc/pam.d/greetd` loads `pam_gnome_keyring` (from
+  `gnome-keyring-pam`); the laptop's `laptop/greetd/pam` is written for Arch
+  (`system-local-login`) and denies every login on Fedora. The desktop had a
+  stray copy of it, so `home/greetd/pam` ships Fedora's file.
 - `/usr/share/wayland-sessions/hyprland.desktop` runs `/usr/bin/start-hyprland`
   on Fedora (lionheartp).
 - Noctalia reads every `*.toml` in `~/.config/noctalia/`, then the state file

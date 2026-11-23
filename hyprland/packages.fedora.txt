@@ -3,6 +3,7 @@ noctalia-git
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
 gnome-keyring
+gnome-keyring-pam
 gcr
 adwaita-cursor-theme
 udiskie
