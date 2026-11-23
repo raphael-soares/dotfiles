@@ -11,11 +11,17 @@ grim
 slurp
 hyprshot
 satty
+nautilus
+loupe
+papers
+showtime
+gnome-text-editor
 gnome-calculator
 gvfs-mtp
 gvfs-smb
 seahorse
 gnome-disk-utility
+pavucontrol
 ddcutil
 adw-gtk3-theme
 papirus-icon-theme

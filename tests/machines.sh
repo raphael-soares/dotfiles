@@ -61,10 +61,10 @@ else
   fail "hook was not rendered"
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
-shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/config.toml)
+shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/config.toml io.missioncenter.MissionCenter)
 laptop_only_in_hook=(enterprise)
 desktop_only_in_hook=(plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms' shapecorners geometry_change media-deploy
-  Module-gtkconfig home/greetd/config.toml 'enable greetd')
+  Module-gtkconfig home/greetd/config.toml 'enable greetd' 'xdg-mime default')
 for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
 for f in "${hypr_shared[@]}"; do exists "$f"; done
 repo_link .config/hypr

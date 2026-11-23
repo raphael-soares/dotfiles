@@ -126,6 +126,9 @@ if [[ $DISTRO == fedora ]]; then
   sudo dnf config-manager setopt copr:copr.fedorainfracloud.org:nett00n:hyprland.includepkgs=satty
 fi
 install_packages hyprland
+if [[ $DISTRO == fedora ]] && ! flatpak info io.missioncenter.MissionCenter >/dev/null 2>&1; then
+  flatpak install --user -y --noninteractive flathub io.missioncenter.MissionCenter
+fi
 # Fedora's hyprland pulls in uwsm, whose %post starts its failed-unit notifier in every
 # graphical session, Plasma included. Neither session here runs under uwsm.
 if systemctl --user cat fumon.service >/dev/null 2>&1; then
@@ -189,6 +192,14 @@ if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
   sudo systemctl enable greetd.service
   echo "==> Reboot to log in through greetd"
 fi
+# The KDE apps still hold these until Plasma is removed.
+xdg-mime default org.gnome.Nautilus.desktop inode/directory
+xdg-mime default org.gnome.Loupe.desktop image/png image/jpeg image/gif image/webp \
+  image/avif image/heif image/tiff image/bmp image/svg+xml
+xdg-mime default org.gnome.Papers.desktop application/pdf
+xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
+  video/quicktime video/x-msvideo video/mpeg
+xdg-mime default org.gnome.TextEditor.desktop text/plain
 # Fedora 44 replaced SDDM with Plasma Login Manager, which reads the same keys from its own dir.
 copy_etc home/plasmalogin/autologin.conf /etc/plasmalogin.conf.d/autologin.conf || true
 # kded's gtkconfig rewrites settings.ini on every Plasma login, and here it links into the repo.
