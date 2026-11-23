@@ -1,3 +1,5 @@
+config_version = 20
+
 [idle.behavior.lock]
 enabled = true
 
@@ -9,11 +11,11 @@ builtin = "Gruvbox"
 mode = "dark"
 source = "builtin"
 
-    [wallpaper.default]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
+[wallpaper.default]
+path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
 
-    [wallpaper.last]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
+[wallpaper.last]
+path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
 
-    [wallpaper.monitors.DP-1]
-    path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"
+[wallpaper.monitors.DP-1]
+path = "/home/raphael/Pictures/Wallpaper/forest-4.jpg"

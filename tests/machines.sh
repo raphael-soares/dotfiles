@@ -75,6 +75,10 @@ links_to .config/noctalia/settings.toml hyprland/noctalia/settings.toml
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||
   fail "hyprtoolkit.conf is tracked, and Noctalia rewrites it with each machine's colors"
 git -C "$REPO" check-ignore -q hyprland/hypr/hyprtoolkit.conf || fail "hyprtoolkit.conf is not ignored"
+# Without it Noctalia runs every migration since version 0 on the state file and rewrites it.
+base_version=$(grep -m1 '^config_version' "$REPO/hyprland/noctalia/settings.toml")
+[[ $(head -1 "$H/.local/state/noctalia/settings.toml") == "$base_version" ]] ||
+  fail "Noctalia state file does not start with $base_version"
 
 case $machine in
   arch)
