@@ -117,6 +117,14 @@ fi
 {{/if}}
 
 {{#if dotter.packages.hyprland}}
+if [[ $DISTRO == fedora ]]; then
+  coprs=$(dnf copr list 2>/dev/null)
+  for copr in lionheartp/Hyprland nett00n/hyprland; do
+    grep -q "/$copr$" <<<"$coprs" || sudo dnf copr enable -y "$copr"
+  done
+  # nett00n's hyprland sorts above lionheartp's build, which is the one tracked here.
+  sudo dnf config-manager setopt copr:copr.fedorainfracloud.org:nett00n:hyprland.includepkgs=satty
+fi
 install_packages hyprland
 # libadwaita apps read font and icons from dconf, not from settings.ini.
 gsettings set org.gnome.desktop.interface font-name 'Sans 10'
@@ -170,6 +178,8 @@ if ! rpm -q Sunshine >/dev/null 2>&1; then
 fi
 # Fedora 44 replaced SDDM with Plasma Login Manager, which reads the same keys from its own dir.
 copy_etc home/plasmalogin/autologin.conf /etc/plasmalogin.conf.d/autologin.conf || true
+# kded's gtkconfig rewrites settings.ini on every Plasma login, and here it links into the repo.
+kwriteconfig6 --file kded5rc --group Module-gtkconfig --key autoload false
 # The monitor shows the laptop most of the time and then stops answering on DP-1,
 # leaving Plasma without a screen and Sunshine with nothing to stream. The kernel
 # replays the LG's own EDID there (amdgpu loads from the initramfs, hence dracut).

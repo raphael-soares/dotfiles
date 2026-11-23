@@ -24,7 +24,7 @@ dotter picks `.dotter/<hostname>.toml`.
 | `terminal` | shell, git, editor, prompt, Ghostty | ✓ | ✓ |
 | `ai` | omp, Claude Code, skills | ✓ | ✓ |
 | `desktop` | fonts, web apps, audio, syncfast | ✓ | ✓ |
-| `hyprland` | Hyprland, Noctalia, GTK | ✓ | |
+| `hyprland` | Hyprland, Noctalia, GTK (on `fedora` as a second session next to Plasma) | ✓ | ✓ |
 | `laptop` | greetd, the laptop's monitors and the remote desktop toggle | ✓ | |
 | `work` | VPN and the work omp profile | ✓ | |
 | `sshd` | key-only SSH and mDNS, so each machine reaches the other ([remote access](docs/remote-desktop.md)) | ✓ | ✓ |

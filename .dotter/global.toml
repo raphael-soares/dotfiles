@@ -69,6 +69,7 @@ default_target_type = "symbolic"
 [home.files]
 "home/kwin/geometry-change" = { type = "symbolic", target = "~/.local/share/kwin/effects/kwin4_effect_geometry_change", recurse = false }
 "home/kwin/center-widget-popups" = { type = "symbolic", target = "~/.local/share/kwin/scripts/center-widget-popups", recurse = false }
+"home/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
 
 [media.files]
 "media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }
