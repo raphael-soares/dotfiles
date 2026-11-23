@@ -1,0 +1,16 @@
+{
+  "colors": {
+    "Palette.Window": "#242424",
+    "Palette.WindowText": "#F6F5F4",
+    "Palette.Base": "#242424",
+    "Palette.AlternateBase": "#2C2C2C",
+    "Palette.Text": "#F6F5F4",
+    "Palette.Button": "#303030",
+    "Palette.ButtonText": "#F6F5F4",
+    "Palette.Highlight": "#3584E4",
+    "Palette.HighlightedText": "#FFFFFF",
+    "Palette.Mid": "#454545",
+    "Palette.Dark": "#1E1E1E",
+    "ProgressBar": "#3584E4"
+  }
+}

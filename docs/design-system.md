@@ -26,7 +26,7 @@ system.
 | Typography | macOS | Inter in the role of SF Pro, mono only for code |
 | Bar | macOS | Menu bar: straight, full width, hairline only at the bottom, no shadow |
 | Motion | M3 | M3 curves and a critically damped spring |
-| Icons | Yaru | Yaru accent closest to the palette in apps, Papirus as fallback, Tabler in the shell |
+| Icons | Yaru | Yaru accent closest to the palette in apps, no other theme behind it, Tabler in the shell |
 
 ## Color
 
@@ -191,13 +191,14 @@ Rules:
 
 - **App** (launcher, tray, dock, file manager): the Yaru accent variant
   closest to the palette primary (`-dark` in dark mode), chosen by the
-  `qt6ct` user template in `base.toml` on every theme change. Papirus is the
-  only fallback.
+  `qt6ct` user template in `base.toml` on every theme change. Nothing falls
+  back to another theme: what Yaru lacks comes from hicolor. Papirus is
+  installed but out of the chain.
 - Who reads the theme: Qt (`qt6ct.conf`, rendered from
   `hyprland/noctalia/templates/qt6ct.conf`), GTK, libadwaita apps and
   Noctalia (gsettings), KDE libraries (`kdeglobals`). The template hook
   `hyprland/noctalia/icon-theme.sh` writes the last three, and shadows the
-  Yaru, Papirus and breeze `index.theme` files in `~/.local/share/icons` so
+  Yaru and breeze `index.theme` files in `~/.local/share/icons` so
   nothing falls back to Breeze (Fedora's qt6ct links KIconThemes, which sets
   breeze as the Qt fallback theme).
 - `settings.ini` keeps a neutral `Yaru-dark` for apps outside Wayland.

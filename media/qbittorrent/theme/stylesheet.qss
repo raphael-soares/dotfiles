@@ -1,0 +1,150 @@
+/* qBittorrent Native — Dark (universal, no OS binding) */
+
+/*
+   Unlike the Light theme, Dark cannot assume the OS itself is already
+   dark: without forcing the base palette here, generic Qt widgets
+   (lists, menus, inputs, tabs, scrollbars) would fall back to whatever
+   palette Qt picked at startup and could render light-on-dark or
+   otherwise mismatched. So this theme sets the app-wide palette itself
+   instead of relying on "switch your OS to dark mode first".
+*/
+QMainWindow, QDialog, QWidget { background-color: #242424; color: #F6F5F4; }
+
+QToolBar#toolBar {
+    background: #242424;
+    color: #F6F5F4;
+    border: none;
+    border-bottom: 1px solid #454545;
+    spacing: 0px;
+    padding: 0px 5px;
+    margin: 0px;
+    min-height: 40px;
+    max-height: 40px;
+    qproperty-iconSize: 24px 24px;
+}
+
+/*
+   No QToolButton min-height/max-height (or hover/pressed background) rule
+   here on purpose: same reasoning as the Light theme — this is the same
+   qBittorrent toolbar layout/bug, independent of color scheme.
+*/
+
+QToolBar#toolBar QLineEdit,
+QToolBar#toolBar QComboBox {
+    color: #F6F5F4;
+    background: #303030;
+    border: 1px solid #4B4B4B;
+    border-radius: 6px;
+    padding: 3px 7px;
+    selection-background-color: #3584E4;
+}
+QToolBar#toolBar QComboBox { padding-right: 22px; }
+QToolBar#toolBar QComboBox::drop-down { border: none; width: 20px; }
+QToolBar#toolBar QComboBox QAbstractItemView {
+    color: #F6F5F4;
+    background: #303030;
+    selection-background-color: #3584E4;
+    selection-color: #FFFFFF;
+}
+
+QToolBar#toolBar QToolButton::menu-indicator {
+    image: url(:/uitheme/icons/chevron-down.svg);
+    width: 10px;
+    height: 7px;
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    right: 1px;
+}
+
+/*
+   qBittorrent (as of 5.2.3) turns toolbar separators into plain QWidget
+   spacers with minimumWidth=16, plus two 8px QWidget spacers, so styling
+   QToolBar::separator alone cannot remove them. Match the spacer widgets
+   by their minimumWidth Qt property and zero them out. The expanding
+   spacer that pushes Search/Filter to the right has no 8/16px
+   minimumWidth and is intentionally left untouched.
+*/
+QToolBar#toolBar QWidget[minimumWidth="16"],
+QToolBar#toolBar QWidget[minimumWidth="8"] {
+    qproperty-minimumWidth: 0;
+    qproperty-maximumWidth: 0;
+    min-width: 0px;
+    max-width: 0px;
+    width: 0px;
+    margin: 0px;
+    padding: 0px;
+    border: none;
+    background: transparent;
+}
+
+QToolBar#toolBar::separator,
+QToolBar::separator { width: 0px; margin: 0px; padding: 0px; border: none; background: transparent; }
+
+/* Preferences sidebar */
+QListWidget#categoriesList,
+QListView#categoriesList { background: transparent; border: none; outline: none; }
+QListWidget#categoriesList::item,
+QListView#categoriesList::item {
+    color: #F6F5F4;
+    background: transparent;
+    border: none;
+    padding: 4px 6px;
+    margin: 1px 3px;
+    border-radius: 6px;
+}
+QListWidget#categoriesList::item:hover,
+QListView#categoriesList::item:hover { background: #343434; }
+QListWidget#categoriesList::item:selected,
+QListView#categoriesList::item:selected { background: #3584E4; color: #FFFFFF; }
+
+/* App-wide dark palette */
+QTreeView, QTableView, QListView, QListWidget, QAbstractItemView {
+    background-color: #242424; color: #F6F5F4;
+    alternate-background-color: #343434;
+    border-color: #454545;
+    selection-background-color: #3584E4;
+    selection-color: #FFFFFF;
+}
+QHeaderView::section {
+    background-color: #242424; color: #F6F5F4;
+    border: none; border-right: 1px solid #454545; border-bottom: 1px solid #454545;
+    padding: 4px 6px;
+}
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
+    background-color: #303030; color: #F6F5F4;
+    border: 1px solid #4B4B4B; border-radius: 6px; padding: 3px 6px;
+}
+QMenu { background-color: #303030; color: #F6F5F4; border: 1px solid #454545; }
+QMenu::item:selected { background: #343434; }
+QTabWidget::pane { border: 1px solid #454545; }
+QTabBar::tab { background: #242424; color: #F6F5F4; padding: 5px 10px; }
+QTabBar::tab:selected { background: #343434; }
+QScrollBar:vertical, QScrollBar:horizontal { background: transparent; border: none; }
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal { background: #666666; border-radius: 5px; min-height: 24px; min-width: 24px; }
+
+/*
+   Draw item checkboxes from theme resources instead of the native macOS
+   control. macOS 27 can make Qt's native indicators invisible in the
+   Add Torrent file tree and torrent Content view.
+*/
+QCheckBox::indicator,
+QGroupBox::indicator,
+QTreeView::indicator {
+    width: 16px;
+    height: 16px;
+}
+QCheckBox::indicator:checked,
+QGroupBox::indicator:checked,
+QTreeView::indicator:checked {
+    image: url(:/uitheme/icons/checkbox-checked.svg);
+}
+QCheckBox::indicator:unchecked,
+QGroupBox::indicator:unchecked,
+QTreeView::indicator:unchecked {
+    image: url(:/uitheme/icons/checkbox-unchecked.svg);
+}
+QCheckBox::indicator:indeterminate,
+QGroupBox::indicator:indeterminate,
+QTreeView::indicator:indeterminate {
+    image: url(:/uitheme/icons/checkbox-indeterminate.svg);
+}

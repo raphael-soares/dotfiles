@@ -605,7 +605,7 @@ source = "builtin"
             { name = "Yaru-yellow", color = "#C88800" },
             { name = "Yaru-wartybrown", color = "#B39169" },
         ]
-        post_hook = "bash ~/.config/noctalia/icon-theme.sh '{{ closest_color }}{{ mode | replace: \"dark\", \"-dark\" | replace: \"light\", \"\" }}' {{ mode }}"
+        post_hook = "bash ~/.config/noctalia/icon-theme.sh '{{ closest_color }}{{ mode | replace: \"dark\", \"-dark\" | replace: \"light\", \"\" }}'"
 
         [theme.templates.user.kvantum-svg]
         input_path_modes = { dark = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-dark.svg", light = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-light.svg" }
@@ -614,12 +614,6 @@ source = "builtin"
         [theme.templates.user.kvantum-kvconfig]
         input_path_modes = { dark = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-dark.kvconfig", light = "$XDG_CONFIG_HOME/noctalia/templates/kvantum-light.kvconfig" }
         output_path = "$XDG_CONFIG_HOME/Kvantum/Noctalia/Noctalia.kvconfig"
-
-        # qBittorrent reads it with General\UseCustomUITheme (media/qbittorrent/qBittorrent.conf.seed).
-        [theme.templates.user.qbittorrent]
-        input_path = "$XDG_CONFIG_HOME/noctalia/templates/qbittorrent.json"
-        output_path = "$XDG_CONFIG_HOME/qBittorrent/noctalia/config.json"
-        requires_path = "$XDG_CONFIG_HOME/qBittorrent"
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"

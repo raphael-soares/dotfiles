@@ -4,6 +4,9 @@ Accepted=true
 [AddNewTorrentDialog]
 RememberLastSavePath=false
 
+[Appearance]
+Style=Fusion
+
 [Application]
 GUI\Notifications\TorrentAdded=false
 
@@ -11,11 +14,13 @@ GUI\Notifications\TorrentAdded=false
 DownloadTrackerFavicon=false
 StartUpWindowState=Hidden
 
+[Toolbar]
+textPosition=0
+
 [Preferences]
 Advanced\TrayIconStyle=MonoLight
-Advanced\useSystemIconTheme=true
+Advanced\useSystemIconTheme=false
 General\CloseToTray=true
-General\CustomUIThemePath=/home/raphael/.config/qBittorrent/noctalia/config.json
 General\Locale=en
 General\MinimizeToTray=true
 General\NoSplashScreen=true

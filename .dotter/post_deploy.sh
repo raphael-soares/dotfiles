@@ -146,9 +146,9 @@ systemctl --user enable --now gcr-ssh-agent.socket
 # The "default" theme is what XCursor uses when the app asks for none.
 mkdir -p "$HOME/.icons/default"
 printf '[Icon Theme]\nInherits=Adwaita\n' >"$HOME/.icons/default/index.theme"
-# Flatpak does not read the host settings.ini for icon and cursor.
+# Flatpak does not read the host settings.ini for the cursor; icons come from the portal.
 if command -v flatpak >/dev/null; then
-  flatpak override --user --env=ICON_THEME=Papirus-Dark --env=XCURSOR_THEME=Adwaita
+  flatpak override --user --unset-env=ICON_THEME --env=XCURSOR_THEME=Adwaita
 fi
 # Swapping the ~/.config/hypr link while Hyprland is running drops it into emergency mode.
 if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then

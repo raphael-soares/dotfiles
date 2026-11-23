@@ -132,7 +132,8 @@ seed_qbittorrent() {
   key=$(openssl kdf -binary -keylen 64 -kdfopt digest:SHA512 -kdfopt "pass:$(env_get QBITTORRENT_WEBUI_PASSWORD)" \
     -kdfopt "hexsalt:$(base64 -d <<<"$salt" | od -An -tx1 | tr -d ' \n')" -kdfopt iter:100000 PBKDF2 | base64 -w0)
   install -D -m 600 "$REPO/media/qbittorrent/qBittorrent.conf.seed" "$conf"
-  printf 'WebUI\\Password_PBKDF2="@ByteArray(%s:%s)"\n' "$salt" "$key" >>"$conf"
+  printf 'WebUI\\Password_PBKDF2="@ByteArray(%s:%s)"\nGeneral\\CustomUIThemePath=%s\n' "$salt" "$key" \
+    "$REPO/media/qbittorrent/theme/config.json" >>"$conf"
   log "created $conf"
 }
 
