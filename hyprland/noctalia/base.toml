@@ -588,6 +588,25 @@ source = "builtin"
     builtin_ids = [ "btop", "cava", "ghostty", "gtk3", "gtk4", "qt" ]
     community_ids = [ "spotifast", "discord", "zapfast", "obs", "zathura", "hyprtoolkit", "herdr-app", "syncfast" ]
 
+        # Yaru accent closest to the palette: icons for Qt (qt6ct.conf) and GTK (gsettings).
+        [theme.templates.user.qt6ct]
+        input_path = "$XDG_CONFIG_HOME/noctalia/templates/qt6ct.conf"
+        output_path = "$XDG_CONFIG_HOME/qt6ct/qt6ct.conf"
+        compare_to = "{{ colors.primary.default.hex }}"
+        colors_to_compare = [
+            { name = "Yaru", color = "#E95420" },
+            { name = "Yaru-sage", color = "#657B69" },
+            { name = "Yaru-olive", color = "#4B8501" },
+            { name = "Yaru-prussiangreen", color = "#308280" },
+            { name = "Yaru-blue", color = "#0073E5" },
+            { name = "Yaru-purple", color = "#7764D8" },
+            { name = "Yaru-magenta", color = "#B34CB3" },
+            { name = "Yaru-red", color = "#DA3450" },
+            { name = "Yaru-yellow", color = "#C88800" },
+            { name = "Yaru-wartybrown", color = "#B39169" },
+        ]
+        post_hook = "gsettings set org.gnome.desktop.interface icon-theme \"$(sed -n 's/^icon_theme=//p' ~/.config/qt6ct/qt6ct.conf)\""
+
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"
 

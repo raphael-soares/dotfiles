@@ -78,6 +78,9 @@ hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+-- Moonlight sends the right button as an instant click, never held: resize over
+-- the stream needs a left-button bind.
+hl.bind(mainMod .. " + SHIFT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
 -- Core binds
 hl.bind(mainMod .. "+D", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"))

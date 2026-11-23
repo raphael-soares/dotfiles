@@ -53,7 +53,7 @@ default_target_type = "symbolic"
 "hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/machine.conf"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
 "hyprland/gtk/gtk-4.0/settings.ini" = "~/.config/gtk-4.0/settings.ini"
-"hyprland/qt6ct/qt6ct.conf" = "~/.config/qt6ct/qt6ct.conf"
+"hyprland/noctalia/templates" = { type = "symbolic", target = "~/.config/noctalia/templates", recurse = false }
 
 [laptop.files]
 "laptop/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
