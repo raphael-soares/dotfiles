@@ -127,6 +127,7 @@ if [[ $DISTRO == fedora ]]; then
 fi
 install_packages hyprland
 if [[ $DISTRO == fedora ]] && ! flatpak info io.missioncenter.MissionCenter >/dev/null 2>&1; then
+  flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
   flatpak install --user -y --noninteractive flathub io.missioncenter.MissionCenter
 fi
 # Fedora's hyprland pulls in uwsm, whose %post starts its failed-unit notifier in every
@@ -185,14 +186,15 @@ if ! rpm -q Sunshine >/dev/null 2>&1; then
   sudo dnf install -y Sunshine
 fi
 install_packages home
-# Sunshine needs a session after an unattended boot. Plasma stays in the greeter until it is removed.
+# Sunshine needs a session after an unattended boot.
 copy_etc home/greetd/config.toml /etc/greetd/config.toml || true
+# Fedora's own file: rpm leaves a stray copy in place (as .rpmnew beside it), and the Arch one denies every login.
+copy_etc home/greetd/pam /etc/pam.d/greetd || true
 if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
   sudo systemctl disable plasmalogin.service
   sudo systemctl enable greetd.service
   echo "==> Reboot to log in through greetd"
 fi
-# The KDE apps still hold these until Plasma is removed.
 xdg-mime default org.gnome.Nautilus.desktop inode/directory
 xdg-mime default org.gnome.Loupe.desktop image/png image/jpeg image/gif image/webp \
   image/avif image/heif image/tiff image/bmp image/svg+xml
