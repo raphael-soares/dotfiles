@@ -63,7 +63,9 @@ if not MODES[pref] then pref = DEFAULT_MODE end
 local declared = {}
 local settleTimer, enableTimer
 
+-- An output whose monitor shows the other machine counts as unplugged (bin/monitor-away).
 local function connected(name)
+  if RUNTIME_DIR and readFile(RUNTIME_DIR .. "/hypr-away/" .. name) then return false end
   local status = readFile("/sys/class/drm/" .. entries[name] .. "/status")
   return status ~= nil and trim(status) == "connected"
 end
@@ -201,5 +203,13 @@ end
 
 hl.on("monitor.added", schedule)
 hl.on("monitor.removed", schedule)
+
+hl.on("hyprland.start", function()
+  for name, rule in pairs(RULES) do
+    if rule.peer_input then
+      hl.exec_cmd("monitor-away " .. name .. " " .. rule.peer_input)
+    end
+  end
+end)
 
 return M

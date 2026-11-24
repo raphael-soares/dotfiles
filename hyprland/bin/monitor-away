@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# usage: monitor-away OUTPUT PEER_INPUT
+# Asks the monitor on OUTPUT over DDC which input it shows. While that is PEER_INPUT
+# (the other machine's cable), $XDG_RUNTIME_DIR/hypr-away/OUTPUT exists and monitors.lua
+# treats the output as unplugged. One instance per output.
+set -uo pipefail
+
+out=$1 peer_input=$(printf 'x%02x' "$(($2))")
+dir=${XDG_RUNTIME_DIR:?}/hypr-away
+mkdir -p "$dir"
+exec 9>"$dir/.$out.lock"
+flock -n 9 || exit 0
+
+bus=$(ddcutil detect --brief 2>/dev/null | awk -v c="-$out\$" '/I2C bus/ {b = $3} $0 ~ c {sub(/.*i2c-/, "", b); print b; exit}')
+[[ -n $bus ]] || { echo "monitor-away: no DDC bus for $out" >&2; exit 1; }
+
+away=
+while :; do
+  input=$(ddcutil --bus "$bus" --brief getvcp 60 2>/dev/null | awk '{print tolower($4)}')
+  now=
+  [[ $input == "$peer_input" ]] && now=1
+  if [[ -n $input && $now != "$away" ]]; then
+    away=$now
+    if [[ -n $away ]]; then touch "$dir/$out"; else rm -f "$dir/$out"; fi
+    hyprctl eval 'require("monitors").evaluate()' >/dev/null
+  fi
+  sleep 3
+done

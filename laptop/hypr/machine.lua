@@ -5,7 +5,9 @@ M.peer = "fedora"
 M.monitors = {
   -- Desk: external on the left, laptop on the right.
   -- "auto" depended on the order the monitors appeared at boot.
-  ["DP-1"] = { position = "0x0" },
+  -- peer_input: the LG's DDC input code for fedora's cable; while it shows fedora the
+  -- laptop runs on its own screen alone.
+  ["DP-1"] = { position = "0x0", peer_input = 0x03 },
   ["eDP-1"] = { position = "auto-right" },
 }
 

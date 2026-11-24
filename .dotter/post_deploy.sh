@@ -151,6 +151,11 @@ if [[ $DISTRO == fedora ]]; then
   grep -q "/lizardbyte/stable$" <<<"$coprs" || sudo dnf copr enable -y lizardbyte/stable
 fi
 install_packages hyprland
+# bin/monitor-away asks the monitor which input it shows over DDC; Arch keeps the
+# i2c devices to that group (Fedora grants them to the logged-in user). Next login.
+if getent group i2c >/dev/null && ! id -nG "$USER" | grep -qw i2c; then
+  sudo usermod -aG i2c "$USER"
+fi
 # Sunshine runs from boot as a system unit, so the other machine reaches the login
 # screen. Portal capture would wait on a permission dialog nobody sees there.
 sunshine_conf=$HOME/.config/sunshine/sunshine.conf
