@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# The bar panel's actions. This machine is serving (the peer watches it) or viewing.
+#   show  show or hide the peer's screen (SUPER + grave)
+#   stop  end the stream, whichever side this is
+#   swap  turn it around: the watching side becomes the watched one
+set -euo pipefail
+
+dir=${XDG_RUNTIME_DIR:?}/remote
+peer=$(cat "$dir/peer" 2>/dev/null) || { echo "No peer set for this machine" >&2; exit 1; }
+toggle='require("remote").toggle()'
+
+at_peer() {
+  local rc=0
+  ssh -o BatchMode=yes -o ConnectTimeout=3 "$peer" "$@" || rc=$?
+  if ((rc == 255)); then
+    echo "Could not reach $peer over SSH" >&2
+    exit 1
+  fi
+  return "$rc"
+}
+here_toggle() { hyprctl eval "$toggle" >/dev/null; }
+peer_toggle() {
+  at_peer "HYPRLAND_INSTANCE_SIGNATURE=\$(ls -t /run/user/\$(id -u)/hypr 2>/dev/null | head -1) hyprctl eval '$toggle'" >/dev/null || {
+    echo "$peer has no open session to start the stream from" >&2
+    return 1
+  }
+}
+close_here() {
+  pkill -x moonlight || return 0
+  while pgrep -x moonlight >/dev/null; do sleep 0.2; done
+}
+
+side=idle
+[[ -e $dir/viewing ]] && side=viewing
+[[ -e $dir/serving ]] && side=serving
+
+case ${1:-}:$side in
+  show:*) here_toggle ;;
+  stop:serving) at_peer pkill -x moonlight || true ;;
+  stop:*) close_here ;;
+  swap:serving)
+    at_peer pkill -x moonlight || true
+    here_toggle
+    ;;
+  swap:viewing)
+    close_here
+    peer_toggle
+    ;;
+  swap:idle) echo "No stream to turn around" >&2; exit 1 ;;
+  *) echo "usage: remote-control show|stop|swap" >&2; exit 2 ;;
+esac

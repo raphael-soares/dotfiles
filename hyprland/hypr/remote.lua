@@ -13,6 +13,14 @@ local SERVING = DIR .. "/serving"
 local state = R.new(peer)
 local M = {}
 
+-- Read by bin/remote-control and the bar panel, which do not know the peer.
+os.execute("mkdir -p '" .. DIR .. "'")
+local peer_file = io.open(DIR .. "/peer", "w")
+if peer_file then
+  peer_file:write(peer)
+  peer_file:close()
+end
+
 local function stream_running()
   for _, w in ipairs(hl.get_windows()) do
     if w.class == R.CLASS then
@@ -101,6 +109,9 @@ local function toggle()
     end, { timeout = 5000, type = "oneshot" })
   end
 end
+
+-- bin/remote-control and the bar panel call it through `hyprctl eval`.
+M.toggle = toggle
 
 -- dont_inhibit: Moonlight's own keyboard grab (Ctrl+Alt+Shift+Z) would otherwise swallow the way out.
 hl.bind(KEY, toggle, { dont_inhibit = true })
