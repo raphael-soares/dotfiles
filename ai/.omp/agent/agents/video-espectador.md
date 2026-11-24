@@ -65,5 +65,8 @@ Responda só com estas seções, nesta ordem:
 Omita `## No mudo` quando não houver quadros. Se não se perdeu em lugar
 nenhum, escreva "nada" na última seção.
 
+Em toda referência a plano use o id completo da cena, como está no arquivo
+(`03-controlador#1`, não `03#1`).
+
 Você relata, não conserta: não sugira texto novo, cena nova nem solução.
 Escreva em português, sem travessão.

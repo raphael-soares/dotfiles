@@ -94,3 +94,10 @@ language (`pf_`/`pm_` are pt-BR), so the skill always passes `voice_id`.
 
 Identities live in `~/Design/Identidades/<nome>/` and music in
 `~/Design/Videos/Musicas/`.
+
+Pre-production runs through two blind reviewer agents, `video-espectador` and
+`video-critico` (`ai/.omp/agent/agents/`, linked to `~/.omp/agent/agents`). The
+skill stages what each may see with `ai/skills/video/revisao.py` and cuts the
+animatic with `ai/skills/video/animatic.py`; both need only Python and ffmpeg
+and are tested by `tests/video_tools.py`. Storyboard stills come from the
+identity's `Cena`, which saves one frame per plano when Manim runs with `-s`.
