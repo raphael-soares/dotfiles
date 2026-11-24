@@ -36,7 +36,7 @@ mark() {
 
 poll() {
   if ! plugged; then
-    bus= fails=0
+    bus='' fails=0
     mark 0
     return
   fi
