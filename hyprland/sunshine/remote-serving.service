@@ -1,0 +1,14 @@
+[Unit]
+Description=Marks when the other machine streams this one
+After=sunshine-prelogin.service
+BindsTo=sunshine-prelogin.service
+PartOf=sunshine-prelogin.service
+
+[Service]
+User=@USER@
+Environment=XDG_RUNTIME_DIR=/run/user/@UID@
+ExecStart=@HOME@/.local/bin/remote-serving
+Restart=on-failure
+
+[Install]
+WantedBy=sunshine-prelogin.service

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Keeps $XDG_RUNTIME_DIR/remote/serving while the other machine streams this one,
+# and closes this machine's Moonlight when it starts. Sunshine runs no command when
+# a client drops without quitting the app, so its log is what tells (remote-serving.service).
+set -uo pipefail
+
+dir=${XDG_RUNTIME_DIR:?}/remote
+
+follow() {
+  local clients=0 line
+  mkdir -p "$dir"
+  rm -f "$dir/serving"
+  while IFS= read -r line; do
+    case $line in
+      *"CLIENT CONNECTED"*)
+        clients=$((clients + 1))
+        touch "$dir/serving"
+        # Each machine streaming the other would show each a picture of itself.
+        pkill -x moonlight || true
+        ;;
+      *"CLIENT DISCONNECTED"*)
+        ((clients > 0)) && clients=$((clients - 1))
+        ((clients)) || rm -f "$dir/serving"
+        ;;
+    esac
+  done
+}
+
+[[ -n ${REMOTE_SERVING_LIB:-} ]] && return 0
+tail -n0 -F "${SUNSHINE_LOG:-$HOME/.config/sunshine/sunshine.log}" 2>/dev/null | follow

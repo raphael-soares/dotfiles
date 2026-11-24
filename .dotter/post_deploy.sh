@@ -63,6 +63,21 @@ copy_etc() {
   sudo install -Dm644 "$REPO/$1" "$2"
 }
 
+# copy_etc for a file with placeholders: the sed script fills them in first.
+copy_etc_rendered() {
+  local rendered status=0
+  rendered=$(mktemp)
+  sed "$3" "$REPO/$1" >"$rendered"
+  if cmp -s "$rendered" "$2"; then
+    status=1
+  else
+    echo "==> $2"
+    sudo install -Dm644 "$rendered" "$2"
+  fi
+  rm -f "$rendered"
+  return "$status"
+}
+
 {{#if dotter.packages.terminal}}
 install_packages terminal
 warn_missing starship mise ghostty rbw direnv
@@ -133,8 +148,42 @@ if [[ $DISTRO == fedora ]]; then
   done
   # nett00n's hyprland sorts above lionheartp's build, which is the one tracked here.
   sudo dnf config-manager setopt copr:copr.fedorainfracloud.org:nett00n:hyprland.includepkgs=satty
+  grep -q "/lizardbyte/stable$" <<<"$coprs" || sudo dnf copr enable -y lizardbyte/stable
 fi
 install_packages hyprland
+# Sunshine runs from boot as a system unit, so the other machine reaches the login
+# screen. Portal capture would wait on a permission dialog nobody sees there.
+sunshine_conf=$HOME/.config/sunshine/sunshine.conf
+mkdir -p "${sunshine_conf%/*}"
+for line in 'capture = kms' 'system_tray = disabled'; do
+  grep -qx "$line" "$sunshine_conf" 2>/dev/null || echo "$line" >>"$sunshine_conf"
+done
+# KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
+sunshine=$(readlink -f "$(command -v sunshine)")
+sunshine_changed=0
+if ! getcap "$sunshine" | grep -q cap_sys_admin; then
+  sudo setcap cap_sys_admin+p "$sunshine"
+  sunshine_changed=1
+fi
+for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
+  systemctl --user disable --now "$unit" 2>/dev/null || true
+done
+# Linger starts the user manager at boot, which brings PipeWire for the stream's audio.
+[[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/null) == yes ]] || sudo loginctl enable-linger "$USER"
+for unit in sunshine-prelogin remote-serving; do
+  copy_etc_rendered "hyprland/sunshine/$unit.service" "/etc/systemd/system/$unit.service" \
+    "s|@USER@|$USER|g; s|@UID@|$(id -u)|g; s|@HOME@|$HOME|g" && sunshine_changed=1
+done
+if ((sunshine_changed)); then
+  sudo systemctl daemon-reload
+  sudo systemctl restart sunshine-prelogin.service
+fi
+sudo systemctl enable --now sunshine-prelogin.service remote-serving.service
+if command -v firewall-cmd >/dev/null; then
+  sudo firewall-cmd -q --permanent \
+    --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
+  sudo firewall-cmd -q --reload
+fi
 if [[ $DISTRO == fedora ]] && ! flatpak info io.missioncenter.MissionCenter >/dev/null 2>&1; then
   flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
   flatpak install --user -y --noninteractive flathub io.missioncenter.MissionCenter
@@ -165,6 +214,10 @@ xdg-mime default org.gnome.Papers.desktop application/pdf
 xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
   video/quicktime video/x-msvideo video/mpeg
 xdg-mime default org.gnome.TextEditor.desktop text/plain
+# The greeter account is greetd on Fedora and greeter on Arch; the repo file carries a placeholder.
+greeter=greeter
+getent passwd greetd >/dev/null && greeter=greetd
+copy_etc_rendered hyprland/greetd/config.toml /etc/greetd/config.toml "s/@GREETER@/$greeter/" || true
 # Swapping the ~/.config/hypr link while Hyprland is running drops it into emergency mode.
 if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
   hyprctl reload >/dev/null && { noctalia msg config-reload || true; }
@@ -174,7 +227,6 @@ fi
 
 {{#if dotter.packages.laptop}}
 install_packages laptop
-copy_etc laptop/greetd/config.toml /etc/greetd/config.toml || true
 copy_etc laptop/greetd/pam /etc/pam.d/greetd || true
 {{/if}}
 
@@ -197,10 +249,6 @@ fi
 {{/if}}
 
 {{#if dotter.packages.home}}
-if ! rpm -q Sunshine >/dev/null 2>&1; then
-  sudo dnf copr enable -y lizardbyte/stable
-  sudo dnf install -y Sunshine
-fi
 install_packages home
 # fedora-release-identity-kde-desktop protects plasma-desktop, and swapping the identity
 # downgrades fedora-release-common. Leftover deps stay: autoremove would take tuned too.
@@ -210,8 +258,6 @@ remove_packages home --setopt=protected_packages= --setopt=protected_packages="$
 if flatpak info org.kde.haruna >/dev/null 2>&1; then
   sudo flatpak uninstall -y --noninteractive org.kde.haruna
 fi
-# Sunshine needs a session after an unattended boot.
-copy_etc home/greetd/config.toml /etc/greetd/config.toml || true
 # Fedora's own file: rpm leaves a stray copy in place (as .rpmnew beside it), and the Arch one denies every login.
 copy_etc home/greetd/pam /etc/pam.d/greetd || true
 if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
@@ -278,30 +324,6 @@ if ! sudo grubby --info=ALL | grep 'drm.edid_firmware=DP-1' >/dev/null; then
   sudo grubby --update-kernel=ALL --args="drm.edid_firmware=DP-1:edid/lg-ultragear.bin video=DP-1:e"
   echo "==> Reboot for the DP-1 EDID override"
 fi
-# Portal capture waits on a permission dialog nobody sees after an unattended boot.
-sunshine_conf=$HOME/.config/sunshine/sunshine.conf
-mkdir -p "${sunshine_conf%/*}"
-grep -qx 'capture = kms' "$sunshine_conf" 2>/dev/null || echo 'capture = kms' >>"$sunshine_conf"
-# KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
-sunshine=$(readlink -f "$(command -v sunshine)")
-capped=0
-if ! getcap "$sunshine" | grep -q cap_sys_admin; then
-  sudo setcap cap_sys_admin+p "$sunshine"
-  capped=1
-fi
-unit_found=0
-for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
-  if systemctl --user cat "$unit" >/dev/null 2>&1; then
-    systemctl --user enable --now "$unit"
-    ((capped)) && systemctl --user restart "$unit"
-    unit_found=1
-    break
-  fi
-done
-((unit_found)) || echo "==> No Sunshine user unit found; start it by hand and check its unit name"
-sudo firewall-cmd -q --permanent \
-  --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
-sudo firewall-cmd -q --reload
 if [[ $(tuned-adm active 2>/dev/null) != *throughput-performance ]]; then
   sudo tuned-adm profile throughput-performance
 fi
