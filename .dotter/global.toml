@@ -55,6 +55,8 @@ default_target_type = "symbolic"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
 "hyprland/gtk/gtk-4.0/settings.ini" = "~/.config/gtk-4.0/settings.ini"
 "hyprland/noctalia/templates" = { type = "symbolic", target = "~/.config/noctalia/templates", recurse = false }
+"media/stremio/manual-pick.plugin.js" = "~/.config/stremio-enhanced/plugins/manual-pick.plugin.js"
+"media/stremio/stremio-enhanced.desktop" = "~/.local/share/applications/stremio-enhanced.desktop"
 "hyprland/noctalia/icon-theme.sh" = "~/.config/noctalia/icon-theme.sh"
 
 [laptop.files]

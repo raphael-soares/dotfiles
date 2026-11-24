@@ -65,7 +65,8 @@ fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
 shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland hyprland/greetd/config.toml 'install_flatpaks "$1"' 'xdg-mime default'
   'remote-add --user --if-not-exists flathub'
-  setcap 'capture = kms' sunshine-prelogin.service remote-serving.service 'enable-linger')
+  setcap 'capture = kms' sunshine-prelogin.service remote-serving.service 'enable-linger'
+  REVENGE977/stremio-enhanced)
 laptop_only_in_hook=(enterprise)
 desktop_only_in_hook=(drm.edid_firmware dracut.conf.d media-deploy remove_packages\ home
   'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' org.kde.haruna
@@ -80,6 +81,9 @@ repo_link .config/hypr
 [[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine has its own remote.lua, which shadows the shared one"
 links_to() { [[ $(readlink -f "$H/$1") == "$REPO/$2" ]] || fail "$1 does not point to $2"; }
 links_to .config/noctalia/base.toml hyprland/noctalia/base.toml
+links_to .config/stremio-enhanced/plugins/manual-pick.plugin.js media/stremio/manual-pick.plugin.js
+links_to .local/share/applications/stremio-enhanced.desktop media/stremio/stremio-enhanced.desktop
+! grep -qx com.stremio.Stremio "$REPO"/*/flatpaks.txt || fail "the Flathub Stremio is still listed"
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||
   fail "hyprtoolkit.conf is tracked, and Noctalia rewrites it with each machine's colors"
 git -C "$REPO" check-ignore -q hyprland/hypr/hyprtoolkit.conf || fail "hyprtoolkit.conf is not ignored"
