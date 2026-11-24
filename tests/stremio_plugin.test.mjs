@@ -5,11 +5,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const P = require("../media/stremio/manual-pick.plugin.js");
 
-const cfg = {
-  movie: { profileId: 7, root: "/home/raphael/Media/Movies" },
-  series: { profileId: 3, root: "/home/raphael/Media/Series" },
-  anime: { profileId: 5, root: "/home/raphael/Media/Anime", tagId: 2 },
-};
+const cfg = { profileId: 9, animeTagId: 2 };
 
 test("parseRoute reads a series episode", () => {
   assert.deepEqual(P.parseRoute("#/detail/series/tt0944947/tt0944947%3A2%3A3"),
@@ -36,7 +32,7 @@ test("isAnime follows the Anime genre", () => {
 
 test("movieAddBody adds without searching", () => {
   const b = P.movieAddBody({ title: "Dune", tmdbId: 1 }, cfg);
-  assert.equal(b.qualityProfileId, 7);
+  assert.equal(b.qualityProfileId, 9);
   assert.equal(b.rootFolderPath, "/home/raphael/Media/Movies");
   assert.equal(b.minimumAvailability, "released");
   assert.equal(b.monitored, true);
@@ -47,7 +43,7 @@ test("seriesAddBody sends anime to the anime folder, untouched by search", () =>
   const b = P.seriesAddBody({ title: "JoJo", tvdbId: 9, genres: ["Anime"] }, cfg);
   assert.equal(b.rootFolderPath, "/home/raphael/Media/Anime");
   assert.equal(b.seriesType, "anime");
-  assert.equal(b.qualityProfileId, 5);
+  assert.equal(b.qualityProfileId, 9);
   assert.deepEqual(b.tags, [2]);
   assert.equal(b.seasonFolder, true);
   assert.equal(b.addOptions.monitor, "none");
@@ -77,23 +73,15 @@ test("episodesToMonitor takes the whole season for a pack", () => {
 });
 
 test("planClick adds only what Radarr or Sonarr lacks", () => {
-  assert.deepEqual(P.planClick(42), ["monitor", "search", "grab"]);
-  assert.deepEqual(P.planClick(null), ["add", "monitor", "search", "grab"]);
+  assert.deepEqual(P.planClick(42), ["monitor", "push"]);
+  assert.deepEqual(P.planClick(null), ["add", "monitor", "push"]);
 });
 
-test("releaseSearchPath asks for the season when the pick is a pack", () => {
-  assert.equal(P.releaseSearchPath("movie", { movieId: 5 }), "/release?movieId=5");
-  assert.equal(P.releaseSearchPath("series", { seriesId: 1, season: 2, episodeId: 30, pack: true }), "/release?seriesId=1&seasonNumber=2");
-  assert.equal(P.releaseSearchPath("series", { seriesId: 1, season: 2, episodeId: 30, pack: false }), "/release?episodeId=30");
-});
-
-test("findRelease matches the picked info hash in any case", () => {
-  const rels = [
-    { guid: "a", indexerId: 1, infoHash: "" },
-    { guid: "b", indexerId: 5, infoHash: "944A0251" },
-  ];
-  assert.deepEqual(P.findRelease(rels, "944a0251"), { guid: "b", indexerId: 5 });
-  assert.equal(P.findRelease(rels, "ffff"), null);
+test("pickedItem moves an existing title to the Manual profile and monitors it", () => {
+  const m = P.pickedItem({ id: 4, qualityProfileId: 7, monitored: false, title: "Dune" }, 9);
+  assert.equal(m.qualityProfileId, 9);
+  assert.equal(m.monitored, true);
+  assert.equal(m.title, "Dune");
 });
 
 test("pushBody hands the magnet over as a torrent", () => {

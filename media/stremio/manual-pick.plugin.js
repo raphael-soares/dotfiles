@@ -8,6 +8,9 @@
 
 (function () {
   const OUT_OF_REACH = "servidor fora de alcance";
+  const MOVIES = "/home/raphael/Media/Movies";
+  const SERIES = "/home/raphael/Media/Series";
+  const ANIME = "/home/raphael/Media/Anime";
 
   function parseRoute(hash) {
     const m = /^#\/detail\/(movie|series)\/(tt\d+)\/([^/?]+)/.exec(hash);
@@ -35,8 +38,8 @@
   function movieAddBody(lookup, cfg) {
     return {
       ...lookup,
-      qualityProfileId: cfg.movie.profileId,
-      rootFolderPath: cfg.movie.root,
+      qualityProfileId: cfg.profileId,
+      rootFolderPath: MOVIES,
       minimumAvailability: "released",
       monitored: true,
       addOptions: { searchForMovie: false },
@@ -45,13 +48,12 @@
 
   function seriesAddBody(lookup, cfg) {
     const anime = isAnime(lookup);
-    const kind = anime ? cfg.anime : cfg.series;
     return {
       ...lookup,
-      qualityProfileId: kind.profileId,
-      rootFolderPath: kind.root,
+      qualityProfileId: cfg.profileId,
+      rootFolderPath: anime ? ANIME : SERIES,
       seriesType: anime ? "anime" : "standard",
-      tags: anime ? [cfg.anime.tagId] : [],
+      tags: anime ? [cfg.animeTagId] : [],
       seasonFolder: true,
       monitored: true,
       addOptions: { monitor: "none", searchForMissingEpisodes: false, searchForCutoffUnmetEpisodes: false },
@@ -70,18 +72,12 @@
   }
 
   function planClick(existingId) {
-    return [...(existingId == null ? ["add"] : []), "monitor", "search", "grab"];
+    return [...(existingId == null ? ["add"] : []), "monitor", "push"];
   }
 
-  function releaseSearchPath(type, ids) {
-    if (type === "movie") return `/release?movieId=${ids.movieId}`;
-    if (ids.pack) return `/release?seriesId=${ids.seriesId}&seasonNumber=${ids.season}`;
-    return `/release?episodeId=${ids.episodeId}`;
-  }
-
-  function findRelease(releases, infoHash) {
-    const r = releases.find((x) => (x.infoHash || "").toLowerCase() === infoHash);
-    return r ? { guid: r.guid, indexerId: r.indexerId } : null;
+  // Sonarr rejects a push for an unmonitored series, and "monitor: none" on add leaves it unmonitored.
+  function pickedItem(item, profileId) {
+    return { ...item, qualityProfileId: profileId, monitored: true };
   }
 
   function pushBody(release, now) {
@@ -96,7 +92,7 @@
 
   const api = {
     parseRoute, streamRelease, isAnime, movieAddBody, seriesAddBody, isPack,
-    episodesToMonitor, planClick, releaseSearchPath, findRelease, pushBody, pushError,
+    episodesToMonitor, planClick, pickedItem, pushBody, pushError,
   };
   globalThis.ManualPick = api;
   if (typeof module !== "undefined") module.exports = api;
