@@ -2,14 +2,12 @@
 set -euo pipefail
 
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
-CACHE=${XDG_RUNTIME_DIR:-/tmp}/mediactl-releases.json
 
 usage() {
   cat >&2 <<'EOF'
 usage: mediactl search <term>
-       mediactl request movie|tv <tmdb-id> [seasons: all | 1,2]
-       mediactl releases <term> [<season> <episode>] [--grep <regex>] [--limit N] [--why]
-       mediactl grab <n>
+       mediactl add movie <imdb-id>
+       mediactl add tv <tvdb-id> [seasons: all | 1,2]
        mediactl queue
        mediactl status
        mediactl log [lines | -f]
@@ -18,7 +16,6 @@ usage: mediactl search <term>
        mediactl info <term>
        mediactl watched [N]
        mediactl subs [<term>]
-       mediactl research <term> [<season> [<episode>]]
        mediactl delete <term> [<season> <episode>]
 EOF
   exit 2
@@ -27,17 +24,40 @@ EOF
 uri() { jq -rn --arg s "$1" '$s | @uri'; }
 
 search() {
-  api seerr GET "/search?query=$(uri "$1")&page=1" | jq -r '.results[] | select(.mediaType == "movie" or .mediaType == "tv")
-    | [.mediaType, "tmdb=\(.id)", ((.releaseDate // .firstAirDate // "")[:4]), (.title // .name),
-       "[\({"1": "unknown", "2": "pending", "3": "downloading", "4": "partial", "5": "available", "6": "deleted"}[(.mediaInfo.status // 0) | tostring] // "not requested")]"]
-    | @tsv'
+  api radarr GET "/movie/lookup?term=$(uri "$1")" |
+    jq -r '.[] | ["movie", "imdb=\(.imdbId // "")", .year, .title, (if .id then "[in library]" else "" end)] | @tsv'
+  api sonarr GET "/series/lookup?term=$(uri "$1")" |
+    jq -r '.[] | ["tv", "tvdb=\(.tvdbId)", .year, .title, (if .id then "[in library]" else "" end)] | @tsv'
 }
 
-request() {
-  local type=$1 id=$2 seasons=${3:-all} body
-  body=$(jq -nc --arg t "$type" --argjson id "$id" --arg s "$seasons" \
-    '{mediaType: $t, mediaId: $id} + if $t == "tv" then {seasons: (if $s == "all" then "all" else $s | split(",") | map(tonumber) end)} else {} end')
-  api seerr POST /request -d "$body" | jq -r '"request \(.id) status=\(.status) (2 = approved, sent to Radarr/Sonarr)"'
+# profile <app>: id of the Manual profile, which takes any release picked in Stremio.
+profile() {
+  api "$1" GET /qualityprofile | jq -er '.[] | select(.name == "Manual") | .id' ||
+    { echo "mediactl: $1 has no Manual profile; run media-deploy" >&2; exit 1; }
+}
+
+# The same rules as the Stremio plugin (media/stremio/manual-pick.plugin.js): Manual profile, no search,
+# anime by genre into Anime with the anime tag. Only the seasons asked for are monitored.
+add() {
+  local type=$1 id=$2 seasons=${3:-} lookup body
+  if [[ $type == movie ]]; then
+    lookup=$(api radarr GET "/movie/lookup?term=imdb:$id" | jq -ec '.[0]') || { echo "mediactl: no film $id" >&2; exit 1; }
+    body=$(jq -c --argjson p "$(profile radarr)" --arg root "$HOME/Media/Movies" '. + {qualityProfileId: $p,
+      rootFolderPath: $root, minimumAvailability: "released", monitored: true, addOptions: {searchForMovie: false}}' <<<"$lookup")
+    api radarr POST /movie -d "$body" | jq -r '"added \(.title) (\(.year)); pick a release in Stremio"'
+  else
+    lookup=$(api sonarr GET "/series/lookup?term=tvdb:$id" | jq -ec '.[0]') || { echo "mediactl: no series $id" >&2; exit 1; }
+    body=$(jq -c --argjson p "$(profile sonarr)" --arg home "$HOME" --arg s "$seasons" \
+      --argjson tag "$(api sonarr GET /tag | jq '[.[] | select(.label == "anime") | .id][0]')" '
+      (.genres // [] | index("Anime") != null) as $anime
+      | ($s | if . == "" then [] elif . == "all" then null else split(",") | map(tonumber) end) as $want
+      | . + {qualityProfileId: $p, rootFolderPath: "\($home)/Media/\(if $anime then "Anime" else "Series" end)",
+        seriesType: (if $anime then "anime" else "standard" end), tags: (if $anime then [$tag] else [] end),
+        seasonFolder: true, monitored: true,
+        seasons: [.seasons[] | .seasonNumber as $n | .monitored = ($want == null and $n > 0 or (($want // []) | index($n) != null))],
+        addOptions: {monitor: "skip", searchForMissingEpisodes: false, searchForCutoffUnmetEpisodes: false}}' <<<"$lookup")
+    api sonarr POST /series -d "$body" | jq -r '"added \(.title) (\(.year)); pick a release in Stremio"'
+  fi
 }
 
 # find_id <app> <term>: id of the first series or movie whose title contains the term.
@@ -45,45 +65,7 @@ find_id() {
   local path=/series
   [[ $1 == radarr ]] && path=/movie
   api "$1" GET "$path" | jq -er --arg t "$2" 'map(select(.title | ascii_downcase | contains($t | ascii_downcase)))[0].id' ||
-    { echo "mediactl: nothing matching '$2' in $1; search and request it first" >&2; exit 1; }
-}
-
-releases() {
-  local term=$1 season='' episode='' grep='' limit=20 why=0 app id rels
-  shift
-  if [[ ${1:-} =~ ^[0-9]+$ ]]; then season=$1 episode=${2:?episode}; shift 2; fi
-  while (($#)); do
-    case $1 in
-      --grep) grep=$2; shift 2 ;;
-      --limit) limit=$2; shift 2 ;;
-      --why) why=1; shift ;;
-      *) usage ;;
-    esac
-  done
-  if [[ -n $season ]]; then
-    app=sonarr
-    id=$(api sonarr GET "/episode?seriesId=$(find_id sonarr "$term")&seasonNumber=$season" |
-      jq -er --argjson e "$episode" 'map(select(.episodeNumber == $e))[0].id') ||
-      { echo "mediactl: S${season}E${episode} not found" >&2; exit 1; }
-    rels=$(api sonarr GET "/release?episodeId=$id" -m 300 | jq -c --argjson s "$season" --argjson e "$episode" '
-      ("S\($s | tostring | if length < 2 then "0" + . else . end)E\($e | tostring | if length < 2 then "0" + . else . end)") as $tag
-      | map(select(.title | test("\($tag)\\b|(?<!\\d)\($e | tostring | if length < 2 then "0" + . else . end)(?!\\d)"; "i")))')
-  else
-    app=radarr
-    rels=$(api radarr GET "/release?movieId=$(find_id radarr "$term")" -m 300)
-  fi
-  rels=$(jq -c --arg g "$grep" --argjson n "$limit" \
-    'map(select($g == "" or (.title | test($g)))) | sort_by(-(.seeders // 0)) | .[:$n]' <<<"$rels")
-  jq -c --arg app "$app" '{app: $app, items: map({guid, indexerId})}' <<<"$rels" >"$CACHE"
-  jq -r --argjson why "$why" 'to_entries[] | .key as $i | .value
-    | "\($i)\tseeds=\(.seeders // 0)\t\(.size / 1048576 | floor)MB\tscore=\(.customFormatScore // 0)\t\(if .rejected then "rejected" else "ok" end)\t\(.title[:110])"
-      + if $why == 1 and .rejected then "\n\t\(.rejections | join("; "))" else "" end' <<<"$rels"
-}
-
-grab() {
-  [[ -f $CACHE ]] || { echo "mediactl: run releases first" >&2; exit 1; }
-  api "$(jq -r .app "$CACHE")" POST /release -d "$(jq -ec --argjson n "$1" '.items[$n]' "$CACHE")" >/dev/null
-  echo "grabbed #$1; it reaches Jellyfin after the download and import"
+    { echo "mediactl: nothing matching '$2' in $1; search and add it first" >&2; exit 1; }
 }
 
 queue() {
@@ -183,18 +165,6 @@ subs() {
   fi
 }
 
-research() {
-  local app id body
-  loc=$(locate "$1")
-  read -r app id <<<"$loc"
-  if [[ $app == radarr ]]; then body="{\"name\":\"MoviesSearch\",\"movieIds\":[$id]}"
-  elif [[ -n ${3:-} ]]; then body="{\"name\":\"EpisodeSearch\",\"episodeIds\":[$(episode "$id" "$2" "$3" | jq .id)]}"
-  elif [[ -n ${2:-} ]]; then body="{\"name\":\"SeasonSearch\",\"seriesId\":$id,\"seasonNumber\":$2}"
-  else body="{\"name\":\"SeriesSearch\",\"seriesId\":$id}"; fi
-  api "$app" POST /command -d "$body" >/dev/null
-  echo "$app is searching; mediactl queue shows what it grabs"
-}
-
 # Unmonitors before deleting, so the app does not fetch it again; the torrent leaves through media-cleanup.
 delete() {
   local app id ep file
@@ -219,9 +189,7 @@ cmd=${1:-}
 (($#)) && shift
 case $cmd in
   search) search "${1:?term}" ;;
-  request) request "${1:?movie or tv}" "${2:?tmdb id}" "${3:-all}" ;;
-  releases) releases "${1:?term}" "${@:2}" ;;
-  grab) grab "${1:?n}" ;;
+  add) add "${1:?movie or tv}" "${2:?imdb or tvdb id}" "${3:-}" ;;
   queue) queue ;;
   status) status ;;
   log) show_log "${1:-}" ;;
@@ -230,7 +198,6 @@ case $cmd in
   info) info "${1:?term}" ;;
   watched) watched "${1:-20}" ;;
   subs) subs "${1:-}" ;;
-  research) research "${1:?term}" "${2:-}" "${3:-}" ;;
   delete) delete "${1:?term}" "${2:-}" "${3:-}" ;;
   *) usage ;;
 esac
