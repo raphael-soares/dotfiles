@@ -6,7 +6,7 @@ REPO=${1:?usage: media-deploy <repo> [--check]}
 CHECK=0
 [[ ${2:-} == --check ]] && CHECK=1
 CONF=${ENV_FILE%/*}
-UNITS=(jellyfin seerr radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
+UNITS=(jellyfin radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
 
 # apply <what>: in --check mode reports the difference and fails, so the caller skips the change.
 DRIFT=0
@@ -55,7 +55,7 @@ wait_http() {
 }
 
 ensure_dirs() {
-  mkdir -p "$STATE"/{jellyfin,seerr,radarr,sonarr,prowlarr,bazarr} \
+  mkdir -p "$STATE"/{jellyfin,radarr,sonarr,prowlarr,bazarr} \
     "$HOME"/.cache/media/{jellyfin,configarr,whisper-cpp} \
     "$HOME"/Media/{Movies,Series,Anime,Downloads/Movies,Downloads/Series} \
     "$HOME"/Games "$HOME"/Personal/Torrents
@@ -73,7 +73,7 @@ ensure_whisper_model() {
 # that already points at its source.
 LINK_DIRS=(containers:.config/containers/systemd/media configarr:.config/media/configarr
   prowlarr/definitions:.config/media/prowlarr-definitions whisper:.config/media/whisper)
-LINK_FILES=(bin:.local/bin systemd:.config/systemd/user applications:.local/share/applications autostart:.config/autostart)
+LINK_FILES=(bin:.local/bin systemd:.config/systemd/user autostart:.config/autostart)
 link() {
   [[ $(readlink "$2") == "$1" ]] && return
   if [[ -e $2 && ! -L $2 ]]; then
@@ -100,10 +100,26 @@ link_files() {
   done
 }
 
+# A quadlet or media unit whose file left the repo keeps running after its link goes: stop it.
+retire_units() {
+  local repo u f
+  repo=$(readlink -f "$REPO")
+  for u in $(systemctl --user list-units --state=active --plain --no-legend '*.service' 'media-*.timer' | awk '{print $1}'); do
+    f=$(systemctl --user show -P SourcePath "$u")
+    [[ -n $f ]] || f=$(systemctl --user show -P FragmentPath "$u")
+    [[ ($f == "$repo/media/containers/"* || $f == "$HOME/.config/systemd/user/media-"*) && ! -e $f ]] || continue
+    apply "unit $u left the repo" || continue
+    systemctl --user stop "$u"
+    rm -f "$STATE/.applied/${u%.service}"
+    log "unit $u stopped"
+  done
+}
+
 # A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
 start_units() {
   ((CHECK)) || systemctl --user daemon-reload
   mkdir -p "$STATE/.applied"
+  retire_units
   local u sum extra
   for u in "${UNITS[@]}"; do
     extra=()
@@ -241,9 +257,8 @@ configure_jellyfin() {
   if api jellyfin GET /Plugins | jq -e --arg id "$JF_ENHANCED" 'any(.[]; .Id == $id)' >/dev/null; then
     sync jellyfin "/Plugins/$JF_ENHANCED/Configuration" \
       "$(api jellyfin GET "/Plugins/$JF_ENHANCED/Configuration" | jq -c --slurpfile w "$dir/enhanced.json" \
-        --arg seerr "$(jq -r .main.apiKey "$STATE/seerr/settings.json" 2>/dev/null)" \
         --arg sonarr "$(env_get SONARR__AUTH__APIKEY)" --arg radarr "$(env_get RADARR__AUTH__APIKEY)" \
-        '. + $w[0] + {JellyseerrApiKey: $seerr, SonarrApiKey: $sonarr, RadarrApiKey: $radarr}')" \
+        '. + $w[0] + {SonarrApiKey: $sonarr, RadarrApiKey: $radarr}')" \
       "jellyfin enhanced settings"
   fi
   for user in $(api jellyfin GET /Users | jq -r '.[].Id'); do
@@ -264,42 +279,6 @@ configure_jellyfin() {
     base64 -w0 "$dir/shows.jpg" | API_TYPE=image/jpeg api jellyfin POST "/Items/$shows/Images/Primary" --data-binary @-
     log "jellyfin Shows cover uploaded"
   fi
-}
-
-# seerr_server <arr>: the repo's server entry with profile and tag ids looked up by name and the API key filled in.
-seerr_server() {
-  local arr=$1 profiles tags
-  profiles=$(api "$arr" GET /qualityprofile | jq -c 'map({(.name): .id}) | add')
-  tags=$(api "$arr" GET /tag | jq -c 'map({(.label): .id}) | add // {}')
-  expand_home "$REPO/media/seerr/$arr.json" | jq -c --argjson p "$profiles" --argjson t "$tags" \
-    --arg key "$(env_get "${arr^^}__AUTH__APIKEY")" '
-    .apiKey = $key | .activeProfileId = $p[.activeProfileName]
-    | if has("activeAnimeProfileName") then .activeAnimeProfileId = $p[.activeAnimeProfileName] else . end
-    | if has("animeTagLabels") then .animeTags = [.animeTagLabels[] | $t[.]] | del(.animeTagLabels) else . end'
-}
-
-# Seerr's first sign-in with the Jellyfin account is manual; until then it has no settings to sync.
-configure_seerr() {
-  local arr want have
-  if ! api seerr GET /settings/public 2>/dev/null | jq -e .initialized >/dev/null; then
-    echo "media: Seerr is not set up yet, its settings apply on the next deploy" >&2
-    return
-  fi
-  sync seerr /settings/main "$(api seerr GET /settings/main | jq -c --slurpfile w "$REPO/media/seerr/main.json" '. + $w[0]')" \
-    "seerr main settings"
-  for arr in radarr sonarr; do
-    want=$(seerr_server "$arr")
-    have=$(api seerr GET "/settings/$arr" | jq -c --argjson w "$want" 'map(select(.name == $w.name))[0] // empty')
-    if [[ -z $have ]]; then
-      apply "seerr $arr server missing" || continue
-      api seerr POST "/settings/$arr" -d "$want" >/dev/null
-      log "seerr $arr server added"
-    elif [[ $(jq -cS . <<<"$have") != "$(jq -cS --argjson h "$have" '$h + .' <<<"$want")" ]]; then
-      apply "seerr $arr server" || continue
-      api seerr PUT "/settings/$arr/$(jq -r .id <<<"$have")" -d "$(jq -c --argjson h "$have" '$h + . | del(.id)' <<<"$want")" >/dev/null
-      log "seerr $arr server applied"
-    fi
-  done
 }
 
 # Nothing grabs on its own: RSS sync is off, and every title sits on the Manual profile
@@ -369,7 +348,6 @@ main() {
   configure_bazarr
   configure_arrs
   run_configarr
-  configure_seerr
   configure_jellyfin
   set_magnet_default
   ensure_flatpaks
@@ -384,7 +362,6 @@ check() {
   render_bazarr
   configure_bazarr
   configure_arrs
-  configure_seerr
   configure_jellyfin
   problems=$(health)
   [[ -z $problems ]] || { sed 's/^/media: unhealthy: /' <<<"$problems"; DRIFT=1; }

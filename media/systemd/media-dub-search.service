@@ -1,7 +1,0 @@
-[Unit]
-Description=Search pt-BR dubs for anime episodes that lack one
-OnFailure=media-failure@%n.service
-
-[Service]
-Type=oneshot
-ExecStart=%h/.local/bin/media-dub-search

@@ -85,5 +85,4 @@ default_target_type = "symbolic"
 "media/whisper" = { type = "symbolic", target = "~/.config/media/whisper", recurse = false }
 "media/systemd" = "~/.config/systemd/user"
 "media/bin" = "~/.local/bin"
-"media/applications" = "~/.local/share/applications"
 "media/autostart" = "~/.config/autostart"

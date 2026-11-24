@@ -30,7 +30,6 @@ check() {
 }
 
 check jellyfin http://127.0.0.1:8096/health
-check seerr http://127.0.0.1:5055/api/v1/status
 check radarr http://127.0.0.1:7878/ping
 check sonarr http://127.0.0.1:8989/ping
 check prowlarr http://127.0.0.1:9696/ping
