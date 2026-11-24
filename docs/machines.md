@@ -29,6 +29,14 @@ leaves out comes from the wildcard rule (`highrr`, `auto`, scale 1), so the LG
 UltraGear runs at 144 Hz on both machines without a rule of its own; the laptop
 only declares where each screen sits.
 
+A rule with `peer_input` (the monitor's DDC input code for the other machine's
+cable) starts `bin/monitor-away`, which asks the monitor every second which
+input it shows. While it shows the other machine, `monitors.lua` turns that
+output off and the laptop works on its own screen; when it switches back, the
+output returns and `laptop/hypr/machine.lua` moves workspaces 1 to 10 onto it.
+Reading the input needs the `i2c` group on Arch (the deploy adds it). To find a
+code: `ddcutil --brief getvcp 60` with the monitor on each input.
+
 Noctalia works the same way. `hyprland/noctalia/base.toml` is the shared
 base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and
 wallpaper. Each machine links its own `machine.toml` next to it

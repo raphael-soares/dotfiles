@@ -86,7 +86,8 @@ instead of games" on.
 ## Notes
 
 - `arch` streams the screen Sunshine finds: the LG when it is on `arch`'s
-  input, the built-in screen otherwise. With the monitor on the other input
+  input, the built-in screen otherwise (`arch` turns the LG off while it shows
+  `fedora`, see `docs/machines.md`). With the monitor on the other input
   `fedora`'s DisplayPort must stay connected
   (`cat /sys/class/drm/card*-DP-1/status`), or its Sunshine has no screen;
   the EDID override in the `home` module keeps it so.
