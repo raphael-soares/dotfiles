@@ -11,9 +11,40 @@ description: >
 
 O dono não aparece no vídeo: nada de voz, rosto ou gravação dele. O vídeo é
 gráfico e animação, com voz Kokoro local, em pt-BR ou inglês. O agente faz o
-trabalho e para em três pontos para o dono aprovar: roteiro, storyboard e corte
-final. Regras dos apps (formato nativo, `open_window`, lotes): skill `artcraft`.
-Ferramentas e serviço: `docs/design.md` do dotfiles, seção Video.
+trabalho e para em três pontos para o dono aprovar: direção e roteiro, rascunho
+animado e corte final. Regras dos apps (formato nativo, `open_window`, lotes):
+skill `artcraft`. Ferramentas e serviço: `docs/design.md` do dotfiles, seção
+Video.
+
+## A imagem explica, a voz acompanha
+
+O vídeo não é slide narrado. Quem ensina é a imagem em movimento; a voz comenta o
+que está acontecendo na tela. Regras:
+
+- Cada conceito vira uma metáfora visual ou um mecanismo que se mexe (a CPU
+  batendo na porta do dispositivo, um contador subindo, dados andando pelo
+  barramento), nunca uma caixa com o nome do conceito.
+- Teste do mudo: sem som, o vídeo ainda tem que dar a ideia. Se só a voz
+  explica, o plano está errado.
+- Texto na tela só para o termo-chave ou um número. Nunca escreva a frase que a
+  voz está falando: texto e voz dizendo a mesma coisa atrapalham o aprendizado
+  (princípio da redundância, Mayer).
+- A imagem aparece quando a voz fala dela, não antes nem depois. Use cor e
+  movimento para apontar onde olhar; o que não serve à ideia sai da tela.
+- Algo muda na tela a cada 5 a 8 segundos (entra elemento, câmera aproxima,
+  estado muda). Imagem parada com voz por cima perde a pessoa.
+
+## Estrutura que prende
+
+- **0 a 5 s:** imagem que intriga, sem logo nem saudação (a CPU parada,
+  esperando uma tecla que não vem).
+- **5 a 15 s:** a promessa concreta do vídeo ("em 3 minutos, as três formas de
+  a CPU falar com o hardware e quando cada uma vale a pena").
+- **até 30 s:** uma pergunta em aberto que o vídeo só responde mais adiante.
+- **Meio:** cada bloco abre com uma pergunta ou um problema visível e fecha com a
+  resposta na tela. Compare o novo com o anterior lado a lado quando der.
+- **Fim:** resumo visual (as ideias lado a lado, na mesma metáfora do vídeo),
+  não uma lista de frases. Sem "deixe seu like" e sem despedida longa.
 
 ## Pasta do vídeo
 
@@ -21,9 +52,9 @@ Ferramentas e serviço: `docs/design.md` do dotfiles, seção Video.
 
 | Caminho | O quê |
 |---|---|
-| `video.md` | idioma, voz, identidade, música, duração alvo, fontes, etapa atual |
-| `roteiro.md` | roteiro, cada seção com a fonte (arquivo e página ou slide) |
-| `storyboard.md` | cenas em ordem: id, narração exata, o que se vê, motor, notas |
+| `video.md` | idioma, voz, identidade, música, duração alvo, fontes, pronúncia, etapa atual |
+| `direcao.md` | metáfora central, mapa visual de cada conceito, arco do vídeo |
+| `roteiro.md` | roteiro em duas colunas, plano por plano, cada um com a fonte |
 | `cenas/manim/<id>.py` | cena Manim |
 | `cenas/effectcraft/<id>.ecproj` | cena EffectCraft |
 | `cenas/render/<id>.mp4` | cena renderizada no tamanho da narração |
@@ -39,46 +70,57 @@ parado se retoma.
 
 1. **Início.** Antes de ler ou escrever qualquer coisa, pergunte o que o dono
    não disse, um `ask` por pergunta: idioma; duração alvo; identidade visual
-   (liste `~/Design/Identidades/` e ofereça criar uma nova); música (veja
-   abaixo). Escreva `video.md`.
-2. **Roteiro.** Leia o material com `read` (PDF vem com `<!-- Page N -->`, que
-   dá a página da citação). Escreva no idioma do vídeo, em ritmo falado: 140
-   palavras por minuto em pt-BR, 150 em inglês. Cada seção cita a fonte. O
-   roteiro diz o que o material diz e dá peso ao que ele enfatiza; o que vier
-   de fora do material entra marcado como tal e só com o OK do dono. Se o
-   material não tem texto legível (PDF escaneado), diga ao dono e leia as
+   (veja Identidades); música (veja abaixo). Escreva `video.md`.
+2. **Material.** Leia com `read` (PDF vem com `<!-- Page N -->`, que dá a
+   página da citação). O vídeo diz o que o material diz e dá peso ao que ele
+   enfatiza; o que vier de fora entra marcado como tal e só com o OK do dono. Se
+   o material não tem texto legível (PDF escaneado), diga ao dono e leia as
    páginas como imagem ou use outra fonte que ele indicar; nunca escreva do
-   conhecimento geral como se viesse do material. **Ponto 1: pare e mostre o
-   roteiro.**
-3. **Storyboard.** Cenas de 5 a 30 segundos, cada uma com a narração exata, o
-   que aparece e o motor:
-   - **Manim:** algoritmo, estrutura de dados, diagrama, fórmula.
-   - **EffectCraft:** abertura, título, cartão de seção, encerramento.
-   - Algoritmo passo a passo vira uma cena curta por passo, para a voz falar
-     do passo que está na tela.
-   - Fórmula sempre em Typst, nunca LaTeX nem `MathTex`.
-   - Termo em inglês dentro de narração em pt-BR vai escrito como se fala
-     quando a voz erra (por exemplo, "ríp" para heap), e só na narração.
+   conhecimento geral como se viesse do material.
+3. **Direção** (`direcao.md`), antes de qualquer fala:
+   - a pergunta que o vídeo responde e a promessa dos primeiros 15 segundos;
+   - a metáfora central, que atravessa o vídeo inteiro (uma só, reaproveitada);
+   - para cada conceito: como ele aparece e se mexe na tela, e que contraste
+     com o conceito anterior a imagem mostra;
+   - o arco: gancho, promessa, pergunta em aberto, blocos, resposta, resumo
+     visual.
+4. **Roteiro** (`roteiro.md`) em duas colunas, plano por plano, de 3 a 10
+   segundos. Escreva primeiro a coluna da tela inteira; a fala vem depois, como
+   comentário dela. Cada plano tem:
 
-   **Ponto 2: pare e mostre o storyboard.** Nada de narrar ou renderizar antes
-   do OK.
-4. **Narração.** Uma chamada `tts` por cena, sempre com `voice_id` (`pf_dora`
+   | Campo | O quê |
+   |---|---|
+   | Tela | o que aparece e como se mexe: entrada, câmera, cor que chama o olho |
+   | Fala | o texto exato, já com a pronúncia adaptada (veja Voz) |
+   | Tom | curioso, firme, pausa antes do termo, ênfase numa palavra |
+   | Tempo | duração alvo, em segundos |
+   | Fonte | arquivo e página ou slide |
+
+   Ritmo da fala: o Kokoro fala perto de 170 palavras por minuto. Motor de
+   cada plano: Manim para mecanismo, diagrama, algoritmo e fórmula (sempre em
+   Typst, nunca LaTeX nem `MathTex`); EffectCraft para título, cartão e
+   tipografia animada. Algoritmo passo a passo vira um plano por passo.
+
+   **Ponto 1: pare e mostre a direção e o roteiro.** Nada de narrar antes do OK.
+5. **Narração.** Uma chamada `tts` por cena, sempre com `voice_id` (`pf_dora`
    em pt-BR, `af_heart` em inglês, ou a voz de `video.md`), saída
-   `audio/<id>.wav`. Meça a duração de cada uma com `ffprobe`. Narração vem
-   antes da animação porque a cena tem o tamanho da fala.
-5. **Cenas.** Rascunho primeiro, em baixa resolução; a passada final é 1920x1080
-   a 30 fps. Cada cena dura o mesmo que a sua narração; se a animação acaba
-   antes, segure o último quadro.
-6. **Montagem** no FilmCraft e exportação de `final.mp4`.
-7. **Miniatura** no VectorCraft, 1280x720, no idioma do vídeo, a partir do
+   `audio/<id>.wav`. Confira a pronúncia (veja Voz) e meça a duração com
+   `ffprobe`. Narração vem antes da animação porque a cena tem o tamanho da fala.
+6. **Rascunho animado.** Todas as cenas em baixa resolução (`manim -ql`), já no
+   tempo da narração, montadas com a voz num `rascunho.mp4`. Confira quadros e
+   margens antes. **Ponto 2: pare e mostre o rascunho.**
+7. **Passada final** em 1920x1080 a 30 fps, cada cena do tamanho da sua
+   narração; se a animação acaba antes, segure o último quadro.
+8. **Montagem** no FilmCraft e exportação de `final.mp4`.
+9. **Miniatura** no VectorCraft, 1280x720, no idioma do vídeo, a partir do
    modelo da identidade, exportada para `miniatura.png`.
-8. **Ponto 3: corte final.** Informe duração, caminhos e o que você conferiu.
+10. **Ponto 3: corte final.** Informe duração, caminhos e o que você conferiu.
 
 ## Mudança pedida pelo dono
 
 Volte só à etapa onde a mudança mora e refaça só o que ela atinge. Mudou uma
-cena do storyboard: reescreva essa cena, deixe roteiro e as outras como estão e
-mostre o storyboard de novo. Mudou a narração de uma cena no corte final: nova
+cena do roteiro: reescreva esse plano, deixe a direção e os outros como estão e
+mostre o roteiro de novo. Mudou a narração de uma cena no corte final: nova
 narração, nova renderização dessa cena e nova montagem; as outras cenas ficam.
 
 ## Voz
@@ -96,11 +138,25 @@ modelo ou motor para contornar: a alternativa do omp só fala inglês. Se contin
 falhando, pare e conte ao dono o erro.
 
 Grave `audio/duracoes.json` com a duração de cada narração (as cenas leem dele).
-O Kokoro fala perto de 170 palavras por minuto, mais rápido que a estimativa do
-roteiro. Sigla e palavra estrangeira saem erradas com frequência: escreva por
-extenso ou como se fala ("entrada e saída", "píksel") e confira passando o
-áudio no Whisper local, se estiver no ar:
-`curl -s "127.0.0.1:9000/asr?language=pt&output=txt" -F audio_file=@x.wav`.
+
+### Pronúncia
+
+O Kokoro lê pela grafia portuguesa e não aceita fonema escrito (a sintaxe
+`[palavra](/fonemas/)` sai como lixo em pt-BR). A fala vai escrita do jeito que
+um brasileiro diz, e só a fala: na tela o termo aparece com a grafia certa.
+
+- Termo em inglês continua em inglês, abrasileirado como se fala numa aula
+  daqui: polling vira "pú-lin", buffer "bâfer", cache "quéche", driver
+  "dráiver", heap "rípi". Não traduza o termo que a área usa em inglês.
+- Sigla dita letra a letra vai soletrada em português: DMA vira "dê-éme-á",
+  CPU "cê-pê-u", USB "u-ésse-bê". RAM não sai certo de jeito nenhum ("ram",
+  "râm" e "rem" falharam): diga "memória principal".
+- Cada vídeo tem uma tabela "Pronúncia" em `video.md` (termo, como escrever na
+  fala, conferido sim ou não). Use a mesma grafia no vídeo todo.
+- Confira cada termo novo antes de narrar o vídeo inteiro: gere uma frase curta,
+  passe no Whisper local (se estiver no ar) e ouça; troque a grafia até soar
+  certo. Whisper devolvendo a grafia original ("No DMA") é sinal de acerto.
+  `curl -s "127.0.0.1:9000/asr?language=pt&output=txt" -F audio_file=@x.wav`
 
 ## Manim
 
@@ -115,6 +171,12 @@ Renderize com `--media_dir cenas/.manim --disable_caching` e copie o `.mp4` para
 Tempo da cena: o `tema.py` lê `$VIDEO_DIR/audio/duracoes.json`; a cena usa
 `self.t(fração)` para os `run_time` e termina com `self.fechar()`, que espera o
 que falta para a duração da narração.
+
+Margem de segurança: nada a menos de 10% da borda (no Manim, conteúdo dentro de
+`x` entre -6,4 e 6,4 e `y` entre -3,6 e 3,6). O `tema.py` da identidade define
+essa área (`AREA_SEGURA`, `encaixar(grupo)`); a cena encaixa o grupo nela em vez de posicionar perto da borda.
+Prefira mexer a câmera (`MovingCameraScene`) para aproximar um detalhe a
+encolher tudo para caber.
 
 Emoji não renderiza em `Text`: desenhe ícones com formas (polígono, arco).
 Texto sobre bloco de destaque usa a cor de texto clara, não a do fundo.
@@ -177,7 +239,9 @@ Confira o resultado em vez de supor: extraia quadros das cenas
 (`ffmpeg -ss <t> -i cena.mp4 -frames:v 1 q.png`) e olhe com `read`; confira a
 duração das cenas contra as narrações e o volume com
 `ffmpeg -i final.mp4 -af volumedetect -f null -`. Texto cortado, elemento fora
-da tela, fala sem som ou estourada voltam para a etapa antes de mostrar.
+da tela ou a menos de 10% da borda, fala sem som ou estourada voltam para a
+etapa antes de mostrar. Faça também o teste do mudo: olhe os quadros sem ler a
+fala e veja se a ideia de cada cena aparece.
 
 O dono pode pedir para ver uma cena no app a qualquer hora: salve e chame o
 `open_window` do app (regras na skill `artcraft`).
