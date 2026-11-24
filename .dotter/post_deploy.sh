@@ -165,6 +165,15 @@ if ! getcap "$sunshine" | grep -q cap_sys_admin; then
   sudo setcap cap_sys_admin+p "$sunshine"
   sunshine_changed=1
 fi
+# Installed next to Plasma, Sunshine's Desktop app toggles HDR with kscreen-doctor,
+# which fails outside Plasma and so aborts every connection.
+sunshine_apps=${sunshine_conf%/*}/apps.json
+if jq -e 'any(.apps[] | select(.name == "Desktop") | ."prep-cmd"[]?; .do | test("kscreen-doctor"))' \
+  "$sunshine_apps" >/dev/null 2>&1; then
+  jq '(.apps[] | select(.name == "Desktop")) |= del(."prep-cmd")' "$sunshine_apps" >"$sunshine_apps.new"
+  mv "$sunshine_apps.new" "$sunshine_apps"
+  sunshine_changed=1
+fi
 for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
   systemctl --user disable --now "$unit" 2>/dev/null || true
 done
