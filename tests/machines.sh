@@ -73,7 +73,8 @@ for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $
 for f in "${hypr_shared[@]}"; do exists "$f"; done
 repo_link .config/hypr
 [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
-[[ ! -e $H/.config/hypr/remote.lua ]] || fail "remote.lua is still shared"
+[[ -f $H/.config/hypr/remote.lua ]] || fail ".config/hypr does not reach the shared remote.lua"
+[[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine has its own remote.lua, which shadows the shared one"
 links_to() { [[ $(readlink -f "$H/$1") == "$REPO/$2" ]] || fail "$1 does not point to $2"; }
 links_to .config/noctalia/base.toml hyprland/noctalia/base.toml
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||
@@ -87,7 +88,7 @@ case $machine in
   arch)
     for f in "${laptop_only[@]}"; do exists "$f"; done
     for f in "${desktop_only[@]}"; do absent "$f"; done
-    [[ -f $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine does not reach remote.lua"
+    grep -q 'peer = "fedora"' "$H/.config/hypr-machine/machine.lua" || fail "arch does not name fedora as its peer"
     links_to .config/noctalia/machine.toml laptop/noctalia/machine.toml
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
     for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
@@ -99,7 +100,7 @@ case $machine in
     for p in "${desktop_only_in_hook[@]}"; do hook_has "$p" || fail "fedora hook lacks $p"; done
     [[ -f $H/.config/hypr-machine/machine.lua ]] || fail "hypr-machine does not reach machine.lua"
     links_to .config/noctalia/machine.toml home/noctalia/machine.toml
-    [[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "fedora got the remote toggle"
+    grep -q 'peer = "arch"' "$H/.config/hypr-machine/machine.lua" || fail "fedora does not name arch as its peer"
     ;;
   *) echo "unknown machine: $machine"; exit 2 ;;
 esac

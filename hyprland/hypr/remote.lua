@@ -1,19 +1,17 @@
+local peer = require("host").peer
+if not peer then
+  return {}
+end
+
 local R = require("remote_state")
 
-local HOST = "fedora.local"
+local HOST = peer .. ".local"
 local KEY = "SUPER + grave"
-local state = R.new()
+local DIR = os.getenv("XDG_RUNTIME_DIR") .. "/remote"
+local VIEWING = DIR .. "/viewing"
+local SERVING = DIR .. "/serving"
+local state = R.new(peer)
 local M = {}
-
-local function ws_key(ws)
-  if not ws or not ws.name then
-    return nil
-  end
-  if ws.name == R.WS:sub(6) then
-    return R.WS
-  end
-  return tonumber(ws.name) and ws.name or "name:" .. ws.name
-end
 
 local function stream_running()
   for _, w in ipairs(hl.get_windows()) do
@@ -24,7 +22,27 @@ local function stream_running()
   return false
 end
 
--- The probe runs outside the compositor so a powered off desktop never
+local function serving()
+  local f = io.open(SERVING, "r")
+  if f then
+    f:close()
+  end
+  return f ~= nil
+end
+
+local function mark_viewing(on)
+  if on then
+    os.execute("mkdir -p '" .. DIR .. "'")
+    local f = io.open(VIEWING, "w")
+    if f then
+      f:close()
+    end
+  else
+    os.remove(VIEWING)
+  end
+end
+
+-- The probe runs outside the compositor so a machine that is off never
 -- blocks it; the shell reports back through `hyprctl eval`.
 local function probe()
   local port = function(p)
@@ -44,8 +62,10 @@ local function run(actions)
   for _, a in ipairs(actions) do
     if a.kind == "probe" then
       probe()
-    elseif a.kind == "goto" then
-      hl.dispatch(hl.dsp.focus({ workspace = a.ws }))
+    elseif a.kind == "special" then
+      if a.show ~= state.shown then
+        hl.dispatch(hl.dsp.workspace.toggle_special(peer))
+      end
     elseif a.kind == "launch" then
       hl.exec_cmd("moonlight stream " .. HOST .. " Desktop")
     elseif a.kind == "focus_stream" then
@@ -55,10 +75,16 @@ local function run(actions)
     elseif a.kind == "notify" then
       -- The synchronous hint makes each step replace the previous one instead of stacking.
       hl.exec_cmd(
-        "notify-send -a Desktop -h string:x-canonical-private-synchronous:remote-desktop Desktop '" .. a.text .. "'"
+        "notify-send -a " .. peer .. " -h string:x-canonical-private-synchronous:remote " .. peer .. " '" .. a.text .. "'"
       )
     elseif a.kind == "move_window" then
-      hl.dispatch(hl.dsp.window.move({ workspace = a.ws, window = "address:" .. a.address, follow = false }))
+      local w = hl.get_window("address:" .. a.address)
+      local ws = w and hl.get_active_workspace(w.monitor)
+      if ws then
+        hl.dispatch(hl.dsp.window.move({ workspace = ws, window = "address:" .. a.address, follow = false }))
+      end
+    elseif a.kind == "viewing" then
+      mark_viewing(a.on)
     end
   end
 end
@@ -68,7 +94,7 @@ function M.probe_done(sunshine_ok, ssh_ok, moonlight_running)
 end
 
 local function toggle()
-  run(R.toggle(state, ws_key(hl.get_active_workspace()), stream_running()))
+  run(R.toggle(state, stream_running()))
   if state.probing then
     hl.timer(function()
       R.probe_timeout(state)
@@ -83,17 +109,17 @@ hl.define_submap("remote", function()
 end)
 
 hl.window_rule({
-  name = "desktop-stream",
-  workspace = R.WS,
+  name = "remote-stream",
+  workspace = state.ws,
   fullscreen = true,
   match = { class = "^(" .. R.CLASS:gsub("%.", "\\.") .. ")$" },
 })
 
-hl.on("workspace.active", function(ws)
-  run(R.workspace_active(state, ws_key(ws)))
+hl.on("workspace.special_active", function(ws)
+  run(R.special_active(state, ws and ws.name))
 end)
 hl.on("window.open", function(w)
-  run(R.window_open(state, w.class, ws_key(w.workspace), w.address))
+  run(R.window_open(state, w.class, w.workspace and w.workspace.name, w.address))
 end)
 local close_pending = false
 hl.on("window.close", function(w)
@@ -101,9 +127,10 @@ hl.on("window.close", function(w)
     return
   end
   close_pending = true
+  -- The window is gone by the time the timer fires and its fields read empty.
   hl.timer(function()
     close_pending = false
-    run(R.window_close(state, w.class, stream_running()))
+    run(R.window_close(state, R.CLASS, stream_running(), serving()))
   end, { timeout = 1500, type = "oneshot" })
 end)
 hl.on("config.reloaded", function()

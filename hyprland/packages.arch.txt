@@ -28,3 +28,4 @@ loupe
 papers
 showtime
 gnome-text-editor
+moonlight-qt

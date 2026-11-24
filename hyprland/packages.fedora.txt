@@ -30,3 +30,4 @@ yaru-icon-theme
 yaru-gtk3-theme
 qt6ct
 plasma-breeze-qt6
+moonlight-qt

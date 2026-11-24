@@ -1,5 +1,7 @@
 local M = {}
 
+M.peer = "fedora"
+
 M.monitors = {
   -- Desk: external on the left, laptop on the right.
   -- "auto" depended on the order the monitors appeared at boot.
@@ -28,7 +30,6 @@ function M.setup()
   hl.workspace_rule({ workspace = "11", monitor = "eDP-1", default = true })
 
   require("lid")
-  require("remote")
 end
 
 return M
