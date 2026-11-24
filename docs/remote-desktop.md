@@ -49,15 +49,14 @@ stream fills the link and the delay climbs to hundreds of milliseconds.
    Also turn on "Optimize mouse for remote desktop instead of games": the
    cursor then follows the laptop's own pointer instead of getting the
    desktop's acceleration on top of the touchpad's.
-4. The `desktop` host comes from the private `~/.ssh` repo
-   (`config.d/personal.conf`): `Host personal-desktop desktop`, user
+4. The `fedora` host comes from the private `~/.ssh` repo
+   (`config.d/personal.conf`): `Host fedora`, `HostName fedora.local`, user
    `raphael`, key `~/.ssh/keys/personal`.
-
-5. herdr: Settings > Machines > Add machine > `desktop`.
+5. herdr: `hc machine add fedora`.
 
 ## Check
 
-- `ssh desktop true` returns without asking for a password.
+- `ssh fedora true` returns without asking for a password.
 - With the desktop on, `SUPER + grave` shows its Hyprland; `SUPER + 1` switches
   the desktop's workspace, not the laptop's; `SUPER + grave` again returns
   to where you were.
@@ -82,14 +81,13 @@ Terminals only: no stream of the laptop's screen. Design:
    starts sshd with keys only (without step 1 it leaves sshd off).
 3. Check the drop-in applied: `sudo sshd -T | grep -i passwordauthentication`
    prints `no`.
-4. The `laptop` host comes from the private `~/.ssh` repo
-   (`config.d/personal.conf`): `Host personal-laptop laptop`,
-   `HostName arch.local`.
-5. herdr on the desktop: Settings > Machines > Add machine > `laptop`.
+4. The `arch` host comes from the private `~/.ssh` repo
+   (`config.d/personal.conf`): `Host arch`, `HostName arch.local`.
+5. herdr on the desktop: `hc machine add arch`.
 
 With the lid closed and no monitor or dock, the laptop suspends 10 s later
-unless it is on the charger (`hyprland/hypr/monitors.lua`). Suspended, it
+unless it is on the charger (`laptop/hypr/lid.lua`). Suspended, it
 does not answer SSH: open the lid or plug it in.
 
-Check: `ssh laptop true` on the desktop returns without asking for a
+Check: `ssh arch true` on the desktop returns without asking for a
 password, also with the lid closed on the charger.
