@@ -160,7 +160,7 @@
   const SE = typeof StremioEnhancedAPI === "undefined" ? undefined : StremioEnhancedAPI;
   if (!SE || !globalThis.document) return;
 
-  const PORTS = { radarr: 7878, sonarr: 8989 };
+  const PORTS = { radarr: 7878, sonarr: 8990 };
   SE.registerSettings([
     { key: "server", type: "input", label: "Servidor de mídia", defaultValue: "http://fedora.local" },
     { key: "radarr_key", type: "input", label: "Chave da API do Radarr", description: "RADARR__AUTH__APIKEY no media.env" },

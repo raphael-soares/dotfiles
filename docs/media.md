@@ -19,7 +19,7 @@ and Jellyfin Desktop (flatpak) plays on this PC. Design:
 | Jellyfin | <http://fedora.local:8096> | LAN |
 | qBittorrent WebUI (used by Radarr and Sonarr) | `host.containers.internal:8080` | containers, password in `media.env` |
 | Radarr | <http://fedora.local:7878> | LAN (the Stremio plugin on both PCs), no login |
-| Sonarr | <http://fedora.local:8989> | LAN (the Stremio plugin on both PCs), no login |
+| Sonarr | <http://fedora.local:8990> | LAN (the Stremio plugin on both PCs), no login; 8989 is Spotifast's login redirect |
 | Prowlarr | <http://127.0.0.1:9696> | this PC |
 | Bazarr | <http://127.0.0.1:6767> | this PC |
 | FlareSolverr | `flaresolverr:8191` | containers only |

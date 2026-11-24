@@ -414,9 +414,9 @@ fi
 
 {{#if dotter.packages.media}}
 install_packages media
-# Radarr and Sonarr answer the Baixar no PC button in Stremio on the other machine.
+# Radarr and Sonarr answer the manual-pick plugin in Stremio on the other machine.
 if command -v firewall-cmd >/dev/null; then
-  sudo firewall-cmd -q --permanent --add-port=7878/tcp --add-port=8989/tcp
+  sudo firewall-cmd -q --permanent --add-port=7878/tcp --add-port=8990/tcp
   sudo firewall-cmd -q --reload
 fi
 "$REPO/media/bin/media-deploy" "$REPO"

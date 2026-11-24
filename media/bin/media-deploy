@@ -287,7 +287,7 @@ configure_jellyfin() {
 # Runs before configarr, which deletes the old profiles only once no title uses them.
 configure_arrs() {
   local app port kind cfg manual ids
-  for port in 7878 8989; do wait_http "http://127.0.0.1:$port/ping"; done
+  for port in 7878 8990; do wait_http "http://127.0.0.1:$port/ping"; done
   for app in radarr sonarr; do
     cfg=$(api "$app" GET /config/indexer)
     if [[ $(jq .rssSyncInterval <<<"$cfg") != 0 ]] && apply "$app rss sync"; then
@@ -316,7 +316,7 @@ configure_arrs() {
 # Cloudflare-fronted indexers fail their first creation test until Prowlarr holds the clearance cookie.
 run_configarr() {
   local port i
-  for port in 7878 8989 9696; do wait_http "http://127.0.0.1:$port/ping"; done
+  for port in 7878 8990 9696; do wait_http "http://127.0.0.1:$port/ping"; done
   for i in 1 2 3; do
     systemctl --user start configarr.service && break
     ((i < 3)) || return 1

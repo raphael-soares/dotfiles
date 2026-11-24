@@ -36,7 +36,7 @@ api() {
   shift 3
   case $app in
     radarr) url=http://127.0.0.1:7878/api/v3 auth="X-Api-Key: $(env_get RADARR__AUTH__APIKEY)" ;;
-    sonarr) url=http://127.0.0.1:8989/api/v3 auth="X-Api-Key: $(env_get SONARR__AUTH__APIKEY)" ;;
+    sonarr) url=http://127.0.0.1:8990/api/v3 auth="X-Api-Key: $(env_get SONARR__AUTH__APIKEY)" ;;
     prowlarr) url=http://127.0.0.1:9696/api/v1 auth="X-Api-Key: $(env_get PROWLARR__AUTH__APIKEY)" ;;
     bazarr) url=http://127.0.0.1:6767/api auth="X-API-KEY: $(env_get BAZARR_API_KEY)" ;;
     jellyfin) url=$JF auth="Authorization: MediaBrowser Token=\"$(env_get JELLYFIN_TOKEN)\"" ;;
