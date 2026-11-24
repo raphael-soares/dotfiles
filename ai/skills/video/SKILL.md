@@ -137,7 +137,11 @@ recusada, suba o serviço e tente de novo com a mesma voz. Nunca troque de voz,
 modelo ou motor para contornar: a alternativa do omp só fala inglês. Se continuar
 falhando, pare e conte ao dono o erro.
 
-Grave `audio/duracoes.json` com a duração de cada narração (as cenas leem dele).
+Narre plano por plano: cada linha do roteiro vira `audio/planos/<id>-<n>.wav`, e
+a concatenação delas, `audio/<id>.wav`. Grave `audio/duracoes.json` com a
+duração de cada cena em `<id>` e a de cada plano em `<id>#planos` (as cenas leem
+dele). Respiro no fim da cena (o dono pode pedir): estique o `.wav` com
+`apad=whole_dur=<total>` e grave o total novo em `<id>`, sem mexer nos planos.
 
 ### Pronúncia
 
@@ -146,8 +150,9 @@ O Kokoro lê pela grafia portuguesa e não aceita fonema escrito (a sintaxe
 um brasileiro diz, e só a fala: na tela o termo aparece com a grafia certa.
 
 - Termo em inglês continua em inglês, abrasileirado como se fala numa aula
-  daqui: polling vira "pú-lin", buffer "bâfer", cache "quéche", driver
-  "dráiver", heap "rípi". Não traduza o termo que a área usa em inglês.
+  daqui: polling vira "púlin" (com hífen, "pú-lin", saiu "Pool Lane"), buffer
+  "bâfer", cache "quéche", driver "dráiver", heap "rípi". Não traduza o termo que
+  a área usa em inglês.
 - Sigla dita letra a letra vai soletrada em português: DMA vira "dê-éme-á",
   CPU "cê-pê-u", USB "u-ésse-bê". RAM não sai certo de jeito nenhum ("ram",
   "râm" e "rem" falharam): diga "memória principal".
@@ -168,9 +173,13 @@ Renderize com `--media_dir cenas/.manim --disable_caching` e copie o `.mp4` para
 `cenas/render/<id>.mp4`. Renderizar em paralelo corrompe o cache de texto
 (`ParseError: no element found`): rode de novo a cena que falhou, sozinha.
 
-Tempo da cena: o `tema.py` lê `$VIDEO_DIR/audio/duracoes.json`; a cena usa
-`self.t(fração)` para os `run_time` e termina com `self.fechar()`, que espera o
-que falta para a duração da narração.
+Tempo da cena: o `Cena` do `tema.py` herda de `MovingCameraScene` e lê
+`$VIDEO_DIR/audio/duracoes.json`. A cena usa `self.p(plano, fração)` para os
+`run_time` (fração da fala daquele plano), `self.ate(plano)` para esperar o
+plano começar, `self.t(fração)` quando a cena inteira é um plano só, e termina
+com `self.fechar()`, que espera o que falta para a duração da narração. Assim
+cada imagem entra junto da frase que a explica. Identidade antiga sem `p` e
+`ate`: atualize o `tema.py` dela antes de animar.
 
 Margem de segurança: nada a menos de 10% da borda (no Manim, conteúdo dentro de
 `x` entre -6,4 e 6,4 e `y` entre -3,6 e 3,6). O `tema.py` da identidade define
@@ -180,6 +189,8 @@ encolher tudo para caber.
 
 Emoji não renderiza em `Text`: desenhe ícones com formas (polígono, arco).
 Texto sobre bloco de destaque usa a cor de texto clara, não a do fundo.
+Forma com preenchimento opaco sobe para a frente quando é animada e tapa o texto
+que estava em cima dela: desenhe caixas e chips só com contorno.
 
 Fórmula em Typst:
 
@@ -236,7 +247,9 @@ aprovação.
 ## Antes de cada ponto de aprovação
 
 Confira o resultado em vez de supor: extraia quadros das cenas
-(`ffmpeg -ss <t> -i cena.mp4 -frames:v 1 q.png`) e olhe com `read`; confira a
+(`ffmpeg -ss <t> -i cena.mp4 -frames:v 1 q.png`) e olhe com `read`. Para o vídeo
+inteiro, uma folha de contato mostra tudo de uma vez: `ffmpeg -i rascunho.mp4
+-vf "fps=1/3.5,scale=427:240,tile=4x5" folha%d.png`. Confira a
 duração das cenas contra as narrações e o volume com
 `ffmpeg -i final.mp4 -af volumedetect -f null -`. Texto cortado, elemento fora
 da tela ou a menos de 10% da borda, fala sem som ou estourada voltam para a
