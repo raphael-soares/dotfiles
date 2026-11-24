@@ -209,6 +209,16 @@ class CraftMcpTest(unittest.TestCase):
         self.assertEqual(text(p.call("a")), "windowless:a")
         self.assertNotIn("ui_x", p.tool_names())
 
+    def test_window_closed_notice_survives_tools_list(self):
+        p = self.proxy()
+        p.handshake()
+        p.call("open_window", {"path": "/x/y.svg"})
+        self.kill_launched_app()
+        self.assertNotIn("ui_x", p.tool_names())
+        r = p.call("a")
+        self.assertTrue(r.get("isError"))
+        self.assertIn("/x/y.svg", text(r))
+
     def test_uninstalled_app_exits_naming_launcher(self):
         self.env["FAKE_INSTALLED"] = "pdfcraft"
         p = Proxy("vectorcraft", self.env)

@@ -63,6 +63,8 @@ class Child:
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
         )
         self.pending = {}
+        self.pending_lock = threading.Lock()
+        self.closed = False
         self.stopping = False
         threading.Thread(target=self._read, daemon=True).start()
 
@@ -108,6 +110,7 @@ class Proxy:
         self.init_msg = None
         self.tool_names = None
         self.last_path = None
+        self.closed_notice = False
         self.child = Child(self, app, connected=False)
 
     def write(self, msg):
@@ -122,9 +125,29 @@ class Proxy:
         self.write({"jsonrpc": "2.0", "id": msg_id, "result": {"content": [{"type": "text", "text": message}], "isError": is_error}})
 
     def fail_pending(self, child, message):
-        while child.pending:
-            msg_id, _ = child.pending.popitem()
+        with child.pending_lock:
+            child.closed = True
+            ids = list(child.pending)
+            child.pending.clear()
+        for msg_id in ids:
             self.error(msg_id, message)
+
+    def forward(self, msg, msg_id, method):
+        child = self.child
+        with child.pending_lock:
+            if child.closed:
+                return self.error(msg_id, f"{self.app.title}'s server stopped; send the request again")
+            child.pending[msg_id] = method
+        child.send(msg)
+
+    def fall_back(self, msg_id, reason):
+        try:
+            self.swap(connected=False)
+            return True
+        except Exception as e:
+            if msg_id is not None:
+                self.error(msg_id, f"{reason} and the windowless server did not start: {e}")
+            return False
 
     def open_window_tool(self):
         t = self.app.title
@@ -148,15 +171,15 @@ class Proxy:
             return
         if child is not self.child:
             return
-        if "method" not in msg and msg_id in child.pending:
-            method = child.pending.pop(msg_id)
+        if "method" not in msg and msg_id is not None:
+            with child.pending_lock:
+                method = child.pending.pop(msg_id, None)
             result = msg.get("result")
             if method == "initialize" and result is not None:
                 result.setdefault("capabilities", {}).setdefault("tools", {})["listChanged"] = True
             if method == "tools/list" and result is not None:
                 self.tool_names = [t["name"] for t in result.get("tools", [])]
-                if self.app.connected:
-                    result.setdefault("tools", []).append(self.open_window_tool())
+                result.setdefault("tools", []).append(self.open_window_tool())
         self.write(msg)
 
     def ask(self, child, method, params=None, timeout=30):
@@ -193,11 +216,13 @@ class Proxy:
     def running(self):
         return subprocess.run(["pgrep", "-u", str(os.getuid()), "-x", self.app.name], stdout=subprocess.DEVNULL).returncode == 0
 
-    def wait_port(self, seconds):
+    def wait_port(self, seconds, while_running=False):
         deadline = time.monotonic() + seconds
         while time.monotonic() < deadline:
             if port_open(self.app.port):
                 return True
+            if while_running and not self.running():
+                return False
             time.sleep(0.25)
         return port_open(self.app.port)
 
@@ -219,20 +244,21 @@ class Proxy:
         if self.child.connected and port_open(self.app.port):
             return self.tool_result(msg_id, f"The {t} window is already open and connected.")
         joined = port_open(self.app.port)
+        if not joined and self.running():
+            joined = self.wait_port(float(os.environ.get("CRAFT_MCP_GRACE", "5")), while_running=True)
+            if not joined and self.running():
+                return self.tool_result(msg_id, f"{t} is open but not listening for the agent (it was opened before the dotfiles deploy). Ask the owner to close and reopen {t}.", True)
         if not joined:
-            if self.running():
-                if not self.wait_port(float(os.environ.get("CRAFT_MCP_GRACE", "5"))):
-                    return self.tool_result(msg_id, f"{t} is open but not listening for the agent (it was opened before the dotfiles deploy). Ask the owner to close and reopen {t}.", True)
-            else:
-                log = self.launch(path)
-                wait = float(os.environ.get("CRAFT_MCP_WAIT", "30"))
-                if not self.wait_port(wait):
-                    return self.tool_result(msg_id, f"{t} did not start listening on port {self.app.port} within {wait:g} s; its output is in {log}. Still working without a window.", True)
+            log = self.launch(path)
+            wait = float(os.environ.get("CRAFT_MCP_WAIT", "30"))
+            if not self.wait_port(wait):
+                return self.tool_result(msg_id, f"{t} did not start listening on port {self.app.port} within {wait:g} s; its output is in {log}. Still working without a window.", True)
         try:
             self.swap(connected=True)
         except Exception as e:
             return self.tool_result(msg_id, f"Could not connect to the {t} window: {e}. Still working without a window.", True)
         self.last_path = path
+        self.closed_notice = False
         if joined:
             where = f"Open {path} there with the app's own open command unless it is the document shown. " if path else ""
             return self.tool_result(msg_id, f"{t} was already open; joined its window. {where}Read the document before each change: the owner may edit it by hand.")
@@ -248,21 +274,22 @@ class Proxy:
             return
         if method == "initialize":
             self.init_msg = msg
-        if method == "tools/call" and self.app.connected and msg.get("params", {}).get("name") == "open_window":
-            return self.open_window(msg_id, msg["params"].get("arguments", {}).get("path"))
+        if method == "tools/call" and (msg.get("params") or {}).get("name") == "open_window":
+            return self.open_window(msg_id, ((msg["params"].get("arguments")) or {}).get("path"))
         if self.window_closed():
-            try:
-                self.swap(connected=False)
-            except Exception as e:
-                return self.error(msg_id, f"The {self.app.title} window was closed and the windowless server did not start: {e}") if msg_id is not None else None
-            if method == "tools/call":
-                reopen = f"Open {self.last_path} to continue." if self.last_path else "Open the saved document to continue."
-                return self.tool_result(msg_id, f"The {self.app.title} window was closed; working without a window again. {reopen}", True)
+            if not self.fall_back(msg_id, f"The {self.app.title} window was closed"):
+                return
+            self.closed_notice = True
         elif not self.child.alive():
-            self.swap(connected=False)
-        if msg_id is not None:
-            self.child.pending[msg_id] = method
-        self.child.send(msg)
+            if not self.fall_back(msg_id, f"{self.app.title}'s server stopped"):
+                return
+        if method == "tools/call" and self.closed_notice:
+            self.closed_notice = False
+            reopen = f"Open {self.last_path} to continue." if self.last_path else "Open the saved document to continue."
+            return self.tool_result(msg_id, f"The {self.app.title} window was closed; working without a window again. {reopen}", True)
+        if msg_id is None:
+            return self.child.send(msg)
+        self.forward(msg, msg_id, method)
 
     def run(self):
         for line in sys.stdin:

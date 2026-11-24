@@ -6,7 +6,7 @@ MCP_JSON=$HOME/.omp/agent/.mcp.json
 
 mkdir -p "$HOME/Design"
 installed=()
-while IFS='|' read -r name port token _; do
+while IFS='|' read -r name port token _ || [[ -n $name ]]; do
   name=${name// /} port=${port// /} token=${token// /}
   [[ -n $name && $name != \#* ]] || continue
   id=ai.storyteller.$name
