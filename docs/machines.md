@@ -7,7 +7,8 @@ the machine has:
 
 - installs missing packages from `<module>/packages.<distro>.txt` (`yay`/`pacman`
   on Arch, `dnf` on Fedora);
-- copies the Fuxi-H3 udev rule and the greetd config to `/etc` with sudo;
+- copies the Fuxi-H3 udev rule, the greetd config and the Sunshine units to
+  `/etc` with sudo;
 - sets gsettings, `gcr-ssh-agent`, the work omp profile, and reloads Hyprland.
 
 `DOTFILES_LINKS_ONLY=1 dotter deploy` creates only the links.

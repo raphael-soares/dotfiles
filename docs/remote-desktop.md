@@ -1,93 +1,95 @@
-# Remote access between the laptop and the desktop
+# Remote access between `arch` and `fedora`
 
-From the laptop, `SUPER + grave` shows the `fedora` desktop's screen on a
-workspace of its own and forwards every key there; the same key brings you
-back. herdr reaches the desktop over SSH for terminals. The other way round,
-the desktop reaches the laptop over SSH only, for herdr (see
-[From the desktop to the laptop](#from-the-desktop-to-the-laptop)).
+On either machine, `SUPER + grave` shows the other machine's screen over the
+current one, on the special workspace `special:<peer>` (`special:fedora` on
+`arch`, `special:arch` on `fedora`), and forwards every key there. The same
+key hides it again; the workspace underneath is untouched. herdr reaches each
+machine from the other over SSH for terminals.
 
-The `sshd` module (both machines) sets up key-only SSH, Avahi and the
-firewall. The `home` module (only on `fedora`) installs and configures the
-stream on the desktop side; the laptop side lives in
-`laptop/hypr/remote.lua`. Design:
-[`superpowers/specs/2026-11-18-remote-desktop-access-design.md`](superpowers/specs/2026-11-18-remote-desktop-access-design.md).
+Both machines run Sunshine from boot, before anyone logs in, so the stream
+can show the other machine's login screen: type the password through the
+stream. Neither machine logs in by itself.
 
-## Once, on the desktop
+The `hyprland` module (both machines) carries all of it: Sunshine, Moonlight,
+`hyprland/hypr/remote.lua`, the greetd config and the bar indicator. Each
+`machine.lua` names the other machine in `M.peer`. The `sshd` module sets up
+key-only SSH, Avahi and the firewall. Design:
+[`superpowers/specs/2026-11-23-mutual-remote-access-design.md`](superpowers/specs/2026-11-23-mutual-remote-access-design.md).
 
-1. `dotter deploy`. It installs Sunshine (LizardByte COPR), enables Avahi and
-   Sunshine, gives Sunshine `cap_sys_admin`, opens the firewall and logs the
-   desktop into Hyprland through greetd autologin. Noctalia never turns the
-   screen off there and nothing suspends it; the screen lock stays. sshd stays
-   off: there is no authorized key yet.
-2. Authorize the `personal` key, the same pair the laptop uses (it comes with
-   the private `~/.ssh` repo):
+## Sun and moon
+
+The bar shows a sun, just left of the clock, while the other machine is
+watching this one, and a moon while this machine shows the other.
+Both read files in `$XDG_RUNTIME_DIR/remote/`: `serving`, kept by
+`remote-serving.service` from Sunshine's log, and `viewing`, kept by
+`remote.lua` while Moonlight is open.
+
+Clicking the sun or moon opens a small panel: show or hide the other screen,
+swap the direction, or end the stream. It runs `remote-control show|stop|swap`
+(`hyprland/bin`), which reaches the other machine over SSH when the action is
+on that side, so ending or swapping works from either end.
+
+The two never stream each other. When the other machine connects, this
+machine's Moonlight closes and a notification says why.
+
+## Once, on each machine
+
+1. Authorize the `personal` key (it comes with the private `~/.ssh` repo):
 
    ```bash
    cat ~/.ssh/keys/personal.pub >>~/.ssh/authorized_keys
    ```
 
-3. `dotter deploy` again: sshd starts, taking keys only.
-4. Open <https://localhost:47990> and create Sunshine's admin user.
-5. Reboot once and check Hyprland comes up logged in. With the monitor on the
-   laptop's input, the desktop's DisplayPort must stay connected
-   (`cat /sys/class/drm/card*-DP-1/status`), or Sunshine has no screen.
+2. `dotter deploy`. It installs Sunshine (LizardByte COPR on Fedora,
+   `sunshine-bin` from the AUR on Arch) and `moonlight-qt`, gives Sunshine
+   `cap_sys_admin` for KMS capture, turns on linger, installs
+   `sunshine-prelogin.service` and `remote-serving.service` as system units,
+   disables Sunshine's user unit, opens the firewall where there is one,
+   installs the shared greetd config and starts sshd with keys only.
+3. Open <https://localhost:47990> on that machine and create Sunshine's admin
+   user. From the other machine the browser usually cannot resolve `.local`,
+   and an IP address needs `csrf_allowed_origins` in `sunshine.conf`.
+4. Check `/etc/nsswitch.conf` has `mdns_minimal [NOTFOUND=return]` on the
+   `hosts:` line, before `resolve`.
+5. The other machine's host comes from `~/.ssh/config.d/personal.conf`
+   (`Host fedora` / `Host arch`, `HostName <name>.local`); herdr:
+   `hc machine add <peer>`.
 
-The desktop is on Wi-Fi: keep Moonlight's bitrate around 10 Mbit/s, or the
-stream fills the link and the delay climbs to hundreds of milliseconds.
+## Pairing, once per direction
 
-## Once, on the laptop
+On the machine that will watch, run `moonlight pair <peer>.local --pin 1234`
+(any four digits), then type that PIN in the PIN tab of the peer's Sunshine
+web UI. Moonlight uses Sunshine's default `Desktop` app.
 
-1. `dotter deploy` installs `moonlight-qt`, `nss-mdns` and `avahi`. Check
-   `/etc/nsswitch.conf` has `mdns_minimal [NOTFOUND=return]` on the `hosts:`
-   line, before `resolve`.
-2. Pair: run `moonlight pair fedora.local`, then type the PIN it shows in
-   Sunshine's web UI (PIN tab).
-3. In Moonlight's settings: resolution matching the laptop screen, bitrate
-   10 Mbit/s, and "Capture system keyboard shortcuts" on, always. Without it
-   Moonlight drops the Super key, so `SUPER + 1` never reaches the desktop;
-   `SUPER + grave` still works because Hyprland binds it with `dont_inhibit`.
-   Also turn on "Optimize mouse for remote desktop instead of games": the
-   cursor then follows the laptop's own pointer instead of getting the
-   desktop's acceleration on top of the touchpad's.
-4. The `fedora` host comes from the private `~/.ssh` repo
-   (`config.d/personal.conf`): `Host fedora`, `HostName fedora.local`, user
-   `raphael`, key `~/.ssh/keys/personal`.
-5. herdr: `hc machine add fedora`.
+If Sunshine restarted between the first Moonlight contact and the PIN, the
+pairing stalls with "Found unexpected PC": remove the `[hosts]` section of
+`~/.config/Moonlight Game Streaming Project/Moonlight.conf` and pair again.
+
+In Moonlight's settings: bitrate around 10 Mbit/s (`fedora` is on Wi-Fi, and
+more fills the link), "Capture system keyboard shortcuts" always on (or the
+Super key never reaches the other side; `SUPER + grave` still works because
+Hyprland binds it with `dont_inhibit`), and "Optimize mouse for remote desktop
+instead of games" on.
 
 ## Check
 
-- `ssh fedora true` returns without asking for a password.
-- With the desktop on, `SUPER + grave` shows its Hyprland; `SUPER + 1` switches
-  the desktop's workspace, not the laptop's; `SUPER + grave` again returns
-  to where you were.
-- With the stream open, `SUPER + grave` switches at once, without the checking
+- `ssh <peer> true` returns without asking for a password.
+- `SUPER + grave` shows the other machine; `SUPER + 1` switches its workspace,
+  not this one's; `SUPER + grave` again hides it.
+- With the stream open, `SUPER + grave` shows it at once, without the checking
   notification.
-- With the desktop off, `SUPER + grave` says it is checking, then "Desktop is
-  off or not on the network".
+- With the other machine off, `SUPER + grave` says it is checking, then
+  "<peer> is off or not on the network".
+- After a reboot of the other machine, the stream shows its login screen.
+- Sun on the watched machine, moon on the watching one.
 
-## From the desktop to the laptop
+## Notes
 
-Terminals only: no stream of the laptop's screen. Design:
-[`superpowers/specs/2026-11-22-laptop-ssh-access-design.md`](superpowers/specs/2026-11-22-laptop-ssh-access-design.md).
-
-1. On the laptop, authorize the `personal` key, the same pair the desktop
-   uses:
-
-   ```bash
-   cat ~/.ssh/keys/personal.pub >>~/.ssh/authorized_keys
-   ```
-
-2. On the laptop, `dotter deploy`. It installs `openssh`, enables Avahi and
-   starts sshd with keys only (without step 1 it leaves sshd off).
-3. Check the drop-in applied: `sudo sshd -T | grep -i passwordauthentication`
-   prints `no`.
-4. The `arch` host comes from the private `~/.ssh` repo
-   (`config.d/personal.conf`): `Host arch`, `HostName arch.local`.
-5. herdr on the desktop: `hc machine add arch`.
-
-With the lid closed and no monitor or dock, the laptop suspends 10 s later
-unless it is on the charger (`laptop/hypr/lid.lua`). Suspended, it
-does not answer SSH: open the lid or plug it in.
-
-Check: `ssh arch true` on the desktop returns without asking for a
-password, also with the lid closed on the charger.
+- `arch` streams the screen Sunshine finds: the LG when it is on `arch`'s
+  input, the built-in screen otherwise. With the monitor on the other input
+  `fedora`'s DisplayPort must stay connected
+  (`cat /sys/class/drm/card*-DP-1/status`), or its Sunshine has no screen;
+  the EDID override in the `home` module keeps it so.
+- With the lid closed and no monitor or dock, `arch` suspends 10 s later
+  unless it is on the charger (`laptop/hypr/lid.lua`). Suspended, it answers
+  neither SSH nor Moonlight.
