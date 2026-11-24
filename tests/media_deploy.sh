@@ -106,21 +106,25 @@ report=$(fake_arr && ARR_DONE=1 && CHECK=1 && configure_arrs && echo "drift=$DRI
 units=$HOME/.config/systemd/user
 mkdir -p "$units" && touch "$units/media-watchdog.timer"
 (
+  UNITS=()
   systemctl() {
     case "$*" in
+      *daemon-reload) touch "$T/reloaded" ;;
       *list-units*) printf '%s\n' jellyfin.service gone.service other.service media-gone.timer media-watchdog.timer ;;
-      *"SourcePath gone.service") echo "$REPO/media/containers/gone.container" ;;
-      *"SourcePath jellyfin.service") echo "$REPO/media/containers/jellyfin.container" ;;
-      *"FragmentPath other.service") echo "/usr/lib/systemd/user/other.service" ;;
-      *"FragmentPath media-"*) echo "$units/$5" ;;
-      *show*) ;;
+      *show*) [[ -e $T/reloaded && $* == *gone* ]] || case "$*" in
+        *"SourcePath gone.service") echo "$REPO/media/containers/gone.container" ;;
+        *"SourcePath jellyfin.service") echo "$REPO/media/containers/jellyfin.container" ;;
+        *"FragmentPath other.service") echo "/usr/lib/systemd/user/other.service" ;;
+        *"FragmentPath media-"*) echo "$units/$5" ;;
+      esac ;;
+      *is-enabled*) ;;
       *) echo "$*" >>"$T/systemctl" ;;
     esac
   }
-  retire_units
+  start_units
 ) 2>/dev/null
 [[ $(sort "$T/systemctl" | paste -sd,) == "--user stop gone.service,--user stop media-gone.timer" ]] ||
-  fail "retire_units stopped: $(paste -sd, "$T/systemctl")"
+  fail "start_units stopped: $(paste -sd, "$T/systemctl")"
 
 (source "$REPO/media/bin/media-lib.sh" && for i in {1..13000}; do printf '%0100d\n' "$i"; done >"$MEDIA_LOG" && log "last")
 [[ $(wc -l <"$MEDIA_LOG") -le 5000 && $(tail -n1 "$MEDIA_LOG") == *": last" ]] || fail "the log is not trimmed to its latest lines"

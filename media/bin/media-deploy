@@ -116,10 +116,11 @@ retire_units() {
 }
 
 # A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
+# retire_units runs first: after daemon-reload systemd no longer knows where a deleted unit came from.
 start_units() {
-  ((CHECK)) || systemctl --user daemon-reload
   mkdir -p "$STATE/.applied"
   retire_units
+  ((CHECK)) || systemctl --user daemon-reload
   local u sum extra
   for u in "${UNITS[@]}"; do
     extra=()

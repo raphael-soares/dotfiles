@@ -50,6 +50,7 @@ add() {
     body=$(jq -c --argjson p "$(profile sonarr)" --arg home "$HOME" --arg s "$seasons" \
       --argjson tag "$(api sonarr GET /tag | jq '[.[] | select(.label == "anime") | .id][0]')" '
       (.genres // [] | index("Anime") != null) as $anime
+      | if $anime and $tag == null then error("Sonarr has no anime tag; run media-deploy") else . end
       | ($s | if . == "" then [] elif . == "all" then null else split(",") | map(tonumber) end) as $want
       | . + {qualityProfileId: $p, rootFolderPath: "\($home)/Media/\(if $anime then "Anime" else "Series" end)",
         seriesType: (if $anime then "anime" else "standard" end), tags: (if $anime then [$tag] else [] end),

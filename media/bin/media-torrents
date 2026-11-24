@@ -57,7 +57,7 @@ main() {
   qbt /torrents/createTags --data-urlencode "tags=$(IFS=,; echo "${TAGS[*]}")"
   info=$(qbt /torrents/info)
   while IFS=$'\t' read -r hash name; do
-    drop "$hash" "$name" "levaria mais de ${SLOW_4K_HOURS}h em 4K"
+    drop "$hash" "$name" "levaria mais de ${SLOW_4K_HOURS}h em 4K" || true
   done < <(slow_4k "$(api radarr GET '/queue?pageSize=1000' | jq -c .records)" "$(date +%s)" <<<"$info")
   info=$(qbt /torrents/info)
   stalled=$(stalled_torrents "$(date +%s)" <<<"$info")
