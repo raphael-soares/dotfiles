@@ -2,19 +2,36 @@
 
 ## What the deploy does besides links
 
-`.dotter/post_deploy.sh` runs after every `dotter deploy`, only for the modules
-the machine has:
+`dotter deploy` only configures the home. `.dotter/post_deploy.sh` runs after
+it, only for the modules the machine has, and never uses sudo, installs,
+downloads or removes anything:
 
-- installs missing packages from `<module>/packages.<distro>.txt` (`yay`/`pacman`
-  on Arch, `dnf` on Fedora) and removes the ones in `<module>/remove.<distro>.txt`;
-- installs missing apps from `<module>/flatpaks.txt`, in the user installation.
-  User apps go here, so both machines get the same version and name: `hyprland`
-  for both, `laptop` for the notebook, `home` for the home PC. What talks to the
-  system (portals, Sunshine, Moonlight, Flameshot, Nautilus) stays native. Apps
-  dropped from a list are not uninstalled;
-- copies the Fuxi-H3 udev rule, the greetd config and the Sunshine units to
-  `/etc` with sudo;
-- sets gsettings, `gcr-ssh-agent`, the work omp profile, and reloads Hyprland.
+- sets gsettings, `gcr-ssh-agent`, the xdg-mime defaults and the Flatpak cursor
+  override, and merges the Ghostty, Sunshine and Moonlight settings;
+- pulls the secrets, restarts WirePlumber when its rules change, reloads Hyprland;
+- links the work omp profile and runs `media-deploy` and `design-deploy`;
+- ends with `.dotter/missing.sh` for the same modules.
+
+`.dotter/missing.sh [module...]` only reads the machine and prints what is
+still to do by hand, one block per module, under "Still to do by hand:". With
+no modules it takes the ones this machine deploys; a complete module prints
+nothing. Each module lists its own steps in `<module>/manual.sh`:
+
+- packages from `<module>/packages.<distro>.txt` (`pacman` for repo packages
+  and `yay` for the AUR on Arch, `dnf` on Fedora);
+- apps from `<module>/flatpaks.txt`, in the user installation. User apps go
+  here, so both machines get the same version and name. What talks to the
+  system (portals, Sunshine, Moonlight, Flameshot, Nautilus) stays native;
+- system files (udev rule, greetd config and PAM file, Sunshine units, sshd
+  drop-in, EDID), services to enable, firewall rules, linger, `setcap`, the
+  kernel argument and the tuned profile, each as the `sudo` command to run;
+- what the repo does not package: Spotifast and ZapFast rpms, Stremio Enhanced
+  (`hyprland/install/stremio-enhanced`), Arr Pick, herdr-setup, the syncfast
+  Nautilus extension, the omp plugin and the Bitwarden MCP for Claude Code.
+
+Run the printed commands, then `missing.sh` again until it prints nothing.
+A step for a distro the machine does not run is never printed. Packages or apps
+dropped from a list are not uninstalled.
 
 `DOTFILES_LINKS_ONLY=1 dotter deploy` creates only the links.
 

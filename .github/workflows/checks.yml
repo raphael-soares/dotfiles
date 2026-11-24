@@ -22,6 +22,7 @@ jobs:
           sudo chmod +x /usr/local/bin/dotter
       - run: bash tests/machines.sh arch
       - run: bash tests/machines.sh fedora
+      - run: bash tests/missing.sh
       - run: bash tests/adopt.sh
       - run: bash tests/media_deploy.sh
       - run: bash tests/media_cleanup.sh

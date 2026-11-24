@@ -50,8 +50,8 @@ Inside the network, services reach each other by container name
 - links every file in `media/bin`, `media/systemd` and `media/autostart` and
   the `media/containers`, `media/configarr`,
   `media/prowlarr/definitions` and `media/whisper` directories, and removes
-  links whose file left the repo, so a new script or timer works without
-  `dotter deploy` (which needs sudo): `media-deploy ~/.dotfiles` is enough;
+  links whose file left the repo, so a new script or timer works without a
+  full `dotter deploy`: `media-deploy ~/.dotfiles` is enough;
 - fills empty `*APIKEY` and `*WEBUI_PASSWORD` values in `media.env`, adding
   keys that are new in `media.env.example`;
 - starts the units, restarting the ones whose quadlet changed, and stops a

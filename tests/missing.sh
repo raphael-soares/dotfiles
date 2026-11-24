@@ -30,7 +30,10 @@ esac
 EOF
 cat >"$T/bin/flatpak" <<EOF
 #!/bin/sh
-[ "\$1" = info ] && [ -e "$S/flatpak/\$2" ]
+case \$1 in
+  remotes) cat "$S/remotes" 2>/dev/null; exit 0 ;;
+  info) [ -e "$S/flatpak/\$2" ] ;;
+esac
 EOF
 cat >"$T/bin/dnf" <<EOF
 #!/bin/sh
@@ -107,6 +110,8 @@ out=$(run fedora flat)
 has "flatpaks" "flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo" "$out"
 has "flatpaks" "flatpak install --user flathub app.X" "$out"
 has "flatpaks" "flatpak install --user https://example.org/y.flatpakref" "$out"
+echo flathub >"$S/remotes"
+lacks "flatpaks, Flathub already added" "remote-add" "$(run fedora flat)"
 touch "$S/flatpak/app.X" "$S/flatpak/y"
 expect "flatpaks, all installed" "" "$(run fedora flat)"
 

@@ -19,7 +19,7 @@ if [[ $DISTRO == fedora ]]; then
 fi
 # bin/monitor-away asks the monitor which input it shows over DDC; Arch keeps the
 # i2c devices to that group (Fedora grants them to the logged-in user).
-if getent group i2c >/dev/null && ! id -nG | grep -qw i2c; then
+if getent group i2c >/dev/null && ! grep -qw i2c <<<"$(id -nG)"; then
   step "sudo usermod -aG i2c $USER"
   note "takes effect at the next login"
 fi
@@ -31,7 +31,7 @@ fi
 if have sunshine; then
   sunshine=$(readlink -f "$(command -v sunshine)")
   # KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
-  getcap "$sunshine" 2>/dev/null | grep -q cap_sys_admin ||
+  grep -q cap_sys_admin <<<"$(getcap "$sunshine" 2>/dev/null)" ||
     step "sudo setcap cap_sys_admin+p $sunshine && sudo systemctl restart sunshine-prelogin.service"
   for unit in sunshine-prelogin remote-serving; do
     need_file "hyprland/sunshine/$unit.service" "/etc/systemd/system/$unit.service" \

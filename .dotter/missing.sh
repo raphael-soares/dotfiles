@@ -57,7 +57,8 @@ need_flatpaks() {
     if [[ $ref == https://* ]]; then refs+=("$ref"); else ids+=("$ref"); fi
   done
   ((${#ids[@]} + ${#refs[@]})) || return 0
-  step "flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo"
+  grep -qx flathub <<<"$(flatpak remotes --user --columns=name 2>/dev/null)" ||
+    step "flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo"
   ((${#ids[@]})) && step "flatpak install --user flathub ${ids[*]}"
   for ref in "${refs[@]}"; do step "flatpak install --user $ref"; done
   return 0
@@ -65,7 +66,7 @@ need_flatpaks() {
 
 need_copr() {
   [[ $DISTRO == fedora ]] || return 0
-  dnf copr list 2>/dev/null | grep -q "/$1$" || step "sudo dnf copr enable -y $1"
+  grep -q "/$1$" <<<"$(dnf copr list 2>/dev/null)" || step "sudo dnf copr enable -y $1"
 }
 
 # need_file <repo file> <system path> [<reload command>] [<sed script>]
