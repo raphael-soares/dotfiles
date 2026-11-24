@@ -25,9 +25,9 @@ it is mature enough to open.
 ## Non-goals
 
 - Submitting it to the Stremio Enhanced registry (maybe later, once public).
-- Sending anime to a separate folder or tagging it. The owner accepted that
-  anime lands in the series root folder; if he wants the Anime folder back, it
-  is done on the server side, not in the plugin.
+- Sending anime to a separate folder or tagging it. The plugin only sets the
+  Sonarr series type to anime by genre, which Sonarr needs to read absolute
+  episode numbers; it is not a category.
 - Interactive search as a fallback (minutes per season; ruled out before).
 - Servers behind an auth proxy that blocks API-key requests or CORS.
 - Changing `mediactl`: it keeps the owner's rules in bash.
@@ -144,8 +144,22 @@ timeout; DOM writes only on change; errors to the Stremio Enhanced logger.
   old `manual-pick.plugin.*` files.
 - `docs/media.md` and the `midia` skill: where the plugin lives, the four
   settings for the owner (`http://fedora.local:7878`, `http://fedora.local:8990`,
-  keys from `media.env`), and that anime from the plugin lands in the series
-  folder. `mediactl`'s comment points at the repository.
+  keys from `media.env`). `mediactl`'s comment points at the repository.
+
+### The owner's server: one Shows folder
+
+The owner chose to drop his Series and Anime split in the same PR, so the
+plugin's single-folder behavior matches his library:
+
+- `~/Media/Series` and `~/Media/Anime` become `~/Media/Shows`; the qBittorrent
+  categories `Series` and `Anime` become `Shows` (`~/Media/Downloads/Shows`).
+- Sonarr has one root folder and one qBittorrent client (`tv_category: Shows`);
+  the `qBittorrent Anime` client and the `anime` tag go away.
+- `mediactl add` puts every show in `Shows`, anime type by genre, no tag.
+- Jellyfin has one `Shows` library on `~/Media/Shows`; the `Anime` library goes.
+- One-time migration on fedora moves JoJo's files with Sonarr and keeps its
+  played episodes in Jellyfin.
+- `docs/media.md`, `ai/AGENTS.md` and the `midia` skill follow.
 
 ## Left to the builder
 
