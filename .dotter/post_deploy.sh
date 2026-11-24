@@ -443,6 +443,7 @@ fi
 {{/if}}
 
 {{#if dotter.packages.design}}
+install_packages design
 "$REPO/design/bin/design-deploy" "$REPO"
 {{/if}}
 

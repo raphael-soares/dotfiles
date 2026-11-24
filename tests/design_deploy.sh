@@ -28,6 +28,17 @@ case $1 in
 esac
 EOF
 chmod +x "$T/bin/flatpak"
+cat >"$T/bin/uv" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >>"$FAKE_LOG/uv"
+mkdir -p "$HOME/.local/bin" && install -m 755 /dev/null "$HOME/.local/bin/manim"
+EOF
+cat >"$T/bin/systemctl" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >>"$FAKE_LOG/systemctl"
+EOF
+chmod +x "$T/bin/uv" "$T/bin/systemctl"
+export FAKE_LOG=$T/log && mkdir -p "$FAKE_LOG"
 export PATH=$T/bin:$PATH
 
 failures=0
@@ -58,6 +69,10 @@ jq -e '.mcpServers.vectorcraft == {"command":"craft-mcp","args":["vectorcraft"],
   fail "vectorcraft entry is wrong"
 [[ $(jq -c '.mcpServers | keys' "$mcp") == '["filmcraft","pdfcraft","photocraft","vectorcraft"]' ]] ||
   fail ".mcp.json lists other apps than the installed ones: $(jq -c '.mcpServers | keys' "$mcp")"
+
+grep -qx -- '--user daemon-reload' "$FAKE_LOG/systemctl" 2>/dev/null || fail "systemd was not reloaded"
+[[ $(cat "$FAKE_LOG/uv" 2>/dev/null) == "tool install manim" ]] ||
+  fail "manim was not installed exactly once over two runs: $(cat "$FAKE_LOG/uv" 2>/dev/null)"
 
 ((failures == 0)) || exit 1
 echo "design deploy: ok"

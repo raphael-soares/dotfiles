@@ -70,3 +70,27 @@ An app installed after the deploy only shows up in omp after the next deploy.
 The app reads its port from the Flatpak override when it starts. A window opened
 before the first deploy does not listen, and `open_window` says so. Closing and
 reopening the app fixes it, from the menu or by asking the agent again.
+
+## Video
+
+The `video` skill turns a topic and the owner's material into a narrated 16:9
+`.mp4` and a thumbnail, in `~/Design/Videos/<slug>/`. Besides the apps above it
+uses tools the deploy installs on the desktop:
+
+| Tool | From | Used for |
+| --- | --- | --- |
+| Manim | `uv tool install manim`, by `design-deploy` | algorithm, diagram and formula scenes |
+| Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
+| Kokoro | `kokoro.service`, a podman quadlet on `127.0.0.1:8880` | narration through omp's `tts` |
+
+Kokoro does not start with the session: the skill runs `systemctl --user start
+kokoro` before narrating (the first start downloads a 1.5 GB image). omp's speech
+role points at it with an empty fallback chain, so a stopped server makes `tts`
+fail instead of falling back to Phonon, which only speaks English. On the laptop
+there is no Kokoro and `tts` fails the same way.
+
+Voices: `pf_dora` for pt-BR, `af_heart` for English. The prefix picks the
+language (`pf_`/`pm_` are pt-BR), so the skill always passes `voice_id`.
+
+Identities live in `~/Design/Identidades/<nome>/` and music in
+`~/Design/Videos/Musicas/`.

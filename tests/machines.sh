@@ -55,7 +55,7 @@ laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/media-deploy
   .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer
-  .local/bin/craft-mcp .local/bin/design-deploy)
+  .local/bin/craft-mcp .local/bin/design-deploy .config/containers/systemd/design .omp/agent/models.yml)
 
 hook=$T/cache/.dotter/post_deploy.sh
 if [[ -f $hook ]]; then
