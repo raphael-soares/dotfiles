@@ -20,6 +20,14 @@ function M.setup()
     hl.exec_cmd("flatpak run com.github.IsmaelMartinez.teams_for_linux --window.minimized")
   end)
 
+  -- External is the primary: SUPER+1..0 only switch DP-1, and the laptop stays on 11.
+  -- Without DP-1 connected, the rule does not apply and the workspaces fall onto eDP-1.
+  for i = 1, 10 do
+    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1", default = i == 1 })
+  end
+  hl.workspace_rule({ workspace = "11", monitor = "eDP-1", default = true })
+
+  require("lid")
   require("remote")
 end
 

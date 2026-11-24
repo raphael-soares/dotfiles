@@ -4,8 +4,6 @@ local MODES = { extend = true, external = true, internal = true }
 local DEFAULT_MODE = "extend"
 local ENABLE_TIMEOUT_MS = 5000
 local SETTLE_MS = 100
-local LID_POLL_MS = 2000
-local LID_SUSPEND_MS = 10000
 
 -- highrr: the LG UltraGear runs at 144 Hz on both machines without a rule of its own.
 local WILDCARD = { mode = "highrr", position = "auto", scale = "1" }
@@ -58,11 +56,6 @@ do
   if lid then LID_PATH = "/proc/acpi/button/lid/" .. lid .. "/state" end
 end
 
-local TYPEC_PORTS = {}
-for _, line in ipairs(lines("ls -1 /sys/class/typec 2>/dev/null")) do
-  if line:match("^port%d+$") then table.insert(TYPEC_PORTS, line) end
-end
-
 local pref = PREF_PATH and readFile(PREF_PATH)
 pref = pref and trim(pref)
 if not MODES[pref] then pref = DEFAULT_MODE end
@@ -75,11 +68,12 @@ local function connected(name)
   return status ~= nil and trim(status) == "connected"
 end
 
-local function lidClosed()
+function M.lidClosed()
   if not LID_PATH then return false end
   local state = readFile(LID_PATH)
   return state ~= nil and state:find("closed") ~= nil
 end
+local lidClosed = M.lidClosed
 
 local function declare(name, disabled)
   if declared[name] == disabled then return end
@@ -102,39 +96,13 @@ local function activeSet()
   return active
 end
 
-local function anyExternalConnected()
+function M.anyExternalConnected()
   for _, name in ipairs(externals) do
     if connected(name) then return true end
   end
   return false
 end
-
--- Dock = USB-C partner with DisplayPort alt mode (svid ff01); a plain charger has none.
--- Stays active when the monitor switches input or the peripherals go to the other PC.
-local function dockAttached()
-  for _, port in ipairs(TYPEC_PORTS) do
-    local partner = "/sys/class/typec/" .. port .. "-partner/"
-    local count = tonumber(trim(readFile(partner .. "number_of_alternate_modes") or "0")) or 0
-    for i = 0, count - 1 do
-      local svid = readFile(partner .. port .. "-partner." .. i .. "/svid")
-      if svid and trim(svid) == "ff01" then return true end
-    end
-  end
-  return false
-end
-
-local MAINS = {}
-for _, line in ipairs(lines("ls -1 /sys/class/power_supply 2>/dev/null")) do
-  local dir = "/sys/class/power_supply/" .. line .. "/"
-  if trim(readFile(dir .. "type") or "") == "Mains" then table.insert(MAINS, dir .. "online") end
-end
-
-local function onAC()
-  for _, online in ipairs(MAINS) do
-    if trim(readFile(online) or "") == "1" then return true end
-  end
-  return false
-end
+local anyExternalConnected = M.anyExternalConnected
 
 local function target()
   local anyExt = anyExternalConnected()
@@ -233,38 +201,5 @@ end
 
 hl.on("monitor.added", schedule)
 hl.on("monitor.removed", schedule)
-
--- The hub blinks for ~3 s when its power fluctuates: only suspends after LID_SUSPEND_MS
--- in a row with the lid closed, no external monitor, no dock and no charger.
--- On the charger it stays awake so the desktop can reach it over SSH.
-local undockedPolls = 0
-hl.timer(function()
-  if not lidClosed() or anyExternalConnected() or dockAttached() or onAC() then
-    undockedPolls = 0
-    return
-  end
-  undockedPolls = undockedPolls + 1
-  if undockedPolls * LID_POLL_MS >= LID_SUSPEND_MS then
-    undockedPolls = 0
-    hl.exec_cmd("systemctl suspend")
-  end
-end, { timeout = LID_POLL_MS, type = "repeat" })
-
--- Takes the lid away from logind while this Hyprland lives; with no session (greeter, TTY) logind decides again.
-hl.on("hyprland.start", function()
-  local pid = (readFile("/proc/self/stat") or ""):match("^(%d+)")
-  hl.exec_cmd(
-    "systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='monitors.lua handles the lid' tail --pid="
-      .. pid
-      .. " -f /dev/null"
-  )
-end)
-
--- External is the primary: SUPER+1..0 only switch DP-1, and the laptop stays on 11.
--- Without DP-1 connected, the rule does not apply and the workspaces fall onto eDP-1.
-for i = 1, 10 do
-  hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1", default = i == 1 })
-end
-hl.workspace_rule({ workspace = "11", monitor = "eDP-1", default = true })
 
 return M
