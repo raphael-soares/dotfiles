@@ -16,13 +16,13 @@ bus=$(ddcutil detect --brief 2>/dev/null | awk -v c="-$out\$" '/I2C bus/ {b = $3
 
 away=
 while :; do
-  input=$(ddcutil --bus "$bus" --brief getvcp 60 2>/dev/null | awk '{print tolower($4)}')
+  input=$(ddcutil --bus "$bus" --brief getvcp 60 2>/dev/null 9>&- | awk '{print tolower($4)}')
   now=
   [[ $input == "$peer_input" ]] && now=1
   if [[ -n $input && $now != "$away" ]]; then
     away=$now
     if [[ -n $away ]]; then touch "$dir/$out"; else rm -f "$dir/$out"; fi
-    hyprctl eval 'require("monitors").evaluate()' >/dev/null
+    hyprctl eval 'require("monitors").evaluate()' >/dev/null 9>&-
   fi
-  sleep 3
+  sleep 3 9>&-
 done

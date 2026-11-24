@@ -64,8 +64,11 @@ local declared = {}
 local settleTimer, enableTimer
 
 -- An output whose monitor shows the other machine counts as unplugged (bin/monitor-away).
+local function away(name)
+  return RUNTIME_DIR ~= nil and readFile(RUNTIME_DIR .. "/hypr-away/" .. name) ~= nil
+end
 local function connected(name)
-  if RUNTIME_DIR and readFile(RUNTIME_DIR .. "/hypr-away/" .. name) then return false end
+  if away(name) then return false end
   local status = readFile("/sys/class/drm/" .. entries[name] .. "/status")
   return status ~= nil and trim(status) == "connected"
 end
@@ -114,7 +117,7 @@ local function target()
   local want = {}
   if internal then want[internal] = intOn end
   for _, name in ipairs(externals) do
-    want[name] = extOn
+    want[name] = extOn and not (internal and away(name))
   end
   return want
 end
