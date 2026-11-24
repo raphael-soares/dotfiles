@@ -1,0 +1,8 @@
+[Unit]
+Description=Configarr sync of Radarr, Sonarr and Prowlarr
+OnFailure=media-failure@%n.service
+
+[Service]
+Type=oneshot
+TimeoutStartSec=900
+ExecStart=%h/.local/bin/media-compose run --rm configarr

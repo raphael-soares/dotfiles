@@ -11,6 +11,15 @@ JF=http://127.0.0.1:8096
 
 env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
 
+# compose <args>: docker compose on the media stack, with the ids compose.yaml reads.
+compose() {
+  MEDIA_UID=$(id -u) MEDIA_GID=$(id -g) MEDIA_RENDER_GID=$(getent group render | cut -d: -f3) \
+    MEDIA_VIDEO_GID=$(getent group video | cut -d: -f3) \
+    docker compose -f "$HOME/.config/media/compose.yaml" "$@"
+}
+
+running() { [[ $(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null) == true ]]; }
+
 LOG=${MEDIA_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/media/media.log}
 
 # log <message>: one line in the journal and, with time and script name, in LOG, which keeps
@@ -79,7 +88,8 @@ health() {
     echo "bazarr: not answering"
   qbt /transfer/info 2>/dev/null | jq -r 'select(.connection_status != "connected") | "qbittorrent: \(.connection_status)"' ||
     echo "qbittorrent: not answering"
-  systemctl --user list-units --failed --plain --no-legend 'media-*' configarr.service jellyfin.service \
-    radarr.service sonarr.service prowlarr.service bazarr.service flaresolverr.service whisper.service whisper-cpp.service |
+  systemctl --user list-units --failed --plain --no-legend 'media-*' configarr.service |
     awk '{print "systemd: " $1 " failed"}'
+  compose ps -a --format '{{.Service}} {{.State}}' 2>/dev/null | awk '$2 != "running" {print "docker: " $1 " is " $2}' ||
+    echo "docker: not answering"
 }

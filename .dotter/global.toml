@@ -76,7 +76,7 @@ default_target_type = "symbolic"
 "home/noctalia/fedora-symbolic.svg" = "~/.config/noctalia/icons/fedora-symbolic.svg"
 
 [media.files]
-"media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }
+"media/compose.yaml" = { type = "symbolic", target = "~/.config/media/compose.yaml" }
 "media/configarr" = { type = "symbolic", target = "~/.config/media/configarr", recurse = false }
 "media/prowlarr/definitions" = { type = "symbolic", target = "~/.config/media/prowlarr-definitions", recurse = false }
 "media/whisper" = { type = "symbolic", target = "~/.config/media/whisper", recurse = false }
