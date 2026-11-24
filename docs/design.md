@@ -18,7 +18,7 @@ The `design` module (only on `fedora`) has one table, `design/apps`, a proxy,
 | VectorCraft | 7979 | no | |
 | LightCraft | 7980 | no | `--compact` (409 tools otherwise) |
 | PhotoCraft | 7981 | yes | automation roots on `~/Design`, its CLI refuses absolute paths without them |
-| WordCraft | 7982 | no | |
+| WordCraft | none | no | windowless only: 0.18.1 keeps the window's key per Flatpak instance, so the server cannot find it, and upstream refuses `--connect` for now (wordcraft#7124) |
 | GridCraft | 7983 | yes | |
 | FilmCraft | 7984 | yes | |
 | EffectCraft | 7985 | no | |

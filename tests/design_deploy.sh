@@ -44,6 +44,7 @@ has vectorcraft VECTORCRAFT_CONTROL_PORT=7979 || fail "vectorcraft lacks its por
 [[ -z $(token vectorcraft) ]] || fail "vectorcraft got a token"
 has photocraft "PHOTOCRAFT_AUTOMATION_READ_ROOT=$HOME/Design" || fail "photocraft lacks its read root"
 has photocraft "PHOTOCRAFT_AUTOMATION_WRITE_ROOT=$HOME/Design" || fail "photocraft lacks its write root"
+has pdfcraft 'filesystems=~/Design;' || fail "pdfcraft lacks ~/Design"
 [[ ! -e $T/overrides/ai.storyteller.gridcraft ]] || fail "uninstalled gridcraft got an override"
 [[ -d $HOME/Design ]] || fail "the Design folder was not created"
 

@@ -26,7 +26,7 @@ por dentro: `docs/design.md` do dotfiles.
 | Edição de vídeo, timeline | FilmCraft | `.fcproj` |
 | Motion graphics, título animado | EffectCraft | `.ecproj` |
 | Áudio, narração, mixagem | SoundCraft | `.scraft` |
-| Documento de texto | WordCraft | `.docx` |
+| Documento de texto | WordCraft | `.docx`; não tem janela |
 | Planilha | GridCraft | `.xlsx` |
 | PDF pronto (páginas, preencher, assinar) | PdfCraft | o próprio `.pdf`; não tem janela |
 
@@ -66,6 +66,7 @@ por dentro: `docs/design.md` do dotfiles.
   "automation path rejected".
 - LightCraft lista as ferramentas em modo compacto: o que não estiver na lista
   roda por `run_command` depois de `command_list`.
-- PdfCraft não tem `open_window`; o dono abre o PDF no visualizador dele.
+- PdfCraft e WordCraft não têm `open_window`. Se o dono quiser ver, salve e
+  diga o caminho: ele abre o arquivo à mão, sem histórico compartilhado.
 - App que não aparece no omp não foi instalado pelo ArtCraft Launcher, ou foi
   instalado depois do último deploy: `dotter deploy` e `/mcp reload`.

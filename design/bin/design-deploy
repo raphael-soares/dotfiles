@@ -12,10 +12,10 @@ while IFS='|' read -r name port token _; do
   id=ai.storyteller.$name
   flatpak info "$id" >/dev/null 2>&1 || continue
   installed+=("$name")
-  [[ $port != - ]] || continue
   upper=${name^^}
   # shellcheck disable=SC2088
-  flags=(--env="${upper}_CONTROL_PORT=$port" '--filesystem=~/Design')
+  flags=('--filesystem=~/Design')
+  [[ $port == - ]] || flags+=(--env="${upper}_CONTROL_PORT=$port")
   if [[ $token == token ]]; then
     value=$(flatpak override --user --show "$id" | sed -n "s/^${upper}_CONTROL_TOKEN=//p" | tail -1)
     [[ -n $value ]] || value=$(openssl rand -hex 32)

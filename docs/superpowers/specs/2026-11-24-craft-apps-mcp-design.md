@@ -16,7 +16,7 @@ session, not rebuilt each time.
   EffectCraft, FilmCraft, GridCraft, LightCraft, PdfCraft, PhotoCraft, SoundCraft,
   VectorCraft, WordCraft.
 - By default the agent works without a window, on files under `~/Design`.
-- For the eight apps that can be driven live (all but PdfCraft), the agent can open
+- For the seven apps that can be driven live (all but PdfCraft and WordCraft), the agent can open
   the window on the owner's request and carry the work into it: from then on each
   change lands in the app's History, and Ctrl+Z undoes it like a manual step. If the
   app is already open, the agent joins that window instead of opening another.
@@ -85,7 +85,7 @@ What each app's `--help` and control docs say (versions installed on 2026-11-24)
 | VectorCraft | 0.24.1 | 7979 | `VECTORCRAFT_CONTROL_PORT` | `mcp --connect 127.0.0.1:PORT` | no |
 | LightCraft | 0.21.1 | 7980 | `LIGHTCRAFT_CONTROL_PORT` | `mcp --compact --connect 127.0.0.1:PORT` (409 tools without `--compact`, in both modes) | no |
 | PhotoCraft | 0.23.1 | 7981 | `PHOTOCRAFT_CONTROL_PORT` | `mcp --bridge 127.0.0.1:PORT` | yes, `PHOTOCRAFT_CONTROL_TOKEN` (64 hex) |
-| WordCraft | 0.18.1 | 7982 | `WORDCRAFT_CONTROL_PORT` | `mcp --connect 127.0.0.1:PORT` | no |
+| WordCraft | 0.18.1 | none | no live MCP | windowless only: the window's key file is named after its Flatpak instance, so a CLI in another instance cannot find it, and upstream refuses `--connect` for now (wordcraft#7124) | no |
 | GridCraft | 0.19.1 | 7983 | `GRIDCRAFT_CONTROL_PORT` | `mcp --connect PORT` | yes, always; `GRIDCRAFT_CONTROL_TOKEN` |
 | FilmCraft | 0.20.1 | 7984 | `FILMCRAFT_CONTROL_PORT` | `mcp --bridge 127.0.0.1:PORT` | yes, `FILMCRAFT_CONTROL_TOKEN` (64 hex, required) |
 | EffectCraft | 0.25.1 | 7985 | `EFFECTCRAFT_CONTROL_PORT` | `mcp --bridge PORT` | no (the port has no auth) |
@@ -135,7 +135,7 @@ PhotoCraft's bridge refuses roots.
 
 1. Unknown or uninstalled app: exit non-zero with a message naming the ArtCraft
    Launcher.
-2. PdfCraft: no proxying, run its CLI windowless with `--compact`.
+2. PdfCraft and WordCraft: no proxying, run their CLI windowless (PdfCraft with `--compact`).
 3. Start the windowless child and forward everything to it. The tool list it returns
    gets one more tool, `open_window`, and the proxy declares `tools.listChanged`.
 4. `open_window {path?}`, handled by the proxy:
@@ -203,7 +203,7 @@ App. It holds the working agreement:
 - `flatpak override --user --show <id>` shows the port, the token where required and
   `~/Design` for each installed app.
 - With every app closed, a fresh omp discovery (`/mcp reload`) lists all nine
-  servers' tools, `open_window` among them for the eight live apps, and opens no
+  servers' tools, `open_window` among them for the seven live apps, and opens no
   window.
 - Per live app: a windowless call that writes a file under `~/Design`; then
   `open_window` with the app closed (one window opens on that file) and with it
