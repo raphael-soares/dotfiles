@@ -24,10 +24,11 @@ dotter picks `.dotter/<hostname>.toml`.
 | `terminal` | shell, git, editor, prompt, Ghostty | ✓ | ✓ |
 | `ai` | omp, Claude Code, skills | ✓ | ✓ |
 | `desktop` | fonts, web apps, audio, syncfast | ✓ | ✓ |
-| `hyprland` | Hyprland, Noctalia, GTK, greetd | ✓ | |
+| `hyprland` | Hyprland, Noctalia, GTK | ✓ | ✓ |
+| `laptop` | greetd, the laptop's monitors and the remote desktop toggle | ✓ | |
 | `work` | VPN and the work omp profile | ✓ | |
 | `sshd` | key-only SSH and mDNS, so each machine reaches the other ([remote access](docs/remote-desktop.md)) | ✓ | ✓ |
-| `home` | Sunshine and autologin, so the laptop can stream the desktop ([remote access](docs/remote-desktop.md)) | | ✓ |
+| `home` | greetd autologin into Hyprland, Sunshine, the desktop's monitor, theme and autostart ([remote access](docs/remote-desktop.md)) | | ✓ |
 | `media` | Jellyfin, Seerr, Radarr, Sonarr, Prowlarr and Bazarr as Podman containers, plus qBittorrent and Jellyfin Desktop ([media](docs/media.md)) | | ✓ |
 
 ## Add a file

@@ -44,11 +44,12 @@ for d in .omp/agent .claude .claude/hooks .local/bin .config/ghostty .config/syn
 done
 [[ -f $H/.claude/skills/discussao/SKILL.md ]] || fail ".claude/skills does not reach the skills"
 
-laptop_only=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
-  .config/noctalia-plugins/hypr-shots .local/state/noctalia/settings.toml
+hypr_shared=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
+  .config/noctalia-plugins/hypr-shots
+  .config/noctalia/base.toml
   Pictures/Wallpaper/forest-4.jpg .config/ghostty/machine.conf
-  .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini
-  .local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
+  .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini .config/hypr-machine)
+laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/media-deploy
   .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer)
@@ -60,31 +61,45 @@ else
   fail "hook was not rendered"
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
-shared_in_hook=(sshd_config.d avahi-daemon)
-laptop_only_in_hook=(hyprctl greetd enterprise)
-desktop_only_in_hook=(plasmalogin.conf.d setcap powerdevilrc drm.edid_firmware dracut.conf.d 'capture = kms' shapecorners geometry_change media-deploy)
+shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/config.toml io.missioncenter.MissionCenter
+  'remote-add --user --if-not-exists flathub')
+laptop_only_in_hook=(enterprise)
+desktop_only_in_hook=(setcap drm.edid_firmware dracut.conf.d 'capture = kms' media-deploy remove_packages\ home
+  home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' 'xdg-mime default' org.kde.haruna
+  'tuned-adm profile throughput-performance' packaging/nautilus/syncfast_nautilus.py)
+gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners)
+for p in "${gone_from_hook[@]}"; do ! hook_has "$p" || fail "$machine hook still has $p"; done
 for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
+for f in "${hypr_shared[@]}"; do exists "$f"; done
+repo_link .config/hypr
+[[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
+[[ ! -e $H/.config/hypr/remote.lua ]] || fail "remote.lua is still shared"
+links_to() { [[ $(readlink -f "$H/$1") == "$REPO/$2" ]] || fail "$1 does not point to $2"; }
+links_to .config/noctalia/base.toml hyprland/noctalia/base.toml
+! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||
+  fail "hyprtoolkit.conf is tracked, and Noctalia rewrites it with each machine's colors"
+git -C "$REPO" check-ignore -q hyprland/hypr/hyprtoolkit.conf || fail "hyprtoolkit.conf is not ignored"
+[[ ! -e $H/.local/state/noctalia/settings.toml ]] ||
+  fail "Noctalia's state file is deployed, and its interface writes theme and wallpaper there"
+[[ ! -e $H/.local/share/kwin ]] || fail "KWin files are still deployed"
 
 case $machine in
   arch)
     for f in "${laptop_only[@]}"; do exists "$f"; done
     for f in "${desktop_only[@]}"; do absent "$f"; done
-    repo_link .config/hypr
-    [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
+    [[ -f $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine does not reach remote.lua"
+    links_to .config/noctalia/machine.toml laptop/noctalia/machine.toml
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
     for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
-    absent .local/share/kwin/effects/kwin4_effect_geometry_change
-    absent .local/share/kwin/scripts/center-widget-popups
     ;;
   fedora)
     for f in "${laptop_only[@]}"; do absent "$f"; done
     for f in "${desktop_only[@]}"; do repo_link "$f"; done
     for p in "${laptop_only_in_hook[@]}"; do ! hook_has "$p" || fail "fedora hook has $p"; done
     for p in "${desktop_only_in_hook[@]}"; do hook_has "$p" || fail "fedora hook lacks $p"; done
-    repo_link .local/share/kwin/effects/kwin4_effect_geometry_change
-    [[ -f $H/.local/share/kwin/effects/kwin4_effect_geometry_change/metadata.json ]] ||
-      fail "geometry change link does not reach metadata.json"
-    repo_link .local/share/kwin/scripts/center-widget-popups
+    [[ -f $H/.config/hypr-machine/machine.lua ]] || fail "hypr-machine does not reach machine.lua"
+    links_to .config/noctalia/machine.toml home/noctalia/machine.toml
+    [[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "fedora got the remote toggle"
     ;;
   *) echo "unknown machine: $machine"; exit 2 ;;
 esac

@@ -18,6 +18,27 @@ the machine has:
 real file in the way to `~/.dotfiles-backup/<date>/` and deploys. Nothing is
 deleted.
 
+## Hyprland per machine
+
+`hyprland` is the same config on both machines. What only one of them needs
+lives in its `~/.config/hypr-machine/machine.lua`, linked by `laptop` on `arch`
+and by `home` on `fedora`. It returns `monitors` (rules by output name, read by
+`monitors.lua`) and `setup`, which `hyprland.lua` calls last. A machine without
+the directory runs the shared config with the wildcard monitor rule.
+
+Noctalia works the same way. `hyprland/noctalia/base.toml` is the shared
+base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and
+wallpaper. Each machine links its own `machine.toml` next to it
+(`laptop/noctalia/machine.toml` or `home/noctalia/machine.toml`) for settings
+that belong to that machine: idle, hooks, greeter sync, the desktop's bar
+widgets. Noctalia merges every `*.toml` there in name order, so `machine.toml`
+wins over `base.toml`.
+
+The repo keeps no state. Noctalia's interface writes theme, wallpaper and bar
+changes to `~/.local/state/noctalia/settings.toml`, a plain file on each
+machine that wins over the config and never reaches git. To make a change the
+new default, copy the key into the base or the machine's `machine.toml`.
+
 ## Fuxi-H3 on the `fedora` machine
 
 Before trusting the rules with the dongle, check that it shows up like the

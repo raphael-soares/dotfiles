@@ -1,0 +1,40 @@
+[idle.behavior.lock]
+enabled = true
+
+[idle.behavior.screen-off]
+enabled = false
+
+# Each sync runs as root through polkit and asks for the password; the desktop logs in alone anyway.
+[shell.greeter_sync]
+auto_sync = false
+
+[bar.default]
+start = [ "active_workspace" ]
+center = [ "fedora", "taskbar" ]
+end = [ "tray", "clipboard", "notifications", "network", "bluetooth", "volume", "input_volume", "clock" ]
+
+[widget.fedora]
+type = "control-center"
+custom_image = "~/.config/noctalia/icons/fedora-symbolic.svg"
+custom_image_colorize = true
+
+# Through IPC the panel gets no click anchor and opens centered above the bar,
+# while the audio and network icons keep opening theirs next to the icon.
+[widget.fedora.actions]
+left = "exec noctalia msg panel-toggle control-center"
+
+[widget.taskbar]
+pinned = [ "org.gnome.Nautilus", "herdr-app", "discord", "steam", "zapfast", "spotifast", "org.qbittorrent.qBittorrent" ]
+icon_scale = 1.3
+item_spacing = 10
+pinned_opacity = 0.5
+
+[shell.panel]
+open_near_click_control_center = true
+open_near_click_clipboard = true
+clipboard_position = "auto"
+
+# The desktop always runs on the performance profile, so its switch goes.
+[control_center]
+hidden_tabs = [ "media", "weather", "screen-time", "power" ]
+shortcuts = [ { type = "wifi" }, { type = "bluetooth" }, { type = "caffeine" }, { type = "nightlight" }, { type = "notification" } ]

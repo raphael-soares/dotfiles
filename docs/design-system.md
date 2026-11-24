@@ -26,13 +26,14 @@ system.
 | Typography | macOS | Inter in the role of SF Pro, mono only for code |
 | Bar | macOS | Menu bar: straight, full width, hairline only at the bottom, no shadow |
 | Motion | M3 | M3 curves and a critically damped spring |
-| Icons | Papirus | Papirus-Dark in apps, Tabler in the shell |
+| Icons | Yaru | Yaru accent closest to the palette in apps, no other theme behind it, Tabler in the shell |
 
 ## Color
 
-The palette comes from Noctalia (`[theme]` in
-`hyprland/noctalia/settings.toml`), either from the wallpaper or from a
-ready-made scheme. What the system fixes is the **roles**, not the values:
+The palette comes from Noctalia (default `[theme]` in
+`hyprland/noctalia/base.toml`, each machine's choice in its state file),
+either from the wallpaper or from a ready-made scheme. What the system fixes
+is the **roles**, not the values:
 changing the palette in the Noctalia UI has to change the whole desktop
 without editing any file.
 
@@ -188,11 +189,31 @@ Rules:
 
 ## Icons
 
-- **App** (launcher, tray, dock, file manager): Papirus-Dark, from the
-  `papirus-icon-theme` package.
-- Who reads the theme: GTK (`settings.ini`), libadwaita apps (gsettings) and
-  Noctalia (reads `gtk-3.0/settings.ini`). `.dotter/post_deploy.sh` adjusts
-  the two that live outside the repo.
+- **App** (launcher, tray, dock, file manager): the Yaru accent variant
+  closest to the palette primary (`-dark` in dark mode), chosen by the
+  `qt6ct` user template in `base.toml` on every theme change. Nothing falls
+  back to another theme: what Yaru lacks comes from hicolor. Papirus is
+  installed but out of the chain.
+- Who reads the theme: Qt (`qt6ct.conf`, rendered from
+  `hyprland/noctalia/templates/qt6ct.conf`), GTK, libadwaita apps and
+  Noctalia (gsettings), KDE libraries (`kdeglobals`). The template hook
+  `hyprland/noctalia/icon-theme.sh` writes the last three, and shadows the
+  Yaru and breeze `index.theme` files in `~/.local/share/icons` so
+  nothing falls back to Breeze (Fedora's qt6ct links KIconThemes, which sets
+  breeze as the Qt fallback theme).
+- Qt apps get `Yaru-symbolic`, built by the same hook in
+  `~/.local/share/icons`: Yaru's symbolic glyphs under plain names, in the
+  palette's text color, inheriting the Yaru variant. Qt never asks for
+  `-symbolic` names and does not recolor SVGs.
+- `settings.ini` keeps a neutral `Yaru-dark` for apps outside Wayland.
+- **Qt style**: Breeze over the Noctalia palette
+  (`hyprland/noctalia/templates/qt6ct-colors.conf`). No Kvantum theme close to
+  libadwaita held up: all of them fork KvLibadwaita, and each one broke
+  something (fields invisible on cards, clipped combos, a light background in
+  dark mode).
+- **qBittorrent** follows the Qt style and the system icons, like the other
+  Qt apps. A libadwaita theme for it lives in a separate repo and is not
+  deployed from here yet.
 - **Shell glyphs** (Noctalia bar and panels): embedded Tabler font. The config
   chooses which glyph goes where (`launcher_icon`, `glyph` of the session
   actions), but the set does not change: Noctalia only loads the package's
@@ -202,14 +223,15 @@ Rules:
 
 | Token | File | Written or generated |
 |---|---|---|
-| Palette and templates | `hyprland/noctalia/settings.toml` | Written (by the Noctalia UI) |
+| Palette and templates | `hyprland/noctalia/base.toml` (defaults), `~/.local/state/noctalia/settings.toml` (each machine's choice) | Written (by the Noctalia UI, outside the repo) |
 | Colors in Hyprland | `hyprland/hypr/noctalia.lua` | Generated, not used |
 | Window border | `hyprland/hypr/borders.lua` | Written |
 | Radius, shadow, gaps, blur off | `hyprland/hypr/look.lua` | Written |
 | Shell opacity | `[bar]`, `[osd]`, `[shell]` and `[shell.panel]` in `settings.toml` | Written |
 | Motion | `hyprland/hypr/animations.lua` | Written |
 | Font family | `desktop/fonts/50-fonts.conf` | Written |
-| Font and icons in GTK | `hyprland/gtk/gtk-{3,4}.0/settings.ini` | Written |
+| Font in GTK, icons outside Wayland | `hyprland/gtk/gtk-{3,4}.0/settings.ini` | Written |
+| Qt style, Qt font, icon theme | `~/.config/qt6ct/qt6ct.conf`, `~/.config/qt6ct/colors/noctalia-breeze.conf`, `~/.local/share/icons/Yaru-symbolic/` | Generated, outside git |
 | Ghostty theme | `~/.config/ghostty/themes/noctalia` | Generated, outside git |
 | herdr-app theme | `~/.config/herdr-app/themes/noctalia.json` | Generated, outside git |
 

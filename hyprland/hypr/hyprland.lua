@@ -5,12 +5,11 @@ require("inputs")
 require("monitors")
 require("keymaps")
 require("windowrules")
-require("remote")
 
 hl.env("XCURSOR_THEME", "Adwaita")
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
-hl.env("QT_QPA_PLATFORMTHEME", "gtk3")
+hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("GDK_BACKEND", "wayland,x11,*")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "wayland")
@@ -22,4 +21,9 @@ if not (":" .. os.getenv("PATH") .. ":"):find(":" .. local_bin .. ":", 1, true) 
 end
 
 require("borders")
+
+local host = require("host")
+if host.setup then
+  host.setup()
+end
 

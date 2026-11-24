@@ -48,11 +48,17 @@ default_target_type = "symbolic"
 "hyprland/noctalia/plugins/hypr-active-workspace" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-active-workspace", recurse = false }
 "hyprland/noctalia/plugins/hypr-displays" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-displays", recurse = false }
 "hyprland/noctalia/plugins/hypr-shots" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-shots", recurse = false }
-"hyprland/noctalia/settings.toml" = "~/.local/state/noctalia/settings.toml"
+"hyprland/noctalia/base.toml" = "~/.config/noctalia/base.toml"
 "hyprland/noctalia/forest-4.jpg" = "~/Pictures/Wallpaper/forest-4.jpg"
 "hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/machine.conf"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
 "hyprland/gtk/gtk-4.0/settings.ini" = "~/.config/gtk-4.0/settings.ini"
+"hyprland/noctalia/templates" = { type = "symbolic", target = "~/.config/noctalia/templates", recurse = false }
+"hyprland/noctalia/icon-theme.sh" = "~/.config/noctalia/icon-theme.sh"
+
+[laptop.files]
+"laptop/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
+"laptop/noctalia/machine.toml" = "~/.config/noctalia/machine.toml"
 
 [work.files]
 "work/bin" = "~/.local/bin"
@@ -64,8 +70,11 @@ default_target_type = "symbolic"
 [sshd.files]
 
 [home.files]
-"home/kwin/geometry-change" = { type = "symbolic", target = "~/.local/share/kwin/effects/kwin4_effect_geometry_change", recurse = false }
-"home/kwin/center-widget-popups" = { type = "symbolic", target = "~/.local/share/kwin/scripts/center-widget-popups", recurse = false }
+"home/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
+"home/noctalia/machine.toml" = "~/.config/noctalia/machine.toml"
+"home/noctalia/fedora-symbolic.svg" = "~/.config/noctalia/icons/fedora-symbolic.svg"
+"home/pcmanfm-qt/settings.conf" = "~/.config/pcmanfm-qt/default/settings.conf"
+"home/pcmanfm-qt/transparent.svg" = "~/.config/pcmanfm-qt/transparent.svg"
 
 [media.files]
 "media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }

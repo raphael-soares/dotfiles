@@ -78,6 +78,9 @@ hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+-- Moonlight sends the right button as an instant click, never held: resize over
+-- the stream needs a left-button bind.
+hl.bind(mainMod .. " + SHIFT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
 -- Core binds
 hl.bind(mainMod .. "+D", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"))
@@ -98,14 +101,6 @@ hl.bind(
     "noctalia msg plugin raphael/hypr-displays:modes all next; noctalia msg panel-open raphael/hypr-displays:modes"
   )
 )
-
--- Outside monitors.lua: when declared next to hl.monitor, they stop firing (hyprwm/Hyprland#14858).
-hl.bind("switch:on:Lid Switch", function()
-  require("monitors").evaluate()
-end, { locked = true, submap_universal = true })
-hl.bind("switch:off:Lid Switch", function()
-  require("monitors").evaluate()
-end, { locked = true, submap_universal = true })
 
 -- Print opens the raphael/hypr-shots plugin picker: area, monitor, window or
 -- annotation, chosen with arrow keys or 1-6.
