@@ -1,0 +1,141 @@
+# Run through media-compose, which exports the MEDIA_* ids read below.
+name: media
+
+x-service: &service
+  restart: unless-stopped
+  stop_grace_period: 60s
+  networks: [media]
+  security_opt: [label=disable]
+
+# raw: the values reach the container as written, like systemd's EnvironmentFile did.
+x-env: &env
+  env_file: [{path: "${HOME}/.config/media/media.env", format: raw}]
+
+services:
+  jellyfin:
+    <<: [*service, *env]
+    container_name: jellyfin
+    image: docker.io/jellyfin/jellyfin:latest
+    user: ${MEDIA_UID}:${MEDIA_GID}
+    group_add: ["${MEDIA_RENDER_GID}"]
+    devices: [/dev/dri/renderD128]
+    environment:
+      TZ: America/Sao_Paulo
+    ports: ["8096:8096"]
+    volumes:
+      - ${HOME}/Media:${HOME}/Media
+      - ${HOME}/.local/share/media/jellyfin:/config
+      - ${HOME}/.cache/media/jellyfin:/cache
+
+  radarr:
+    <<: [*service, *env]
+    container_name: radarr
+    image: lscr.io/linuxserver/radarr:latest
+    environment:
+      TZ: America/Sao_Paulo
+      PUID: ${MEDIA_UID}
+      PGID: ${MEDIA_GID}
+      RADARR__AUTH__METHOD: External
+    ports: ["7878:7878"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - ${HOME}/Media:${HOME}/Media
+      - ${HOME}/.local/share/media/radarr:/config
+
+  sonarr:
+    <<: [*service, *env]
+    container_name: sonarr
+    image: lscr.io/linuxserver/sonarr:latest
+    environment:
+      TZ: America/Sao_Paulo
+      PUID: ${MEDIA_UID}
+      PGID: ${MEDIA_GID}
+      SONARR__AUTH__METHOD: External
+    # 8989 on the host belongs to Spotifast's Spotify login redirect.
+    ports: ["8990:8989"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - ${HOME}/Media:${HOME}/Media
+      - ${HOME}/.local/share/media/sonarr:/config
+
+  prowlarr:
+    <<: [*service, *env]
+    container_name: prowlarr
+    image: lscr.io/linuxserver/prowlarr:latest
+    environment:
+      TZ: America/Sao_Paulo
+      PUID: ${MEDIA_UID}
+      PGID: ${MEDIA_GID}
+      PROWLARR__AUTH__METHOD: External
+    ports: ["127.0.0.1:9696:9696"]
+    volumes:
+      - ${HOME}/.local/share/media/prowlarr:/config
+      - ${HOME}/.config/media/prowlarr-definitions:/config/Definitions/Custom:ro
+
+  bazarr:
+    <<: [*service, *env]
+    container_name: bazarr
+    image: lscr.io/linuxserver/bazarr:latest
+    environment:
+      TZ: America/Sao_Paulo
+      PUID: ${MEDIA_UID}
+      PGID: ${MEDIA_GID}
+    ports: ["127.0.0.1:6767:6767"]
+    volumes:
+      - ${HOME}/Media:${HOME}/Media
+      - ${HOME}/.local/share/media/bazarr:/config
+
+  flaresolverr:
+    <<: [*service, *env]
+    container_name: flaresolverr
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    environment:
+      TZ: America/Sao_Paulo
+
+  whisper-cpp:
+    <<: *service
+    container_name: whisper-cpp
+    image: ghcr.io/ggml-org/whisper.cpp:main-vulkan
+    user: ${MEDIA_UID}:${MEDIA_GID}
+    group_add: ["${MEDIA_RENDER_GID}", "${MEDIA_VIDEO_GID}"]
+    devices: [/dev/dri]
+    entrypoint: whisper-server
+    command: --model /models/ggml-medium.bin --host 0.0.0.0 --port 8080
+    volumes:
+      - ${HOME}/.cache/media/whisper-cpp:/models:ro
+
+  whisper:
+    <<: *service
+    container_name: whisper
+    image: docker.io/library/python:3-alpine
+    user: ${MEDIA_UID}:${MEDIA_GID}
+    command: python3 /app/asr-shim.py
+    depends_on: [whisper-cpp]
+    ports: ["127.0.0.1:9000:9000"]
+    volumes:
+      - ${HOME}/.config/media/whisper:/app:ro
+
+  # Not a daemon: configarr.service runs it on its timer (media-compose run --rm configarr).
+  configarr:
+    <<: [*service, *env]
+    container_name: configarr
+    image: ghcr.io/raydak-labs/configarr:latest
+    profiles: [manual]
+    restart: "no"
+    user: ${MEDIA_UID}:${MEDIA_GID}
+    environment:
+      TZ: America/Sao_Paulo
+      CONFIGARR_ENFORCE_CONFIG_VALIDATION: "true"
+      STOP_ON_ERROR: "true"
+      MEDIA_MOVIES: ${HOME}/Media/Movies
+      MEDIA_SHOWS: ${HOME}/Media/Shows
+    volumes:
+      - ${HOME}/.config/media/configarr:/app/config:ro
+      - ${HOME}/.cache/media/configarr:/app/repos
+
+networks:
+  media:
+    name: media
+    ipam:
+      config:
+        - subnet: 10.89.42.0/24

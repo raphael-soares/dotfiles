@@ -225,8 +225,32 @@ lacks "sshd without a key" "50-key-only" "$out"
 mkdir -p "$T/home/.ssh" && echo 'ssh-ed25519 AAAA' >"$T/home/.ssh/authorized_keys"
 has "sshd with a key" "sudo systemctl enable --now sshd avahi-daemon" "$(real fedora sshd)"
 
+cat >"$T/bin/getent" <<'EOF'
+#!/bin/sh
+if [ "$2" = docker ]; then [ -e "$DOCKER_GROUP" ] && echo "docker:x:966:$USER" || echo "docker:x:966:"; exit 0; fi
+exec /usr/bin/getent "$@"
+EOF
+cat >"$T/bin/id" <<'EOF'
+#!/bin/sh
+[ "$1" = -nG ] || exec /usr/bin/id "$@"
+g=$(/usr/bin/id -nG | tr ' ' '\n' | grep -vx docker | tr '\n' ' ')
+[ -e "$DOCKER_SESSION" ] && g="$g docker"
+echo "$g"
+EOF
+chmod +x "$T/bin/getent" "$T/bin/id"
+export DOCKER_GROUP=$T/docker-group DOCKER_SESSION=$T/docker-session
+out=$(real fedora media)
+has "media without Docker's repo" "sudo dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo" "$out"
+has "media without the docker group" "sudo usermod -aG docker $USER" "$out"
+has "media with Docker off" "sudo systemctl enable --now docker.service" "$out"
+mkdir -p "$T/root/etc/yum.repos.d" && touch "$T/root/etc/yum.repos.d/docker-ce.repo"
+lacks "media with Docker's repo" "docker-ce.repo" "$(real fedora media)"
 while read -r p; do touch "$S/rpm/$p"; done <"$REPO/media/packages.fedora.txt"
-touch "$S/fw/7878_tcp" "$S/fw/8990_tcp"
+touch "$S/fw/7878_tcp" "$S/fw/8990_tcp" "$S/enabled/docker.service" "$S/active/docker.service" "$DOCKER_GROUP"
+out=$(real fedora media)
+lacks "media in the docker group" "usermod" "$out"
+has "media in the group, old session" "# reboot so this session and the user services get the docker group" "$out"
+touch "$DOCKER_SESSION"
 has "media without the Jellyfin app" "flatpak install --user flathub org.jellyfin.JellyfinDesktop" "$(real fedora media)"
 touch "$S/flatpak/org.jellyfin.JellyfinDesktop"
 out=$(real fedora media)

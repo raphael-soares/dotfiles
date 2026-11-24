@@ -68,7 +68,7 @@ radarr:
           remove_completed_downloads: false
           remove_failed_downloads: true
           fields:
-            host: host.containers.internal
+            host: host.docker.internal
             username: media
             password: !env QBITTORRENT_WEBUI_PASSWORD
             port: 8080
@@ -151,7 +151,7 @@ sonarr:
           remove_completed_downloads: false
           remove_failed_downloads: true
           fields:
-            host: host.containers.internal
+            host: host.docker.internal
             username: media
             password: !env QBITTORRENT_WEBUI_PASSWORD
             port: 8080

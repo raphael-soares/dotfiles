@@ -6,7 +6,6 @@ REPO=${1:?usage: media-deploy <repo> [--check]}
 CHECK=0
 [[ ${2:-} == --check ]] && CHECK=1
 CONF=${ENV_FILE%/*}
-UNITS=(jellyfin radarr sonarr prowlarr bazarr flaresolverr whisper-cpp whisper)
 
 # apply <what>: in --check mode reports the difference and fails, so the caller skips the change.
 DRIFT=0
@@ -71,7 +70,7 @@ ensure_whisper_model() {
 
 # media-deploy also runs on its own (media-deploy ~/.dotfiles), so it links its own files;
 # dotter adopts a link that already points at its source.
-LINK_DIRS=(containers:.config/containers/systemd/media configarr:.config/media/configarr
+LINK_PATHS=(compose.yaml:.config/media/compose.yaml configarr:.config/media/configarr
   prowlarr/definitions:.config/media/prowlarr-definitions whisper:.config/media/whisper)
 LINK_FILES=(bin:.local/bin systemd:.config/systemd/user autostart:.config/autostart)
 link() {
@@ -88,7 +87,7 @@ link() {
 link_files() {
   local repo pair src dest rel
   repo=$(readlink -f "$REPO")/media
-  for pair in "${LINK_DIRS[@]}"; do link "$repo/${pair%%:*}" "$HOME/${pair#*:}"; done
+  for pair in "${LINK_PATHS[@]}"; do link "$repo/${pair%%:*}" "$HOME/${pair#*:}"; done
   for pair in "${LINK_FILES[@]}"; do
     src=$repo/${pair%%:*} dest=$HOME/${pair#*:}
     while IFS= read -r rel; do link "$src/$rel" "$dest/$rel"; done < <(cd "$src" && find . -type f -printf '%P\n')
@@ -100,41 +99,46 @@ link_files() {
   done
 }
 
-# A quadlet or media unit whose file left the repo keeps running after its link goes: stop it.
+# A media unit whose file left the repo keeps running after its link goes: stop it.
 retire_units() {
-  local repo u f
-  repo=$(readlink -f "$REPO")
-  for u in $(systemctl --user list-units --state=active --plain --no-legend '*.service' 'media-*.timer' | awk '{print $1}'); do
-    f=$(systemctl --user show -P SourcePath "$u")
-    [[ -n $f ]] || f=$(systemctl --user show -P FragmentPath "$u")
-    [[ ($f == "$repo/media/containers/"* || $f == "$HOME/.config/systemd/user/media-"*) && ! -e $f ]] || continue
+  local u f
+  for u in $(systemctl --user list-units --state=active --plain --no-legend 'media-*.service' 'media-*.timer' | awk '{print $1}'); do
+    f=$(systemctl --user show -P FragmentPath "$u")
+    [[ $f == "$HOME/.config/systemd/user/media-"* && ! -e $f ]] || continue
     apply "unit $u left the repo" || continue
     systemctl --user stop "$u"
-    rm -f "$STATE/.applied/${u%.service}"
     log "unit $u stopped"
   done
 }
 
-# A running container keeps its old definition after daemon-reload, so a changed quadlet restarts its unit.
-# retire_units runs first: after daemon-reload systemd no longer knows where a deleted unit came from.
-start_units() {
+# Compose recreates a container whose definition changed, but not one whose mounted shim changed.
+start_stack() {
+  docker info >/dev/null 2>&1 || {
+    echo "media: docker is not usable by $USER yet, see '${REPO/#"$HOME"/\~}/.dotter/missing.sh media'" >&2
+    return 1
+  }
   mkdir -p "$STATE/.applied"
   retire_units
   ((CHECK)) || systemctl --user daemon-reload
-  local u sum extra
-  for u in "${UNITS[@]}"; do
-    extra=()
-    [[ $u != whisper ]] || extra=("$REPO/media/whisper/asr-shim.py")
-    sum=$(cat "$REPO/media/containers/$u.container" "$REPO/media/containers/media.network" "${extra[@]}" | sha256sum)
-    if [[ $(cat "$STATE/.applied/$u" 2>/dev/null) == "$sum" ]]; then
-      ((CHECK)) || systemctl --user start "$u"
-    elif apply "unit $u (quadlet changed since the last deploy)"; then
-      systemctl --user restart "$u"
-      echo "$sum" >"$STATE/.applied/$u"
-    fi
-  done
+  local service hash hashes sum
+  if ((CHECK)); then
+    hashes=$(compose config --hash '*')
+    while read -r service hash; do
+      if [[ $(docker inspect -f '{{.State.Running}} {{index .Config.Labels "com.docker.compose.config-hash"}}' \
+        "$service" 2>/dev/null) != "true $hash" ]]; then
+        apply "container $service (not running or compose.yaml changed)" || true
+      fi
+    done <<<"$hashes"
+  else
+    compose up -d --remove-orphans
+  fi
+  sum=$(sha256sum <"$REPO/media/whisper/asr-shim.py")
+  if [[ $(cat "$STATE/.applied/whisper" 2>/dev/null) != "$sum" ]] && apply "container whisper (asr-shim.py changed)"; then
+    compose restart whisper
+    echo "$sum" >"$STATE/.applied/whisper"
+  fi
   local t
-  for t in podman-auto-update.timer "$REPO"/media/systemd/media-*.timer; do
+  for t in "$REPO"/media/systemd/media-*.timer; do
     if ! systemctl --user is-enabled --quiet "${t##*/}" && apply "timer ${t##*/} not enabled"; then
       systemctl --user enable --now "${t##*/}"
     fi
@@ -206,7 +210,7 @@ render_bazarr() {
   apply "bazarr config" || return 0
   mkdir -p "${dest%/*}" "$STATE/.applied"
   (umask 077 && printf '%s\n' "$new" >"$dest" && printf '%s\n' "$new" >"$applied")
-  if systemctl --user is-active -q bazarr; then systemctl --user restart bazarr; fi
+  if running bazarr; then docker restart bazarr >/dev/null; fi
   log "rendered $dest"
 }
 
@@ -249,7 +253,7 @@ configure_jellyfin() {
   done
   if ((installed)); then
     until api jellyfin GET /System/Info | jq -e .HasPendingRestart >/dev/null; do sleep 2; done
-    systemctl --user restart jellyfin
+    docker restart jellyfin >/dev/null
     wait_http "$JF/health"
   fi
   sync jellyfin /System/Configuration/branding \
@@ -339,7 +343,7 @@ main() {
   seed_qbittorrent
   render_bazarr
   ensure_whisper_model
-  start_units
+  start_stack
   configure_qbittorrent
   configure_bazarr
   configure_arrs
@@ -352,7 +356,7 @@ main() {
 check() {
   local problems
   link_files
-  start_units
+  start_stack
   configure_qbittorrent
   render_bazarr
   configure_bazarr

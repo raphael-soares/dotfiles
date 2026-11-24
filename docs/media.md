@@ -7,8 +7,8 @@ Bazarr fetches pt-BR and English subtitles (never the hearing-impaired kind),
 and the Samsung TV plays it in the Jellyfin app. Nothing is grabbed on its
 own: no RSS sync, no automatic search, no upgrades.
 
-The `media` module (only on `fedora`) runs the services as rootless Podman
-quadlets on the `media` network. qBittorrent is the desktop app (Fedora RPM)
+The `media` module (only on `fedora`) runs the services as Docker containers
+from `media/compose.yaml` on the `media` network. qBittorrent is the desktop app (Fedora RPM)
 and Jellyfin Desktop (flatpak) plays on this PC. Design:
 [`superpowers/specs/2026-11-21-media-stack-design.md`](superpowers/specs/2026-11-21-media-stack-design.md).
 
@@ -17,7 +17,7 @@ and Jellyfin Desktop (flatpak) plays on this PC. Design:
 | Service | Address | Reachable from |
 |---|---|---|
 | Jellyfin | <http://fedora.local:8096> | LAN |
-| qBittorrent WebUI (used by Radarr and Sonarr) | `host.containers.internal:8080` | containers, password in `media.env` |
+| qBittorrent WebUI (used by Radarr and Sonarr) | `host.docker.internal:8080` | containers, password in `media.env` |
 | Radarr | <http://fedora.local:7878> | LAN (the browser on the laptop), no login |
 | Sonarr | <http://fedora.local:8990> | LAN (the browser on the laptop), no login; 8989 is Spotifast's login redirect |
 | Prowlarr | <http://127.0.0.1:9696> | this PC |
@@ -30,14 +30,20 @@ gateway, so incoming peers only reach it if 9386 is forwarded by hand on the
 router.
 
 Inside the network, services reach each other by container name
-(`http://radarr:7878`). `podman-auto-update.timer` pulls new images daily;
-`configarr.timer` reapplies the YAML daily.
+(`http://radarr:7878`). `media-update.timer` pulls new images daily and
+recreates the containers they changed (there is no rollback: a bad image is
+logged and replaced by the next update); `configarr.timer` reapplies the YAML
+daily.
+
+`media-compose` is `docker compose` on this stack (`media-compose ps`,
+`media-compose logs -f radarr`, `media-compose restart jellyfin`). It needs
+the user in the `docker` group, which `missing.sh media` asks for.
 
 ## Where things live
 
 | What | Path |
 |---|---|
-| Quadlets | `media/containers` → `~/.config/containers/systemd/media` |
+| Compose file | `media/compose.yaml` → `~/.config/media/compose.yaml` |
 | Secrets (API keys, OpenSubtitles login) | `~/.config/media/media.env`, mode 600, generated on first deploy |
 | App state and databases | `~/.local/share/media/<service>` |
 | Caches (Jellyfin transcodes, TRaSH repos) | `~/.cache/media` |
@@ -47,15 +53,17 @@ Inside the network, services reach each other by container name
 
 `dotter deploy` runs `media/bin/media-deploy`, which:
 
-- links every file in `media/bin`, `media/systemd` and `media/autostart` and
-  the `media/containers`, `media/configarr`,
+- links every file in `media/bin`, `media/systemd` and `media/autostart`,
+  `media/compose.yaml` and the `media/configarr`,
   `media/prowlarr/definitions` and `media/whisper` directories, and removes
   links whose file left the repo, so a new script or timer works without a
   full `dotter deploy`: `media-deploy ~/.dotfiles` is enough;
 - fills empty `*APIKEY` and `*WEBUI_PASSWORD` values in `media.env`, adding
   keys that are new in `media.env.example`;
-- starts the units, restarting the ones whose quadlet changed, and stops a
-  container or `media-*` unit whose file left the repo;
+- stops early if `docker` does not work for the user, then brings the stack
+  up with `media-compose up -d --remove-orphans` (compose recreates a
+  container whose definition changed), restarts `whisper` when
+  `asr-shim.py` changed, and stops a `media-*` unit whose file left the repo;
 - seeds `~/.config/qBittorrent/qBittorrent.conf` when it does not exist
   (WebUI on, starts hidden in the tray, monochrome tray icon, Breeze style
   with system icons, no status bar, no "torrent added" notification), starts
@@ -79,19 +87,20 @@ Inside the network, services reach each other by container name
   subtitle preferences (pt-BR, Always), and the Shows library cover when it
   has none. Backdrops in Jellyfin Desktop and on the phone are a per-device
   setting (Settings → Display → Backdrops);
-- makes qBittorrent the magnet link handler and installs Jellyfin Desktop;
-- enables every `media-*.timer` in `media/systemd` and
-  `podman-auto-update.timer`: `media-original-audio` (every 15 minutes),
-  `media-watchdog` (every 5 minutes), `media-cleanup`, `media-backup` and
-  `media-drift` (daily), and `media-restore-test` (weekly).
+- makes qBittorrent the magnet link handler;
+- enables every `media-*.timer` in `media/systemd`: `media-original-audio`
+  (every 15 minutes), `media-watchdog` (every 5 minutes), `media-update`,
+  `media-cleanup`, `media-backup` and `media-drift` (daily), and
+  `media-restore-test` (weekly).
 
 `media-deploy ~/.dotfiles --check` changes nothing, prints one
-`media: differs:` line for each link, timer, unit, qBittorrent, Bazarr, Radarr
+`media: differs:` line for each link, timer, container (stopped, or running an
+older `compose.yaml`), qBittorrent, Bazarr, Radarr
 or Jellyfin setting that is not what the repo says, and exits 1 when there is
 any (Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr
 every hour). It also prints a `media: unhealthy:` line for each problem a
 service reports (a Radarr, Sonarr or Prowlarr health warning, a paused Bazarr
-subtitle site, qBittorrent offline, a failed unit) and exits 1 for those too.
+subtitle site, qBittorrent offline, a stopped container or a failed unit) and exits 1 for those too.
 `media-drift` runs it daily, so either lands in the media log.
 
 The media log, `~/.local/state/media/media.log`, is one timeline of what the
@@ -142,15 +151,15 @@ services run), the rest of each service's settings, `media.env` and
 qBittorrent's config and torrent state into one `media-YYYY-MM-DD.tar.zst` on
 Google Drive (`Raphael:Backups/media`, through syncfast's rclone config) and
 deletes archives older than 30 days. To restore on a fresh install: deploy,
-stop the units, `rclone copy` the archive down, unpack it, put each
+stop the stack (`media-compose stop`), `rclone copy` the archive down, unpack it, put each
 `.db`/`.sqlite3` back under `~/.local/share/media/<service>`, untar
 `files.tar` there and `qbittorrent.tar` in `~`, copy `media.env` to
-`~/.config/media/`, then start the units. `media-restore-test` (weekly)
+`~/.config/media/`, then `media-compose up -d`. `media-restore-test` (weekly)
 downloads the newest archive, unpacks it and checks every database with
 `PRAGMA integrity_check`, so a broken backup fails its unit.
 
 `media-watchdog` restarts a service whose web page stopped answering for two
-checks in a row (a crashed one is restarted by systemd itself), reopens
+checks in a row (a crashed one is restarted by Docker's restart policy), reopens
 qBittorrent in the tray when it was closed, and runs `media-unstick` and
 `media-torrents` (see qBittorrent). `media-unstick` imports a
 finished download stuck waiting for a manual import when Radarr
@@ -214,7 +223,7 @@ keys from `media.env` (`RADARR__AUTH__APIKEY`, `SONARR__AUTH__APIKEY`).
 4. TV (Samsung QN55Q80A, `192.168.1.78`): the store app doesn't show up on
    this set, so it is sideloaded. Turn on Developer Mode (Apps, then `12345`
    from the SmartThings remote) with host IP `192.168.1.250`, restart the TV
-   and run `podman run --rm ghcr.io/georift/install-jellyfin-tizen 192.168.1.78`.
+   and run `docker run --rm ghcr.io/georift/install-jellyfin-tizen 192.168.1.78`.
    The sideloaded app never updates itself; run the same command again for a
    new version. Server address: `http://192.168.1.250:8096` (the TV can't
    resolve `.local` names).
@@ -251,9 +260,9 @@ forced the PC to convert it.
 ## qBittorrent
 
 Radarr and Sonarr reach the desktop app's WebUI at
-`host.containers.internal:8080` with user `media` and the password in
+`host.docker.internal:8080` with user `media` and the password in
 `media.env`. The WebUI listens on every interface (containers reach the host
-through its LAN address), so the password is what keeps the LAN out.
+through Docker's bridge gateway), so the password is what keeps the LAN out.
 Closing the window keeps it in the tray.
 
 Five downloads run at once; a slow one does not hold a slot. Every new torrent

@@ -37,19 +37,22 @@ grep -Eq '^QBITTORRENT_WEBUI_PASSWORD=[0-9a-f]{32}$' "$env_file" || fail "key ad
 ensure_dirs
 while IFS= read -r src; do
   [[ -d $HOME$src ]] || fail "bind mount source ~$src missing after ensure_dirs"
-done < <(sed -n 's/^Volume=%h\([^:]*\):.*/\1/p' "$REPO"/media/containers/*.container | grep -vx -e '/.config/media/configarr' -e '/.config/media/prowlarr-definitions' -e '/.config/media/whisper')
+done < <(sed -n 's|^ *- \${HOME}\([^:]*\):.*|\1|p' "$REPO/media/compose.yaml" | grep -vx -e '/.config/media/configarr' -e '/.config/media/prowlarr-definitions' -e '/.config/media/whisper')
+[[ -n $(sed -n 's|^ *- \${HOME}\([^:]*\):.*|\1|p' "$REPO/media/compose.yaml") ]] || fail "no bind mount read from compose.yaml"
+if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
+  MEDIA_UID=1000 MEDIA_GID=1000 MEDIA_RENDER_GID=105 MEDIA_VIDEO_GID=39 \
+    docker compose -f "$REPO/media/compose.yaml" --profile manual config -q || fail "compose.yaml is not valid"
+fi
 
 mkdir "$T/bin"
-cat >"$T/bin/systemctl" <<'EOF'
+cat >"$T/bin/docker" <<'EOF'
 #!/bin/sh
-case " $* " in
-  *" is-active "*) exit 4 ;;
-  *" restart "* | *" try-restart "*) echo "Unit bazarr.service not found." >&2; exit 5 ;;
-esac
+echo "Error: No such object: bazarr" >&2
+exit 1
 EOF
-chmod +x "$T/bin/systemctl"
+chmod +x "$T/bin/docker"
 PATH=$T/bin:$PATH bash -c 'MEDIA_DEPLOY_LIB=1 source "$1" "$2" && render_bazarr' _ "$REPO/media/bin/media-deploy" "$REPO" >/dev/null ||
-  fail "render_bazarr fails while the bazarr unit does not exist yet"
+  fail "render_bazarr fails while the bazarr container does not exist yet"
 bazarr_conf=$HOME/.local/share/media/bazarr/config/config.yaml
 grep -qx "  apikey: $(sed -n 's/^BAZARR_API_KEY=//p' "$env_file")" "$bazarr_conf" || fail "bazarr config lacks the Bazarr API key"
 [[ $(stat -c %a "$bazarr_conf") == 600 ]] || fail "bazarr config is not mode 600"
@@ -67,7 +70,7 @@ link_files 2>/dev/null
 [[ $(readlink "$HOME/.local/bin/media-failure") == "$REPO/media/bin/media-failure" ]] || fail "a media/bin script was not linked"
 [[ $(readlink "$HOME/.config/systemd/user/media-failure@.service") == "$REPO/media/systemd/media-failure@.service" ]] ||
   fail "a media/systemd unit was not linked"
-[[ $(readlink "$HOME/.config/containers/systemd/media") == "$REPO/media/containers" ]] || fail "the quadlet directory was not linked"
+[[ $(readlink "$HOME/.config/media/compose.yaml") == "$REPO/media/compose.yaml" ]] || fail "compose.yaml was not linked"
 [[ -z $(CHECK=1 link_files) ]] || fail "--check reports links that link_files just made"
 rm "$HOME/.local/bin/mediactl"
 ln -s "$REPO/media/bin/media-removed" "$HOME/.local/bin/media-removed"
@@ -105,26 +108,50 @@ report=$(fake_arr && ARR_DONE=1 && CHECK=1 && configure_arrs && echo "drift=$DRI
 
 units=$HOME/.config/systemd/user
 mkdir -p "$units" && touch "$units/media-watchdog.timer"
-(
-  UNITS=()
+# stack <check>: start_stack against a fake Docker where jellyfin is current, radarr runs an older
+# definition and sonarr is not running; prints what start_stack reported and what it ran.
+stack() (
+  set -e # media-deploy runs under errexit, which $(...) would otherwise drop
+  CHECK=$1
   systemctl() {
     case "$*" in
-      *daemon-reload) touch "$T/reloaded" ;;
-      *list-units*) printf '%s\n' jellyfin.service gone.service other.service media-gone.timer media-watchdog.timer ;;
-      *show*) [[ -e $T/reloaded && $* == *gone* ]] || case "$*" in
-        *"SourcePath gone.service") echo "$REPO/media/containers/gone.container" ;;
-        *"SourcePath jellyfin.service") echo "$REPO/media/containers/jellyfin.container" ;;
-        *"FragmentPath other.service") echo "/usr/lib/systemd/user/other.service" ;;
-        *"FragmentPath media-"*) echo "$units/$5" ;;
-      esac ;;
-      *is-enabled*) ;;
-      *) echo "$*" >>"$T/systemctl" ;;
+      *list-units*) printf '%s\n' other.service media-gone.timer media-watchdog.timer ;;
+      *"FragmentPath other.service") echo "/usr/lib/systemd/user/other.service" ;;
+      *"FragmentPath media-"*) echo "$units/$5" ;;
+      *daemon-reload* | *is-enabled*) ;;
+      *) echo "systemctl $*" ;;
     esac
   }
-  start_units
-) 2>/dev/null
-[[ $(sort "$T/systemctl" | paste -sd,) == "--user stop gone.service,--user stop media-gone.timer" ]] ||
-  fail "start_units stopped: $(paste -sd, "$T/systemctl")"
+  docker() {
+    case "$*" in
+      info*) ;;
+      *" jellyfin") echo "true h-jellyfin" ;;
+      *" radarr") echo "true h-old" ;;
+      inspect*) return 1 ;;
+      *) echo "docker $*" ;;
+    esac
+  }
+  compose() {
+    case "$*" in
+      "config --hash *") printf '%s\n' "jellyfin h-jellyfin" "radarr h-radarr" "sonarr h-sonarr" ;;
+      *) echo "compose $*" ;;
+    esac
+  }
+  start_stack 2>&1
+)
+set +e # an || here would switch errexit off inside stack too
+out=$(stack 1)
+set -e
+grep -q "differs: container radarr" <<<"$out" || fail "--check does not report a container on an old definition: $out"
+grep -q "differs: container sonarr" <<<"$out" || fail "--check does not report a stopped container: $out"
+grep -q "differs: container whisper" <<<"$out" || fail "--check stopped before the whisper shim: $out"
+! grep -q -e "container jellyfin" -e "^compose " -e "^systemctl " <<<"$out" || fail "--check changed or misreported something: $out"
+out=$(stack 0)
+grep -qx "compose up -d --remove-orphans" <<<"$out" || fail "start_stack did not bring the stack up: $out"
+grep -qx "systemctl --user stop media-gone.timer" <<<"$out" || fail "start_stack did not stop a unit that left the repo: $out"
+! grep -q "stop other.service" <<<"$out" || fail "start_stack stopped a unit that is not the repo's: $out"
+grep -qx "compose restart whisper" <<<"$out" || fail "start_stack did not restart whisper for a new shim: $out"
+! grep -q "restart whisper" <<<"$(stack 0)" || fail "start_stack restarts whisper with the shim unchanged"
 
 (source "$REPO/media/bin/media-lib.sh" && for i in {1..13000}; do printf '%0100d\n' "$i"; done >"$MEDIA_LOG" && log "last")
 [[ $(wc -l <"$MEDIA_LOG") -le 5000 && $(tail -n1 "$MEDIA_LOG") == *": last" ]] || fail "the log is not trimmed to its latest lines"

@@ -6,26 +6,24 @@ FAILS=${XDG_RUNTIME_DIR:-/tmp}/media-watchdog
 mkdir -p "$FAILS"
 
 uptime() {
-  local since now
-  since=$(systemctl --user show -P ActiveEnterTimestampMonotonic "$1")
-  now=$(cut -d' ' -f1 /proc/uptime)
-  echo $((${now%.*} - since / 1000000))
+  echo $(($(date +%s) - $(date -d "$(docker inspect -f '{{.State.StartedAt}}' "$1")" +%s)))
 }
 
 # Restarts only after two failed checks in a row and ten minutes up, so a library scan or a model
-# download at first start is not mistaken for a hang. A stopped or crashed unit is left to Restart=.
+# download at first start is not mistaken for a hang. A stopped or crashed container is left to its
+# restart policy.
 check() {
-  local unit=$1 url=$2
-  if ! systemctl --user is-active --quiet "$unit" || (($(uptime "$unit") < 600)); then
-    rm -f "$FAILS/$unit"
+  local name=$1 url=$2
+  if ! running "$name" || (($(uptime "$name") < 600)); then
+    rm -f "$FAILS/$name"
   elif curl -fs -m 20 -o /dev/null "$url"; then
-    rm -f "$FAILS/$unit"
-  elif [[ -f $FAILS/$unit ]]; then
-    rm -f "$FAILS/$unit"
-    log "$unit is not answering, restarting it"
-    systemctl --user restart "$unit" || true
+    rm -f "$FAILS/$name"
+  elif [[ -f $FAILS/$name ]]; then
+    rm -f "$FAILS/$name"
+    log "$name is not answering, restarting it"
+    docker restart "$name" >/dev/null || true
   else
-    touch "$FAILS/$unit"
+    touch "$FAILS/$name"
   fi
 }
 
