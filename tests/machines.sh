@@ -45,11 +45,12 @@ done
 [[ -f $H/.claude/skills/discussao/SKILL.md ]] || fail ".claude/skills does not reach the skills"
 
 hypr_shared=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
-  .config/noctalia-plugins/hypr-shots .config/noctalia-plugins/hypr-remote
+  .config/noctalia-plugins/hypr-remote .local/bin/screenshot
   .config/noctalia/base.toml
   Pictures/Wallpaper/forest-4.jpg .config/ghostty/machine.conf
   .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini .config/hypr-machine
   .local/bin/remote-serving .local/bin/remote-control .local/bin/monitor-away)
+[[ ! -e $H/.config/noctalia-plugins/hypr-shots ]] || fail "the old screenshot plugin is still deployed"
 laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/media-deploy

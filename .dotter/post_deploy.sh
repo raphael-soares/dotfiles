@@ -35,7 +35,7 @@ install_packages() {
   esac
 }
 
-# Packages a Fedora install brings and nothing here uses. Runs after
+# Packages nothing here uses, brought by a Fedora install or an older deploy. Runs after
 # install_packages so the fonts and langpacks it would drag out are back in
 # place first. Arguments after the module go to dnf.
 remove_packages() {
@@ -143,14 +143,15 @@ fi
 {{#if dotter.packages.hyprland}}
 if [[ $DISTRO == fedora ]]; then
   coprs=$(dnf copr list 2>/dev/null)
-  for copr in lionheartp/Hyprland nett00n/hyprland; do
-    grep -q "/$copr$" <<<"$coprs" || sudo dnf copr enable -y "$copr"
-  done
-  # nett00n's hyprland sorts above lionheartp's build, which is the one tracked here.
-  sudo dnf config-manager setopt copr:copr.fedorainfracloud.org:nett00n:hyprland.includepkgs=satty
+  grep -q "/lionheartp/Hyprland$" <<<"$coprs" || sudo dnf copr enable -y lionheartp/Hyprland
   grep -q "/lizardbyte/stable$" <<<"$coprs" || sudo dnf copr enable -y lizardbyte/stable
 fi
 install_packages hyprland
+remove_packages hyprland
+# nett00n's copr only served satty, which Flameshot replaced.
+if [[ $DISTRO == fedora ]] && grep -q "/nett00n/hyprland$" <<<"$coprs"; then
+  sudo dnf copr remove -y nett00n/hyprland
+fi
 # bin/monitor-away asks the monitor which input it shows over DDC; Arch keeps the
 # i2c devices to that group (Fedora grants them to the logged-in user). Next login.
 if getent group i2c >/dev/null && ! id -nG "$USER" | grep -qw i2c; then

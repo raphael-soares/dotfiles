@@ -102,6 +102,7 @@ hl.bind(
   )
 )
 
--- Print opens the raphael/hypr-shots plugin picker: area, monitor, window or
--- annotation, chosen with arrow keys or 1-6.
-hl.bind("Print", hl.dsp.exec_cmd(ipc .. "panel-open raphael/hypr-shots:menu"))
+-- bin/screenshot: Print selects an area of the frozen monitor; ALT+Print starts with the
+-- focused window selected.
+hl.bind("Print", hl.dsp.exec_cmd("screenshot"))
+hl.bind("ALT + Print", hl.dsp.exec_cmd("screenshot window"))

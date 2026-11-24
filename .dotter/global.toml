@@ -49,7 +49,6 @@ default_target_type = "symbolic"
 "hyprland/noctalia/plugins/hypr-active-workspace" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-active-workspace", recurse = false }
 "hyprland/noctalia/plugins/hypr-displays" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-displays", recurse = false }
 "hyprland/noctalia/plugins/hypr-remote" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-remote", recurse = false }
-"hyprland/noctalia/plugins/hypr-shots" = { type = "symbolic", target = "~/.config/noctalia-plugins/hypr-shots", recurse = false }
 "hyprland/noctalia/base.toml" = "~/.config/noctalia/base.toml"
 "hyprland/noctalia/forest-4.jpg" = "~/Pictures/Wallpaper/forest-4.jpg"
 "hyprland/noctalia/ghostty.conf" = "~/.config/ghostty/machine.conf"

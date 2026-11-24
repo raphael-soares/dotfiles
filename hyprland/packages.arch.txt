@@ -7,10 +7,8 @@ gcr-4
 adwaita-cursors
 udiskie
 socat
-grim
-slurp
-hyprshot
-satty
+flameshot
+wayland-utils
 gnome-calculator
 gvfs-mtp
 gvfs-smb
