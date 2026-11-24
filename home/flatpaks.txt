@@ -1,0 +1,7 @@
+org.telegram.desktop
+com.stremio.Stremio
+org.jellyfin.JellyfinDesktop
+org.prismlauncher.PrismLauncher
+net.davidotek.pupgui2
+io.github.ilya_zlobintsev.LACT
+com.dec05eba.gpu_screen_recorder

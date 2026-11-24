@@ -8,7 +8,27 @@ DISTRO=$(. /etc/os-release && echo "$ID")
 STATE=${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles
 mkdir -p "$STATE"
 
+# A module's flatpaks.txt holds Flathub app IDs, or the .flatpakref URL of an app
+# with its own repository. The same app comes from Flatpak on every distro.
+install_flatpaks() {
+  local list="$REPO/$1/flatpaks.txt" ref id
+  [[ -f $list ]] || return 0
+  flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  for ref in $(<"$list"); do
+    id=${ref##*/}
+    id=${id%.flatpakref}
+    flatpak info "$id" >/dev/null 2>&1 && continue
+    echo "==> Installing $id"
+    if [[ $ref == https://* ]]; then
+      flatpak install --user -y --noninteractive "$ref"
+    else
+      flatpak install --user -y --noninteractive flathub "$ref"
+    fi
+  done
+}
+
 install_packages() {
+  install_flatpaks "$1"
   local list="$REPO/$1/packages.$DISTRO.txt" missing p
   [[ -f $list ]] || return 0
   case $DISTRO in
@@ -35,18 +55,27 @@ install_packages() {
   esac
 }
 
-# Packages nothing here uses, brought by a Fedora install or an older deploy. Runs after
-# install_packages so the fonts and langpacks it would drag out are back in
-# place first. Arguments after the module go to dnf.
+# Packages nothing here uses, brought by a Fedora install or an older deploy (or now
+# taken from Flatpak). Runs after install_packages so the fonts and langpacks it would
+# drag out are back in place first. Arguments after the module go to dnf.
 remove_packages() {
   local list="$REPO/$1/remove.$DISTRO.txt" present=() p
   shift
   [[ -f $list ]] || return 0
-  [[ $DISTRO == fedora ]] || return 0
-  for p in $(<"$list"); do rpm -q "$p" >/dev/null 2>&1 && present+=("$p"); done
-  ((${#present[@]})) || return 0
-  echo "==> Removing: ${present[*]}"
-  sudo dnf remove -y "$@" "${present[@]}"
+  case $DISTRO in
+    arch)
+      for p in $(<"$list"); do pacman -Q "$p" >/dev/null 2>&1 && present+=("$p"); done
+      ((${#present[@]})) || return 0
+      echo "==> Removing: ${present[*]}"
+      sudo pacman -Rns --noconfirm "${present[@]}"
+      ;;
+    fedora)
+      for p in $(<"$list"); do rpm -q "$p" >/dev/null 2>&1 && present+=("$p"); done
+      ((${#present[@]})) || return 0
+      echo "==> Removing: ${present[*]}"
+      sudo dnf remove -y "$@" "${present[@]}"
+      ;;
+  esac
 }
 
 warn_missing() {
@@ -218,10 +247,6 @@ else
       sed -i "/^\[General\]$/a $setting" "$moonlight_conf"
     fi
   done
-fi
-if [[ $DISTRO == fedora ]] && ! flatpak info io.missioncenter.MissionCenter >/dev/null 2>&1; then
-  flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-  flatpak install --user -y --noninteractive flathub io.missioncenter.MissionCenter
 fi
 # Fedora's hyprland pulls in uwsm, whose %post starts its failed-unit notifier in every
 # graphical session, Plasma included. Neither session here runs under uwsm.

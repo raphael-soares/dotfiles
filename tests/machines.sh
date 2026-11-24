@@ -63,7 +63,7 @@ else
   fail "hook was not rendered"
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
-shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland hyprland/greetd/config.toml io.missioncenter.MissionCenter 'xdg-mime default'
+shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland hyprland/greetd/config.toml 'install_flatpaks "$1"' 'xdg-mime default'
   'remote-add --user --if-not-exists flathub'
   setcap 'capture = kms' sunshine-prelogin.service remote-serving.service 'enable-linger')
 laptop_only_in_hook=(enterprise)

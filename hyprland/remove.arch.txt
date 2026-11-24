@@ -1,0 +1,8 @@
+hyprshot
+slurp
+satty
+loupe
+papers
+showtime
+gnome-text-editor
+gnome-calculator
