@@ -1,0 +1,10 @@
+# name       | port | token | windowless server                                                  | connected server
+vectorcraft  | 7979 | -     | mcp --headless                                                     | mcp --connect 127.0.0.1:{port}
+lightcraft   | 7980 | -     | mcp --compact                                                      | mcp --compact --connect 127.0.0.1:{port}
+photocraft   | 7981 | token | mcp --automation-read-root ~/Design --automation-write-root ~/Design | mcp --bridge 127.0.0.1:{port}
+wordcraft    | 7982 | -     | mcp                                                                | mcp --connect 127.0.0.1:{port}
+gridcraft    | 7983 | token | mcp                                                                | mcp --connect {port}
+filmcraft    | 7984 | token | mcp                                                                | mcp --bridge 127.0.0.1:{port}
+effectcraft  | 7985 | -     | mcp                                                                | mcp --bridge {port}
+soundcraft   | 7986 | -     | mcp                                                                | mcp --connect {port}
+pdfcraft     | -    | -     | mcp --compact                                                      | -

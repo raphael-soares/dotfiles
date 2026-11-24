@@ -1,0 +1,292 @@
+#!/usr/bin/env python3
+import json
+import os
+import socket
+import subprocess
+import sys
+import threading
+import time
+
+HOME = os.path.expanduser("~")
+
+
+class App:
+    def __init__(self, name, port, token, windowless, connected):
+        self.name = name
+        self.id = f"ai.storyteller.{name}"
+        self.port = None if port == "-" else int(port)
+        self.windowless = self._args(windowless)
+        self.connected = None if connected == "-" else self._args(connected)
+        self.title = name[: -len("craft")].capitalize() + "Craft"
+        self.env = name.upper()
+
+    def _args(self, spec):
+        return [a.replace("{port}", str(self.port)).replace("~", HOME, 1) for a in spec.split()]
+
+
+def load_table():
+    path = os.environ.get("CRAFT_MCP_APPS") or os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "apps")
+    apps = {}
+    with open(path) as f:
+        for line in f:
+            if line.strip() and not line.lstrip().startswith("#"):
+                fields = [x.strip() for x in line.split("|")]
+                apps[fields[0]] = App(*fields)
+    return apps
+
+
+def die(message):
+    print(f"craft-mcp: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def port_open(port):
+    try:
+        socket.create_connection(("127.0.0.1", port), 0.5).close()
+        return True
+    except OSError:
+        return False
+
+
+class Child:
+    def __init__(self, proxy, app, connected):
+        self.proxy = proxy
+        self.connected = connected
+        if connected:
+            unset = [f"--unset-env={app.env}_AUTOMATION_READ_ROOT", f"--unset-env={app.env}_AUTOMATION_WRITE_ROOT"]
+            args = app.connected
+        else:
+            unset = [f"--unset-env={app.env}_CONTROL_PORT"]
+            args = app.windowless
+        self.proc = subprocess.Popen(
+            ["flatpak", "run", *unset, f"--command={app.name}-cli", app.id, *args],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
+        )
+        self.pending = {}
+        self.stopping = False
+        threading.Thread(target=self._read, daemon=True).start()
+
+    def send(self, msg):
+        try:
+            self.proc.stdin.write(json.dumps(msg) + "\n")
+            self.proc.stdin.flush()
+        except (BrokenPipeError, ValueError):
+            pass
+
+    def alive(self):
+        return self.proc.poll() is None
+
+    def stop(self):
+        self.stopping = True
+        try:
+            self.proc.stdin.close()
+        except (BrokenPipeError, ValueError):
+            pass
+        self.proc.terminate()
+        try:
+            self.proc.wait(5)
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
+        self.proxy.fail_pending(self, "the server switched windows; send the request again")
+
+    def _read(self):
+        for line in self.proc.stdout:
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            self.proxy.from_child(self, msg)
+        if not self.stopping:
+            self.proxy.fail_pending(self, "the app's server stopped; send the request again")
+
+
+class Proxy:
+    def __init__(self, app):
+        self.app = app
+        self.lock = threading.Lock()
+        self.internal = {}
+        self.init_msg = None
+        self.tool_names = None
+        self.last_path = None
+        self.child = Child(self, app, connected=False)
+
+    def write(self, msg):
+        with self.lock:
+            sys.stdout.write(json.dumps(msg) + "\n")
+            sys.stdout.flush()
+
+    def error(self, msg_id, message):
+        self.write({"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32000, "message": message}})
+
+    def tool_result(self, msg_id, message, is_error=False):
+        self.write({"jsonrpc": "2.0", "id": msg_id, "result": {"content": [{"type": "text", "text": message}], "isError": is_error}})
+
+    def fail_pending(self, child, message):
+        while child.pending:
+            msg_id, _ = child.pending.popitem()
+            self.error(msg_id, message)
+
+    def open_window_tool(self):
+        t = self.app.title
+        return {
+            "name": "open_window",
+            "description": (
+                f"Open the {t} window so the owner can watch and edit along, and carry the work into it. "
+                f"Only when the owner asks. Save the current document under ~/Design first and pass its path: "
+                f"unsaved work in the windowless engine does not travel. If {t} is already open, this joins "
+                f"that window instead of opening another."
+            ),
+            "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Saved document to open in the window"}}},
+        }
+
+    def from_child(self, child, msg):
+        msg_id = msg.get("id")
+        if "method" not in msg and msg_id in self.internal:
+            box = self.internal.pop(msg_id)
+            box["reply"] = msg
+            box["done"].set()
+            return
+        if child is not self.child:
+            return
+        if "method" not in msg and msg_id in child.pending:
+            method = child.pending.pop(msg_id)
+            result = msg.get("result")
+            if method == "initialize" and result is not None:
+                result.setdefault("capabilities", {}).setdefault("tools", {})["listChanged"] = True
+            if method == "tools/list" and result is not None:
+                self.tool_names = [t["name"] for t in result.get("tools", [])]
+                if self.app.connected:
+                    result.setdefault("tools", []).append(self.open_window_tool())
+        self.write(msg)
+
+    def ask(self, child, method, params=None, timeout=30):
+        msg_id = f"craft-mcp-{method}-{time.monotonic_ns()}"
+        box = {"done": threading.Event()}
+        self.internal[msg_id] = box
+        msg = {"jsonrpc": "2.0", "id": msg_id, "method": method}
+        if params is not None:
+            msg["params"] = params
+        child.send(msg)
+        if not box["done"].wait(timeout):
+            self.internal.pop(msg_id, None)
+            raise RuntimeError(f"{self.app.title}'s server did not answer {method}")
+        if "error" in box["reply"]:
+            raise RuntimeError(box["reply"]["error"].get("message", str(box["reply"]["error"])))
+        return box["reply"]["result"]
+
+    def swap(self, connected):
+        new = Child(self, self.app, connected)
+        try:
+            if self.init_msg is not None:
+                self.ask(new, "initialize", self.init_msg.get("params"))
+                new.send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+            names = [t["name"] for t in self.ask(new, "tools/list").get("tools", [])]
+        except Exception:
+            new.stop()
+            raise
+        old, self.child = self.child, new
+        old.stop()
+        if self.tool_names is not None and names != self.tool_names:
+            self.write({"jsonrpc": "2.0", "method": "notifications/tools/list_changed"})
+        self.tool_names = names
+
+    def running(self):
+        return subprocess.run(["pgrep", "-u", str(os.getuid()), "-x", self.app.name], stdout=subprocess.DEVNULL).returncode == 0
+
+    def wait_port(self, seconds):
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            if port_open(self.app.port):
+                return True
+            time.sleep(0.25)
+        return port_open(self.app.port)
+
+    def launch(self, path):
+        log_dir = os.environ.get("CRAFT_MCP_LOG_DIR") or os.path.join(
+            os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local", "state"), "dotfiles", "design")
+        os.makedirs(log_dir, exist_ok=True)
+        with open(os.path.join(log_dir, f"{self.app.name}.log"), "ab") as log:
+            subprocess.Popen(
+                ["flatpak", "run", f"--command={self.app.name}", self.app.id, *([path] if path else [])],
+                stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True,
+            )
+        return log.name
+
+    def open_window(self, msg_id, path):
+        t = self.app.title
+        if path:
+            path = os.path.abspath(os.path.expanduser(path))
+        if self.child.connected and port_open(self.app.port):
+            return self.tool_result(msg_id, f"The {t} window is already open and connected.")
+        joined = port_open(self.app.port)
+        if not joined:
+            if self.running():
+                if not self.wait_port(float(os.environ.get("CRAFT_MCP_GRACE", "5"))):
+                    return self.tool_result(msg_id, f"{t} is open but not listening for the agent (it was opened before the dotfiles deploy). Ask the owner to close and reopen {t}.", True)
+            else:
+                log = self.launch(path)
+                wait = float(os.environ.get("CRAFT_MCP_WAIT", "30"))
+                if not self.wait_port(wait):
+                    return self.tool_result(msg_id, f"{t} did not start listening on port {self.app.port} within {wait:g} s; its output is in {log}. Still working without a window.", True)
+        try:
+            self.swap(connected=True)
+        except Exception as e:
+            return self.tool_result(msg_id, f"Could not connect to the {t} window: {e}. Still working without a window.", True)
+        self.last_path = path
+        if joined:
+            where = f"Open {path} there with the app's own open command unless it is the document shown. " if path else ""
+            return self.tool_result(msg_id, f"{t} was already open; joined its window. {where}Read the document before each change: the owner may edit it by hand.")
+        return self.tool_result(msg_id, f"The {t} window is open{' on ' + path if path else ''}. Changes now land in the window; read the document before each change, the owner may edit it by hand.")
+
+    def window_closed(self):
+        return self.child.connected and (not self.child.alive() or not port_open(self.app.port))
+
+    def handle(self, msg):
+        method, msg_id = msg.get("method"), msg.get("id")
+        if method is None:
+            self.child.send(msg)
+            return
+        if method == "initialize":
+            self.init_msg = msg
+        if method == "tools/call" and self.app.connected and msg.get("params", {}).get("name") == "open_window":
+            return self.open_window(msg_id, msg["params"].get("arguments", {}).get("path"))
+        if self.window_closed():
+            try:
+                self.swap(connected=False)
+            except Exception as e:
+                return self.error(msg_id, f"The {self.app.title} window was closed and the windowless server did not start: {e}") if msg_id is not None else None
+            if method == "tools/call":
+                reopen = f"Open {self.last_path} to continue." if self.last_path else "Open the saved document to continue."
+                return self.tool_result(msg_id, f"The {self.app.title} window was closed; working without a window again. {reopen}", True)
+        elif not self.child.alive():
+            self.swap(connected=False)
+        if msg_id is not None:
+            self.child.pending[msg_id] = method
+        self.child.send(msg)
+
+    def run(self):
+        for line in sys.stdin:
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            self.handle(msg)
+        self.child.stop()
+
+
+def main():
+    if len(sys.argv) != 2:
+        die("usage: craft-mcp <app>")
+    apps = load_table()
+    app = apps.get(sys.argv[1])
+    if app is None:
+        die(f"unknown app {sys.argv[1]!r}; known: {', '.join(apps)}")
+    if subprocess.run(["flatpak", "info", app.id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
+        die(f"{app.title} is not installed. Install it with the ArtCraft Launcher, then run the dotfiles deploy.")
+    if app.connected is None:
+        os.execvp("flatpak", ["flatpak", "run", f"--command={app.name}-cli", app.id, *app.windowless])
+    Proxy(app).run()
+
+
+if __name__ == "__main__":
+    main()
