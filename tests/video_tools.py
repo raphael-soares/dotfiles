@@ -8,6 +8,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 REVISAO = REPO / "ai" / "skills" / "video" / "revisao.py"
+ANIMATIC = REPO / "ai" / "skills" / "video" / "animatic.py"
 
 ROTEIRO = """# Roteiro
 
@@ -59,6 +60,21 @@ PLANOS = {"01-a": 2.0, "01-a#planos": [1.0, 1.0], "02-b": 1.0, "02-b#planos": [1
 def png(path, cor="red", size="64x36"):
     path.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", f"color={cor}:s={size}", "-frames:v", "1", str(path)], check=True)
+
+
+def wav(path, segundos):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", f"sine=frequency=440:sample_rate=24000:duration={segundos}", str(path)], check=True)
+
+
+def duracao(path):
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)], capture_output=True, text=True, check=True)
+    return float(r.stdout)
+
+
+def cor_em(path, segundos):
+    r = subprocess.run(["ffmpeg", "-loglevel", "error", "-ss", str(segundos), "-i", str(path), "-frames:v", "1", "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True, check=True)
+    return "rgb"[max(range(3), key=lambda i: r.stdout[i])]
 
 
 def video(path, segundos, cor="blue"):
@@ -200,6 +216,54 @@ class Revisao(unittest.TestCase):
             texto = textos(e)
             for segredo in ("esposta", "SEGREDO", "secret", "O disco fala direto"):
                 self.assertNotIn(segredo, texto, e)
+
+
+class Animatic(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.v = montar(self.tmp.name, stills=False)
+        (self.v / "audio" / "duracoes.json").write_text(json.dumps({"01-a": 2.5, "01-a#planos": [1.0, 1.5], "02-b": 2.6, "02-b#planos": [2.0]}))
+        for nome, cor in (("01-a-1", "red"), ("01-a-2", "green"), ("02-b-1", "blue")):
+            png(self.v / "storyboard" / f"{nome}.png", cor)
+        wav(self.v / "audio" / "01-a.wav", 2.5)
+        wav(self.v / "audio" / "02-b.wav", 2.6)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def rodar(self):
+        return subprocess.run([sys.executable, str(ANIMATIC), str(self.v)], capture_output=True, text=True)
+
+    def test_animatic_length_matches_narration(self):
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertAlmostEqual(duracao(self.v / "animatic.mp4"), 5.1, delta=0.1)
+
+    def test_animatic_shows_right_still_at_time(self):
+        self.rodar()
+
+        cores = [cor_em(self.v / "animatic.mp4", t) for t in (0.5, 1.2, 2.4, 2.7, 4.9)]
+
+        self.assertEqual(cores, ["r", "g", "g", "b", "b"])
+
+    def test_animatic_missing_wav_fails(self):
+        (self.v / "audio" / "02-b.wav").unlink()
+
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("02-b.wav", r.stderr)
+        self.assertFalse((self.v / "animatic.mp4").exists())
+
+    def test_animatic_missing_still_fails(self):
+        (self.v / "storyboard" / "01-a-2.png").unlink()
+
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("01-a-2.png", r.stderr)
+        self.assertFalse((self.v / "animatic.mp4").exists())
 
 
 if __name__ == "__main__":
