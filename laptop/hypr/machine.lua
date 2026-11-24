@@ -30,6 +30,15 @@ function M.setup()
     hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1", default = i == 1 })
   end
   hl.workspace_rule({ workspace = "11", monitor = "eDP-1", default = true })
+  -- The rule only places new workspaces: those that fell onto eDP-1 go back when DP-1 returns.
+  hl.on("monitor.added", function(m)
+    if m.name ~= "DP-1" then return end
+    hl.timer(function()
+      for i = 1, 10 do
+        hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(i), monitor = "DP-1" }))
+      end
+    end, { timeout = 500, type = "oneshot" })
+  end)
 
   require("lid")
 end
