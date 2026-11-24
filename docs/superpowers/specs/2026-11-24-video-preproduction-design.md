@@ -168,18 +168,19 @@ today (`fechar()`).
 
 ### What each reviewer receives
 
-The author stages the inputs for each round in
-`revisao/<etapa>-<n>/entrada/` and passes only that folder. The prompt forbids
-reading anything outside it. The video folder path is never given. The answer
-key, `briefing.md`, `direcao.md`, `video.md` and the course material never go
-in.
+The author stages the inputs for each round once: a record copy goes to
+`revisao/<etapa>-<n>/entrada/`, and the reviewer gets a second copy in a
+temporary folder outside the video, so the path it receives leads neither to
+the video folder nor to its slug. The prompt forbids reading anything outside
+that folder. The answer key, `briefing.md`, `direcao.md`, `video.md` and the
+course material never go in.
 
 | Gate | Viewer gets | Critic gets |
 |---|---|---|
 | Script | Tela and Fala columns as text, quiz questions | |
 | Storyboard | | stills, Tela column, rubric |
 | Animatic | stills in order, then the Fala text per plano, quiz questions | |
-| Draft | sampled frames per plano, Fala text per plano, quiz questions | frames, contact sheet, rubric |
+| Draft | sampled frames per plano, Fala text per plano, quiz questions | the same folder: frames, contact sheet, Fala text (the intent, since Tela would spoil the viewer's mute pass), rubric |
 
 On stills and frames the viewer reads the pictures first, without the Fala, and
 notes what each one says on mute. Then it reads the Fala. Narration reaches the

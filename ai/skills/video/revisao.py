@@ -3,6 +3,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ETAPAS = ("roteiro", "storyboard", "animatic", "rascunho")
@@ -17,6 +18,10 @@ def celulas(linha):
     return [c.strip() for c in re.split(r"(?<!\\)\|", linha.strip().strip("|"))]
 
 
+def concat(caminho):
+    return "file '" + str(Path(caminho).resolve()).replace("'", "'\\''") + "'"
+
+
 def planos(video):
     cenas = []
     cabecalho = None
@@ -25,10 +30,14 @@ def planos(video):
             cenas.append((linha[3:].split()[0], []))
             cabecalho = None
         elif cenas and linha.lstrip().startswith("|"):
-            valores = celulas(linha)
+            cena, valores = cenas[-1][0], celulas(linha)
             if cabecalho is None:
+                if not {"#", "Tela", "Fala"} <= set(valores):
+                    raise Falha(f"{cena}: a tabela do roteiro precisa das colunas #, Tela e Fala")
                 cabecalho = valores
             elif not all(re.fullmatch(r":?-+:?", v) for v in valores):
+                if len(valores) != len(cabecalho):
+                    raise Falha(f"{cena}#{valores[0]}: a linha tem {len(valores)} células e o cabeçalho {len(cabecalho)}; escreva | dentro do texto como \\|")
                 cenas[-1][1].append(dict(zip(cabecalho, valores)))
     return [(cena, linhas) for cena, linhas in cenas if linhas]
 
@@ -54,6 +63,8 @@ def briefing(video):
         publico = secao(texto, "Quem assiste")
     except ValueError as e:
         raise Falha(f"briefing.md sem a seção esperada: {e}")
+    if not quiz:
+        raise Falha("briefing.md sem perguntas numeradas (1. ...) na seção Quiz")
     return "\n".join(quiz) + "\n", "\n".join(publico).strip() + "\n"
 
 
@@ -81,7 +92,19 @@ def stills(video, cenas):
 
 def quadro(origem, destino, *posicao):
     destino.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *posicao, "-i", str(origem), "-frames:v", "1", "-update", "1", str(destino)], check=True)
+    r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *posicao, "-i", str(origem), "-frames:v", "1", "-update", "1", str(destino)], capture_output=True, text=True)
+    if r.returncode != 0 or not destino.is_file():
+        raise Falha(f"{origem.name}: sem quadro em {' '.join(posicao) or 'início'}; o render é mais curto que a narração?\n{r.stderr}")
+
+
+def folha(quadros, destino):
+    with tempfile.TemporaryDirectory() as tmp:
+        lista = Path(tmp) / "lista.txt"
+        lista.write_text("".join(concat(q) + "\n" for q in quadros))
+        linhas = -(-len(quadros) // 4)
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(lista),
+                        "-vf", f"scale=427:240:force_original_aspect_ratio=decrease,pad=427:240:(ow-iw)/2:(oh-ih)/2,tile=4x{linhas}",
+                        "-frames:v", "1", str(destino)], check=True, capture_output=True)
 
 
 def preparar(video, etapa):
@@ -105,32 +128,41 @@ def preparar(video, etapa):
     k = 1
     while (revisao / f"{etapa}-{k}").exists():
         k += 1
-    entrada = revisao / f"{etapa}-{k}" / "entrada"
-    entrada.mkdir(parents=True)
 
-    if etapa == "roteiro":
-        (entrada / "roteiro.md").write_text(tabela(cenas, ["Tela", "Fala"]))
-    if etapa == "storyboard":
-        (entrada / "tela.md").write_text(tabela(cenas, ["Tela"]))
-    if etapa in ("storyboard", "animatic"):
-        (entrada / "quadros").mkdir()
-        for s in stills(video, cenas):
-            shutil.copy(s, entrada / "quadros" / s.name)
-    if etapa in ("animatic", "rascunho"):
-        (entrada / "fala.md").write_text(tabela(cenas, ["Fala"]))
-    if etapa == "rascunho":
-        for cena, _ in cenas:
-            render = video / "cenas" / "render" / f"{cena}.mp4"
-            fim = 0.0
-            for i, t in enumerate(tempos[f"{cena}#planos"], 1):
-                fim += t
-                quadro(render, entrada / "quadros" / f"{cena}-{i}.png", "-ss", f"{max(0.0, fim - 0.1):.3f}")
-            quadro(render, entrada / "inicio" / f"{cena}.png")
-            quadro(render, entrada / "fim" / f"{cena}.png", "-sseof", "-0.2")
-    if etapa != "storyboard":
-        (entrada / "quiz.md").write_text(quiz)
-        (entrada / "publico.md").write_text(publico)
-    return entrada
+    with tempfile.TemporaryDirectory() as tmp:
+        entrada = Path(tmp) / "entrada"
+        entrada.mkdir()
+        if etapa == "roteiro":
+            (entrada / "roteiro.md").write_text(tabela(cenas, ["Tela", "Fala"]))
+        if etapa == "storyboard":
+            (entrada / "tela.md").write_text(tabela(cenas, ["Tela"]))
+        if etapa in ("storyboard", "animatic"):
+            (entrada / "quadros").mkdir()
+            for s in stills(video, cenas):
+                shutil.copy(s, entrada / "quadros" / s.name)
+        if etapa in ("animatic", "rascunho"):
+            (entrada / "fala.md").write_text(tabela(cenas, ["Fala"]))
+        if etapa == "rascunho":
+            ordem = []
+            for cena, _ in cenas:
+                render = video / "cenas" / "render" / f"{cena}.mp4"
+                fim = 0.0
+                for i, t in enumerate(tempos[f"{cena}#planos"], 1):
+                    fim += t
+                    ordem.append(entrada / "quadros" / f"{cena}-{i}.png")
+                    quadro(render, ordem[-1], "-ss", f"{max(0.0, fim - 0.1):.3f}")
+                quadro(render, entrada / "inicio" / f"{cena}.png")
+                quadro(render, entrada / "fim" / f"{cena}.png", "-sseof", "-0.2")
+            folha(ordem, entrada / "folha.png")
+        if etapa != "storyboard":
+            (entrada / "quiz.md").write_text(quiz)
+            (entrada / "publico.md").write_text(publico)
+
+        registro = revisao / f"{etapa}-{k}" / "entrada"
+        shutil.copytree(entrada, registro)
+        cego = Path(tempfile.mkdtemp(prefix="rodada-")) / "entrada"
+        shutil.copytree(entrada, cego)
+    return cego
 
 
 def main(args):

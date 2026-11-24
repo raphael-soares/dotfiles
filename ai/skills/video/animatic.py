@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from revisao import Falha, duracoes, exigir, planos, stills
+from revisao import Falha, concat, duracoes, exigir, planos, stills
 
 USO = "uso: python3 animatic.py <pasta-do-video>"
 
@@ -20,13 +20,15 @@ def montar(video):
 
     imagens, sons, total = ["ffconcat version 1.0"], ["ffconcat version 1.0"], 0.0
     for cena, linhas in cenas:
+        if cena not in tempos:
+            raise Falha(f"{cena}: duracoes.json não tem a cena")
         cortes = list(tempos.get(f"{cena}#planos", [tempos[cena]]))
         if len(cortes) != len(linhas):
             raise Falha(f"{cena}: duracoes.json não tem um tempo por plano do roteiro")
         cortes[-1] += max(0.0, tempos[cena] - sum(cortes))
         for i, t in enumerate(cortes, 1):
-            imagens += [f"file '{(video / 'storyboard' / f'{cena}-{i}.png').resolve()}'", f"duration {t:.3f}"]
-        sons.append(f"file '{(video / 'audio' / f'{cena}.wav').resolve()}'")
+            imagens += [concat(video / "storyboard" / f"{cena}-{i}.png"), f"duration {t:.3f}"]
+        sons.append(concat(video / "audio" / f"{cena}.wav"))
         total += sum(cortes)
     imagens.append(imagens[-2])
 

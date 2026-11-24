@@ -18,6 +18,11 @@ Na pasta podem estar:
 - `tela.md`: o que cada plano pretende mostrar.
 - `fala.md`: o que a voz diz em cada plano.
 - `inicio/<cena>.png` e `fim/<cena>.png`: primeiro e último quadro de cada cena.
+- `folha.png`: todos os quadros numa folha só, na ordem, para ver o vídeo
+  inteiro de uma vez (cor, ritmo, repetição).
+
+Quando não houver `tela.md`, o que o plano pretende mostrar é aquilo de que a
+voz fala em `fala.md`: julgue **mudo** e **pretendido** contra ela.
 
 ## Rubrica
 

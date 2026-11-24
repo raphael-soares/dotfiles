@@ -81,6 +81,7 @@ onde essa pessoa se perde; por isso o espectador cego revisa cada etapa.
 | `audio/planos/<id>-<n>.wav`, `audio/<id>.wav`, `audio/duracoes.json` | narração por plano, por cena e as durações |
 | `storyboard/<id>-<n>.png` | pose final de cada plano |
 | `animatic.mp4` | os quadros do storyboard no tempo da narração, com a voz |
+| `rascunho.mp4` | as cenas do rascunho animado montadas com a voz |
 | `revisao/<etapa>-<k>/entrada/` | o que o revisor recebeu na rodada `k` |
 | `revisao/<etapa>-<k>.md` | relatório do revisor e o que o autor fez com cada achado |
 | `cenas/manim/<id>.py`, `cenas/manim/palco.py` | cenas Manim e os construtores compartilhados do vídeo |
@@ -154,8 +155,11 @@ parado se retoma.
 9. **Rascunho animado.** Agora o movimento: cada plano leva da pose anterior à
    próxima, seguindo `manim.md`, Movimento. As poses aprovadas não mudam. Todas
    as cenas em baixa resolução (`manim -ql`), em `cenas/render/`, montadas com a
-   voz num `rascunho.mp4`. **Rodada do crítico e do espectador no rascunho.**
-   **Ponto 3: pare e mostre o rascunho.**
+   voz num `rascunho.mp4`: liste as cenas em ordem num arquivo `file '...'` do
+   concat do ffmpeg, faça o mesmo com `audio/<id>.wav` e junte com
+   `ffmpeg -f concat -safe 0 -i v.txt -f concat -safe 0 -i a.txt -c:v copy
+   -c:a aac -shortest rascunho.mp4`. **Rodada do crítico e do espectador no
+   rascunho.** **Ponto 3: pare e mostre o rascunho.**
 10. **Passada final** em 1920x1080 a 30 fps, cada cena do tamanho da sua
     narração; se a animação acaba antes, segure o último quadro. **Montagem** no
     FilmCraft e exportação de `final.mp4`. **Miniatura** no VectorCraft,
@@ -189,8 +193,9 @@ Não sabe:
 - ...
 ```
 
-Os títulos das seções são lidos pelo `revisao.py`: mantenha-os. Só a pergunta
-numerada sai para o revisor; o que estiver indentado abaixo dela fica.
+Os títulos das seções são lidos pelo `revisao.py`: mantenha-os. Cada pergunta
+cabe numa linha só, começando por `1.`, `2.` na margem; só essa linha sai para
+o revisor, e o que estiver indentado abaixo dela fica.
 
 ### Mapa de termos
 
@@ -220,12 +225,15 @@ briefing inteiro, a direção nem o gabarito: o valor deles é não saber.
 Para cada rodada:
 
 1. Prepare a entrada: `python3 ~/.omp/agent/skills/video/revisao.py <pasta>
-   <etapa>`. Ele cria `revisao/<etapa>-<k>/entrada/` com só o que o revisor
-   pode ver e imprime o caminho; falta de arquivo (quadro, render, briefing)
-   para tudo e lista o que falta.
+   <etapa>`. Ele monta só o que o revisor pode ver, guarda uma cópia em
+   `revisao/<etapa>-<k>/entrada/` como registro e imprime o caminho de outra
+   cópia, numa pasta temporária fora do vídeo (assim o revisor não chega no
+   briefing nem no nome do vídeo). Arquivo faltando (quadro, render, briefing),
+   render mais curto que a narração ou tabela torta param tudo e dizem o quê.
 2. Chame o agente com `task`, `agent: video-espectador` ou `video-critico`, e
    na tarefa só `Pasta: <caminho impresso>`. Nada de resumo, contexto ou dica:
-   qualquer coisa a mais acaba com a cegueira.
+   qualquer coisa a mais acaba com a cegueira. No rascunho os dois agentes
+   recebem a mesma pasta.
 3. Escreva `revisao/<etapa>-<k>.md`: o relatório do revisor, a correção do quiz
    contra o gabarito (espectador) e, para cada achado, "corrigido" (onde) ou
    "rejeitado" (por quê). Achado não some: o que você rejeitar fica com o
@@ -279,7 +287,7 @@ planos é `audio/<id>.wav`. Meça com `ffprobe` e grave `audio/duracoes.json` co
 a duração de cada cena em `<id>` e a de cada plano em `<id>#planos` (as cenas e
 o `animatic.py` leem dele). Respiro no fim da cena (o dono pode pedir): estique
 o `.wav` da cena com `apad=whole_dur=<total>` e grave o total novo em `<id>`,
-sem mexer nos planos.
+sem mexer nos planos. Depois do Ponto 2 isso é mudança de tempo.
 
 ### Pronúncia
 

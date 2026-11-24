@@ -97,7 +97,9 @@ def montar(raiz, stills=True):
 
 
 def rodar(v, etapa):
-    return subprocess.run([sys.executable, str(REVISAO), str(v), etapa], capture_output=True, text=True)
+    tmp = Path(v).parent / "tmp"
+    tmp.mkdir(exist_ok=True)
+    return subprocess.run([sys.executable, str(REVISAO), str(v), etapa], capture_output=True, text=True, env={**os.environ, "TMPDIR": str(tmp)})
 
 
 def textos(pasta):
@@ -178,14 +180,68 @@ class Revisao(unittest.TestCase):
         self.assertFalse((self.v / "revisao").exists())
 
     def test_second_round_new_folder(self):
-        primeira = self.entrada("roteiro")
-        antes = (primeira / "roteiro.md").read_text()
+        self.entrada("roteiro")
+        registro = self.v / "revisao" / "roteiro-1" / "entrada" / "roteiro.md"
+        antes = registro.read_text()
 
-        segunda = self.entrada("roteiro")
+        self.entrada("roteiro")
 
-        self.assertEqual(primeira.parent.name, "roteiro-1")
-        self.assertEqual(segunda.parent.name, "roteiro-2")
-        self.assertEqual((primeira / "roteiro.md").read_text(), antes)
+        self.assertTrue((self.v / "revisao" / "roteiro-2" / "entrada" / "roteiro.md").is_file())
+        self.assertEqual(registro.read_text(), antes)
+
+    def test_printed_path_hides_video_folder(self):
+        e = self.entrada("roteiro")
+
+        self.assertNotIn(str(self.v), str(e))
+        self.assertNotIn("revisao", str(e))
+        self.assertFalse((e.parent / "briefing.md").exists())
+        self.assertEqual((e / "quiz.md").read_text(), (self.v / "revisao" / "roteiro-1" / "entrada" / "quiz.md").read_text())
+
+    def test_quiz_without_questions_fails(self):
+        (self.v / "briefing.md").write_text(BRIEFING.replace("1. Para onde", "Para onde").replace("2. O que gira", "O que gira"))
+
+        r = rodar(self.v, "roteiro")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("Quiz", r.stderr)
+        self.assertFalse((self.v / "revisao").exists())
+
+    def test_missing_fala_column_fails(self):
+        (self.v / "roteiro.md").write_text(ROTEIRO.replace("| Tela | Fala |", "| Tela | Voz |", 1))
+
+        r = rodar(self.v, "roteiro")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("01-a", r.stderr)
+        self.assertFalse((self.v / "revisao").exists())
+
+    def test_unescaped_pipe_in_row_fails(self):
+        (self.v / "roteiro.md").write_text(ROTEIRO.replace("O disco guarda os dados.", "O disco | guarda os dados."))
+
+        r = rodar(self.v, "roteiro")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("01-a#1", r.stderr)
+        self.assertFalse((self.v / "revisao").exists())
+
+    def test_short_render_fails_and_creates_nothing(self):
+        video(self.v / "cenas" / "render" / "01-a.mp4", 1.2)
+        video(self.v / "cenas" / "render" / "02-b.mp4", 1)
+
+        r = rodar(self.v, "rascunho")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("01-a", r.stderr)
+        self.assertFalse((self.v / "revisao").exists())
+
+    def test_rascunho_contact_sheet(self):
+        video(self.v / "cenas" / "render" / "01-a.mp4", 2)
+        video(self.v / "cenas" / "render" / "02-b.mp4", 1)
+
+        e = self.entrada("rascunho")
+
+        self.assertTrue((e / "folha.png").is_file())
+        self.assertFalse((e / "tela.md").exists())
 
     def test_rascunho_frames(self):
         video(self.v / "cenas" / "render" / "01-a.mp4", 2)
@@ -233,6 +289,14 @@ class Animatic(unittest.TestCase):
 
     def rodar(self):
         return subprocess.run([sys.executable, str(ANIMATIC), str(self.v)], capture_output=True, text=True)
+
+    def test_animatic_in_folder_with_apostrophe(self):
+        self.v = self.v.rename(Path(self.tmp.name) / "d'água")
+
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertAlmostEqual(duracao(self.v / "animatic.mp4"), 5.1, delta=0.1)
 
     def test_animatic_length_matches_narration(self):
         r = self.rodar()

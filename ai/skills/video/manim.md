@@ -21,10 +21,12 @@ falhou roda de novo sozinha.
 ## Tempo e poses
 
 O `Cena` do `tema.py` herda de `MovingCameraScene` e lê
-`$VIDEO_DIR/audio/duracoes.json`. A cena usa `self.p(plano, fração)` para os
-`run_time` (fração da fala daquele plano), `self.ate(plano)` para esperar o
-plano começar, `self.t(fração)` quando a cena inteira é um plano só, e termina
-com `self.fechar()`, que espera o que falta para a duração da narração.
+`$VIDEO_DIR/audio/duracoes.json`. A cena usa `self.p(i, fração)` para os
+`run_time` (fração da fala do plano de índice `i`, contado a partir de 0),
+`self.ate(k)` para esperar o fim do plano `k` do roteiro (contado a partir de 1,
+ou seja, o começo do plano de índice `k`), `self.t(fração)` quando a cena
+inteira é um plano só, e termina com `self.fechar()`, que espera o que falta
+para a duração da narração.
 
 Com `-s`, as animações pulam para o fim e o `Cena` grava a pose de cada plano:
 `self.ate(k)` salva `storyboard/<id>-<k>.png` (o fim do plano `k`, contado a
