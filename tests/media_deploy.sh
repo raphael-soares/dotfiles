@@ -79,6 +79,30 @@ link_files 2>/dev/null
 [[ -L $HOME/.local/bin/mediactl && ! -L $HOME/.local/bin/media-removed ]] || fail "link_files did not restore and prune links"
 [[ $(cat "$HOME/.local/bin/media-backup") == mine ]] || fail "link_files replaced a file that is not a link"
 
+# fake_arr <done>: Radarr and Sonarr before (0) or after (1) configure_arrs, recording writes in $T/arr.
+fake_arr() {
+  wait_http() { :; }
+  api() {
+    local old=3 rss=30
+    ((ARR_DONE)) && old=9 rss=0
+    case "$2 $3" in
+      "GET /config/indexer") echo "{\"id\":1,\"rssSyncInterval\":$rss}" ;;
+      "GET /qualityprofile") echo '[{"id":3,"name":"Old"},{"id":9,"name":"Manual"}]' ;;
+      "GET /movie" | "GET /series" | "GET /collection") echo "[{\"id\":1,\"qualityProfileId\":$old},{\"id\":2,\"qualityProfileId\":9}]" ;;
+      PUT*) echo "$1 $3 $5" >>"$T/arr" ;;
+    esac
+  }
+}
+(fake_arr && ARR_DONE=0 && configure_arrs) 2>/dev/null
+for want in 'radarr /config/indexer/1 {"id":1,"rssSyncInterval":0}' 'sonarr /config/indexer/1 {"id":1,"rssSyncInterval":0}' \
+  'radarr /movie/editor {"movieIds": [1], "qualityProfileId": 9}' 'sonarr /series/editor {"seriesIds": [1], "qualityProfileId": 9}' \
+  'radarr /collection {"collectionIds": [1], "qualityProfileId": 9}'; do
+  grep -qxF "$want" "$T/arr" || fail "configure_arrs did not send: $want"
+done
+rm "$T/arr"
+report=$(fake_arr && ARR_DONE=1 && CHECK=1 && configure_arrs && echo "drift=$DRIFT")
+[[ $report == drift=0 && ! -e $T/arr ]] || fail "configure_arrs reports or writes on arrs already without RSS and on Manual"
+
 (source "$REPO/media/bin/media-lib.sh" && for i in {1..13000}; do printf '%0100d\n' "$i"; done >"$MEDIA_LOG" && log "last")
 [[ $(wc -l <"$MEDIA_LOG") -le 5000 && $(tail -n1 "$MEDIA_LOG") == *": last" ]] || fail "the log is not trimmed to its latest lines"
 

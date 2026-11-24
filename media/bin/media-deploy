@@ -302,6 +302,37 @@ configure_seerr() {
   done
 }
 
+# Nothing grabs on its own: RSS sync is off, and every title sits on the Manual profile
+# (configarr creates it) so a release picked in Stremio is never refused for its quality.
+# Runs before configarr, which deletes the old profiles only once no title uses them.
+configure_arrs() {
+  local app port kind cfg manual ids
+  for port in 7878 8989; do wait_http "http://127.0.0.1:$port/ping"; done
+  for app in radarr sonarr; do
+    cfg=$(api "$app" GET /config/indexer)
+    if [[ $(jq .rssSyncInterval <<<"$cfg") != 0 ]] && apply "$app rss sync"; then
+      api "$app" PUT "/config/indexer/$(jq .id <<<"$cfg")" -d "$(jq -c '.rssSyncInterval = 0' <<<"$cfg")" >/dev/null
+      log "$app rss sync off"
+    fi
+    kind=movie
+    [[ $app == sonarr ]] && kind=series
+    manual=$(api "$app" GET /qualityprofile | jq '.[] | select(.name == "Manual") | .id')
+    [[ -n $manual ]] || continue
+    ids=$(api "$app" GET "/$kind" | jq -c --argjson m "$manual" 'map(select(.qualityProfileId != $m) | .id)')
+    if [[ $ids != '[]' ]] && apply "$app titles outside the Manual profile"; then
+      api "$app" PUT "/$kind/editor" -d "{\"${kind}Ids\": $ids, \"qualityProfileId\": $manual}" >/dev/null
+      log "$app titles moved to the Manual profile"
+    fi
+    # Radarr collections hold a profile too, and an old one in use blocks configarr's delete.
+    [[ $app == radarr ]] || continue
+    ids=$(api radarr GET /collection | jq -c --argjson m "$manual" 'map(select(.qualityProfileId != $m) | .id)')
+    if [[ $ids != '[]' ]] && apply "radarr collections outside the Manual profile"; then
+      api radarr PUT /collection -d "{\"collectionIds\": $ids, \"qualityProfileId\": $manual}" >/dev/null
+      log "radarr collections moved to the Manual profile"
+    fi
+  done
+}
+
 # Cloudflare-fronted indexers fail their first creation test until Prowlarr holds the clearance cookie.
 run_configarr() {
   local port i
@@ -336,6 +367,7 @@ main() {
   start_units
   configure_qbittorrent
   configure_bazarr
+  configure_arrs
   run_configarr
   configure_seerr
   configure_jellyfin
@@ -351,6 +383,7 @@ check() {
   configure_qbittorrent
   render_bazarr
   configure_bazarr
+  configure_arrs
   configure_seerr
   configure_jellyfin
   problems=$(health)
