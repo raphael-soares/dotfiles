@@ -23,6 +23,13 @@ log() {
   (($(stat -c %s "$LOG") < 1048576)) || { tail -n 5000 "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"; }
 }
 
+# notify <message>: log, plus a desktop notification when a session bus is reachable.
+notify() {
+  log "$*"
+  [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]] && command -v notify-send >/dev/null || return 0
+  notify-send -a Media "$*" || true
+}
+
 # api <app> <method> <path> [curl args...]: path is relative to the app's API root.
 api() {
   local app=$1 method=$2 path=$3 url auth

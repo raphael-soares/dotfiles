@@ -4,8 +4,6 @@ set -euo pipefail
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 STALL_HOURS=${MEDIA_STALL_HOURS:-6}
 SLOW_4K_HOURS=${MEDIA_SLOW_4K_HOURS:-12}
-MIN_SEEDS=${MEDIA_MIN_SEEDS:-5}
-KEPT=$STATE/slow-4k-kept
 CATEGORIES='["Movies","Series","Anime"]'
 TAGS=(library seeding-only stalled)
 
@@ -29,66 +27,37 @@ tag() {
   [[ -z $want || ", $have, " == *", $want, "* ]] || qbt /torrents/addTags -d "hashes=$hash" --data-urlencode "tags=$want"
 }
 
-# A stalled download Radarr or Sonarr grabbed goes to the blocklist, which also makes the app search
-# for another release. One added by hand only gets the tag.
-replace() {
+# drop <hash> <name> <why>: a download Radarr or Sonarr grabbed leaves the queue and qBittorrent
+# without a blocklist entry or a new search, and the owner is told to pick another release.
+# One added by hand is not in a queue and fails, so it only gets the tag.
+drop() {
   local hash=${1^^} app id
   for app in radarr sonarr; do
     id=$(api "$app" GET '/queue?pageSize=1000' | jq -r --arg h "$hash" '.records[] | select(.downloadId == $h) | .id' | head -1)
     [[ -n $id ]] || continue
-    api "$app" DELETE "/queue/$id?removeFromClient=true&blocklist=true"
-    log "$app is replacing stalled $2"
+    api "$app" DELETE "/queue/$id?removeFromClient=true&blocklist=false"
+    notify "$2 $3; escolha outra versão no Stremio"
     return 0
   done
   return 1
 }
 
-# stdin: qBittorrent's torrents; $1: Radarr's queue records; $2: now. Prints queue id, movie id, hash,
-# bytes left, swarm seeders and name of 4K downloads that ran 30 minutes and still expect more than
-# SLOW_4K_HOURS.
+# stdin: qBittorrent's torrents; $1: Radarr's queue records; $2: now. Prints hash and name of 4K
+# downloads that ran 30 minutes and still expect more than SLOW_4K_HOURS.
 slow_4k() {
   jq -r --argjson q "$1" --argjson now "$2" --argjson secs $((SLOW_4K_HOURS * 3600)) '
     (map({key: (.hash | ascii_upcase), value: .}) | from_entries) as $t
     | $q[] | select(.quality.quality.resolution == 2160) | . as $r | $t[$r.downloadId] // empty
     | select(.progress < 1 and $now - .added_on >= 1800 and .eta >= $secs)
-    | [$r.id, $r.movieId, $r.downloadId, .amount_left, .num_complete, .name] | @tsv'
-}
-
-# stdin: Radarr's releases for a movie; $1: bytes the 4K download still needs; $2: its swarm's
-# seeders. Prints guid, indexer id and title of the best 1080p release that is smaller than what is
-# left, has more seeders than the 4K (and at least MIN_SEEDS), and that Radarr only turns down
-# because the 4K one is in the queue.
-pick_1080p() {
-  jq -r --argjson left "$1" --argjson swarm "$2" --argjson min "$MIN_SEEDS" '[.[]
-    | select(.quality.quality.resolution == 1080 and .size < $left and (.seeders // 0) >= ([$min, $swarm] | max))
-    | select(all(.rejections[]?; startswith("Release in queue")))]
-    | sort_by(-.customFormatScore, -.seeders) | first // empty | [.guid, .indexerId, .title] | @tsv'
-}
-
-# A 4K download that would take too long becomes the best faster 1080p release; Radarr can still
-# upgrade to a faster 4K later. Without such a release it keeps going and is not checked again.
-downgrade() {
-  local queue=$1 movie=$2 hash=$3 left=$4 swarm=$5 name=$6 guid indexer title
-  IFS=$'\t' read -r guid indexer title < <(api radarr GET "/release?movieId=$movie" | pick_1080p "$left" "$swarm") || true
-  if [[ -n ${guid:-} ]]; then
-    api radarr DELETE "/queue/$queue?removeFromClient=true&blocklist=true&skipRedownload=true"
-    api radarr POST /release -d "$(jq -nc --arg g "$guid" --argjson i "$indexer" '{guid: $g, indexerId: $i}')" >/dev/null
-    log "$name is too slow in 4K; grabbed $title"
-  elif [[ $(api radarr GET "/movie/$movie" | jq .hasFile) == true ]]; then
-    api radarr DELETE "/queue/$queue?removeFromClient=true&blocklist=true&skipRedownload=true"
-    log "dropped slow 4K upgrade $name"
-  else
-    mkdir -p "${KEPT%/*}" && echo "$hash" >>"$KEPT"
-    log "$name is slow in 4K and no 1080p release would be faster; keeping it"
-  fi
+    | [$r.downloadId, .name] | @tsv'
 }
 
 main() {
-  local info stalled hash name progress have want queue movie left swarm
+  local info stalled hash name progress have want
   qbt /torrents/createTags --data-urlencode "tags=$(IFS=,; echo "${TAGS[*]}")"
   info=$(qbt /torrents/info)
-  while IFS=$'\t' read -r queue movie hash left swarm name; do
-    grep -qsx "$hash" "$KEPT" || downgrade "$queue" "$movie" "$hash" "$left" "$swarm" "$name"
+  while IFS=$'\t' read -r hash name; do
+    drop "$hash" "$name" "levaria mais de ${SLOW_4K_HOURS}h em 4K"
   done < <(slow_4k "$(api radarr GET '/queue?pageSize=1000' | jq -c .records)" "$(date +%s)" <<<"$info")
   info=$(qbt /torrents/info)
   stalled=$(stalled_torrents "$(date +%s)" <<<"$info")
@@ -97,7 +66,7 @@ main() {
     if [[ $progress == 1 ]]; then
       if torrent_linked "$hash"; then want=library; else want=seeding-only; fi
     elif grep -qx "$hash" <<<"$stalled"; then
-      replace "$hash" "$name" && continue
+      drop "$hash" "$name" "parou há ${STALL_HOURS}h" && continue
       want=stalled
     fi
     tag "$hash" "$have" "$want"
