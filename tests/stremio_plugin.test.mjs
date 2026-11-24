@@ -112,3 +112,47 @@ test("pushError gives the owner something readable", () => {
   assert.equal(P.pushError({ message: "Series not found" }), "Series not found");
   assert.equal(P.pushError([{ rejections: ["Unable to parse"] }]), "nome sem título e ano reconhecíveis");
 });
+
+test("queueByHash groups a season pack's records and reads progress", () => {
+  const q = P.queueByHash([
+    { id: 1, seriesId: 7, downloadId: "AB", size: 200, sizeleft: 50, trackedDownloadState: "downloading" },
+    { id: 2, seriesId: 7, downloadId: "AB", size: 200, sizeleft: 50, trackedDownloadState: "downloading" },
+    { id: 3, movieId: 4, downloadId: "CD", size: 0, sizeleft: 0, trackedDownloadState: "downloading" },
+    { id: 4, movieId: 5, downloadId: "EF", size: 10, sizeleft: 0, trackedDownloadState: "importPending" },
+    { id: 5, movieId: 6, downloadId: null },
+  ], "sonarr");
+  assert.deepEqual(q.get("ab"), { app: "sonarr", ids: [1, 2], itemId: 7, text: "Baixando 75%", cancelable: true });
+  assert.equal(q.get("cd").text, "Baixando");
+  assert.deepEqual([q.get("ef").text, q.get("ef").cancelable], ["Importando", false]);
+  assert.equal(q.size, 3);
+});
+
+test("importedHash names the download behind the item's current file", () => {
+  const h = [
+    { eventType: "downloadFolderImported", downloadId: "OLD", movieId: 2, date: "2026-11-21T00:00:00Z" },
+    { eventType: "downloadFolderImported", downloadId: "NEW", movieId: 2, date: "2026-11-22T00:00:00Z" },
+    { eventType: "grabbed", downloadId: "LATER", movieId: 2, date: "2026-11-23T00:00:00Z" },
+    { eventType: "downloadFolderImported", downloadId: "OTHER", movieId: 3, date: "2026-11-24T00:00:00Z" },
+  ];
+  assert.equal(P.importedHash(h, "movieId", 2), "new");
+  assert.equal(P.importedHash(h, "movieId", 9), null);
+});
+
+test("rowState: downloading rows cancel, imported ones do nothing, the rest download", () => {
+  const queued = { text: "Baixando 40%", cancelable: true };
+  assert.deepEqual(P.rowState(undefined, undefined, false), { text: "", menu: "Baixar no PC", icon: "download", action: "pick" });
+  assert.deepEqual(P.rowState(undefined, queued, false), { text: "Baixando 40%", menu: "Cancelar download", icon: "cancel", action: "cancel" });
+  assert.equal(P.rowState(undefined, { text: "Importando", cancelable: false }, false).action, "none");
+  assert.deepEqual(P.rowState(undefined, undefined, true), { text: "No PC", menu: "Já está no PC", icon: "done", action: "none" });
+  assert.equal(P.rowState({ text: "Enviando…", busy: true }, queued, false).action, "none");
+  assert.deepEqual(P.rowState({ text: "servidor fora de alcance", error: true }, queued, false).action, "cancel");
+  assert.equal(P.rowState({ text: "servidor fora de alcance", error: true }, undefined, false).action, "pick");
+  assert.equal(P.rowState({ text: "Baixando" }, undefined, false).text, "Baixando");
+});
+
+test("a cancelled title leaves Radarr or Sonarr only when it has no file", () => {
+  assert.equal(P.emptyAfterCancel("radarr", { hasFile: false }), true);
+  assert.equal(P.emptyAfterCancel("radarr", { hasFile: true }), false);
+  assert.equal(P.emptyAfterCancel("sonarr", { statistics: { episodeFileCount: 0 } }), true);
+  assert.equal(P.emptyAfterCancel("sonarr", { statistics: { episodeFileCount: 3 } }), false);
+});

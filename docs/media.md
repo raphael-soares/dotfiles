@@ -186,9 +186,17 @@ right-click menu, adds the title to Radarr or Sonarr if it is not there
 (`Manual` profile, no search; anime by genre goes to `~/Media/Anime` with the
 `anime` tag), monitors that film or the episodes the release covers (a whole
 season for a season pack), and pushes that release. The row then shows
-"Baixando", or the reason it failed ("servidor fora de alcance", "o servidor
-demorou demais", "perfil Manual não existe no Radarr", or the app's
-rejection). Errors also go to Stremio Enhanced's log, tagged `manual-pick`.
+"Baixando" with the percentage from Radarr's or Sonarr's queue (refreshed every
+5 seconds, still there after reopening the title), or the reason it failed
+("servidor fora de alcance", "o servidor demorou demais", "perfil Manual não
+existe no Radarr", or the app's rejection). Errors also go to Stremio
+Enhanced's log, tagged `manual-pick`.
+
+A downloading row shows an X: clicking it, or "Cancelar download" in its menu,
+asks for confirmation and removes the download from the queue and qBittorrent
+(no blocklist). If the title is left with no file and nothing downloading, it
+leaves Radarr or Sonarr too. The release whose file is in the library shows
+"No PC" with a check, and clicking it does nothing.
 
 Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable
 `manual-pick` in Settings > Plugins and fill its settings: server

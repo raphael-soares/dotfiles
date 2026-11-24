@@ -19,7 +19,8 @@ dotfiles.
 Nada baixa sozinho. O dono escolhe cada release no Stremio Enhanced: clicar
 numa linha do Torrentio (o play virou download) ou "Baixar no PC" no menu do
 botão direito; o plugin adiciona o título no
-Radarr ou no Sonarr e manda aquele release. Você não escolhe release.
+Radarr ou no Sonarr e manda aquele release. A linha mostra o progresso, e
+clicar de novo nela cancela o download. Você não escolhe release.
 
 ## Comandos
 
