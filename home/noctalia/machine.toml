@@ -9,17 +9,9 @@ enabled = false
 auto_sync = false
 
 [bar.default]
-position = "bottom"
 start = [ "active_workspace" ]
 center = [ "fedora", "taskbar" ]
 end = [ "tray", "clipboard", "notifications", "network", "bluetooth", "volume", "input_volume", "clock" ]
-margin_edge = 6
-margin_ends = 6
-radius = 12
-radius_top_left = 12
-radius_top_right = 12
-radius_bottom_left = 12
-radius_bottom_right = 12
 
 [widget.fedora]
 type = "control-center"

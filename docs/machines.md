@@ -30,8 +30,8 @@ Noctalia works the same way. `hyprland/noctalia/base.toml` is the shared
 base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and
 wallpaper. Each machine links its own `machine.toml` next to it
 (`laptop/noctalia/machine.toml` or `home/noctalia/machine.toml`) for settings
-that belong to that machine: idle, hooks, greeter sync, the desktop's bottom
-bar. Noctalia merges every `*.toml` there in name order, so `machine.toml`
+that belong to that machine: idle, hooks, greeter sync, the desktop's bar
+widgets. Noctalia merges every `*.toml` there in name order, so `machine.toml`
 wins over `base.toml`.
 
 The repo keeps no state. Noctalia's interface writes theme, wallpaper and bar
