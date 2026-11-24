@@ -55,7 +55,6 @@ default_target_type = "symbolic"
 "hyprland/gtk/gtk-3.0/settings.ini" = "~/.config/gtk-3.0/settings.ini"
 "hyprland/gtk/gtk-4.0/settings.ini" = "~/.config/gtk-4.0/settings.ini"
 "hyprland/noctalia/templates" = { type = "symbolic", target = "~/.config/noctalia/templates", recurse = false }
-"media/stremio/stremio-enhanced.desktop" = "~/.local/share/applications/stremio-enhanced.desktop"
 "hyprland/noctalia/icon-theme.sh" = "~/.config/noctalia/icon-theme.sh"
 
 [laptop.files]
@@ -83,6 +82,7 @@ default_target_type = "symbolic"
 "media/whisper" = { type = "symbolic", target = "~/.config/media/whisper", recurse = false }
 "media/systemd" = "~/.config/systemd/user"
 "media/bin" = "~/.local/bin"
+"media/stremio/stremio-enhanced.desktop" = "~/.local/share/applications/stremio-enhanced.desktop"
 "media/autostart" = "~/.config/autostart"
 
 [design.files]

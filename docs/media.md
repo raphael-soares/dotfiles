@@ -18,8 +18,8 @@ and Jellyfin Desktop (flatpak) plays on this PC. Design:
 |---|---|---|
 | Jellyfin | <http://fedora.local:8096> | LAN |
 | qBittorrent WebUI (used by Radarr and Sonarr) | `host.containers.internal:8080` | containers, password in `media.env` |
-| Radarr | <http://fedora.local:7878> | LAN (the Stremio plugin on both PCs), no login |
-| Sonarr | <http://fedora.local:8990> | LAN (the Stremio plugin on both PCs), no login; 8989 is Spotifast's login redirect |
+| Radarr | <http://fedora.local:7878> | LAN (the browser on the laptop), no login |
+| Sonarr | <http://fedora.local:8990> | LAN (the browser on the laptop), no login; 8989 is Spotifast's login redirect |
 | Prowlarr | <http://127.0.0.1:9696> | this PC |
 | Bazarr | <http://127.0.0.1:6767> | this PC |
 | FlareSolverr | `flaresolverr:8191` | containers only |
@@ -176,12 +176,12 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 
 ## Picking a release in Stremio
 
-`missing.sh hyprland` prints how to install Stremio Enhanced
-(`hyprland/install/stremio-enhanced` unpacks the latest AppImage in
+Stremio is only on this PC: the `media` module carries it, so the laptop never
+gets it. `missing.sh media` prints how to install Stremio Enhanced
+(`media/install/stremio-enhanced` unpacks the latest AppImage in
 `~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) and Arr Pick
 (<https://github.com/raphael-soares/stremio-arr-pick>, a private repo) into
-its plugins folder, with `gh release download`. A machine whose `gh` account
-cannot read the repo goes without the plugin. Run the same commands to update
+its plugins folder, with `gh release download`. Run the same commands to update
 either one. How the plugin behaves is in its README.
 
 Each torrent row keeps playing and gets a round download button next to the
@@ -193,9 +193,9 @@ folder, so films go to `~/Media/Movies` and every show, anime included, to
 (click to stop and delete it) and a check once that release is in the library.
 Errors show on hover and go to Stremio Enhanced's log, tagged `arr-pick`.
 
-Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable Arr
+Once: open Stremio Enhanced, sign in, install Torrentio, enable Arr
 Pick in Settings > Plugins and fill its four settings: Radarr URL
-`http://fedora.local:7878`, Sonarr URL `http://fedora.local:8990`, and the API
+`http://127.0.0.1:7878`, Sonarr URL `http://127.0.0.1:8990`, and the API
 keys from `media.env` (`RADARR__AUTH__APIKEY`, `SONARR__AUTH__APIKEY`).
 
 ## Once, after the first deploy
