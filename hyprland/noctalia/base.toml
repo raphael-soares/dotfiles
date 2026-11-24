@@ -22,7 +22,7 @@ order = [ "default" ]
     radius_top_left = 0
     radius_top_right = 0
     shadow = false
-    start = [ "active_workspace" ]
+    start = [ "remote", "active_workspace" ]
     thickness = 38
     widget_spacing = 12
 
@@ -514,7 +514,7 @@ browser_placement = "floating"
 w-engine-panel_position = "center"
 
 [plugins]
-enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots" ]
+enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots", "raphael/hypr-remote" ]
 
     [[plugins.source]]
     kind = "git"
@@ -775,6 +775,9 @@ show_vpn_label = true
 
 [widget.notifications]
 hide_when_no_unread = true
+
+[widget.remote]
+type = "raphael/hypr-remote:remote"
 
 [widget.tray]
 color = "on_surface"

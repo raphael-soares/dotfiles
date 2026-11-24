@@ -1,0 +1,13 @@
+id = "raphael/hypr-remote"
+name = "Hypr Remote"
+version = "1.0.0"
+plugin_api = 24
+author = "raphael"
+license = "MIT"
+icon = "sun"
+description = "Shows a sun while the other machine streams this screen and a moon while this machine shows the other one."
+tags = ["hyprland", "bar", "indicator"]
+
+[[widget]]
+id = "remote"
+entry = "widget.luau"
