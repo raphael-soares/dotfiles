@@ -29,14 +29,15 @@ if have loginctl && [[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/nul
   step "sudo loginctl enable-linger $USER"
 fi
 if have sunshine; then
+  for unit in sunshine-prelogin remote-serving; do
+    need_file "hyprland/sunshine/$unit.service" "/etc/systemd/system/$unit.service" \
+      "sudo systemctl daemon-reload && sudo systemctl restart sunshine-prelogin.service" \
+      "s|@USER@|$USER|g; s|@UID@|$(id -u)|g; s|@HOME@|$HOME|g"
+  done
   sunshine=$(readlink -f "$(command -v sunshine)")
   # KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
   grep -q cap_sys_admin <<<"$(getcap "$sunshine" 2>/dev/null)" ||
     step "sudo setcap cap_sys_admin+p $sunshine && sudo systemctl restart sunshine-prelogin.service"
-  for unit in sunshine-prelogin remote-serving; do
-    need_file "hyprland/sunshine/$unit.service" "/etc/systemd/system/$unit.service" \
-      "sudo systemctl daemon-reload" "s|@USER@|$USER|g; s|@UID@|$(id -u)|g; s|@HOME@|$HOME|g"
-  done
   need_enabled sunshine-prelogin.service remote-serving.service
   need_restart sunshine-prelogin.service sunshine \
     "$HOME/.config/sunshine/sunshine.conf" "$HOME/.config/sunshine/apps.json"

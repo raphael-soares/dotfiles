@@ -9,6 +9,9 @@ REPO={{dotter.current_dir}}
 STATE=${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles
 mkdir -p "$STATE"
 have() { command -v "$1" >/dev/null; }
+# On a fresh machine a step below can fail for a package not installed yet; the list of
+# what to install is printed anyway.
+trap '"$REPO/.dotter/missing.sh" {{#each dotter.packages}}{{#if this}}{{@key}} {{/if}}{{/each}}|| true' EXIT
 
 {{#if dotter.packages.terminal}}
 # Noctalia's Ghostty template rewrites the theme line of ~/.config/ghostty/config,
@@ -78,7 +81,7 @@ if systemctl --user cat fumon.service >/dev/null 2>&1; then
 fi
 # libadwaita apps read the font from dconf, not from settings.ini. The icon theme comes
 # from the Noctalia qt6ct template hook (noctalia/icon-theme.sh).
-if have gsettings; then
+if have gsettings && gsettings writable org.gnome.desktop.interface font-name >/dev/null 2>&1; then
   gsettings set org.gnome.desktop.interface font-name 'Sans 10'
   gsettings set org.gnome.desktop.interface monospace-font-name 'Monospace 10'
   gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita'
@@ -109,11 +112,11 @@ fi
 {{/if}}
 
 {{#if dotter.packages.media}}
-"$REPO/media/bin/media-deploy" "$REPO"
+"$REPO/media/bin/media-deploy" "$REPO" || echo "==> media-deploy failed, see above" >&2
 {{/if}}
 
 {{#if dotter.packages.design}}
-"$REPO/design/bin/design-deploy" "$REPO"
+"$REPO/design/bin/design-deploy" "$REPO" || echo "==> design-deploy failed, see above" >&2
 {{/if}}
 
 {{#if dotter.packages.work}}
@@ -124,5 +127,3 @@ for item in AGENTS.md RULES.md config.yml keybindings.yml lsp.json skills prompt
   ln -sfn "$REPO/ai/.omp/agent/$item" "$profile/$item"
 done
 {{/if}}
-
-"$REPO/.dotter/missing.sh" {{#each dotter.packages}}{{#if this}}{{@key}} {{/if}}{{/each}}|| true

@@ -176,13 +176,13 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 
 ## Picking a release in Stremio
 
-The `hyprland` module installs Stremio Enhanced (the latest AppImage, unpacked
-in `~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) on both PCs,
-and the latest release of Arr Pick
-(<https://github.com/raphael-soares/stremio-arr-pick>, a private repo) into its
-plugins folder. Deploy reads the release with `gh`; a machine whose `gh`
-account cannot read the repo prints a skip line and goes without the plugin.
-How the plugin behaves is in its README.
+`missing.sh hyprland` prints how to install Stremio Enhanced
+(`hyprland/install/stremio-enhanced` unpacks the latest AppImage in
+`~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) and Arr Pick
+(<https://github.com/raphael-soares/stremio-arr-pick>, a private repo) into
+its plugins folder, with `gh release download`. A machine whose `gh` account
+cannot read the repo goes without the plugin. Run the same commands to update
+either one. How the plugin behaves is in its README.
 
 Each torrent row keeps playing and gets a round download button next to the
 play button, and its right-click menu a "Baixar" item. Arr Pick adds the title

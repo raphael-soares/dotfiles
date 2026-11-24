@@ -13,7 +13,7 @@ fail() { echo "FAILED: $*"; failures=$((failures + 1)); }
 # never answers.
 mkdir -p "$T/bin" "$T/tools" "$T/sys"/{rpm,pacman,repo,flatpak,enabled,fw} "$T/root" "$T/state"
 for c in bash sh sed sha256sum cmp grep cat mkdir awk sort cut head tr env dirname basename rm \
-  hostname id getent; do
+  hostname id getent readlink; do
   p=$(type -P "$c") && ln -s "$p" "$T/tools/$c"
 done
 S=$T/sys
@@ -43,6 +43,8 @@ EOF
 cat >"$T/bin/systemctl" <<EOF
 #!/bin/sh
 [ "\$1" = is-enabled ] && [ -e "$S/enabled/\$2" ] && echo enabled
+[ "\$1" = is-active ] && [ -e "$S/active/\$2" ] && echo active
+exit 0
 EOF
 cat >"$T/bin/firewall-cmd" <<EOF
 #!/bin/sh
@@ -73,6 +75,7 @@ EOF
 echo 'need_restart demo.service demo "$REPO/files/plain.conf"' >"$R/restart.sh"
 mkdir -p "$R/restart" && mv "$R/restart.sh" "$R/restart/manual.sh"
 mkdir -p "$R/fw" && echo 'need_firewall --add-port=7878/tcp --add-service=ssh' >"$R/fw/manual.sh"
+mkdir -p "$R/svc" && echo 'need_enabled a.service' >"$R/svc/manual.sh"
 echo 'packages = ["pkgs", "done"]' >"$R/.dotter/local.toml"
 
 run() {
@@ -87,6 +90,15 @@ expect() {
 }
 has() { grep -qxF -- "$2" <<<"$3" || fail "$1: no line [$2] in [$3]"; }
 lacks() { ! grep -qF -- "$2" <<<"$3" || fail "$1: has [$2] in [$3]"; }
+
+mkdir -p "$S/active"
+expect "service off" "Still to do by hand:
+==> svc
+sudo systemctl enable --now a.service" "$(run fedora svc)"
+touch "$S/enabled/a.service"
+has "service enabled but stopped" "sudo systemctl enable --now a.service" "$(run fedora svc)"
+touch "$S/active/a.service"
+expect "service on" "" "$(run fedora svc)"
 
 touch "$S/rpm/a" "$S/rpm/b"
 expect "fedora, everything installed" "" "$(run fedora pkgs)"
@@ -188,6 +200,21 @@ has "laptop greetd config" \
   "sed 's/@GREETER@/greeter/' $REPO/hyprland/greetd/config.toml | sudo install -Dm644 /dev/stdin /etc/greetd/config.toml" \
   "$(real arch laptop)"
 grep -q "s/@GREETER@/greetd/" <<<"$(real fedora home)" || fail "home greetd config is not rendered for greetd"
+grep -q "s/@GREETER@/greetd/" <<<"$(real fedora laptop)" || fail "the greetd user does not follow the distro"
+[[ $(real fedora home | grep -cx "sudo dracut -f --regenerate-all") == 1 ]] ||
+  fail "home does not regenerate the initramfs exactly once"
+
+printf '#!/bin/sh\n' >"$T/bin/sunshine"
+printf '#!/bin/sh\necho "$1 cap_sys_admin=p"\n' >"$T/bin/getcap"
+printf '#!/bin/sh\necho yes\n' >"$T/bin/loginctl"
+chmod +x "$T/bin/sunshine" "$T/bin/getcap" "$T/bin/loginctl"
+mkdir -p "$T/root/etc/systemd/system"
+echo old >"$T/root/etc/systemd/system/sunshine-prelogin.service"
+out=$(real fedora hyprland)
+grep -F "/etc/systemd/system/sunshine-prelogin.service" <<<"$out" |
+  grep -qF "&& sudo systemctl daemon-reload && sudo systemctl restart sunshine-prelogin.service" ||
+  fail "a changed Sunshine unit does not restart Sunshine: [$out]"
+rm "$T/bin/sunshine" "$T/bin/getcap" "$T/bin/loginctl"
 
 lacks "hyprland on arch" "dnf copr" "$(real arch hyprland)"
 has "hyprland on fedora without the copr" "sudo dnf copr enable -y lionheartp/Hyprland" "$(real fedora hyprland)"
@@ -200,6 +227,8 @@ has "sshd with a key" "sudo systemctl enable --now sshd avahi-daemon" "$(real fe
 
 while read -r p; do touch "$S/rpm/$p"; done <"$REPO/media/packages.fedora.txt"
 touch "$S/fw/7878_tcp" "$S/fw/8990_tcp"
+has "media without the Jellyfin app" "flatpak install --user flathub org.jellyfin.JellyfinDesktop" "$(real fedora media)"
+touch "$S/flatpak/org.jellyfin.JellyfinDesktop"
 expect "media with everything in place" "" "$(real fedora media)"
 rm "$S/fw/8990_tcp"
 has "media with a port closed" "sudo firewall-cmd --permanent --add-port=8990/tcp && sudo firewall-cmd --reload" "$(real fedora media)"

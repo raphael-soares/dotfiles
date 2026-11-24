@@ -75,11 +75,11 @@ reopening the app fixes it, from the menu or by asking the agent again.
 
 The `video` skill turns a topic and the owner's material into a narrated 16:9
 `.mp4` and a thumbnail, in `~/Design/Videos/<slug>/`. Besides the apps above it
-uses tools the deploy installs on the desktop:
+uses these tools on the desktop:
 
 | Tool | From | Used for |
 | --- | --- | --- |
-| Manim | `uv tool install manim`, by `design-deploy` | algorithm, diagram and formula scenes |
+| Manim | `uv tool install manim`, printed by `missing.sh design` | algorithm, diagram and formula scenes |
 | Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
 | Kokoro | `kokoro.service`, a podman quadlet on `127.0.0.1:8880` | narration through omp's `tts` |
 

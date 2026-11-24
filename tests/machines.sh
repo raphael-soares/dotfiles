@@ -76,10 +76,24 @@ for p in "${gone_from_hook[@]}"; do ! hook_has "$p" || fail "$machine hook still
 for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
 modules=$(sed -n 's/^packages *= *\[\(.*\)\]/\1/p' ".dotter/$machine.toml" | tr -d '",')
 for m in $modules; do [[ -f $REPO/$m/manual.sh ]] || fail "module $m has no manual.sh"; done
-called=$(grep -o '/\.dotter/missing\.sh" .*' "$hook" | tr -s ' ' | sed 's/^[^ ]* //; s/ *|| true$//')
+called=$(grep -o '/\.dotter/missing\.sh" .*' "$hook" | tr -s ' ' | sed "s/^[^ ]* //; s/ *|| true' EXIT$//")
 [[ $(tr ' ' '\n' <<<"$called" | sort | xargs) == $(tr ' ' '\n' <<<"$modules" | sort | xargs) ]] ||
   fail "hook runs missing.sh for [$called], the machine deploys [$modules]"
 ! ls "$REPO"/*/remove.*.txt >/dev/null 2>&1 || fail "removal lists are back"
+
+# A fresh machine: only basic tools, and a gsettings without the GNOME schemas. The deploy
+# must still finish and print what to install.
+mkdir -p "$T/bare"
+for c in bash sed grep cat mkdir rm ln cp mv sort cut head tr env dirname basename readlink \
+  sha256sum cmp awk hostname id getent printf xargs; do
+  p=$(type -P "$c") && ln -s "$p" "$T/bare/$c"
+done
+printf '#!/bin/sh\necho "No such schema" >&2\nexit 1\n' >"$T/bare/gsettings"
+chmod +x "$T/bare/gsettings"
+rc=0
+out=$(env -i HOME="$H" PATH="$T/bare" bash "$hook" 2>&1) || rc=$?
+[[ $rc == 0 ]] || fail "$machine deploy on a bare machine exited $rc: $out"
+grep -q "Still to do by hand:" <<<"$out" || fail "$machine deploy on a bare machine printed no manual steps: $out"
 for f in "${hypr_shared[@]}"; do exists "$f"; done
 repo_link .config/hypr
 [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"

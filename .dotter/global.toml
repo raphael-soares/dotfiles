@@ -68,7 +68,7 @@ default_target_type = "symbolic"
 "work/git/unimed" = "~/.config/git/unimed"
 "ai/.omp/overlays" = { type = "symbolic", target = "~/.omp/overlays", recurse = false }
 
-# No files to link: post_deploy.sh copies its sshd drop-in to /etc.
+# No files to link: missing.sh prints the copy of its sshd drop-in to /etc.
 [sshd.files]
 
 [home.files]

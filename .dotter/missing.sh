@@ -96,7 +96,8 @@ need_file() {
 need_enabled() {
   local off=() unit
   for unit; do
-    [[ $(systemctl is-enabled "$unit" 2>/dev/null) == enabled ]] || off+=("$unit")
+    [[ $(systemctl is-enabled "$unit" 2>/dev/null) == enabled &&
+      $(systemctl is-active "$unit" 2>/dev/null) == active ]] || off+=("$unit")
   done
   ((${#off[@]})) && step "sudo systemctl enable --now ${off[*]}"
   return 0

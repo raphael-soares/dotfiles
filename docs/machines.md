@@ -17,8 +17,8 @@ still to do by hand, one block per module, under "Still to do by hand:". With
 no modules it takes the ones this machine deploys; a complete module prints
 nothing. Each module lists its own steps in `<module>/manual.sh`:
 
-- packages from `<module>/packages.<distro>.txt` (`pacman` for repo packages
-  and `yay` for the AUR on Arch, `dnf` on Fedora);
+- packages from `<module>/packages.<distro>.txt` (`dnf` on Fedora; on Arch one
+  `yay` line, or without yay `pacman` for repo packages and the AUR names apart);
 - apps from `<module>/flatpaks.txt`, in the user installation. User apps go
   here, so both machines get the same version and name. What talks to the
   system (portals, Sunshine, Moonlight, Flameshot, Nautilus) stays native;
