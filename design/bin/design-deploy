@@ -33,3 +33,6 @@ tmp=$(mktemp "$MCP_JSON.XXXXXX")
 printf '%s\n' "${installed[@]}" | jq -Rn '{mcpServers: [inputs | select(. != "") | {key: ., value: {command: "craft-mcp", args: [.], cwd: "${HOME}"}}] | from_entries}' >"$tmp"
 mv "$tmp" "$MCP_JSON"
 echo "design: ${#installed[@]} ArtCraft apps registered in omp${installed[*]:+ (${installed[*]})}"
+
+[[ -x $HOME/.local/bin/manim ]] || uv tool install manim
+systemctl --user daemon-reload

@@ -1,0 +1,9 @@
+providers:
+  kokoro:
+    baseUrl: http://127.0.0.1:8880/v1
+    auth: none
+    models:
+      - id: kokoro
+        name: Kokoro 82M
+        api: openai-speech
+        kind: tts

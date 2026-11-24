@@ -6,8 +6,13 @@ modelRoles:
   commit: anthropic/claude-haiku-5-5
   advisor: anthropic/claude-opus-5-5:medium
   default: anthropic/claude-opus-5-5
+  speech: kokoro/kokoro
 retry:
   modelFallback: false
+  fallbackChains:
+    speech: []
+speechgen:
+  enabled: true
 task:
   agentModelOverrides:
     scout: anthropic/claude-sonnet-5.5:medium
