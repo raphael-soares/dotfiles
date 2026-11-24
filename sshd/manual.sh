@@ -1,3 +1,4 @@
+# shellcheck shell=bash  # sourced by .dotter/missing.sh
 need_packages
 # Without an authorized key sshd would take passwords on any network the laptop joins.
 if [[ -s $HOME/.ssh/authorized_keys ]]; then

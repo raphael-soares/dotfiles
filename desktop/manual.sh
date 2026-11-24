@@ -1,3 +1,4 @@
+# shellcheck shell=bash  # sourced by .dotter/missing.sh
 need_packages
 need_flatpaks
 # Spotifast and ZapFast have no dnf repo (on Arch they come from the AUR list).

@@ -7,6 +7,7 @@ set -uo pipefail
 REPO=${DOTFILES_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}
 DISTRO=${DOTFILES_DISTRO:-$(. /etc/os-release && echo "$ID")}
 ROOT=${DOTFILES_ROOT:-}
+# shellcheck disable=SC2034  # read by home/manual.sh
 CMDLINE=${DOTFILES_CMDLINE:-/proc/cmdline}
 STATE=${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles
 REPO_SHOWN=${REPO/#"$HOME"/\~}
@@ -140,6 +141,7 @@ done
 printed=0
 for MODULE in "${modules[@]}"; do
   lines=()
+  # shellcheck source=/dev/null
   source "$REPO/$MODULE/manual.sh"
   ((${#lines[@]})) || continue
   ((printed++)) || echo "Still to do by hand:"

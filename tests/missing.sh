@@ -151,7 +151,7 @@ has "firewall, one open" "sudo firewall-cmd --permanent --add-service=ssh && sud
 
 touch "$S/rpm/b"
 rm "$S/flatpak/app.X"
-out=$(run fedora done flat)
+out=$(run fedora "done" flat)
 lacks "a complete module prints no header" "==> done" "$out"
 has "the other module prints" "==> flat" "$out"
 

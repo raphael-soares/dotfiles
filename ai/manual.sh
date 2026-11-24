@@ -1,3 +1,4 @@
+# shellcheck shell=bash  # sourced by .dotter/missing.sh
 need_packages
 need_cmd omp claude rtk
 superpowers=v7.0.2

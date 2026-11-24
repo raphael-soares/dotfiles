@@ -1,3 +1,4 @@
+# shellcheck shell=bash  # sourced by .dotter/missing.sh
 need_copr lionheartp/Hyprland
 need_copr lizardbyte/stable
 need_packages

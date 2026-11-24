@@ -69,8 +69,8 @@ ensure_whisper_model() {
   mv "$model.part" "$model"
 }
 
-# Dotter needs sudo for the other packages, so media links its own files too; dotter adopts a link
-# that already points at its source.
+# media-deploy also runs on its own (media-deploy ~/.dotfiles), so it links its own files;
+# dotter adopts a link that already points at its source.
 LINK_DIRS=(containers:.config/containers/systemd/media configarr:.config/media/configarr
   prowlarr/definitions:.config/media/prowlarr-definitions whisper:.config/media/whisper)
 LINK_FILES=(bin:.local/bin systemd:.config/systemd/user autostart:.config/autostart)

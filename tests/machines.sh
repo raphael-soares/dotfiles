@@ -64,17 +64,22 @@ else
   fail "hook was not rendered"
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
-shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland hyprland/greetd/config.toml 'install_flatpaks "$1"' 'xdg-mime default'
-  'remote-add --user --if-not-exists flathub'
-  setcap 'capture = kms' sunshine-prelogin.service remote-serving.service 'enable-linger'
-  REVENGE977/stremio-enhanced)
+shared_in_hook=(hyprctl 'xdg-mime default' 'capture = kms' missing.sh)
 laptop_only_in_hook=(enterprise)
-desktop_only_in_hook=(drm.edid_firmware dracut.conf.d media-deploy design-deploy remove_packages\ home
-  'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' org.kde.haruna
-  'tuned-adm profile throughput-performance' packaging/nautilus/syncfast_nautilus.py)
-gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners home/greetd/config.toml laptop/greetd/config.toml)
+desktop_only_in_hook=(media-deploy design-deploy)
+# The deploy configures; installing, downloading and anything needing root is printed
+# by missing.sh for the owner to run.
+gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners home/greetd/config.toml laptop/greetd/config.toml
+  'sudo ' 'dnf ' 'pacman ' 'yay ' 'flatpak install' 'flatpak uninstall' 'curl ' 'gh release' 'git clone'
+  'omp plugin install' 'npx ' 'uv tool install')
 for p in "${gone_from_hook[@]}"; do ! hook_has "$p" || fail "$machine hook still has $p"; done
 for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
+modules=$(sed -n 's/^packages *= *\[\(.*\)\]/\1/p' ".dotter/$machine.toml" | tr -d '",')
+for m in $modules; do [[ -f $REPO/$m/manual.sh ]] || fail "module $m has no manual.sh"; done
+called=$(grep -o '/\.dotter/missing\.sh" .*' "$hook" | tr -s ' ' | sed 's/^[^ ]* //; s/ *|| true$//')
+[[ $(tr ' ' '\n' <<<"$called" | sort | xargs) == $(tr ' ' '\n' <<<"$modules" | sort | xargs) ]] ||
+  fail "hook runs missing.sh for [$called], the machine deploys [$modules]"
+! ls "$REPO"/*/remove.*.txt >/dev/null 2>&1 || fail "removal lists are back"
 for f in "${hypr_shared[@]}"; do exists "$f"; done
 repo_link .config/hypr
 [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"

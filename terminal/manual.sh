@@ -1,3 +1,4 @@
+# shellcheck shell=bash  # sourced by .dotter/missing.sh
 need_packages
 need_cmd starship mise ghostty rbw direnv
 herdr_setup=$HOME/Code/Personal/herdr-setup

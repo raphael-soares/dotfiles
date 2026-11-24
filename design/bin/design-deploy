@@ -34,5 +34,4 @@ printf '%s\n' "${installed[@]}" | jq -Rn '{mcpServers: [inputs | select(. != "")
 mv "$tmp" "$MCP_JSON"
 echo "design: ${#installed[@]} ArtCraft apps registered in omp${installed[*]:+ (${installed[*]})}"
 
-[[ -x $HOME/.local/bin/manim ]] || uv tool install manim
 systemctl --user daemon-reload
