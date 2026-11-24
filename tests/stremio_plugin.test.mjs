@@ -15,13 +15,24 @@ test("parseRoute reads a series episode", () => {
   assert.equal(P.parseRoute("#/detail/series/tt0944947"), null);
 });
 
-test("streamRelease builds the magnet from a Torrentio stream", () => {
-  const r = P.streamRelease({ infoHash: "ABC", title: "Dune.2024.1080p.BluRay\n👤 120 💾 9.8 GB", sources: ["tracker:udp://t:1", "dht:ABC"] });
+test("streamRelease builds the magnet from a stream in Stremio's state", () => {
+  const r = P.streamRelease({ infoHash: "ABC", description: "Dune.2024.1080p.BluRay\n👤 120 💾 9.8 GB", announce: ["tracker:udp://t:1", "dht:ABC"] });
   assert.equal(r.infoHash, "abc");
   assert.equal(r.title, "Dune.2024.1080p.BluRay");
   assert.match(r.magnet, /^magnet:\?xt=urn:btih:abc&/);
   assert.match(r.magnet, /tr=udp%3A%2F%2Ft%3A1/);
   assert.doesNotMatch(r.magnet, /dht/);
+});
+
+test("torrentioStreams keeps only Torrentio's ready streams", () => {
+  const s = { infoHash: "a", description: "x", deepLinks: { player: "#/player/1" } };
+  const state = { streams: [
+    { addon: { manifest: { id: "com.stremio.torrentio.addon" } }, content: { type: "Ready", content: [s] } },
+    { addon: { manifest: { id: "other" } }, content: { type: "Ready", content: [{ ...s, deepLinks: { player: "#/player/2" } }] } },
+    { addon: { manifest: { id: "com.stremio.torrentio.addon" } }, content: { type: "Err" } },
+  ] };
+  assert.deepEqual([...P.torrentioStreams(state).keys()], ["#/player/1"]);
+  assert.equal(P.torrentioStreams({}).size, 0);
 });
 
 test("isAnime follows the Anime genre", () => {
@@ -40,13 +51,15 @@ test("movieAddBody adds without searching", () => {
 });
 
 test("seriesAddBody sends anime to the anime folder, untouched by search", () => {
-  const b = P.seriesAddBody({ title: "JoJo", tvdbId: 9, genres: ["Anime"] }, cfg);
+  const b = P.seriesAddBody({ title: "JoJo", tvdbId: 9, genres: ["Anime"], seasons: [{ seasonNumber: 1, monitored: true }] }, cfg);
   assert.equal(b.rootFolderPath, "/home/raphael/Media/Anime");
   assert.equal(b.seriesType, "anime");
   assert.equal(b.qualityProfileId, 9);
   assert.deepEqual(b.tags, [2]);
   assert.equal(b.seasonFolder, true);
-  assert.equal(b.addOptions.monitor, "none");
+  assert.equal(b.monitored, true);
+  assert.equal(b.addOptions.monitor, "skip");
+  assert.deepEqual(b.seasons, [{ seasonNumber: 1, monitored: false }]);
   assert.equal(b.addOptions.searchForMissingEpisodes, false);
   const s = P.seriesAddBody({ title: "Dark", tvdbId: 8, genres: ["Drama"] }, cfg);
   assert.equal(s.rootFolderPath, "/home/raphael/Media/Series");
@@ -97,4 +110,5 @@ test("pushError gives the owner something readable", () => {
   assert.equal(P.pushError(Object.assign(new Error("t"), { name: "TimeoutError" })), "servidor fora de alcance");
   assert.equal(P.pushError([{ rejections: ["Unknown Movie"] }]), "Unknown Movie");
   assert.equal(P.pushError({ message: "Series not found" }), "Series not found");
+  assert.equal(P.pushError([{ rejections: ["Unable to parse"] }]), "nome sem título e ano reconhecíveis");
 });
