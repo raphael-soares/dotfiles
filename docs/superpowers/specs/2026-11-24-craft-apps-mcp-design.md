@@ -83,7 +83,7 @@ What each app's `--help` and control docs say (versions installed on 2026-11-24)
 | App | Version | Port | App listens with | CLI connects with | Token |
 |---|---|---|---|---|---|
 | VectorCraft | 0.24.1 | 7979 | `VECTORCRAFT_CONTROL_PORT` | `mcp --connect 127.0.0.1:PORT` | no |
-| LightCraft | 0.21.1 | 7980 | `LIGHTCRAFT_CONTROL_PORT` | `mcp --connect 127.0.0.1:PORT` | no |
+| LightCraft | 0.21.1 | 7980 | `LIGHTCRAFT_CONTROL_PORT` | `mcp --compact --connect 127.0.0.1:PORT` (409 tools without `--compact`, in both modes) | no |
 | PhotoCraft | 0.23.1 | 7981 | `PHOTOCRAFT_CONTROL_PORT` | `mcp --bridge 127.0.0.1:PORT` | yes, `PHOTOCRAFT_CONTROL_TOKEN` (64 hex) |
 | WordCraft | 0.18.1 | 7982 | `WORDCRAFT_CONTROL_PORT` | `mcp --connect 127.0.0.1:PORT` | no |
 | GridCraft | 0.19.1 | 7983 | `GRIDCRAFT_CONTROL_PORT` | `mcp --connect PORT` | yes, always; `GRIDCRAFT_CONTROL_TOKEN` |
@@ -95,11 +95,11 @@ What each app's `--help` and control docs say (versions installed on 2026-11-24)
 Every live app takes its port from a variable, so a menu launch listens too once the
 override is in place.
 
-The windowless servers need file access to `~/Design`. Where a CLI denies files
-without automation roots (PhotoCraft: "an omitted root denies it"; SoundCraft: "a
-kind left out grants none of its access"), its windowless arguments carry
-`--automation-read-root` and `--automation-write-root` for `~/Design`. Where roots
-only confine, none are given. This is to make them work, not to confine.
+The windowless servers need file access to `~/Design`. PhotoCraft's CLI refuses
+absolute paths without automation roots, so its windowless arguments carry
+`--automation-read-root` and `--automation-write-root` for `~/Design`. The others
+saved under `~/Design` without roots in a test on 2026-11-24 and get none. This is to
+make PhotoCraft work, not to confine.
 
 ### Flatpak overrides, applied by the deploy
 
@@ -157,12 +157,14 @@ PhotoCraft's bridge refuses roots.
    The tool's description tells the agent to save the document under `~/Design`
    first and pass that path, since the windowless engine's unsaved state does not
    travel.
-5. If the connected child exits (the owner closed the window), pending requests fail
-   with a message, the proxy starts a windowless child again (replaying the
-   handshake, `list_changed` if the tools differ), and the next tool call fails
-   once with "The <App> window was closed; working without a window again. Open
-   <last path> to continue." so the agent reloads the saved file instead of working
-   on an empty engine.
+5. The window counts as closed when, while connected, the app's port stops answering
+   before a request is forwarded, or the connected child exits. A connected child
+   does not exit on its own when the app closes (its calls just fail), so the port is
+   probed on every request. Then the proxy stops the connected child, starts a
+   windowless one again (replaying the handshake, `list_changed` if the tools
+   differ), and that tool call fails once with "The <App> window was closed; working
+   without a window again. Open <last path> to continue." so the agent reloads the
+   saved file instead of working on an empty engine.
 
 ### omp registration
 
@@ -215,5 +217,3 @@ App. It holds the working agreement:
 
 - The skill's name and wording, following the `writing-skills` skill and the other
   skills in `ai/skills/`.
-- Each app's exact windowless arguments, from its `mcp --help` (roots only where
-  files are denied without them).
