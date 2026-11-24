@@ -27,5 +27,5 @@ while :; do
     sleep 3 9>&-
     pgrep -x noctalia >/dev/null || hyprctl eval 'hl.exec_cmd("noctalia")' >/dev/null 9>&-
   fi
-  sleep 3 9>&-
+  sleep 1 9>&-
 done
