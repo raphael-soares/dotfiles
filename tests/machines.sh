@@ -54,7 +54,8 @@ hypr_shared=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
 laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/media-deploy
-  .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer)
+  .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer
+  .local/bin/craft-mcp .local/bin/design-deploy)
 
 hook=$T/cache/.dotter/post_deploy.sh
 if [[ -f $hook ]]; then
@@ -68,7 +69,7 @@ shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland hyprland/
   setcap 'capture = kms' sunshine-prelogin.service remote-serving.service 'enable-linger'
   REVENGE977/stremio-enhanced)
 laptop_only_in_hook=(enterprise)
-desktop_only_in_hook=(drm.edid_firmware dracut.conf.d media-deploy remove_packages\ home
+desktop_only_in_hook=(drm.edid_firmware dracut.conf.d media-deploy design-deploy remove_packages\ home
   'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' org.kde.haruna
   'tuned-adm profile throughput-performance' packaging/nautilus/syncfast_nautilus.py)
 gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners home/greetd/config.toml laptop/greetd/config.toml)

@@ -85,3 +85,6 @@ default_target_type = "symbolic"
 "media/systemd" = "~/.config/systemd/user"
 "media/bin" = "~/.local/bin"
 "media/autostart" = "~/.config/autostart"
+
+[design.files]
+"design/bin" = "~/.local/bin"
