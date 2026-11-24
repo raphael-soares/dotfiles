@@ -26,7 +26,7 @@ nothing. Each module lists its own steps in `<module>/manual.sh`:
   drop-in, EDID), services to enable, firewall rules, linger, `setcap`, the
   kernel argument and the tuned profile, each as the `sudo` command to run;
 - what the repo does not package: Spotifast and ZapFast rpms, Stremio Enhanced
-  (`hyprland/install/stremio-enhanced`), Arr Pick, herdr-setup, the syncfast
+  (`media/install/stremio-enhanced`, fedora only), Arr Pick, herdr-setup, the syncfast
   Nautilus extension, the omp plugin and the Bitwarden MCP for Claude Code.
 
 Run the printed commands, then `missing.sh` again until it prints nothing.

@@ -3,12 +3,6 @@ need_copr lionheartp/Hyprland
 need_copr lizardbyte/stable
 need_packages
 need_flatpaks
-[[ -x $HOME/.local/opt/stremio-enhanced/AppRun ]] || step "$REPO_SHOWN/hyprland/install/stremio-enhanced"
-# Arr Pick sends a picked torrent to Radarr or Sonarr; its repo is private.
-if [[ ! -f $HOME/.config/stremio-enhanced/plugins/arr-pick.plugin.js ]]; then
-  step "gh release download -R raphael-soares/stremio-arr-pick -p arr-pick.plugin.js -D ~/.config/stremio-enhanced/plugins --clobber"
-  note "Arr Pick needs a gh account that reads raphael-soares/stremio-arr-pick"
-fi
 # Fedora has no syncfast-nautilus package (AUR only): the extension comes from the
 # tag of the installed Flatpak, so it speaks the same D-Bus API.
 if [[ $DISTRO == fedora ]]; then
