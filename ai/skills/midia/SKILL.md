@@ -2,7 +2,7 @@
 name: midia
 description: >
   Use para qualquer coisa do Netflix local do dono (Jellyfin, Radarr, Sonarr,
-  Bazarr, qBittorrent no PC fedora, botão Baixar no PC do Stremio): achar ou
+  Bazarr, qBittorrent no PC fedora, plugin Arr Pick do Stremio): achar ou
   adicionar filme, série ou anime; legendas e áudio; apagar; o que ele
   assistiu e recomendações; downloads parados; o que a pilha fez ou por que
   algo quebrou.
@@ -16,11 +16,11 @@ dá `api <radarr|sonarr|prowlarr|bazarr|jellyfin> <MÉTODO> <caminho>` e
 `qbt <caminho>`, já autenticados. Como a pilha funciona: `docs/media.md` do
 dotfiles.
 
-Nada baixa sozinho. O dono escolhe cada release no Stremio Enhanced: clicar
-numa linha do Torrentio (o play virou download) ou "Baixar no PC" no menu do
-botão direito; o plugin adiciona o título no
-Radarr ou no Sonarr e manda aquele release. A linha mostra o progresso, e
-clicar de novo nela cancela o download. Você não escolhe release.
+Nada baixa sozinho. O dono escolhe cada release no Stremio Enhanced com o
+plugin Arr Pick: o botão redondo de download ao lado do play, numa linha do
+Torrentio, ou "Baixar" no menu do botão direito. O plugin adiciona o título no
+Radarr ou no Sonarr e manda aquele release. O botão mostra o progresso, e
+clicar nele de novo para o download. Você não escolhe release.
 
 ## Comandos
 
