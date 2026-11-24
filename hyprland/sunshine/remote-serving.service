@@ -9,6 +9,7 @@ User=@USER@
 Environment=XDG_RUNTIME_DIR=/run/user/@UID@
 # Through bash: SELinux on Fedora does not let a system service exec a file in home.
 ExecStart=/usr/bin/bash @HOME@/.local/bin/remote-serving
+ExecStopPost=/usr/bin/rm -f /run/user/@UID@/remote/serving
 Restart=on-failure
 
 [Install]

@@ -21,18 +21,27 @@ at_peer() {
 here_toggle() { hyprctl eval "$toggle" >/dev/null; }
 peer_toggle() {
   at_peer "HYPRLAND_INSTANCE_SIGNATURE=\$(ls -t /run/user/\$(id -u)/hypr 2>/dev/null | head -1) hyprctl eval '$toggle'" >/dev/null || {
-    echo "$peer has no open session to start the stream from" >&2
+    echo "Could not start the stream on $peer: is a session open there?" >&2
     return 1
   }
 }
 close_here() {
   pkill -x moonlight || return 0
-  while pgrep -x moonlight >/dev/null; do sleep 0.2; done
+  local i
+  for ((i = 0; i < 25; i++)); do
+    pgrep -x moonlight >/dev/null || return 0
+    sleep 0.2
+  done
+  pkill -9 -x moonlight || true
 }
 
+# A running Moonlight decides, not the viewing file: that one can outlive a crash.
 side=idle
-[[ -e $dir/viewing ]] && side=viewing
-[[ -e $dir/serving ]] && side=serving
+if pgrep -x moonlight >/dev/null; then
+  side=viewing
+elif [[ -e $dir/serving ]]; then
+  side=serving
+fi
 
 case ${1:-}:$side in
   show:*) here_toggle ;;
@@ -43,6 +52,7 @@ case ${1:-}:$side in
     here_toggle
     ;;
   swap:viewing)
+    at_peer true
     close_here
     peer_toggle
     ;;

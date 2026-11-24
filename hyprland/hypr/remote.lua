@@ -30,6 +30,11 @@ local function stream_running()
   return false
 end
 
+-- Linger keeps the runtime dir across logout and crashes, so a viewing file can be stale.
+if not stream_running() then
+  os.remove(VIEWING)
+end
+
 local function serving()
   local f = io.open(SERVING, "r")
   if f then
@@ -101,11 +106,17 @@ function M.probe_done(sunshine_ok, ssh_ok, moonlight_running)
   run(R.probe_result(state, sunshine_ok, ssh_ok, moonlight_running or stream_running()))
 end
 
+local probe_gen = 0
 local function toggle()
+  local was_probing = state.probing
   run(R.toggle(state, stream_running()))
-  if state.probing then
+  if state.probing and not was_probing then
+    probe_gen = probe_gen + 1
+    local gen = probe_gen
     hl.timer(function()
-      R.probe_timeout(state)
+      if gen == probe_gen then
+        R.probe_timeout(state)
+      end
     end, { timeout = 5000, type = "oneshot" })
   end
 end

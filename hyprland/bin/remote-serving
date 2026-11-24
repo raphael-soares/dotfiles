@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Keeps $XDG_RUNTIME_DIR/remote/serving while the other machine streams this one,
 # and closes this machine's Moonlight when it starts. Sunshine runs no command when
-# a client drops without quitting the app, so its log is what tells (remote-serving.service).
+# a client drops without quitting the app, so its log is what tells. The journal, not
+# sunshine.log: any `sunshine` run by hand renames the live process's log file.
 set -uo pipefail
 
 dir=${XDG_RUNTIME_DIR:?}/remote
@@ -27,4 +28,4 @@ follow() {
 }
 
 [[ -n ${REMOTE_SERVING_LIB:-} ]] && return 0
-tail -n0 -F "${SUNSHINE_LOG:-$HOME/.config/sunshine/sunshine.log}" 2>/dev/null | follow
+journalctl -u sunshine-prelogin.service -f -n0 -o cat | follow

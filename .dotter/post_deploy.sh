@@ -72,7 +72,7 @@ copy_etc_rendered() {
     status=1
   else
     echo "==> $2"
-    sudo install -Dm644 "$rendered" "$2"
+    sudo install -Dm644 "$rendered" "$2" || status=2
   fi
   rm -f "$rendered"
   return "$status"
@@ -154,13 +154,15 @@ install_packages hyprland
 # Sunshine runs from boot as a system unit, so the other machine reaches the login
 # screen. Portal capture would wait on a permission dialog nobody sees there.
 sunshine_conf=$HOME/.config/sunshine/sunshine.conf
+sunshine_changed=0
 mkdir -p "${sunshine_conf%/*}"
 for line in 'capture = kms' 'system_tray = disabled'; do
-  grep -qx "$line" "$sunshine_conf" 2>/dev/null || echo "$line" >>"$sunshine_conf"
+  grep -qx "$line" "$sunshine_conf" 2>/dev/null && continue
+  echo "$line" >>"$sunshine_conf"
+  sunshine_changed=1
 done
 # KMS capture needs cap_sys_admin, and a package update drops it with the old binary.
 sunshine=$(readlink -f "$(command -v sunshine)")
-sunshine_changed=0
 if ! getcap "$sunshine" | grep -q cap_sys_admin; then
   sudo setcap cap_sys_admin+p "$sunshine"
   sunshine_changed=1
@@ -240,9 +242,10 @@ xdg-mime default org.gnome.Papers.desktop application/pdf
 xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
   video/quicktime video/x-msvideo video/mpeg
 xdg-mime default org.gnome.TextEditor.desktop text/plain
-# The greeter account is greetd on Fedora and greeter on Arch; the repo file carries a placeholder.
+# The greeter account is greetd on Fedora and greeter on Arch. Picked by distro, not by
+# getent: on a fresh Fedora greetd itself is installed later, by the home module.
 greeter=greeter
-getent passwd greetd >/dev/null && greeter=greetd
+[[ $DISTRO == fedora ]] && greeter=greetd
 copy_etc_rendered hyprland/greetd/config.toml /etc/greetd/config.toml "s/@GREETER@/$greeter/" || true
 # Swapping the ~/.config/hypr link while Hyprland is running drops it into emergency mode.
 if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
