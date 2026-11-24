@@ -1,4 +1,4 @@
-package.path = arg[0]:gsub("tests/remote_state.lua$", "") .. "laptop/hypr/?.lua;" .. package.path
+package.path = arg[0]:gsub("tests/remote_state.lua$", "") .. "hyprland/hypr/?.lua;" .. package.path
 local R = require("remote_state")
 
 local failures = 0
@@ -19,119 +19,118 @@ local function check(name, actual, expected)
   end
 end
 
-local function inside(origin)
-  local s = R.new()
-  R.toggle(s, origin)
-  R.probe_result(s, true, true, false)
-  R.workspace_active(s, R.WS)
+local SHOW = { kind = "special", show = true }
+local HIDE = { kind = "special", show = false }
+local REMOTE = { kind = "submap", name = "remote" }
+local RESET = { kind = "submap", name = "reset" }
+
+local function shown()
+  local s = R.new("fedora")
+  R.special_active(s, s.ws)
   return s
 end
 
 do
-  local s = R.new()
-  check("toggle outside probes and says so", R.toggle(s, "3"),
-    { { kind = "notify", text = R.MSG.checking }, { kind = "probe" } })
-  check("toggle remembers origin", s.origin, "3")
-  check("second toggle while probing does nothing", R.toggle(s, "3"), {})
+  local s = R.new("fedora")
+  check("special workspace is named after the peer", s.ws, "special:fedora")
+  check("messages name the peer", R.msg(s, "taken"), "fedora stream closed: fedora is now watching this screen")
+  check("checking message", R.msg(s, "checking"), "Checking if fedora is on...")
+  check("no_stream message", R.msg(s, "no_stream"), "fedora is on, but Sunshine is not answering")
 end
 
 do
-  local s = R.new()
-  R.toggle(s, "3")
-  check("reachable launches", R.probe_result(s, true, true, false), {
-    { kind = "goto", ws = R.WS }, { kind = "notify", text = R.MSG.opening }, { kind = "launch" },
-    { kind = "submap", name = "remote" },
-  })
-  local t = R.new()
-  R.toggle(t, "3")
-  check("reachable with stream running focuses", R.probe_result(t, true, true, true), {
-    { kind = "goto", ws = R.WS }, { kind = "focus_stream" }, { kind = "submap", name = "remote" },
-  })
+  local s = R.new("fedora")
+  check("toggle hidden, no stream: probes", R.toggle(s, false),
+    { { kind = "notify", text = R.msg(s, "checking") }, { kind = "probe" } })
+  check("probing is remembered", s.probing, true)
+  check("second toggle while probing does nothing", R.toggle(s, false), {})
 end
 
 do
-  local s = R.new()
-  check("toggle with stream alive goes straight in", R.toggle(s, "3", true), {
-    { kind = "goto", ws = R.WS }, { kind = "focus_stream" }, { kind = "submap", name = "remote" },
-  })
-  check("direct switch does not probe", s.probing, false)
-  R.workspace_active(s, R.WS)
-  check("direct switch remembers origin", R.toggle(s, R.WS, true),
-    { { kind = "submap", name = "reset" }, { kind = "goto", ws = "3" } })
+  local s = R.new("arch")
+  check("toggle hidden, stream alive: shows it", R.toggle(s, true),
+    { SHOW, { kind = "focus_stream" }, REMOTE })
+  check("showing directly does not probe", s.probing, false)
 end
 
 do
-  local s = R.new()
-  R.toggle(s, "3")
-  R.toggle(s, "3", true)
-  R.workspace_active(s, R.WS)
-  R.toggle(s, R.WS, true)
-  R.workspace_active(s, "3")
-  check("probe reply after a direct switch is ignored", R.probe_result(s, true, true, true), {})
+  local s = shown()
+  check("toggle shown hides", R.toggle(s, true), { RESET, HIDE })
 end
 
 do
-  local s = R.new()
-  R.toggle(s, "3")
-  check("ssh only", R.probe_result(s, false, true, false),
-    { { kind = "notify", text = R.MSG.no_stream } })
-  check("probe done allows next toggle", R.toggle(s, "3"),
-    { { kind = "notify", text = R.MSG.checking }, { kind = "probe" } })
-  check("nothing answers", R.probe_result(s, false, false, false),
-    { { kind = "notify", text = R.MSG.off } })
+  local s = R.new("fedora")
+  R.toggle(s, false)
+  check("probe sunshine ok, no stream: launches", R.probe_result(s, true, true, false),
+    { SHOW, { kind = "notify", text = R.msg(s, "opening") }, { kind = "launch" }, REMOTE })
+  local t = R.new("fedora")
+  R.toggle(t, false)
+  check("probe sunshine ok, stream running: focuses", R.probe_result(t, true, true, true),
+    { SHOW, { kind = "focus_stream" }, REMOTE })
 end
 
 do
-  local s = inside("3")
-  check("toggle inside returns", R.toggle(s, R.WS),
-    { { kind = "submap", name = "reset" }, { kind = "goto", ws = "3" } })
-  local t = R.new()
-  check("toggle inside without origin falls back", R.toggle(t, R.WS),
-    { { kind = "submap", name = "reset" }, { kind = "goto", ws = R.FALLBACK } })
+  local s = R.new("fedora")
+  R.toggle(s, false)
+  check("probe ssh only", R.probe_result(s, false, true, false),
+    { { kind = "notify", text = R.msg(s, "no_stream") } })
+  R.toggle(s, false)
+  check("probe nothing", R.probe_result(s, false, false, false),
+    { { kind = "notify", text = R.msg(s, "off") } })
+  check("probe reply when not probing is ignored", R.probe_result(s, true, true, true), {})
 end
 
 do
-  local s = R.new()
-  check("entering by other means enters passthrough", R.workspace_active(s, R.WS),
-    { { kind = "submap", name = "remote" } })
-  check("leaving resets", R.workspace_active(s, "2"), { { kind = "submap", name = "reset" } })
-  check("moving between laptop workspaces does nothing", R.workspace_active(s, "4"), {})
-end
-
-do
-  local s = inside("3")
-  check("splash closing while the stream window lives is ignored", R.window_close(s, R.CLASS, true), {})
-  check("stream closes while inside", R.window_close(s, R.CLASS, false), {
-    { kind = "submap", name = "reset" },
-    { kind = "notify", text = R.MSG.closed },
-    { kind = "goto", ws = "3" },
-  })
-  local t = inside("3")
-  R.workspace_active(t, "5")
-  check("stream closes while elsewhere", R.window_close(t, R.CLASS, false),
-    { { kind = "notify", text = R.MSG.closed } })
-  check("other window closing is ignored", R.window_close(t, "firefox", false), {})
-end
-
-do
-  local s = R.new()
-  R.toggle(s, "3")
+  local s = R.new("fedora")
+  R.toggle(s, false)
   R.probe_timeout(s)
-  check("lost probe reply does not block the next toggle", R.toggle(s, "3"),
-    { { kind = "notify", text = R.MSG.checking }, { kind = "probe" } })
+  check("lost probe reply does not block the next toggle", R.toggle(s, false),
+    { { kind = "notify", text = R.msg(s, "checking") }, { kind = "probe" } })
 end
 
 do
-  local s = inside("3")
-  check("intruder sent back", R.window_open(s, "firefox", R.WS, "0xabc"),
-    { { kind = "move_window", address = "0xabc", ws = "3" } })
-  check("moonlight stays", R.window_open(s, R.CLASS, R.WS, "0xdef"), {})
-  check("window elsewhere ignored", R.window_open(s, "firefox", "2", "0x1"), {})
+  local s = R.new("fedora")
+  check("special shown enters passthrough", R.special_active(s, s.ws), { REMOTE })
+  check("special shown is remembered", s.shown, true)
+  check("special hidden resets", R.special_active(s, nil), { RESET })
+  check("hidden again does nothing", R.special_active(s, nil), {})
+  check("another special workspace is not the stream", R.special_active(s, "special:magic"), {})
 end
 
 do
-  local s = R.new()
-  check("reload resets submap", R.on_config_reloaded(s), { { kind = "submap", name = "reset" } })
+  local s = shown()
+  check("moonlight opening marks viewing", R.window_open(s, R.CLASS, s.ws, "0x1"), { { kind = "viewing", on = true } })
+  check("other app on the stream is moved out", R.window_open(s, "firefox", s.ws, "0xabc"),
+    { { kind = "move_window", address = "0xabc" } })
+  check("other app elsewhere is ignored", R.window_open(s, "firefox", "2", "0x2"), {})
+end
+
+do
+  local s = shown()
+  check("splash closing while the stream lives is ignored", R.window_close(s, R.CLASS, true, false), {})
+  check("other window closing is ignored", R.window_close(s, "firefox", false, false), {})
+end
+
+do
+  local s = R.new("fedora")
+  check("last moonlight closes while hidden", R.window_close(s, R.CLASS, false, false),
+    { { kind = "viewing", on = false }, { kind = "notify", text = R.msg(s, "closed") } })
+  check("taken while hidden says why", R.window_close(s, R.CLASS, false, true),
+    { { kind = "viewing", on = false }, { kind = "notify", text = R.msg(s, "taken") } })
+end
+
+do
+  local s = shown()
+  check("taken while shown hides and says why", R.window_close(s, R.CLASS, false, true), {
+    { kind = "viewing", on = false }, RESET, HIDE, { kind = "notify", text = R.msg(s, "taken") },
+  })
+end
+
+do
+  local s = R.new("fedora")
+  R.toggle(s, false)
+  check("reload resets submap", R.on_config_reloaded(s), { RESET })
+  check("reload clears probing", s.probing, false)
 end
 
 if failures > 0 then

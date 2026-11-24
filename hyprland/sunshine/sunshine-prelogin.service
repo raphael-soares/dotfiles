@@ -1,0 +1,18 @@
+# System unit so Sunshine is up at the login screen: the user unit waits for a
+# graphical session, and without autologin there is none after a boot.
+[Unit]
+Description=Sunshine game stream host, from boot
+After=network-online.target user@@UID@.service
+Wants=network-online.target user@@UID@.service
+
+[Service]
+User=@USER@
+SupplementaryGroups=input video render
+Environment=XDG_RUNTIME_DIR=/run/user/@UID@
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/@UID@/bus
+ExecStart=/usr/bin/sunshine
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target

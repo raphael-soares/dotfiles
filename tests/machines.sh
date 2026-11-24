@@ -45,10 +45,11 @@ done
 [[ -f $H/.claude/skills/discussao/SKILL.md ]] || fail ".claude/skills does not reach the skills"
 
 hypr_shared=(.config/hypr .config/xdg-desktop-portal/hyprland-portals.conf
-  .config/noctalia-plugins/hypr-shots
+  .config/noctalia-plugins/hypr-shots .config/noctalia-plugins/hypr-remote
   .config/noctalia/base.toml
   Pictures/Wallpaper/forest-4.jpg .config/ghostty/machine.conf
-  .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini .config/hypr-machine)
+  .config/gtk-3.0/settings.ini .config/gtk-4.0/settings.ini .config/hypr-machine
+  .local/bin/remote-serving .local/bin/remote-control .local/bin/monitor-away)
 laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/containers/systemd/media .config/media/configarr .local/bin/media-deploy
@@ -61,24 +62,27 @@ else
   fail "hook was not rendered"
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
-shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/config.toml io.missioncenter.MissionCenter 'xdg-mime default'
-  'remote-add --user --if-not-exists flathub')
+shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland hyprland/greetd/config.toml io.missioncenter.MissionCenter 'xdg-mime default'
+  'remote-add --user --if-not-exists flathub'
+  setcap 'capture = kms' sunshine-prelogin.service remote-serving.service 'enable-linger')
 laptop_only_in_hook=(enterprise)
-desktop_only_in_hook=(setcap drm.edid_firmware dracut.conf.d 'capture = kms' media-deploy remove_packages\ home
-  home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' org.kde.haruna
+desktop_only_in_hook=(drm.edid_firmware dracut.conf.d media-deploy remove_packages\ home
+  'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' org.kde.haruna
   'tuned-adm profile throughput-performance' packaging/nautilus/syncfast_nautilus.py)
-gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners)
+gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners home/greetd/config.toml laptop/greetd/config.toml)
 for p in "${gone_from_hook[@]}"; do ! hook_has "$p" || fail "$machine hook still has $p"; done
 for p in "${shared_in_hook[@]}"; do hook_has "$p" || fail "$machine hook lacks $p"; done
 for f in "${hypr_shared[@]}"; do exists "$f"; done
 repo_link .config/hypr
 [[ -f $H/.config/hypr/hyprland.lua ]] || fail ".config/hypr does not reach hyprland.lua"
-[[ ! -e $H/.config/hypr/remote.lua ]] || fail "remote.lua is still shared"
+[[ -f $H/.config/hypr/remote.lua ]] || fail ".config/hypr does not reach the shared remote.lua"
+[[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine has its own remote.lua, which shadows the shared one"
 links_to() { [[ $(readlink -f "$H/$1") == "$REPO/$2" ]] || fail "$1 does not point to $2"; }
 links_to .config/noctalia/base.toml hyprland/noctalia/base.toml
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||
   fail "hyprtoolkit.conf is tracked, and Noctalia rewrites it with each machine's colors"
 git -C "$REPO" check-ignore -q hyprland/hypr/hyprtoolkit.conf || fail "hyprtoolkit.conf is not ignored"
+! grep -q initial_session "$REPO/hyprland/greetd/config.toml" || fail "the shared greetd config autologins"
 [[ ! -e $H/.local/state/noctalia/settings.toml ]] ||
   fail "Noctalia's state file is deployed, and its interface writes theme and wallpaper there"
 [[ ! -e $H/.local/share/kwin ]] || fail "KWin files are still deployed"
@@ -87,7 +91,7 @@ case $machine in
   arch)
     for f in "${laptop_only[@]}"; do exists "$f"; done
     for f in "${desktop_only[@]}"; do absent "$f"; done
-    [[ -f $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine does not reach remote.lua"
+    grep -q 'peer = "fedora"' "$H/.config/hypr-machine/machine.lua" || fail "arch does not name fedora as its peer"
     links_to .config/noctalia/machine.toml laptop/noctalia/machine.toml
     for p in "${laptop_only_in_hook[@]}"; do hook_has "$p" || fail "hook lacks $p"; done
     for p in "${desktop_only_in_hook[@]}"; do ! hook_has "$p" || fail "arch hook has $p"; done
@@ -99,7 +103,7 @@ case $machine in
     for p in "${desktop_only_in_hook[@]}"; do hook_has "$p" || fail "fedora hook lacks $p"; done
     [[ -f $H/.config/hypr-machine/machine.lua ]] || fail "hypr-machine does not reach machine.lua"
     links_to .config/noctalia/machine.toml home/noctalia/machine.toml
-    [[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "fedora got the remote toggle"
+    grep -q 'peer = "arch"' "$H/.config/hypr-machine/machine.lua" || fail "fedora does not name arch as its peer"
     ;;
   *) echo "unknown machine: $machine"; exit 2 ;;
 esac

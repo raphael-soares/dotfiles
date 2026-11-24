@@ -27,3 +27,5 @@ if host.setup then
   host.setup()
 end
 
+require("remote")
+

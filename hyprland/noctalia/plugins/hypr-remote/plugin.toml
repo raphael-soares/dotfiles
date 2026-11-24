@@ -1,0 +1,22 @@
+id = "raphael/hypr-remote"
+name = "Hypr Remote"
+version = "1.1.0"
+plugin_api = 24
+author = "raphael"
+license = "MIT"
+icon = "sun"
+description = "Sun while the other machine streams this screen, moon while this machine shows the other one; a click offers to swap or end the stream."
+tags = ["hyprland", "bar", "panel", "indicator"]
+
+[[widget]]
+id = "remote"
+entry = "widget.luau"
+
+[[panel]]
+id = "control"
+entry = "panel.luau"
+width = 340
+height = 200
+placement = "floating"
+open_near_click = true
+keyboard_focus = "on_demand"

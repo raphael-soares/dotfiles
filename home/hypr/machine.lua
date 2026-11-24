@@ -1,5 +1,7 @@
 local M = {}
 
+M.peer = "arch"
+
 function M.setup()
   hl.on("hyprland.start", function()
     hl.exec_cmd("discord --start-minimized")

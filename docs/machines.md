@@ -7,7 +7,8 @@ the machine has:
 
 - installs missing packages from `<module>/packages.<distro>.txt` (`yay`/`pacman`
   on Arch, `dnf` on Fedora);
-- copies the Fuxi-H3 udev rule and the greetd config to `/etc` with sudo;
+- copies the Fuxi-H3 udev rule, the greetd config and the Sunshine units to
+  `/etc` with sudo;
 - sets gsettings, `gcr-ssh-agent`, the work omp profile, and reloads Hyprland.
 
 `DOTFILES_LINKS_ONLY=1 dotter deploy` creates only the links.
@@ -27,6 +28,16 @@ and by `home` on `fedora`. It returns `monitors` (fields by output name, read by
 leaves out comes from the wildcard rule (`highrr`, `auto`, scale 1), so the LG
 UltraGear runs at 144 Hz on both machines without a rule of its own; the laptop
 only declares where each screen sits.
+
+A rule with `shared = { model = ..., peer_input = ... }` (the monitor's model as
+`ddcutil detect` names it, and its DDC input code for the other machine's cable)
+starts `bin/monitor-away`, which asks that monitor every second which input it
+shows. While it shows the other machine, `monitors.lua` turns the output off and
+the laptop works on its own screen; the lid still counts it as plugged in. When
+it switches back, the output returns and `laptop/hypr/machine.lua` moves
+workspaces 1 to 10 onto it. A monitor that stops answering is turned back on
+after 10 s. Reading the input needs the `i2c` group on Arch (the deploy adds
+it). To find a code: `ddcutil --brief getvcp 60` with the monitor on each input.
 
 Noctalia works the same way. `hyprland/noctalia/base.toml` is the shared
 base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and

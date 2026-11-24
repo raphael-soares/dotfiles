@@ -13,7 +13,7 @@ order = [ "default" ]
     compositor_blur = false
     concave_edge_corners = false
     contact_shadow = true
-    end = [ "tray", "clipboard", "notifications", "battery", "network", "bluetooth", "volume", "input_volume", "clock" ]
+    end = [ "tray", "clipboard", "notifications", "battery", "network", "bluetooth", "volume", "input_volume", "remote", "clock" ]
     hover_highlight = false
     margin_edge = -1
     margin_ends = -1
@@ -514,7 +514,7 @@ browser_placement = "floating"
 w-engine-panel_position = "center"
 
 [plugins]
-enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots" ]
+enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots", "raphael/hypr-remote" ]
 
     [[plugins.source]]
     kind = "git"
@@ -775,6 +775,9 @@ show_vpn_label = true
 
 [widget.notifications]
 hide_when_no_unread = true
+
+[widget.remote]
+type = "raphael/hypr-remote:remote"
 
 [widget.tray]
 color = "on_surface"

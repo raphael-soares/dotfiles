@@ -1,0 +1,19 @@
+{
+  "panel": {
+    "serving": "{peer} is watching this screen",
+    "viewing": "This screen shows {peer}",
+    "idle": "No stream with {peer}",
+    "show": "Show or hide {peer}",
+    "swap_to_viewing": "Swap: show {peer} here",
+    "swap_to_serving": "Swap: {peer} watches this screen",
+    "stop_serving": "Disconnect {peer}",
+    "stop_viewing": "End the stream"
+  },
+  "notify": {
+    "title": "Remote access"
+  },
+  "tooltip": {
+    "serving": "{peer} is watching this screen",
+    "viewing": "Showing {peer}"
+  }
+}

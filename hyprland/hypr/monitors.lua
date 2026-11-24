@@ -63,6 +63,14 @@ if not MODES[pref] then pref = DEFAULT_MODE end
 local declared = {}
 local settleTimer, enableTimer
 
+-- A monitor showing the other machine (bin/monitor-away) is still plugged in: lid.lua
+-- must not suspend while that machine streams this one. Only the layout skips it.
+-- The file holds the watcher's PID, so one left by a dead watcher is ignored.
+local function away(name)
+  local pid = RUNTIME_DIR and readFile(RUNTIME_DIR .. "/hypr-away/" .. name)
+  pid = pid and pid:match("^%d+")
+  return pid ~= nil and readFile("/proc/" .. pid .. "/stat") ~= nil
+end
 local function connected(name)
   local status = readFile("/sys/class/drm/" .. entries[name] .. "/status")
   return status ~= nil and trim(status) == "connected"
@@ -102,17 +110,19 @@ function M.anyExternalConnected()
   end
   return false
 end
-local anyExternalConnected = M.anyExternalConnected
 
 local function target()
-  local anyExt = anyExternalConnected()
+  local anyExt = false
+  for _, name in ipairs(externals) do
+    if connected(name) and not (internal and away(name)) then anyExt = true end
+  end
   local extOn = pref ~= "internal" or internal == nil
   local intOn = not anyExt or pref == "internal" or (pref == "extend" and not lidClosed())
 
   local want = {}
   if internal then want[internal] = intOn end
   for _, name in ipairs(externals) do
-    want[name] = extOn
+    want[name] = extOn and not (internal and away(name))
   end
   return want
 end
@@ -201,5 +211,17 @@ end
 
 hl.on("monitor.added", schedule)
 hl.on("monitor.removed", schedule)
+
+-- Started on every load: a watcher already running keeps the lock and the new one exits.
+local function startWatchers()
+  for name, rule in pairs(RULES) do
+    local shared = rule.shared
+    if shared then
+      hl.exec_cmd(string.format("monitor-away %s '%s' %d", name, shared.model, shared.peer_input))
+    end
+  end
+end
+hl.on("hyprland.start", startWatchers)
+hl.on("config.reloaded", startWatchers)
 
 return M
