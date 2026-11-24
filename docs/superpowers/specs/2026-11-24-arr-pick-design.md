@@ -2,174 +2,152 @@
 
 ## Intent
 
-`media/stremio/manual-pick.plugin.js` works only for the owner's setup. The
-owner wants a plugin anyone with Radarr and Sonarr can use, kept in its own
-private repository until it is mature enough to open. His own setup becomes
-one configuration of it.
-
-What it does stays the same: in Stremio Enhanced, clicking a torrent stream
-row (or its right-click menu item) adds the title to Radarr or Sonarr without
-searching and hands that exact release over; the row shows progress, an X
-cancels, and the release whose file is in the library is marked.
+`media/stremio/manual-pick.plugin.js` was built around the owner's own flow:
+clicking a row downloads instead of playing, a profile called Manual, an Anime
+folder and tag, Portuguese text in the rows. The owner wants a plugin anyone
+with Radarr and Sonarr can use without learning his flow, simple in the way
+Apple's App Store download button is simple: one control that explains itself
+and almost nothing to configure. It lives in its own private repository until
+it is mature enough to open.
 
 ## Goals
 
-- Nothing in the plugin names the owner's machine, paths, profile, tag or
-  language.
-- Works with any Radarr v5 and Sonarr v4 reachable from the PC running
-  Stremio Enhanced, with sensible defaults for a fresh install.
+- Stremio behaves as before: a stream row still plays.
+- One download control per torrent row, plus a menu item, with three looks:
+  download arrow, progress ring with a stop square, check mark.
+- Settings are only the Radarr and Sonarr address and API key.
+- Everything else is decided from what Radarr and Sonarr already know.
 - Works with any addon whose streams carry a torrent info hash.
-- English and Portuguese.
-- Its own repository with tests in CI and versioned releases.
-- The dotfiles install it from that repository's latest release.
+- Text follows Stremio's interface language (English and Portuguese).
+- Its own repository with tests in CI and versioned releases; the dotfiles
+  install it from the latest release.
 
 ## Non-goals
 
-- Submitting it to the Stremio Enhanced registry (the owner chose a repository
-  only; maybe later, once public).
-- Forcing a release the profile rejects. Radarr's and Sonarr's push only grabs
-  what the profile accepts; the plugin explains the rejection.
+- Submitting it to the Stremio Enhanced registry (maybe later, once public).
+- Sending anime to a separate folder or tagging it. The owner accepted that
+  anime lands in the series root folder; if he wants the Anime folder back, it
+  is done on the server side, not in the plugin.
 - Interactive search as a fallback (minutes per season; ruled out before).
 - Servers behind an auth proxy that blocks API-key requests or CORS.
-- Changing `mediactl`: it keeps the owner's rules (Manual profile, Anime
-  folder, anime tag) in bash.
+- Changing `mediactl`: it keeps the owner's rules in bash.
 
 ## Anti-goals
 
-- A plugin that only works after reading the owner's docs.
-- Silent fallbacks that pick another profile, folder or release.
+- Settings or text that only make sense in the owner's setup.
 - Changing or removing what the user already had in Radarr or Sonarr.
-- Keys or addresses in the repository.
+- A downloaded title that Radarr or Sonarr later replaces on its own from an
+  indexer because the plugin chose a profile that wants an upgrade.
+- Popups for routine actions.
 
 ## Constraints
 
 - Stremio Enhanced plugins are one `.plugin.js` file with a metadata block,
-  run inside the page with a scoped `StremioEnhancedAPI`
-  (`registerSettings`, `getSetting`, `saveSetting`, `onSettingsSaved`,
-  `showAlert`, `logger`). Settings are `input`, `select` (fixed options) and
-  `toggle`.
-- `@updateUrl` must be a public raw URL. While the repository is private it is
-  `none`; when it opens it points at the file on the default branch.
-- The dotfiles deploy runs on both PCs. `gh` on fedora is logged in as
-  `raphael-soares`; on arch as `soaresphael`, which will not get access (the
-  owner's call), so arch skips the plugin with a message until that changes.
-- Requests to plain `http://` LAN addresses work from Stremio Enhanced
-  (verified on the owner's setup with `http://127.0.0.1` and
-  `http://fedora.local`); Radarr and Sonarr answer CORS with `*`.
+  run inside the page with a scoped `StremioEnhancedAPI` (`registerSettings`,
+  `getSetting`, `saveSetting`, `showAlert`, `logger`). Settings are `input`,
+  `select` and `toggle`. Unregistered keys can be saved and read back.
+- Stremio's interface language is `core.getState("ctx").profile.settings.interfaceLanguage`
+  (ISO 639-2, e.g. `eng`, `por`); checked on the test instance.
+- Radarr's and Sonarr's `GET /api/v3/parse?title=` returns the release's
+  quality (`parsedMovieInfo.quality.quality` / `parsedEpisodeInfo.quality.quality`);
+  checked on fedora.
+- `@updateUrl` must be a public raw URL: `none` while the repository is private.
+- `gh` on fedora is logged in as `raphael-soares`; on arch as `soaresphael`,
+  which gets no access (the owner's call), so arch skips the plugin with a
+  message until that changes.
+- Plain `http://` LAN addresses work from Stremio Enhanced; Radarr and Sonarr
+  answer CORS with `*`.
 
 ## Approaches
 
-1. **Settings with defaults** (chosen). The settings panel holds the two URLs,
-   two keys, one profile per app, root folders and optional anime folder and
-   tag. Defaults work on a fresh Radarr or Sonarr; a wrong name fails with the
-   list of valid ones.
-2. Discover profiles and folders and ask on first use. The settings panel only
-   takes fixed options, so this needs a custom screen. More code for a
-   one-time step.
-3. Fall back to interactive search when the profile rejects. Minutes for a
-   season pack; already ruled out.
+1. **Automatic choices, four settings** (chosen). Profile, folder, series type
+   and language come from Radarr, Sonarr and Stremio.
+2. Settings with defaults for profile, folders, anime and language (the first
+   version of this design). Works, but every field is a decision the user has
+   to understand; the owner judged it still shaped by his flow.
+3. Ask on first use. Needs a custom screen for a one-time step.
 
 ## Design
 
 ### Repository
 
-`raphael-soares/stremio-arr-pick`, private, MIT license (my call: ready for
-opening without a relicense). Contents: `arr-pick.plugin.js`, `test/` (the
-current Node tests, moved and extended), a GitHub Actions workflow running
-`node --test`, `README.md` in English (what it does, install, settings, the
-profile limitation, compatible addons), `CHANGELOG.md`. A release is a tag
-`vX.Y.Z` with the plugin file attached; `@version` matches the tag. Local
+`raphael-soares/stremio-arr-pick`, private, MIT license (my call). Contents:
+`arr-pick.plugin.js`, `test/arr-pick.test.mjs`, a GitHub Actions workflow
+running `node --test`, `README.md` in English, `CHANGELOG.md`. A release is a
+tag `vX.Y.Z` with the plugin file attached; `@version` matches the tag. Local
 clone at `~/Code/Personal/stremio-arr-pick`.
 
 ### Settings
 
-| Key | Label (en) | Default | Meaning |
-|---|---|---|---|
-| `radarr_url` | Radarr URL | empty | Full base URL, e.g. `http://192.168.1.10:7878` or `https://host/radarr`. Empty disables films. |
-| `radarr_key` | Radarr API key | empty | |
-| `sonarr_url` | Sonarr URL | empty | Same for series. |
-| `sonarr_key` | Sonarr API key | empty | |
-| `radarr_profile` | Radarr quality profile | `Any` | Used only when the plugin adds a film. |
-| `sonarr_profile` | Sonarr quality profile | `Any` | Used only when the plugin adds a series. |
-| `movie_root` | Movie root folder | empty | Empty: Radarr's first root folder. |
-| `series_root` | Series root folder | empty | Empty: Sonarr's first root folder. |
-| `anime_root` | Anime root folder | empty | Empty: the series root folder. |
-| `anime_tag` | Anime tag | empty | Empty: no tag. A name that does not exist is an error, never created. |
-| `language` | Language | Automatic | Automatic, English, Português. |
+`radarr_url`, `radarr_key`, `sonarr_url`, `sonarr_key`. A URL is a full base
+URL (port, base path, HTTPS allowed; trailing slash ignored). A type whose URL
+is empty gets no control, so someone with only Radarr sees nothing new on
+series. A URL with an empty key shows the error state saying the key is
+missing. Settings are read on every action and refresh.
 
-- Profile and tag names match case-insensitively (my call: names differ in
-  spacing and case between installs, which is also why each app has its own
-  profile setting).
-- Settings are read on every click and every refresh, so a change applies
-  without a reload. A trailing slash in a URL is ignored.
-- Rows of a type whose URL is empty stay untouched (they keep playing), so
-  someone with only Radarr keeps series streaming.
-- A URL with an empty key counts as configured, and the click says the key is
-  missing (my call: silence would hide a half-done setup).
-- Errors name what is wrong and what exists: "profile Manual not found in
-  Sonarr; available: Any, HD-1080p", "root folder /x not found in Radarr;
-  available: /movies".
+### The control
 
-### Respecting what the user already has (my calls)
+- Rows keep playing. Each torrent row gets a round button at its right end;
+  the row's right-click menu gets a "Download" item. Clicking the button never
+  starts playback.
+- Looks:
+  - **download**: arrow in a circle. Click downloads.
+  - **busy**: spinning ring while sending or stopping.
+  - **progress**: ring filled to the download's percentage with a stop square;
+    while importing, a full ring without the square. Click on the square stops
+    without asking (App Store behavior) and deletes the partial download.
+  - **done**: check mark; this release's file is in the library.
+  - **error**: "!" in a circle; the tooltip says why; click retries.
+- Tooltips carry the words ("Download", "Downloading 45%, click to stop",
+  "Importing", "In library", the error). No text inside the row.
 
-- A title already in Radarr or Sonarr keeps its own profile; the click only
-  sets it monitored (and the episodes the release covers). If that profile
-  rejects the release, the error says which profile refused it. Today's code
-  moved the title to the configured profile, which on a generic install would
-  silently change the user's choice.
-- The plugin remembers which titles it added (app and id, kept with
-  `saveSetting` on a hidden key). Only those are removed: after a cancel that
-  leaves them with no file and nothing queued, and right away when the push
-  for the click that added them is rejected. A title the user had before is
-  never removed.
+### Automatic choices
 
-Anime detection stays as today: Sonarr's lookup lists the `Anime` genre; the
-series type becomes `anime` regardless of the folder and tag settings.
+- **Existing title**: keeps its profile; the click only monitors it (and the
+  episodes the release covers). If its profile rejects the release, the error
+  names that profile.
+- **New title, profile**: the release's quality comes from `/parse`. The
+  plugin takes the first profile, by id, that allows that quality and will not
+  upgrade past it (upgrades off, or the quality at or above the cutoff); if
+  none, the first that allows it; if none, the error says no profile accepts
+  that quality.
+- **New title, folder**: the app's first root folder; none is an error.
+- **Series type**: `anime` when Sonarr's lookup has the Anime genre, else
+  standard. No tag.
+- **Language**: Stremio's interface language, else the browser's, else English.
 
-### Streams
+### Cleaning up after itself
 
-Any addon's `Ready` streams with an `infoHash` and a player deep link are
-handled, not only Torrentio's. The release name sent to Radarr or Sonarr is
-the first line of the stream's `description` (or `title` when there is no
-description), which is the torrent name for Torrentio. Other addons format
-this differently; the builder checks MediaFusion and Comet against a real
-title and documents in the README which addons give names Radarr parses. A
-name that does not parse shows Radarr's message.
+The plugin remembers the titles it added (`saveSetting("added", JSON list of
+"radarr:12")`). Such a title is removed, without files, when it is left with
+no file and nothing queued: after a stop, and after a click whose push Radarr
+or Sonarr answered with a rejection or error. After a network error or timeout
+it is left alone, because the grab may still be going. A title the user had
+before is never removed.
 
-### Language
+### Behavior kept
 
-English and Portuguese strings in one table. On Automatic, the language comes
-from Stremio's interface language in the core state when it is Portuguese,
-else the browser language, else English. Status texts: "Sending…",
-"Downloading N%", "Importing", "Cancelling…", "In library"; menu: "Download",
-"Cancel download", "Already in library"; and their Portuguese forms ("Na
-biblioteca" replaces "No PC").
-
-### Behavior kept from today
-
-Progress from the queue matched by info hash every 5 seconds while the page is
-visible; cancel with the native confirmation, removing from queue and client
-without blocklist; the library marker from the latest import in history; the
-30 s request timeout; DOM writes only on change; React-owned nodes hidden, ours
-beside them; errors to the Stremio Enhanced logger.
+Release name from the stream's `description` first line, else `title`; magnet
+from the info hash and trackers; series packs monitor the whole season;
+progress polled every 5 s while the page is visible; queue records grouped by
+info hash; library check from the latest import in history; 30 s request
+timeout; DOM writes only on change; errors to the Stremio Enhanced logger.
 
 ### Dotfiles
 
 - Remove `media/stremio/manual-pick.plugin.js`, `tests/stremio_plugin.test.mjs`,
   its CI step, its `global.toml` entry and the `machines.sh` link assertion.
-- `post_deploy.sh`, in the Stremio Enhanced block: download the latest release
-  asset with `gh release download -R raphael-soares/stremio-arr-pick` into
-  `~/.config/stremio-enhanced/plugins/arr-pick.plugin.js` when the tag changed
-  (state file like the Stremio Enhanced one); if `gh` cannot reach the
-  repository, print one line and go on.
-- `docs/media.md` and the `midia` skill: the plugin lives in its own
-  repository; the owner's settings (URLs `http://fedora.local:7878` and
-  `http://fedora.local:8990`, profile `Manual` in both, anime folder
-  `/home/raphael/Media/Anime`, tag `anime`) are listed once, entered per PC.
-  `mediactl`'s comment points at the new repository.
+- `post_deploy.sh`: download the latest release asset with
+  `gh release download -R raphael-soares/stremio-arr-pick` into
+  `~/.config/stremio-enhanced/plugins/arr-pick.plugin.js` when the tag changed;
+  if `gh` cannot reach the repository, print one line and go on. Remove the
+  old `manual-pick.plugin.*` files.
+- `docs/media.md` and the `midia` skill: where the plugin lives, the four
+  settings for the owner (`http://fedora.local:7878`, `http://fedora.local:8990`,
+  keys from `media.env`), and that anime from the plugin lands in the series
+  folder. `mediactl`'s comment points at the repository.
 
 ## Left to the builder
 
-- Where Stremio Web keeps the interface language in the core state.
-- Exact README wording and the addon compatibility notes.
-- Whether tests reach the pure functions through `module.exports` only.
+- Exact SVG shapes and sizes, matched to Stremio's row icons.
+- README wording and the addon compatibility notes.
