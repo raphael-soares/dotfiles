@@ -2,7 +2,7 @@
 name: midia
 description: >
   Use para qualquer coisa do Netflix local do dono (Jellyfin, Radarr, Sonarr,
-  Bazarr, qBittorrent no PC fedora, botão Baixar no PC do Stremio): achar ou
+  Bazarr, qBittorrent no PC fedora, plugin Arr Pick do Stremio): achar ou
   adicionar filme, série ou anime; legendas e áudio; apagar; o que ele
   assistiu e recomendações; downloads parados; o que a pilha fez ou por que
   algo quebrou.
@@ -16,11 +16,17 @@ dá `api <radarr|sonarr|prowlarr|bazarr|jellyfin> <MÉTODO> <caminho>` e
 `qbt <caminho>`, já autenticados. Como a pilha funciona: `docs/media.md` do
 dotfiles.
 
-Nada baixa sozinho. O dono escolhe cada release no Stremio Enhanced: clicar
-numa linha do Torrentio (o play virou download) ou "Baixar no PC" no menu do
-botão direito; o plugin adiciona o título no
-Radarr ou no Sonarr e manda aquele release. A linha mostra o progresso, e
-clicar de novo nela cancela o download. Você não escolhe release.
+Nada baixa sozinho. O dono escolhe cada release no Stremio Enhanced com o
+plugin Arr Pick: o botão redondo de download ao lado do play, numa linha do
+Torrentio, ou "Baixar" no menu do botão direito. O plugin adiciona o título no
+Radarr ou no Sonarr e manda aquele release. O botão mostra o progresso, e
+clicar nele de novo para o download. Você não escolhe release.
+
+O plugin vem do repositório privado `raphael-soares/stremio-arr-pick` (o
+deploy baixa a última release com `gh`) e tem quatro configurações: URL e
+chave de API do Radarr (`http://fedora.local:7878`) e do Sonarr
+(`http://fedora.local:8990`), chaves no `media.env`. Máquina cujo `gh` não
+lê o repositório fica sem o plugin.
 
 ## Comandos
 
@@ -36,7 +42,7 @@ clicar de novo nela cancela o download. Você não escolhe release.
 | O que a pilha fez e o que falhou, com hora | `mediactl log` / `mediactl log 200` |
 | O que cada pessoa assistiu por último | `mediactl watched 30` |
 | Apagar o arquivo e não baixar de novo | `mediactl delete "dune"` / `mediactl delete jojo 6 1` |
-| Importar à força um download | `mediactl import jojo ~/Media/Downloads/Anime/<pasta> --grep S06E10` |
+| Importar à força um download | `mediactl import jojo ~/Media/Downloads/Shows/<pasta> --grep S06E10` |
 
 ## Fluxos
 
@@ -44,8 +50,8 @@ clicar de novo nela cancela o download. Você não escolhe release.
   que quiser. Leva cerca de um minuto entre o 100% do `queue` e
   o item aparecer no Jellyfin.
 - **Adicionar sem baixar** (para acompanhar ou baixar depois): `search` dá o
-  id (imdb para filme, tvdb para série), depois `add`. Anime vai para Anime
-  pelo gênero, com a tag `anime`.
+  id (imdb para filme, tvdb para série), depois `add`. Toda série, anime
+  incluso, vai para `~/Media/Shows`; anime ganha o tipo anime pelo gênero.
 - **Recomendar:** parta de `watched` (o gosto real) e de `search` para saber
   o que já tem. Proponha; quem baixa é o dono, pelo Stremio.
 - **Algo não apareceu ou quebrou:** `status`, depois `log`. Download parado há

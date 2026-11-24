@@ -140,8 +140,7 @@ sonarr:
       deleteEmptyFolders: true
 
     root_folders:
-      - !env MEDIA_SERIES
-      - !env MEDIA_ANIME
+      - !env MEDIA_SHOWS
 
     download_clients:
       update_password: true
@@ -149,7 +148,6 @@ sonarr:
         - name: qBittorrent
           type: qbittorrent
           enable: true
-          priority: 2
           remove_completed_downloads: false
           remove_failed_downloads: true
           fields:
@@ -157,20 +155,7 @@ sonarr:
             username: media
             password: !env QBITTORRENT_WEBUI_PASSWORD
             port: 8080
-            tv_category: Series
-        - name: qBittorrent Anime
-          type: qbittorrent
-          enable: true
-          priority: 1
-          remove_completed_downloads: false
-          remove_failed_downloads: true
-          tags: [anime]
-          fields:
-            host: host.containers.internal
-            username: media
-            password: !env QBITTORRENT_WEBUI_PASSWORD
-            port: 8080
-            tv_category: Anime
+            tv_category: Shows
       config:
         enable_completed_download_handling: true
 

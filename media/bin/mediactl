@@ -36,8 +36,8 @@ profile() {
     { echo "mediactl: $1 has no Manual profile; run media-deploy" >&2; exit 1; }
 }
 
-# The same rules as the Stremio plugin (media/stremio/manual-pick.plugin.js): Manual profile, no search,
-# anime by genre into Anime with the anime tag. Only the seasons asked for are monitored.
+# Close to Arr Pick, the Stremio plugin (github.com/raphael-soares/stremio-arr-pick): Manual profile,
+# no search, every show in Shows, anime typed by genre. Only the seasons asked for are monitored.
 add() {
   local type=$1 id=$2 seasons=${3:-} lookup body
   if [[ $type == movie ]]; then
@@ -47,13 +47,10 @@ add() {
     api radarr POST /movie -d "$body" | jq -r '"added \(.title) (\(.year)); pick a release in Stremio"'
   else
     lookup=$(api sonarr GET "/series/lookup?term=tvdb:$id" | jq -ec '.[0]') || { echo "mediactl: no series $id" >&2; exit 1; }
-    body=$(jq -c --argjson p "$(profile sonarr)" --arg home "$HOME" --arg s "$seasons" \
-      --argjson tag "$(api sonarr GET /tag | jq '[.[] | select(.label == "anime") | .id][0]')" '
-      (.genres // [] | index("Anime") != null) as $anime
-      | if $anime and $tag == null then error("Sonarr has no anime tag; run media-deploy") else . end
-      | ($s | if . == "" then [] elif . == "all" then null else split(",") | map(tonumber) end) as $want
-      | . + {qualityProfileId: $p, rootFolderPath: "\($home)/Media/\(if $anime then "Anime" else "Series" end)",
-        seriesType: (if $anime then "anime" else "standard" end), tags: (if $anime then [$tag] else [] end),
+    body=$(jq -c --argjson p "$(profile sonarr)" --arg root "$HOME/Media/Shows" --arg s "$seasons" '
+      ($s | if . == "" then [] elif . == "all" then null else split(",") | map(tonumber) end) as $want
+      | . + {qualityProfileId: $p, rootFolderPath: $root,
+        seriesType: (if (.genres // [] | index("Anime")) != null then "anime" else "standard" end), tags: [],
         seasonFolder: true, monitored: true,
         seasons: [.seasons[] | .seasonNumber as $n | .monitored = ($want == null and $n > 0 or (($want // []) | index($n) != null))],
         addOptions: {monitor: "skip", searchForMissingEpisodes: false, searchForCutoffUnmetEpisodes: false}}' <<<"$lookup")

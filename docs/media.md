@@ -1,8 +1,8 @@
 # Media stack
 
-Pick a release in Stremio Enhanced by clicking a Torrentio row (its play
-button is a download button now); Radarr or Sonarr takes that exact release, qBittorrent
-downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Series`,
+Pick a release in Stremio Enhanced with the download button on a Torrentio
+row (the Arr Pick plugin); Radarr or Sonarr takes that exact release, qBittorrent
+downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Shows`,
 Bazarr fetches pt-BR and English subtitles (never the hearing-impaired kind),
 and the Samsung TV plays it in the Jellyfin app. Nothing is grabbed on its
 own: no RSS sync, no automatic search, no upgrades.
@@ -41,8 +41,8 @@ Inside the network, services reach each other by container name
 | Secrets (API keys, OpenSubtitles login) | `~/.config/media/media.env`, mode 600, generated on first deploy |
 | App state and databases | `~/.local/share/media/<service>` |
 | Caches (Jellyfin transcodes, TRaSH repos) | `~/.cache/media` |
-| Downloads | `~/Media/Downloads/{Movies,Series}` |
-| Library | `~/Media/Movies`, `~/Media/Series`, `~/Media/Anime` |
+| Downloads | `~/Media/Downloads/{Movies,Shows}` |
+| Library | `~/Media/Movies`, `~/Media/Shows` (series and anime) |
 | `.torrent` copies | `~/Personal/Torrents` |
 
 `dotter deploy` runs `media/bin/media-deploy`, which:
@@ -109,8 +109,8 @@ the admin's home sections and the playback keys already in `user.json` (a new
 playback key has to be added to the file by hand to be tracked).
 
 `mediactl` drives the stack from the terminal, and the `midia` skill teaches
-agents to use it: `search` and `add` (through Radarr and Sonarr, with the same
-rules as the Stremio plugin and no search), `info` (file, quality, audio and
+agents to use it: `search` and `add` (through Radarr and Sonarr, with the
+same profile and folders as the Stremio plugin and no search), `info` (file, quality, audio and
 subtitles), `subs` (missing subtitles), `watched` (what each Jellyfin user
 played last), `delete` (unmonitor, then delete the file), `queue`, `log` and
 `status` (disk, torrent tags, downloads, health problems and the runs that
@@ -177,31 +177,26 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 ## Picking a release in Stremio
 
 The `hyprland` module installs Stremio Enhanced (the latest AppImage, unpacked
-in `~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) on both PCs
-and links `media/stremio/manual-pick.plugin.js` into its plugins folder.
+in `~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) on both PCs,
+and the latest release of Arr Pick
+(<https://github.com/raphael-soares/stremio-arr-pick>, a private repo) into its
+plugins folder. Deploy reads the release with `gh`; a machine whose `gh`
+account cannot read the repo prints a skip line and goes without the plugin.
+How the plugin behaves is in its README.
 
-Torrentio rows of a film or episode stop playing: the play icon becomes a
-download icon, and clicking the row, or "Baixar no PC" (the old "Play") in its
-right-click menu, adds the title to Radarr or Sonarr if it is not there
-(`Manual` profile, no search; anime by genre goes to `~/Media/Anime` with the
-`anime` tag), monitors that film or the episodes the release covers (a whole
-season for a season pack), and pushes that release. The row then shows
-"Baixando" with the percentage from Radarr's or Sonarr's queue (refreshed every
-5 seconds, still there after reopening the title), or the reason it failed
-("servidor fora de alcance", "o servidor demorou demais", "perfil Manual não
-existe no Radarr", or the app's rejection). Errors also go to Stremio
-Enhanced's log, tagged `manual-pick`.
+Each torrent row keeps playing and gets a round download button next to the
+play button, and its right-click menu a "Baixar" item. Arr Pick adds the title
+to Radarr or Sonarr if it is not there, with no search. Here each app has one
+profile (`Manual`, which allows every quality and never upgrades) and one root
+folder, so films go to `~/Media/Movies` and every show, anime included, to
+`~/Media/Shows`. The button then shows a ring with the download's progress
+(click to stop and delete it) and a check once that release is in the library.
+Errors show on hover and go to Stremio Enhanced's log, tagged `arr-pick`.
 
-A downloading row shows an X: clicking it, or "Cancelar download" in its menu,
-asks for confirmation and removes the download from the queue and qBittorrent
-(no blocklist). If the title is left with no file and nothing downloading, it
-leaves Radarr or Sonarr too. The release whose file is in the library shows
-"No PC" with a check, and clicking it does nothing.
-
-Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable
-`manual-pick` in Settings > Plugins and fill its settings: server
-`http://fedora.local`, and the Radarr and Sonarr API keys from `media.env`
-(`RADARR__AUTH__APIKEY`, `SONARR__AUTH__APIKEY`).
+Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable Arr
+Pick in Settings > Plugins and fill its four settings: Radarr URL
+`http://fedora.local:7878`, Sonarr URL `http://fedora.local:8990`, and the API
+keys from `media.env` (`RADARR__AUTH__APIKEY`, `SONARR__AUTH__APIKEY`).
 
 ## Once, after the first deploy
 
@@ -209,8 +204,8 @@ Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable
    its username (not the email) in `media.env` (`OPENSUBTITLESCOM_USERNAME`,
    `OPENSUBTITLESCOM_PASSWORD`) and `dotter deploy` again.
 2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
-   `Movies` (`~/Media/Movies`), `Shows` (`~/Media/Series`) and `Anime`
-   (`~/Media/Anime`, type Shows). In Dashboard → Playback → Transcoding pick VAAPI with
+   `Movies` (`~/Media/Movies`) and `Shows` (`~/Media/Shows`, series and anime
+   together). In Dashboard → Playback → Transcoding pick VAAPI with
    `/dev/dri/renderD128`. In Dashboard → API Keys create a key and put it in
    `media.env` as `JELLYFIN_TOKEN` (`media-cleanup` reads watch history with
    it). Turn on "Automatically add to collection" in the Movies library. The
@@ -266,19 +261,18 @@ also gets the public trackers from
 <https://ngosang.github.io/trackerslist/trackers_best.txt>, which finds more
 peers and unsticks metadata.
 
-Torrents in `Movies`, `Series` and `Anime` carry one tag, kept by
+Torrents in `Movies` and `Shows` carry one tag, kept by
 `media-torrents` from the watchdog: `library` (a library file is a hardlink of
 it), `seeding-only` (it left the library and waits for the seeding rule) or
 `stalled` (a download that moved nothing for 6 hours, `MEDIA_STALL_HOURS`).
 A stalled download Radarr or Sonarr grabbed is dropped instead, the same way
 as a slow 4K one, with a notification. Games are left alone.
 
-Radarr and Sonarr download into the qBittorrent categories `Movies`, `Series`
-and `Anime` (`~/Media/Downloads/<category>`) and hardlink the finished file
-into `~/Media/Movies`, `~/Media/Series` or `~/Media/Anime`, renamed. Series
-tagged `anime` in Sonarr go through the `qBittorrent Anime` client (priority 1,
-category `Anime`); the Stremio plugin and `mediactl add` tag anime. The untagged client
-(priority 2) takes everything else. A torrent added by hand
+Radarr and Sonarr download into the qBittorrent categories `Movies` and
+`Shows` (`~/Media/Downloads/<category>`) and hardlink the finished file into
+`~/Media/Movies` or `~/Media/Shows`, renamed. Series and anime share `Shows`:
+Sonarr has one root folder and one qBittorrent client, and only types anime
+series as anime so absolute episode numbers parse. A torrent added by hand
 with one of those categories is imported the same way when its film or series
 is already in Radarr or Sonarr (`mediactl add` it first); otherwise it waits
 in that app's Activity queue for a manual import. After each import Radarr and

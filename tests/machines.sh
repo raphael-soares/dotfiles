@@ -81,7 +81,6 @@ repo_link .config/hypr
 [[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine has its own remote.lua, which shadows the shared one"
 links_to() { [[ $(readlink -f "$H/$1") == "$REPO/$2" ]] || fail "$1 does not point to $2"; }
 links_to .config/noctalia/base.toml hyprland/noctalia/base.toml
-links_to .config/stremio-enhanced/plugins/manual-pick.plugin.js media/stremio/manual-pick.plugin.js
 links_to .local/share/applications/stremio-enhanced.desktop media/stremio/stremio-enhanced.desktop
 ! grep -qx com.stremio.Stremio "$REPO"/*/flatpaks.txt || fail "the Flathub Stremio is still listed"
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||

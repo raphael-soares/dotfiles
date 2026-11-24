@@ -203,6 +203,26 @@ fi
 if flatpak info com.stremio.Stremio >/dev/null 2>&1; then
   sudo flatpak uninstall -y --noninteractive com.stremio.Stremio
 fi
+# Arr Pick, the Stremio plugin that sends a picked torrent to Radarr or Sonarr, lives in a
+# private repo: a machine whose gh account cannot read it goes without the plugin.
+se_plugins=$HOME/.config/stremio-enhanced/plugins
+rm -f "$se_plugins"/manual-pick.plugin.*
+if ap_tag=$(gh release view -R raphael-soares/stremio-arr-pick --json tagName -q .tagName 2>/dev/null); then
+  if [[ $(cat "$STATE/arr-pick" 2>/dev/null) != "$ap_tag" || ! -f $se_plugins/arr-pick.plugin.js ]]; then
+    echo "==> Installing Arr Pick $ap_tag"
+    ap_tmp=$(mktemp -d)
+    if gh release download "$ap_tag" -R raphael-soares/stremio-arr-pick -p arr-pick.plugin.js -D "$ap_tmp"; then
+      mkdir -p "$se_plugins"
+      mv -f "$ap_tmp/arr-pick.plugin.js" "$se_plugins/arr-pick.plugin.js"
+      echo "$ap_tag" >"$STATE/arr-pick"
+    else
+      echo "==> Skipping Arr Pick: the $ap_tag download failed"
+    fi
+    rm -rf "$ap_tmp"
+  fi
+else
+  echo "==> Skipping Arr Pick: gh cannot read raphael-soares/stremio-arr-pick"
+fi
 # bin/monitor-away asks the monitor which input it shows over DDC; Arch keeps the
 # i2c devices to that group (Fedora grants them to the logged-in user). Next login.
 if getent group i2c >/dev/null && ! id -nG "$USER" | grep -qw i2c; then
@@ -414,7 +434,7 @@ fi
 
 {{#if dotter.packages.media}}
 install_packages media
-# Radarr and Sonarr answer the manual-pick plugin in Stremio on the other machine.
+# Radarr and Sonarr answer the Arr Pick plugin in Stremio on the other machine.
 if command -v firewall-cmd >/dev/null; then
   sudo firewall-cmd -q --permanent --add-port=7878/tcp --add-port=8990/tcp
   sudo firewall-cmd -q --reload
