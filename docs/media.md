@@ -2,7 +2,7 @@
 
 Pick a release in Stremio Enhanced by clicking a Torrentio row (its play
 button is a download button now); Radarr or Sonarr takes that exact release, qBittorrent
-downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Series`,
+downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Shows`,
 Bazarr fetches pt-BR and English subtitles (never the hearing-impaired kind),
 and the Samsung TV plays it in the Jellyfin app. Nothing is grabbed on its
 own: no RSS sync, no automatic search, no upgrades.
@@ -41,8 +41,8 @@ Inside the network, services reach each other by container name
 | Secrets (API keys, OpenSubtitles login) | `~/.config/media/media.env`, mode 600, generated on first deploy |
 | App state and databases | `~/.local/share/media/<service>` |
 | Caches (Jellyfin transcodes, TRaSH repos) | `~/.cache/media` |
-| Downloads | `~/Media/Downloads/{Movies,Series}` |
-| Library | `~/Media/Movies`, `~/Media/Series`, `~/Media/Anime` |
+| Downloads | `~/Media/Downloads/{Movies,Shows}` |
+| Library | `~/Media/Movies`, `~/Media/Shows` (series and anime) |
 | `.torrent` copies | `~/Personal/Torrents` |
 
 `dotter deploy` runs `media/bin/media-deploy`, which:
@@ -183,8 +183,8 @@ and links `media/stremio/manual-pick.plugin.js` into its plugins folder.
 Torrentio rows of a film or episode stop playing: the play icon becomes a
 download icon, and clicking the row, or "Baixar no PC" (the old "Play") in its
 right-click menu, adds the title to Radarr or Sonarr if it is not there
-(`Manual` profile, no search; anime by genre goes to `~/Media/Anime` with the
-`anime` tag), monitors that film or the episodes the release covers (a whole
+(`Manual` profile, no search; every show goes to `~/Media/Shows`, anime typed
+by genre), monitors that film or the episodes the release covers (a whole
 season for a season pack), and pushes that release. The row then shows
 "Baixando" with the percentage from Radarr's or Sonarr's queue (refreshed every
 5 seconds, still there after reopening the title), or the reason it failed
@@ -209,8 +209,8 @@ Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable
    its username (not the email) in `media.env` (`OPENSUBTITLESCOM_USERNAME`,
    `OPENSUBTITLESCOM_PASSWORD`) and `dotter deploy` again.
 2. Jellyfin, at <http://127.0.0.1:8096> (or Jellyfin Desktop): run the wizard, add the libraries
-   `Movies` (`~/Media/Movies`), `Shows` (`~/Media/Series`) and `Anime`
-   (`~/Media/Anime`, type Shows). In Dashboard → Playback → Transcoding pick VAAPI with
+   `Movies` (`~/Media/Movies`) and `Shows` (`~/Media/Shows`, series and anime
+   together). In Dashboard → Playback → Transcoding pick VAAPI with
    `/dev/dri/renderD128`. In Dashboard → API Keys create a key and put it in
    `media.env` as `JELLYFIN_TOKEN` (`media-cleanup` reads watch history with
    it). Turn on "Automatically add to collection" in the Movies library. The
@@ -266,19 +266,18 @@ also gets the public trackers from
 <https://ngosang.github.io/trackerslist/trackers_best.txt>, which finds more
 peers and unsticks metadata.
 
-Torrents in `Movies`, `Series` and `Anime` carry one tag, kept by
+Torrents in `Movies` and `Shows` carry one tag, kept by
 `media-torrents` from the watchdog: `library` (a library file is a hardlink of
 it), `seeding-only` (it left the library and waits for the seeding rule) or
 `stalled` (a download that moved nothing for 6 hours, `MEDIA_STALL_HOURS`).
 A stalled download Radarr or Sonarr grabbed is dropped instead, the same way
 as a slow 4K one, with a notification. Games are left alone.
 
-Radarr and Sonarr download into the qBittorrent categories `Movies`, `Series`
-and `Anime` (`~/Media/Downloads/<category>`) and hardlink the finished file
-into `~/Media/Movies`, `~/Media/Series` or `~/Media/Anime`, renamed. Series
-tagged `anime` in Sonarr go through the `qBittorrent Anime` client (priority 1,
-category `Anime`); the Stremio plugin and `mediactl add` tag anime. The untagged client
-(priority 2) takes everything else. A torrent added by hand
+Radarr and Sonarr download into the qBittorrent categories `Movies` and
+`Shows` (`~/Media/Downloads/<category>`) and hardlink the finished file into
+`~/Media/Movies` or `~/Media/Shows`, renamed. Series and anime share `Shows`:
+Sonarr has one root folder and one qBittorrent client, and only types anime
+series as anime so absolute episode numbers parse. A torrent added by hand
 with one of those categories is imported the same way when its film or series
 is already in Radarr or Sonarr (`mediactl add` it first); otherwise it waits
 in that app's Activity queue for a manual import. After each import Radarr and

@@ -36,7 +36,7 @@ clicar de novo nela cancela o download. Você não escolhe release.
 | O que a pilha fez e o que falhou, com hora | `mediactl log` / `mediactl log 200` |
 | O que cada pessoa assistiu por último | `mediactl watched 30` |
 | Apagar o arquivo e não baixar de novo | `mediactl delete "dune"` / `mediactl delete jojo 6 1` |
-| Importar à força um download | `mediactl import jojo ~/Media/Downloads/Anime/<pasta> --grep S06E10` |
+| Importar à força um download | `mediactl import jojo ~/Media/Downloads/Shows/<pasta> --grep S06E10` |
 
 ## Fluxos
 
@@ -44,8 +44,8 @@ clicar de novo nela cancela o download. Você não escolhe release.
   que quiser. Leva cerca de um minuto entre o 100% do `queue` e
   o item aparecer no Jellyfin.
 - **Adicionar sem baixar** (para acompanhar ou baixar depois): `search` dá o
-  id (imdb para filme, tvdb para série), depois `add`. Anime vai para Anime
-  pelo gênero, com a tag `anime`.
+  id (imdb para filme, tvdb para série), depois `add`. Toda série, anime
+  incluso, vai para `~/Media/Shows`; anime ganha o tipo anime pelo gênero.
 - **Recomendar:** parta de `watched` (o gosto real) e de `search` para saber
   o que já tem. Proponha; quem baixa é o dono, pelo Stremio.
 - **Algo não apareceu ou quebrou:** `status`, depois `log`. Download parado há

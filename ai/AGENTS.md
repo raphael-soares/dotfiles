@@ -86,7 +86,7 @@ uma linha aqui.
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
 | `~/Games` | jogos, ROMs, saves | só PC de casa |
 | `~/Studio` | produção musical: samples, presets, projetos | só PC de casa |
-| `~/Media` | consumo, uma pasta por tipo: `Movies`, `Books`, e o que vier (`Series`, `Mangas`) | só PC de casa |
+| `~/Media` | consumo, uma pasta por tipo: `Movies`, `Shows` (séries e anime), `Books`, e o que vier (`Mangas`) | só PC de casa |
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
   `~/Code/<Área>/`. `~/TEAjudo` e `~/Unimed` sincronizam documento, marca e
@@ -105,8 +105,9 @@ uma linha aqui.
   PC de casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para
   lá e cada categoria dele cai na área certa: `Books` e `Mangas` em
   `~/Media/<nome>`, `Games/PC` e `Games/Switch` em `~/Games/<nome>`. Filme e
-  série passam pelo Radarr e pelo Sonarr: baixam em `~/Media/Downloads` e
-  entram por hardlink em `~/Media/Movies` e `~/Media/Series`. Categoria nova
+  série (anime incluso) passam pelo Radarr e pelo Sonarr: baixam em
+  `~/Media/Downloads` e entram por hardlink em `~/Media/Movies` e
+  `~/Media/Shows`. Categoria nova
   vai em `media/qbittorrent/categories.json`.
 - Mídia pesada (jogo, ROM, filme, série, sample, gravação de tela) mora em
   `~/Games`, `~/Media`, `~/Studio` e `~/Videos`, que não são pares do syncfast:

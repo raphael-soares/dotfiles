@@ -16,8 +16,7 @@ Environment=TZ=America/Sao_Paulo
 Environment=CONFIGARR_ENFORCE_CONFIG_VALIDATION=true
 Environment=STOP_ON_ERROR=true
 Environment=MEDIA_MOVIES=%h/Media/Movies
-Environment=MEDIA_SERIES=%h/Media/Series
-Environment=MEDIA_ANIME=%h/Media/Anime
+Environment=MEDIA_SHOWS=%h/Media/Shows
 Volume=%h/.config/media/configarr:/app/config:ro
 Volume=%h/.cache/media/configarr:/app/repos
 
