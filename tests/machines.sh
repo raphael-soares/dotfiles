@@ -30,7 +30,7 @@ for f in .bashrc .bash_profile .gitconfig .config/git/ignore .config/starship.to
   .config/fastfetch/config.jsonc \
   .claude/CLAUDE.md .claude/settings.json .claude/skills .claude/hooks/rtk-rewrite.sh \
   .omp/agent/AGENTS.md .omp/agent/config.yml .omp/agent/skills .omp/agent/extensions \
-  .omp/agent/rules .omp/agent/prompts .omp/agent/themes .local/bin/fila \
+  .omp/agent/rules .omp/agent/prompts .omp/agent/themes .omp/agent/agents .local/bin/fila \
   .config/fontconfig/conf.d/50-fonts.conf .local/share/applications/zapfast.desktop \
   .local/share/icons/hicolor/scalable/apps/whatsapp.svg \
   .config/wireplumber/wireplumber.conf.d/53-bluetooth-a2dp-only.conf \
