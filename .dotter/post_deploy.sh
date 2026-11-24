@@ -200,6 +200,9 @@ if [[ -n $se_tag && $(cat "$STATE/stremio-enhanced" 2>/dev/null) != "$se_tag" ]]
     "$HOME/.local/share/icons/hicolor/512x512/apps/"
   echo "$se_tag" >"$STATE/stremio-enhanced"
 fi
+if flatpak info com.stremio.Stremio >/dev/null 2>&1; then
+  sudo flatpak uninstall -y --noninteractive com.stremio.Stremio
+fi
 # bin/monitor-away asks the monitor which input it shows over DDC; Arch keeps the
 # i2c devices to that group (Fedora grants them to the logged-in user). Next login.
 if getent group i2c >/dev/null && ! id -nG "$USER" | grep -qw i2c; then

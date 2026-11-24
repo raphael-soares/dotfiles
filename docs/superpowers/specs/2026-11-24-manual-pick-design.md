@@ -77,9 +77,8 @@ playing it in Jellyfin.
    of a pack) end up monitored. Series lookup by IMDb id; if Sonarr cannot
    resolve it, the plugin says so instead of guessing (my call). Anime (my
    call: Sonarr's lookup lists the `Anime` genre) goes to `~/Media/Anime` with
-   the anime series type, the `Anime` profile and the `anime` tag, as Seerr
-   does today (`media/seerr/sonarr.json`); everything else matches Seerr's
-   current choices.
+   the anime series type and the `anime` tag, as Seerr did
+   (`media/seerr/sonarr.json`). Every title uses the single `Manual` profile.
 4. Hand the release to Radarr or Sonarr so it sends it to qBittorrent in its own
    category and records it as its grab in history. The preferred route is the
    release push API (`POST /api/v3/release/push` with the magnet). The plan
@@ -90,8 +89,10 @@ playing it in Jellyfin.
    through without changing how configarr ranks. A name that does not parse to
    the title is shown as Radarr's or Sonarr's error, never forced (my call).
    Sending the bare magnet to qBittorrent is not a fallback (anti-goal).
-5. The button turns into "Baixando", or shows the error from Radarr or Sonarr
-   in plain words ("servidor fora de alcance" when fedora does not answer).
+5. Torrentio rows and the "Play" item of their right-click menu become the
+   download action (download icon, "Baixar no PC"); the row then shows
+   "Baixando", or the error from Radarr or Sonarr in plain words ("servidor
+   fora de alcance" when fedora does not answer).
 
 ### Nothing swaps a release on its own
 
@@ -122,7 +123,8 @@ he picks another release in Stremio.
 ### Reach
 
 Radarr and Sonarr listen only on 127.0.0.1 today. To be reached from arch they
-publish on the LAN like Jellyfin (`0.0.0.0`), protected by their API keys; the
+publish on the LAN like Jellyfin (`0.0.0.0`); the API needs the keys, and the
+web UI has no login on the LAN (the owner's choice). The
 stack is LAN-only by design and the deploy opens their ports in firewalld if it
 is active (my call). The plugin keeps the fedora address and both keys in its
 settings, entered once per machine; keys never go into the repo.

@@ -16,8 +16,9 @@ dá `api <radarr|sonarr|prowlarr|bazarr|jellyfin> <MÉTODO> <caminho>` e
 `qbt <caminho>`, já autenticados. Como a pilha funciona: `docs/media.md` do
 dotfiles.
 
-Nada baixa sozinho. O dono escolhe cada release no Stremio Enhanced, no botão
-"Baixar no PC" de uma linha do Torrentio; o plugin adiciona o título no
+Nada baixa sozinho. O dono escolhe cada release no Stremio Enhanced: clicar
+numa linha do Torrentio (o play virou download) ou "Baixar no PC" no menu do
+botão direito; o plugin adiciona o título no
 Radarr ou no Sonarr e manda aquele release. Você não escolhe release.
 
 ## Comandos
@@ -38,8 +39,8 @@ Radarr ou no Sonarr e manda aquele release. Você não escolhe release.
 
 ## Fluxos
 
-- **Pedir:** diga ao dono para abrir o título no Stremio e apertar "Baixar no
-  PC" na versão que quiser. Leva cerca de um minuto entre o 100% do `queue` e
+- **Pedir:** diga ao dono para abrir o título no Stremio e clicar na versão
+  que quiser. Leva cerca de um minuto entre o 100% do `queue` e
   o item aparecer no Jellyfin.
 - **Adicionar sem baixar** (para acompanhar ou baixar depois): `search` dá o
   id (imdb para filme, tvdb para série), depois `add`. Anime vai para Anime
@@ -57,8 +58,9 @@ Radarr ou no Sonarr e manda aquele release. Você não escolhe release.
 ## Dublado
 
 O nome do release raramente diz "PT-BR". Depois do download, confira com
-`audio` ou `info`; se não veio o áudio esperado, o dono escolhe outra versão
-no Stremio.
+`audio` ou `info`. Se não veio o áudio esperado, o arquivo precisa sair antes
+(`delete`, com confirmação do dono), porque o perfil Manual não troca arquivo;
+depois o dono escolhe outra versão no Stremio.
 
 ## Erros comuns
 

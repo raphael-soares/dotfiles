@@ -1,7 +1,7 @@
 # Media stack
 
-Pick a release in Stremio Enhanced with the "Baixar no PC" button on a
-Torrentio row; Radarr or Sonarr takes that exact release, qBittorrent
+Pick a release in Stremio Enhanced by clicking a Torrentio row (its play
+button is a download button now); Radarr or Sonarr takes that exact release, qBittorrent
 downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Series`,
 Bazarr fetches pt-BR and English subtitles (never the hearing-impaired kind),
 and the Samsung TV plays it in the Jellyfin app. Nothing is grabbed on its
@@ -180,13 +180,15 @@ The `hyprland` module installs Stremio Enhanced (the latest AppImage, unpacked
 in `~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) on both PCs
 and links `media/stremio/manual-pick.plugin.js` into its plugins folder.
 
-Every Torrentio row of a film or episode gets a "Baixar no PC" button. A click
-adds the title to Radarr or Sonarr if it is not there (`Manual` profile, no
-search; anime by genre goes to `~/Media/Anime` with the `anime` tag), monitors
-that film or the episodes the release covers (a whole season for a season
-pack), and pushes that release. The button then reads "Baixando", or the
-reason it failed ("servidor fora de alcance", "perfil Manual não existe no
-Radarr", or the app's rejection).
+Torrentio rows of a film or episode stop playing: the play icon becomes a
+download icon, and clicking the row, or "Baixar no PC" (the old "Play") in its
+right-click menu, adds the title to Radarr or Sonarr if it is not there
+(`Manual` profile, no search; anime by genre goes to `~/Media/Anime` with the
+`anime` tag), monitors that film or the episodes the release covers (a whole
+season for a season pack), and pushes that release. The row then shows
+"Baixando", or the reason it failed ("servidor fora de alcance", "o servidor
+demorou demais", "perfil Manual não existe no Radarr", or the app's
+rejection). Errors also go to Stremio Enhanced's log, tagged `manual-pick`.
 
 Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable
 `manual-pick` in Settings > Plugins and fill its settings: server
@@ -234,7 +236,9 @@ queue and qBittorrent, nothing is blocklisted or searched, and a notification
 
 Dolby Vision without an HDR fallback shows wrong colors on the TV, and a dub
 is rarely named in the release title: check those in the Torrentio row before
-picking, and `mediactl audio` after the download.
+picking, and `mediactl audio` after the download. The `Manual` profile does
+not upgrade, so to swap a file for another release, delete it first (in
+Jellyfin or with `mediactl delete`) and then pick again.
 
 To check the TV plays without transcoding, start something and open
 Dashboard → Activity in Jellyfin: the session should say "Direct Playing".

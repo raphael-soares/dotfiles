@@ -107,7 +107,7 @@ test("pushBody hands the magnet over as a torrent", () => {
 
 test("pushError gives the owner something readable", () => {
   assert.equal(P.pushError(new TypeError("Failed to fetch")), "servidor fora de alcance");
-  assert.equal(P.pushError(Object.assign(new Error("t"), { name: "TimeoutError" })), "servidor fora de alcance");
+  assert.equal(P.pushError(Object.assign(new Error("t"), { name: "TimeoutError" })), "o servidor demorou demais, tente de novo");
   assert.equal(P.pushError([{ rejections: ["Unknown Movie"] }]), "Unknown Movie");
   assert.equal(P.pushError({ message: "Series not found" }), "Series not found");
   assert.equal(P.pushError([{ rejections: ["Unable to parse"] }]), "nome sem título e ano reconhecíveis");

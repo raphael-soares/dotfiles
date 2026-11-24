@@ -97,7 +97,8 @@
   }
 
   function pushError(e) {
-    if (e instanceof TypeError || e?.name === "TimeoutError" || e?.name === "AbortError") return OUT_OF_REACH;
+    if (e instanceof TypeError) return OUT_OF_REACH;
+    if (e?.name === "TimeoutError" || e?.name === "AbortError") return "o servidor demorou demais, tente de novo";
     const first = Array.isArray(e) ? e[0] : e;
     const text = first?.rejections?.[0] || first?.message || first?.errorMessage || String(e);
     return text === "Unable to parse" ? "nome sem título e ano reconhecíveis" : text;
@@ -110,24 +111,25 @@
   globalThis.ManualPick = api;
   if (typeof module !== "undefined") module.exports = api;
 
-  const SE = globalThis.StremioEnhancedAPI;
+  // Stremio Enhanced wraps each plugin with its own StremioEnhancedAPI, already bound to the plugin's name.
+  const SE = typeof StremioEnhancedAPI === "undefined" ? undefined : StremioEnhancedAPI;
   if (!SE || !globalThis.document) return;
 
-  const PLUGIN = "manual-pick";
   const PORTS = { radarr: 7878, sonarr: 8989 };
-  SE.registerSettings(PLUGIN, [
+  SE.registerSettings([
     { key: "server", type: "input", label: "Servidor de mídia", defaultValue: "http://fedora.local" },
-    { key: "radarr_key", type: "input", label: "Chave da API do Radarr" },
-    { key: "sonarr_key", type: "input", label: "Chave da API do Sonarr" },
+    { key: "radarr_key", type: "input", label: "Chave da API do Radarr", description: "RADARR__AUTH__APIKEY no media.env" },
+    { key: "sonarr_key", type: "input", label: "Chave da API do Sonarr", description: "SONARR__AUTH__APIKEY no media.env" },
   ]);
 
   async function call(app, method, path, body) {
-    const server = ((await SE.getSetting(PLUGIN, "server")) || "http://fedora.local").replace(/\/+$/, "");
+    const server = ((await SE.getSetting("server")) || "http://fedora.local").replace(/\/+$/, "");
     const res = await fetch(`${server}:${PORTS[app]}/api/v3${path}`, {
       method,
-      headers: { "X-Api-Key": (await SE.getSetting(PLUGIN, `${app}_key`)) || "", "Content-Type": "application/json" },
+      headers: { "X-Api-Key": (await SE.getSetting(`${app}_key`)) || "", "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(8000),
+      // Adding a title waits on Radarr's or Sonarr's metadata server, which is often slow.
+      signal: AbortSignal.timeout(30000),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw data || { message: `${app} respondeu ${res.status}` };
@@ -175,6 +177,7 @@
     let id = lookup.id;
     if (planClick(id)[0] === "add") {
       const tag = (await call("sonarr", "GET", "/tag")).find((t) => t.label === "anime");
+      if (isAnime(lookup) && !tag) throw { message: "tag anime não existe no Sonarr" };
       id = (await call("sonarr", "POST", "/series", seriesAddBody(lookup, { profileId, animeTagId: tag?.id }))).id;
     }
     const item = await call("sonarr", "GET", `/series/${id}`);
@@ -184,44 +187,99 @@
     await push("sonarr", release);
   }
 
-  function button(stream) {
-    const b = document.createElement("button");
-    b.className = "manual-pick";
-    b.textContent = "Baixar no PC";
-    b.style.cssText = "margin-left:auto;padding:0.4rem 0.8rem;border:0;border-radius:0.5rem;background:var(--secondary-accent-color,#7b5bf5);color:#fff;font:inherit;cursor:pointer;white-space:nowrap";
-    b.addEventListener("click", async (ev) => {
+  const ICON =
+    '<path d="M12 3v12m0 0-5-5m5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+  const status = new Map();
+
+  async function pick(href, stream) {
+    const route = parseRoute(location.hash);
+    if (!route || status.get(href)?.busy) return;
+    status.set(href, { text: "Enviando…", busy: true });
+    render();
+    try {
+      const release = streamRelease(stream);
+      await (route.type === "movie" ? pickMovie(route, release) : pickEpisode(route, release));
+      status.set(href, { text: "Baixando" });
+    } catch (e) {
+      status.set(href, { text: pushError(e) });
+      SE.logger.error(JSON.stringify(e));
+    }
+    render();
+  }
+
+  // React owns the original icon and label, so they are hidden and ours sit beside them.
+  function swapIcon(svg) {
+    if (!svg || svg.dataset.manualPick) return;
+    svg.dataset.manualPick = "original";
+    const ours = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    ours.setAttribute("class", svg.getAttribute("class") || "");
+    ours.setAttribute("viewBox", "0 0 24 24");
+    ours.dataset.manualPick = "1";
+    ours.innerHTML = ICON;
+    svg.style.display = "none";
+    svg.after(ours);
+  }
+
+  function dress(a) {
+    const label = a.querySelector('[class*="menu-label-"]');
+    if (label) {
+      swapIcon(a.querySelector(":scope > svg"));
+      let ours = a.querySelector(".manual-pick-label");
+      if (!ours) {
+        ours = label.cloneNode(false);
+        ours.classList.add("manual-pick-label");
+        label.style.display = "none";
+        label.after(ours);
+      }
+      ours.textContent = status.get(a.getAttribute("href"))?.text || "Baixar no PC";
+      a.title = "Baixar no PC";
+      return;
+    }
+    const play = a.querySelector('[class*="play-"]');
+    if (!play) return;
+    swapIcon(play.querySelector("svg"));
+    let note = play.querySelector(".manual-pick-status");
+    if (!note) {
+      note = document.createElement("span");
+      note.className = "manual-pick-status";
+      note.style.cssText = "font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+      play.prepend(note);
+    }
+    const s = status.get(a.getAttribute("href"));
+    note.textContent = s?.text || "";
+    note.title = s?.text || "";
+    play.style.cssText = s
+      ? "display:flex;flex-direction:row;align-items:center;width:auto;max-width:12rem;padding:0 0.8rem;gap:0.4rem;border-radius:999px"
+      : "";
+  }
+
+  let streams = new Map();
+  function render() {
+    for (const a of document.querySelectorAll('a[href^="#/player/"]')) {
+      if (streams.has(a.getAttribute("href"))) (a.dataset.manualPick = "1"), dress(a);
+    }
+  }
+
+  window.addEventListener(
+    "click",
+    (ev) => {
+      const a = ev.target.closest?.("a[data-manual-pick]");
+      const s = a && streams.get(a.getAttribute("href"));
+      if (!s) return;
       ev.preventDefault();
       ev.stopPropagation();
-      const route = parseRoute(location.hash);
-      if (!route || b.disabled) return;
-      b.disabled = true;
-      b.textContent = "Enviando…";
-      try {
-        const release = streamRelease(stream);
-        await (route.type === "movie" ? pickMovie(route, release) : pickEpisode(route, release));
-        b.textContent = "Baixando";
-      } catch (e) {
-        b.textContent = pushError(e);
-        b.disabled = false;
-        SE.error?.(`[manual-pick] ${JSON.stringify(e)}`);
-      }
-    });
-    return b;
-  }
+      pick(a.getAttribute("href"), s);
+    },
+    true,
+  );
 
   let pending = false;
   async function decorate() {
     pending = false;
     if (!parseRoute(location.hash)) return;
-    const rows = [...document.querySelectorAll('a[href^="#/player/"]:not([data-manual-pick])')];
-    if (!rows.length) return;
-    const streams = torrentioStreams(await globalThis.core.getState("meta_details"));
-    for (const a of rows) {
-      const s = streams.get(a.getAttribute("href"));
-      if (!s) continue;
-      a.dataset.manualPick = "1";
-      a.appendChild(button(s));
-    }
+    if (!document.querySelector('a[href^="#/player/"]')) return;
+    streams = torrentioStreams(await globalThis.core.getState("meta_details"));
+    render();
   }
 
   new MutationObserver(() => {
