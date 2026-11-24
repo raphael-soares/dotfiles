@@ -22,6 +22,12 @@ Torrentio, ou "Baixar" no menu do botão direito. O plugin adiciona o título no
 Radarr ou no Sonarr e manda aquele release. O botão mostra o progresso, e
 clicar nele de novo para o download. Você não escolhe release.
 
+O plugin vem do repositório privado `raphael-soares/stremio-arr-pick` (o
+deploy baixa a última release com `gh`) e tem quatro configurações: URL e
+chave de API do Radarr (`http://fedora.local:7878`) e do Sonarr
+(`http://fedora.local:8990`), chaves no `media.env`. Máquina cujo `gh` não
+lê o repositório fica sem o plugin.
+
 ## Comandos
 
 | Quero | Comando |

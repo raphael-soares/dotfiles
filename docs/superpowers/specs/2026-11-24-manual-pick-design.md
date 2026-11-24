@@ -1,5 +1,7 @@
 # Pick the release by hand, from Stremio
 
+Superseded by `2026-11-24-arr-pick-design.md`: the plugin moved to its own repo, and series and anime share one Shows folder.
+
 ## Why
 
 Today a film is requested in Seerr and Radarr picks the release. The owner does
