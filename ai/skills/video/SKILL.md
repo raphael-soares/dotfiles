@@ -95,14 +95,29 @@ recusada, suba o serviço e tente de novo com a mesma voz. Nunca troque de voz,
 modelo ou motor para contornar: a alternativa do omp só fala inglês. Se continuar
 falhando, pare e conte ao dono o erro.
 
+Grave `audio/duracoes.json` com a duração de cada narração (as cenas leem dele).
+O Kokoro fala perto de 170 palavras por minuto, mais rápido que a estimativa do
+roteiro. Sigla e palavra estrangeira saem erradas com frequência: escreva por
+extenso ou como se fala ("entrada e saída", "píksel") e confira passando o
+áudio no Whisper local, se estiver no ar:
+`curl -s "127.0.0.1:9000/asr?language=pt&output=txt" -F audio_file=@x.wav`.
+
 ## Manim
 
-Cenas importam a identidade (`sys.path` com `~/Design/Identidades/<nome>`, depois
-`from tema import *`). Rascunho com `manim -ql`; final com
-`manim -r 1920,1080 --fps 30` (o `-qh` sai a 60 fps). Renderize com
-`--media_dir cenas/.manim` e copie o `.mp4` para `cenas/render/<id>.mp4`.
-Tempo da cena: some os `run_time` e termine com `self.wait()` do que faltar
-para a duração da narração.
+Cenas importam a identidade por variável de ambiente: rode com
+`VIDEO_DIR=<pasta do vídeo> IDENTIDADE=<pasta da identidade>` e, na cena,
+`sys.path.insert(0, os.environ["IDENTIDADE"])` e `from tema import *`. Rascunho
+com `manim -ql`; final com `manim -r 1920,1080 --fps 30` (o `-qh` sai a 60 fps).
+Renderize com `--media_dir cenas/.manim --disable_caching` e copie o `.mp4` para
+`cenas/render/<id>.mp4`. Renderizar em paralelo corrompe o cache de texto
+(`ParseError: no element found`): rode de novo a cena que falhou, sozinha.
+
+Tempo da cena: o `tema.py` lê `$VIDEO_DIR/audio/duracoes.json`; a cena usa
+`self.t(fração)` para os `run_time` e termina com `self.fechar()`, que espera o
+que falta para a duração da narração.
+
+Emoji não renderiza em `Text`: desenhe ícones com formas (polígono, arco).
+Texto sobre bloco de destaque usa a cor de texto clara, não a do fundo.
 
 Fórmula em Typst:
 
@@ -130,9 +145,10 @@ FilmCraft sem janela: `file.newProject {}`; `media_import {paths}` com as cenas
 e as narrações; `file.newSequence {name, width: 1920, height: 1080, fps: 30}`
 (sem `fps` ele cria 23,976); `timeline.place {items: [cenas em ordem], track:
 "V1", seconds: 0}`; cada narração com `timeline.place {item, track: "A1",
-seconds: <início da cena>}`; `file.exportMedia {path: "final.mp4", format:
-"h264", wait: true}`; `file.saveAs {path: "montagem.fcproj"}`. Corte seco entre
-cenas, a não ser que a identidade diga outra coisa.
+seconds: <início da cena>}` (início = soma das durações reais dos `.mp4`
+anteriores); `file.exportMedia {path: "final.mp4", format: "h264",
+loudnessLufs: -16, wait: true}`; `file.saveAs {path: "montagem.fcproj"}`. Corte
+seco entre cenas, a não ser que a identidade diga outra coisa.
 
 ## Música
 
@@ -146,9 +162,14 @@ use-o no lugar das narrações na montagem.
 
 `~/Design/Identidades/<nome>/` tem `identidade.md` (paleta, fontes, títulos,
 legendas, transições), `tema.py` (os mesmos valores para o Manim),
-`abertura.ecproj` e `miniatura.vectorcraft`. Identidade nova: monte um quadro de
-exemplo e uma miniatura de exemplo, mostre ao dono e só salve na biblioteca
-depois que ele aprovar.
+`abertura.ecproj` e `miniatura.vectorcraft`.
+
+A identidade se decide com o dono antes de qualquer cena, nunca por conta
+própria. Primeiro um `ask`: usar uma existente (liste as da biblioteca) ou criar
+uma nova. Nova: proponha paleta, fonte e tom num `ask` (cores em hex, uma
+recomendação marcada) e espere o aval antes de escrever o `tema.py`. Depois
+mostre um quadro e uma miniatura de exemplo e só salve na biblioteca com
+aprovação.
 
 ## Antes de cada ponto de aprovação
 
