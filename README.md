@@ -10,7 +10,12 @@ git clone git@github.com:Raphael-Soares/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 .dotter/adopt.sh    # first run: backs up anything in the way, then links
 dotter deploy       # every run after that
+.dotter/missing.sh  # what is still to do by hand: packages, sudo steps
 ```
+
+The deploy only configures the home: it never uses sudo or installs anything.
+It ends by printing the commands still to run by hand, which
+`.dotter/missing.sh` also prints on its own ([details](docs/machines.md)).
 
 Get dotter with `yay -S dotter-rs-bin` on Arch, or from the
 [releases](https://github.com/SuperCuber/dotter/releases/latest) elsewhere.

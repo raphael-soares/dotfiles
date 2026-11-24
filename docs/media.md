@@ -50,8 +50,8 @@ Inside the network, services reach each other by container name
 - links every file in `media/bin`, `media/systemd` and `media/autostart` and
   the `media/containers`, `media/configarr`,
   `media/prowlarr/definitions` and `media/whisper` directories, and removes
-  links whose file left the repo, so a new script or timer works without
-  `dotter deploy` (which needs sudo): `media-deploy ~/.dotfiles` is enough;
+  links whose file left the repo, so a new script or timer works without a
+  full `dotter deploy`: `media-deploy ~/.dotfiles` is enough;
 - fills empty `*APIKEY` and `*WEBUI_PASSWORD` values in `media.env`, adding
   keys that are new in `media.env.example`;
 - starts the units, restarting the ones whose quadlet changed, and stops a
@@ -176,13 +176,13 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 
 ## Picking a release in Stremio
 
-The `hyprland` module installs Stremio Enhanced (the latest AppImage, unpacked
-in `~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) on both PCs,
-and the latest release of Arr Pick
-(<https://github.com/raphael-soares/stremio-arr-pick>, a private repo) into its
-plugins folder. Deploy reads the release with `gh`; a machine whose `gh`
-account cannot read the repo prints a skip line and goes without the plugin.
-How the plugin behaves is in its README.
+`missing.sh hyprland` prints how to install Stremio Enhanced
+(`hyprland/install/stremio-enhanced` unpacks the latest AppImage in
+`~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) and Arr Pick
+(<https://github.com/raphael-soares/stremio-arr-pick>, a private repo) into
+its plugins folder, with `gh release download`. A machine whose `gh` account
+cannot read the repo goes without the plugin. Run the same commands to update
+either one. How the plugin behaves is in its README.
 
 Each torrent row keeps playing and gets a round download button next to the
 play button, and its right-click menu a "Baixar" item. Arr Pick adds the title

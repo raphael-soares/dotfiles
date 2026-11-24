@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Installs or updates Stremio Enhanced in ~/.local/opt. It ships only as an
+# AppImage; extracting it avoids needing FUSE.
+set -euo pipefail
+
+release=$(curl -fsSL https://api.github.com/repos/REVENGE977/stremio-enhanced/releases/latest)
+tag=$(jq -r .tag_name <<<"$release")
+url=$(jq -r '.assets[].browser_download_url |
+  select(endswith(".AppImage") and (contains("arm64") | not))' <<<"$release")
+echo "==> Installing Stremio Enhanced $tag"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+curl -fsSL -o "$tmp/se.AppImage" "$url"
+chmod +x "$tmp/se.AppImage"
+(cd "$tmp" && ./se.AppImage --appimage-extract >/dev/null)
+rm -rf "$HOME/.local/opt/stremio-enhanced"
+mkdir -p "$HOME/.local/opt" "$HOME/.local/bin" "$HOME/.local/share/icons/hicolor/512x512/apps"
+mv "$tmp/squashfs-root" "$HOME/.local/opt/stremio-enhanced"
+ln -sfn "$HOME/.local/opt/stremio-enhanced/AppRun" "$HOME/.local/bin/stremio-enhanced"
+cp "$HOME/.local/opt/stremio-enhanced/usr/share/icons/hicolor/512x512/apps/stremio-enhanced.png" \
+  "$HOME/.local/share/icons/hicolor/512x512/apps/"

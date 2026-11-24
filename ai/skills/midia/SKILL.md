@@ -23,7 +23,7 @@ Radarr ou no Sonarr e manda aquele release. O botão mostra o progresso, e
 clicar nele de novo para o download. Você não escolhe release.
 
 O plugin vem do repositório privado `raphael-soares/stremio-arr-pick` (o
-deploy baixa a última release com `gh`) e tem quatro configurações: URL e
+`missing.sh hyprland` mostra o `gh release download`) e tem quatro configurações: URL e
 chave de API do Radarr (`http://fedora.local:7878`) e do Sonarr
 (`http://fedora.local:8990`), chaves no `media.env`. Máquina cujo `gh` não
 lê o repositório fica sem o plugin.

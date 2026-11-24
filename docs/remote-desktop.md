@@ -40,12 +40,13 @@ machine's Moonlight closes and a notification says why.
    cat ~/.ssh/keys/personal.pub >>~/.ssh/authorized_keys
    ```
 
-2. `dotter deploy`. It installs Sunshine (LizardByte COPR on Fedora,
-   `sunshine-bin` from the AUR on Arch) and `moonlight-qt`, gives Sunshine
-   `cap_sys_admin` for KMS capture, turns on linger, installs
-   `sunshine-prelogin.service` and `remote-serving.service` as system units,
-   disables Sunshine's user unit, opens the firewall where there is one,
-   installs the shared greetd config and starts sshd with keys only.
+2. `dotter deploy`, then run what it prints under "Still to do by hand"
+   (`.dotter/missing.sh` prints it again): Sunshine (LizardByte COPR on
+   Fedora, `sunshine-bin` from the AUR on Arch) and `moonlight-qt`,
+   `cap_sys_admin` for KMS capture, linger, `sunshine-prelogin.service` and
+   `remote-serving.service` as system units, the firewall ports, the shared
+   greetd config and sshd with keys only. The deploy itself disables
+   Sunshine's user unit and sets `capture = kms`.
 3. Open <https://localhost:47990> on that machine and create Sunshine's admin
    user. From the other machine the browser usually cannot resolve `.local`,
    and an IP address needs `csrf_allowed_origins` in `sunshine.conf`.

@@ -1,3 +1,2 @@
 greetd
 noctalia-greeter-git
-nautilus-python

@@ -31,7 +31,6 @@ chmod +x "$T/bin/flatpak"
 cat >"$T/bin/uv" <<'EOF'
 #!/usr/bin/env bash
 echo "$*" >>"$FAKE_LOG/uv"
-mkdir -p "$HOME/.local/bin" && install -m 755 /dev/null "$HOME/.local/bin/manim"
 EOF
 cat >"$T/bin/systemctl" <<'EOF'
 #!/usr/bin/env bash
@@ -71,8 +70,7 @@ jq -e '.mcpServers.vectorcraft == {"command":"craft-mcp","args":["vectorcraft"],
   fail ".mcp.json lists other apps than the installed ones: $(jq -c '.mcpServers | keys' "$mcp")"
 
 grep -qx -- '--user daemon-reload' "$FAKE_LOG/systemctl" 2>/dev/null || fail "systemd was not reloaded"
-[[ $(cat "$FAKE_LOG/uv" 2>/dev/null) == "tool install manim" ]] ||
-  fail "manim was not installed exactly once over two runs: $(cat "$FAKE_LOG/uv" 2>/dev/null)"
+[[ ! -s $FAKE_LOG/uv ]] || fail "design-deploy installed something: $(cat "$FAKE_LOG/uv")"
 
 ((failures == 0)) || exit 1
 echo "design deploy: ok"
