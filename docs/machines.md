@@ -58,11 +58,9 @@ changes to `~/.local/state/noctalia/settings.toml`, a plain file on each
 machine that wins over the config and never reaches git. To make a change the
 new default, copy the key into the base or the machine's `machine.toml`.
 
-Two app files stay real files instead of links, because the app rewrites them:
+One app file stays a real file instead of a link, because the app rewrites it:
 `~/.config/ghostty/config` (Noctalia's Ghostty template edits its theme line) only
-includes the linked `base` and `machine.conf`, and pcmanfm-qt's `settings.conf`
-gets the keys from `home/pcmanfm-qt/settings.conf` merged in by the deploy, with
-the bar's visible height added to the top margin.
+includes the linked `base` and `machine.conf`.
 
 ## Fuxi-H3 on the `fedora` machine
 

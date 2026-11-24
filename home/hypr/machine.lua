@@ -9,11 +9,6 @@ function M.setup()
     hl.exec_cmd("openrgb --startminimized")
     hl.exec_cmd("qbittorrent --no-splash")
     hl.exec_cmd("flatpak run com.dec05eba.gpu_screen_recorder gsr-ui")
-    -- Both are background layers and the last one mapped stays on top, so the
-    -- desktop icons wait for the Noctalia wallpaper.
-    hl.exec_cmd(
-      "sh -c 'until hyprctl layers | grep -q noctalia-wallpaper; do sleep 0.5; done; exec pcmanfm-qt --desktop'"
-    )
   end)
 end
 

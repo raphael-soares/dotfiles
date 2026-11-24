@@ -347,43 +347,6 @@ if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
   sudo systemctl enable --force greetd.service
   echo "==> Reboot to log in through greetd"
 fi
-# pcmanfm-qt rewrites its whole settings file on exit, so it is a real file and the
-# repo only merges in the keys it owns. The top margin sits below the bar: its
-# thickness minus the 1px that margin_edge = -1 pushes off screen.
-pcm=$HOME/.config/pcmanfm-qt/default/settings.conf
-bar=$(awk -F' *= *' '$1 ~ /^ *thickness$/ {print $2; exit}' "$REPO/hyprland/noctalia/base.toml")
-# Unlinked before pcmanfm-qt stops: it writes on exit and would follow the old link into the repo.
-[[ -L $pcm ]] && rm "$pcm"
-pcm_running=0
-if pkill -x pcmanfm-qt; then
-  pcm_running=1
-  while pgrep -x pcmanfm-qt >/dev/null; do sleep 0.2; done
-fi
-mkdir -p "${pcm%/*}"
-python3 - "$REPO/home/pcmanfm-qt/settings.conf" "$pcm" "$((bar - 1))" <<'PY'
-import configparser, os, sys
-
-def load(path):
-    c = configparser.ConfigParser(interpolation=None, delimiters=("=",))
-    c.optionxform = str
-    if os.path.exists(path):
-        c.read(path)
-    return c
-
-owned, real = load(sys.argv[1]), load(sys.argv[2])
-for section in owned.sections():
-    if not real.has_section(section):
-        real.add_section(section)
-    for key, value in owned.items(section):
-        real.set(section, key, value)
-left, top, right, bottom = (int(v) for v in owned.get("Desktop", "WorkAreaMargins").split(","))
-real.set("Desktop", "WorkAreaMargins", f"{left}, {top + int(sys.argv[3])}, {right}, {bottom}")
-with open(sys.argv[2], "w") as f:
-    real.write(f, space_around_delimiters=False)
-PY
-if ((pcm_running)) && [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
-  hyprctl dispatch 'hl.dsp.exec_cmd("pcmanfm-qt --desktop")' >/dev/null
-fi
 # Fedora has no syncfast-nautilus package (AUR only): take the extension from the
 # tag of the installed Flatpak, so it speaks the same D-Bus API.
 sf_ver=$(flatpak info io.github.raphael_soares.syncfast 2>/dev/null | awk '/Version:/ {print $2}')
