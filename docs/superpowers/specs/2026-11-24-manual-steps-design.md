@@ -96,9 +96,10 @@ Sudo steps that move to layer 2:
   nett00n COPR, Flathub Stremio, Haruna) stay until the owner removes them.
 - A step belongs to the module that installs what it configures (owner's call):
   - the greetd config and PAM go to `laptop` and `home`, which install greetd;
-  - the syncfast Nautilus extension goes to `hyprland`, with the syncfast Flatpak;
-  - Spotifast and ZapFast (Fedora rpms, Arch AUR names) go to `hyprland`, with
-    their window rules and autostart;
+  - the syncfast Nautilus extension goes to `hyprland`, with the syncfast Flatpak and
+    Nautilus; `nautilus-python` moves there from `home`;
+  - Spotifast and ZapFast stay in `desktop`, which already installs them on Arch and
+    holds their desktop entries; on Fedora the rpm becomes a `desktop` step;
   - Arr Pick stays in `hyprland` with Stremio Enhanced: Radarr may be on another
     machine and the plugin only needs its URL.
 - Exception (owner's call): media-deploy keeps pulling its container images and the
