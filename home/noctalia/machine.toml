@@ -9,9 +9,10 @@ enabled = false
 auto_sync = false
 
 [bar.default]
-start = [ "active_workspace" ]
 center = [ "fedora", "taskbar" ]
-end = [ "tray", "clipboard", "notifications", "network", "bluetooth", "volume", "input_volume", "clock" ]
+
+[widget.battery]
+enabled = false
 
 [widget.fedora]
 type = "control-center"

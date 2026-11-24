@@ -22,22 +22,31 @@ deleted.
 
 `hyprland` is the same config on both machines. What only one of them needs
 lives in its `~/.config/hypr-machine/machine.lua`, linked by `laptop` on `arch`
-and by `home` on `fedora`. It returns `monitors` (rules by output name, read by
-`monitors.lua`) and `setup`, which `hyprland.lua` calls last. A machine without
-the directory runs the shared config with the wildcard monitor rule.
+and by `home` on `fedora`. It returns `monitors` (fields by output name, read by
+`monitors.lua`) and `setup`, which `hyprland.lua` calls last. A field a machine
+leaves out comes from the wildcard rule (`highrr`, `auto`, scale 1), so the LG
+UltraGear runs at 144 Hz on both machines without a rule of its own; the laptop
+only declares where each screen sits.
 
 Noctalia works the same way. `hyprland/noctalia/base.toml` is the shared
 base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and
 wallpaper. Each machine links its own `machine.toml` next to it
 (`laptop/noctalia/machine.toml` or `home/noctalia/machine.toml`) for settings
-that belong to that machine: idle, hooks, greeter sync, the desktop's bar
-widgets. Noctalia merges every `*.toml` there in name order, so `machine.toml`
-wins over `base.toml`.
+that belong to that machine: idle, hooks, greeter sync, the desktop's center
+section and hidden battery widget. Noctalia merges every `*.toml` there in name
+order, so `machine.toml` wins over `base.toml`. Arrays are replaced, not merged:
+a machine sets a whole widget list only when it really differs from the base.
 
 The repo keeps no state. Noctalia's interface writes theme, wallpaper and bar
 changes to `~/.local/state/noctalia/settings.toml`, a plain file on each
 machine that wins over the config and never reaches git. To make a change the
 new default, copy the key into the base or the machine's `machine.toml`.
+
+Two app files stay real files instead of links, because the app rewrites them:
+`~/.config/ghostty/config` (Noctalia's Ghostty template edits its theme line) only
+includes the linked `base` and `machine.conf`, and pcmanfm-qt's `settings.conf`
+gets the keys from `home/pcmanfm-qt/settings.conf` merged in by the deploy, with
+the bar's visible height added to the top margin.
 
 ## Fuxi-H3 on the `fedora` machine
 

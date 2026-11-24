@@ -11,7 +11,7 @@ default_target_type = "symbolic"
 "terminal/fzf/fzf.sh" = "~/.config/fzf/fzf.sh"
 "terminal/mise/config.toml" = "~/.config/mise/config.toml"
 "terminal/nvim" = { type = "symbolic", target = "~/.config/nvim", recurse = false }
-"terminal/ghostty/config" = "~/.config/ghostty/config"
+"terminal/ghostty/config" = "~/.config/ghostty/base"
 "terminal/ghostty/themes/Herdr Graphite" = "~/.config/ghostty/themes/Herdr Graphite"
 "terminal/ghostty/themes/Herdr Paper" = "~/.config/ghostty/themes/Herdr Paper"
 "terminal/fastfetch/config.jsonc" = "~/.config/fastfetch/config.jsonc"
@@ -73,7 +73,6 @@ default_target_type = "symbolic"
 "home/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
 "home/noctalia/machine.toml" = "~/.config/noctalia/machine.toml"
 "home/noctalia/fedora-symbolic.svg" = "~/.config/noctalia/icons/fedora-symbolic.svg"
-"home/pcmanfm-qt/settings.conf" = "~/.config/pcmanfm-qt/default/settings.conf"
 "home/pcmanfm-qt/transparent.svg" = "~/.config/pcmanfm-qt/transparent.svg"
 
 [media.files]

@@ -118,13 +118,13 @@ Rules:
 
 ## Spacing
 
-4px grid. Every spacing is a multiple of 4.
+4px grid. Every spacing is a multiple of 4, except the window gaps below.
 
 | Where | Value |
 |---|---|
-| Between windows (`gaps_in`) | 4, and the visible space between two windows is 8 |
-| Window to screen edge (`gaps_out`) | 8 |
-| Terminal padding | 16 horizontal, 12 vertical |
+| Between windows (`gaps_in`) | 3, and the visible space between two windows is 6 |
+| Window to screen edge or bar (`gaps_out`) | 6 |
+| Terminal padding | 12 horizontal, 14 vertical |
 | Bar | height 38 (37 visible, the notch MacBook menu bar), padding 16, space between widgets 12 |
 
 ## Typography

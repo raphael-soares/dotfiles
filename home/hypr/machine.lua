@@ -1,9 +1,5 @@
 local M = {}
 
-M.monitors = {
-  ["DP-1"] = { mode = "1920x1080@143.94", position = "0x0", scale = "1" },
-}
-
 function M.setup()
   hl.on("hyprland.start", function()
     hl.exec_cmd("discord --start-minimized")

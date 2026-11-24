@@ -7,7 +7,8 @@ local SETTLE_MS = 100
 local LID_POLL_MS = 2000
 local LID_SUSPEND_MS = 10000
 
-local WILDCARD = { mode = "preferred", position = "auto", scale = "1" }
+-- highrr: the LG UltraGear runs at 144 Hz on both machines without a rule of its own.
+local WILDCARD = { mode = "highrr", position = "auto", scale = "1" }
 local RULES = require("host").monitors or {}
 
 local RUNTIME_DIR = os.getenv("XDG_RUNTIME_DIR")
@@ -82,13 +83,13 @@ end
 
 local function declare(name, disabled)
   if declared[name] == disabled then return end
-  local rule = RULES[name] or WILDCARD
+  local rule = RULES[name] or {}
   hl.monitor({
     output = name,
     disabled = disabled,
-    mode = rule.mode,
-    position = rule.position,
-    scale = rule.scale,
+    mode = rule.mode or WILDCARD.mode,
+    position = rule.position or WILDCARD.position,
+    scale = rule.scale or WILDCARD.scale,
   })
   declared[name] = disabled
 end
