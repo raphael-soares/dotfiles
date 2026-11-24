@@ -1,10 +1,10 @@
 local M = {}
 
 M.monitors = {
-  ["DP-1"] = { mode = "1920x1080@143.99", position = "0x0", scale = "1" },
   -- Desk: external on the left, laptop on the right.
   -- "auto" depended on the order the monitors appeared at boot.
-  ["eDP-1"] = { mode = "preferred", position = "auto-right", scale = "1" },
+  ["DP-1"] = { position = "0x0" },
+  ["eDP-1"] = { position = "auto-right" },
 }
 
 function M.setup()
