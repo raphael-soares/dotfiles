@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+import os
+import subprocess
+import sys
+
+here = os.path.dirname(os.path.abspath(__file__))
+fake = os.environ["FAKE_DIR"]
+
+
+def log(line):
+    with open(os.path.join(fake, "log"), "a") as f:
+        f.write(line + "\n")
+
+
+args = sys.argv[1:]
+if args[0] == "info":
+    app = args[-1].removeprefix("ai.storyteller.")
+    sys.exit(0 if app in os.environ.get("FAKE_INSTALLED", "").split() else 1)
+
+assert args[0] == "run", args
+args = args[1:]
+unset = [a.split("=", 1)[1] for a in args if a.startswith("--unset-env=")]
+command = next(a.split("=", 1)[1] for a in args if a.startswith("--command="))
+rest = [a for a in args if not a.startswith("--")]
+app_id, extra = rest[0], args[args.index(rest[0]) + 1:]
+
+if command.endswith("-cli"):
+    log(f"cli {' '.join(extra)} unset={','.join(unset)}")
+    os.execvp(sys.executable, [sys.executable, os.path.join(here, "fake_cli.py"), *extra])
+
+log(f"app {' '.join(extra)}")
+silent = os.path.exists(os.path.join(fake, "silent"))
+proc = subprocess.Popen([sys.executable, os.path.join(here, "fake_app.py"), os.environ["FAKE_PORT"], "silent" if silent else "listen"])
+with open(os.path.join(fake, "app.pid"), "w") as f:
+    f.write(str(proc.pid))
+proc.wait()

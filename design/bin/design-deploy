@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO=${1:?usage: design-deploy <repo>}
+MCP_JSON=$HOME/.omp/agent/.mcp.json
+
+mkdir -p "$HOME/Design"
+installed=()
+while IFS='|' read -r name port token _ || [[ -n $name ]]; do
+  name=${name// /} port=${port// /} token=${token// /}
+  [[ -n $name && $name != \#* ]] || continue
+  id=ai.storyteller.$name
+  flatpak info "$id" >/dev/null 2>&1 || continue
+  installed+=("$name")
+  upper=${name^^}
+  # shellcheck disable=SC2088
+  flags=('--filesystem=~/Design')
+  [[ $port == - ]] || flags+=(--env="${upper}_CONTROL_PORT=$port")
+  if [[ $token == token ]]; then
+    value=$(flatpak override --user --show "$id" | sed -n "s/^${upper}_CONTROL_TOKEN=//p" | tail -1)
+    [[ -n $value ]] || value=$(openssl rand -hex 32)
+    flags+=(--env="${upper}_CONTROL_TOKEN=$value")
+  fi
+  if [[ $name == photocraft ]]; then
+    flags+=(--env="PHOTOCRAFT_AUTOMATION_READ_ROOT=$HOME/Design" --env="PHOTOCRAFT_AUTOMATION_WRITE_ROOT=$HOME/Design")
+  fi
+  flatpak override --user "${flags[@]}" "$id"
+done <"$REPO/design/apps"
+
+mkdir -p "${MCP_JSON%/*}"
+tmp=$(mktemp "$MCP_JSON.XXXXXX")
+# shellcheck disable=SC2016
+printf '%s\n' "${installed[@]}" | jq -Rn '{mcpServers: [inputs | select(. != "") | {key: ., value: {command: "craft-mcp", args: [.], cwd: "${HOME}"}}] | from_entries}' >"$tmp"
+mv "$tmp" "$MCP_JSON"
+echo "design: ${#installed[@]} ArtCraft apps registered in omp${installed[*]:+ (${installed[*]})}"

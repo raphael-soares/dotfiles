@@ -442,6 +442,10 @@ fi
 "$REPO/media/bin/media-deploy" "$REPO"
 {{/if}}
 
+{{#if dotter.packages.design}}
+"$REPO/design/bin/design-deploy" "$REPO"
+{{/if}}
+
 {{#if dotter.packages.work}}
 install_packages work
 # Enterprise omp profile: its own auth (agent.db), the rest shared with the default one.
