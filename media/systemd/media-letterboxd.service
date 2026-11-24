@@ -1,8 +1,0 @@
-[Unit]
-Description=Request the films on the Letterboxd Jellyfin list
-OnFailure=media-failure@%n.service
-
-[Service]
-Type=oneshot
-Environment=MEDIA_LETTERBOXD_LIST=prayplagues/list/jellyfin-library
-ExecStart=%h/.local/bin/media-letterboxd

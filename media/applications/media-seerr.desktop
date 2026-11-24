@@ -1,8 +1,0 @@
-#!/usr/bin/env xdg-open
-[Desktop Entry]
-Type=Application
-Name=Seerr
-Comment=Pedir filmes e séries
-Exec=xdg-open http://localhost:5055
-Icon=applications-multimedia
-Categories=AudioVideo;

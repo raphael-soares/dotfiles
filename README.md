@@ -29,7 +29,7 @@ dotter picks `.dotter/<hostname>.toml`.
 | `work` | VPN and the work omp profile | ✓ | |
 | `sshd` | key-only SSH and mDNS, so each machine reaches the other ([remote access](docs/remote-desktop.md)) | ✓ | ✓ |
 | `home` | the desktop's monitor, greetd PAM file, theme and autostart | | ✓ |
-| `media` | Jellyfin, Seerr, Radarr, Sonarr, Prowlarr and Bazarr as Podman containers, plus qBittorrent and Jellyfin Desktop ([media](docs/media.md)) | | ✓ |
+| `media` | Jellyfin, Radarr, Sonarr, Prowlarr and Bazarr as Podman containers, plus qBittorrent and Jellyfin Desktop; releases are picked in Stremio Enhanced ([media](docs/media.md)) | | ✓ |
 
 ## Add a file
 

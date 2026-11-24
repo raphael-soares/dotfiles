@@ -181,6 +181,28 @@ remove_packages hyprland
 if [[ $DISTRO == fedora ]] && grep -q "/nett00n/hyprland$" <<<"$coprs"; then
   sudo dnf copr remove -y nett00n/hyprland
 fi
+# Stremio Enhanced ships only as an AppImage; extracting it avoids needing FUSE.
+se_release=$(curl -fsSL https://api.github.com/repos/REVENGE977/stremio-enhanced/releases/latest || true)
+se_tag=$(jq -r '.tag_name // empty' <<<"$se_release" 2>/dev/null || true)
+if [[ -n $se_tag && $(cat "$STATE/stremio-enhanced" 2>/dev/null) != "$se_tag" ]]; then
+  echo "==> Installing Stremio Enhanced $se_tag"
+  se_tmp=$(mktemp -d)
+  curl -fsSL -o "$se_tmp/se.AppImage" "$(jq -r '.assets[].browser_download_url |
+    select(endswith(".AppImage") and (contains("arm64") | not))' <<<"$se_release")"
+  chmod +x "$se_tmp/se.AppImage"
+  (cd "$se_tmp" && ./se.AppImage --appimage-extract >/dev/null)
+  rm -rf "$HOME/.local/opt/stremio-enhanced"
+  mkdir -p "$HOME/.local/opt" "$HOME/.local/bin" "$HOME/.local/share/icons/hicolor/512x512/apps"
+  mv "$se_tmp/squashfs-root" "$HOME/.local/opt/stremio-enhanced"
+  rm -rf "$se_tmp"
+  ln -sfn "$HOME/.local/opt/stremio-enhanced/AppRun" "$HOME/.local/bin/stremio-enhanced"
+  cp "$HOME/.local/opt/stremio-enhanced/usr/share/icons/hicolor/512x512/apps/stremio-enhanced.png" \
+    "$HOME/.local/share/icons/hicolor/512x512/apps/"
+  echo "$se_tag" >"$STATE/stremio-enhanced"
+fi
+if flatpak info com.stremio.Stremio >/dev/null 2>&1; then
+  sudo flatpak uninstall -y --noninteractive com.stremio.Stremio
+fi
 # bin/monitor-away asks the monitor which input it shows over DDC; Arch keeps the
 # i2c devices to that group (Fedora grants them to the logged-in user). Next login.
 if getent group i2c >/dev/null && ! id -nG "$USER" | grep -qw i2c; then
@@ -392,6 +414,11 @@ fi
 
 {{#if dotter.packages.media}}
 install_packages media
+# Radarr and Sonarr answer the manual-pick plugin in Stremio on the other machine.
+if command -v firewall-cmd >/dev/null; then
+  sudo firewall-cmd -q --permanent --add-port=7878/tcp --add-port=8990/tcp
+  sudo firewall-cmd -q --reload
+fi
 "$REPO/media/bin/media-deploy" "$REPO"
 {{/if}}
 

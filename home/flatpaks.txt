@@ -1,5 +1,4 @@
 org.telegram.desktop
-com.stremio.Stremio
 org.jellyfin.JellyfinDesktop
 org.prismlauncher.PrismLauncher
 net.davidotek.pupgui2

@@ -1,9 +1,11 @@
 # Media stack
 
-Pick a film or series in Seerr; Radarr or Sonarr finds a release, qBittorrent
+Pick a release in Stremio Enhanced by clicking a Torrentio row (its play
+button is a download button now); Radarr or Sonarr takes that exact release, qBittorrent
 downloads it, the file is hardlinked into `~/Media/Movies` or `~/Media/Series`,
 Bazarr fetches pt-BR and English subtitles (never the hearing-impaired kind),
-and the Samsung TV plays it in the Jellyfin app.
+and the Samsung TV plays it in the Jellyfin app. Nothing is grabbed on its
+own: no RSS sync, no automatic search, no upgrades.
 
 The `media` module (only on `fedora`) runs the services as rootless Podman
 quadlets on the `media` network. qBittorrent is the desktop app (Fedora RPM)
@@ -15,10 +17,9 @@ and Jellyfin Desktop (flatpak) plays on this PC. Design:
 | Service | Address | Reachable from |
 |---|---|---|
 | Jellyfin | <http://fedora.local:8096> | LAN |
-| Seerr | <http://fedora.local:5055> | LAN |
 | qBittorrent WebUI (used by Radarr and Sonarr) | `host.containers.internal:8080` | containers, password in `media.env` |
-| Radarr | <http://127.0.0.1:7878> | this PC |
-| Sonarr | <http://127.0.0.1:8989> | this PC |
+| Radarr | <http://fedora.local:7878> | LAN (the Stremio plugin on both PCs), no login |
+| Sonarr | <http://fedora.local:8990> | LAN (the Stremio plugin on both PCs), no login; 8989 is Spotifast's login redirect |
 | Prowlarr | <http://127.0.0.1:9696> | this PC |
 | Bazarr | <http://127.0.0.1:6767> | this PC |
 | FlareSolverr | `flaresolverr:8191` | containers only |
@@ -46,14 +47,15 @@ Inside the network, services reach each other by container name
 
 `dotter deploy` runs `media/bin/media-deploy`, which:
 
-- links every file in `media/bin`, `media/systemd`, `media/applications` and
-  `media/autostart` and the `media/containers`, `media/configarr`,
+- links every file in `media/bin`, `media/systemd` and `media/autostart` and
+  the `media/containers`, `media/configarr`,
   `media/prowlarr/definitions` and `media/whisper` directories, and removes
   links whose file left the repo, so a new script or timer works without
   `dotter deploy` (which needs sudo): `media-deploy ~/.dotfiles` is enough;
 - fills empty `*APIKEY` and `*WEBUI_PASSWORD` values in `media.env`, adding
   keys that are new in `media.env.example`;
-- starts the units, restarting the ones whose quadlet changed;
+- starts the units, restarting the ones whose quadlet changed, and stops a
+  container or `media-*` unit whose file left the repo;
 - seeds `~/.config/qBittorrent/qBittorrent.conf` when it does not exist
   (WebUI on, starts hidden in the tray, monochrome tray icon, Breeze style
   with system icons, no status bar, no "torrent added" notification), starts
@@ -63,27 +65,28 @@ Inside the network, services reach each other by container name
 - renders Bazarr's config from `media/bazarr/config.yaml.tmpl` (subtitle
   timing fixed with subsync when the match score is low, Whisper as the last
   provider) and applies the pt-BR and English language profile;
-- runs Configarr (`media/configarr/config.yml`): quality profiles, sizes,
-  naming, root folders, the qBittorrent client, Prowlarr indexers and apps;
+- turns RSS sync off in Radarr and Sonarr and moves every film, series and
+  Radarr collection to the `Manual` profile;
+- runs Configarr (`media/configarr/config.yml`): the `Manual` profile (every
+  quality, no upgrades, no custom formats; any other profile or custom format
+  is deleted), naming, root folders, the qBittorrent client, Prowlarr indexers
+  and apps;
 - once `JELLYFIN_TOKEN` is set, applies `media/jellyfin` to Jellyfin: plugin
   repositories and plugins (Intro Skipper, Jellyfin Enhanced and its
   dependencies), the custom CSS on top of the default theme, the Jellyfin
   Enhanced settings that differ from its defaults (`enhanced.json`) with the
-  Seerr, Radarr and Sonarr keys filled in, every user's home sections and
+  Radarr and Sonarr keys filled in, every user's home sections and
   subtitle preferences (pt-BR, Always), and the Shows library cover when it
   has none. Backdrops in Jellyfin Desktop and on the phone are a per-device
   setting (Settings → Display → Backdrops);
-- once Seerr is signed in, applies `media/seerr`: Application URL and the
-  Radarr and Sonarr servers;
 - makes qBittorrent the magnet link handler and installs Jellyfin Desktop;
 - enables every `media-*.timer` in `media/systemd` and
   `podman-auto-update.timer`: `media-original-audio` (every 15 minutes),
-  `media-watchdog` (every 5 minutes), `media-letterboxd` (every 6 hours),
-  `media-cleanup`, `media-backup` and `media-drift` (daily), and
-  `media-dub-search` and `media-restore-test` (weekly).
+  `media-watchdog` (every 5 minutes), `media-cleanup`, `media-backup` and
+  `media-drift` (daily), and `media-restore-test` (weekly).
 
 `media-deploy ~/.dotfiles --check` changes nothing, prints one
-`media: differs:` line for each link, timer, unit, qBittorrent, Bazarr, Seerr
+`media: differs:` line for each link, timer, unit, qBittorrent, Bazarr, Radarr
 or Jellyfin setting that is not what the repo says, and exits 1 when there is
 any (Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr
 every hour). It also prints a `media: unhealthy:` line for each problem a
@@ -93,7 +96,7 @@ subtitle site, qBittorrent offline, a failed unit) and exits 1 for those too.
 
 The media log, `~/.local/state/media/media.log`, is one timeline of what the
 stack did and what broke: every change a script or the deploy made (a torrent
-replaced or deleted, a film removed, a backup uploaded, a setting applied, a
+dropped or deleted, a film removed, a backup uploaded, a setting applied, a
 service restarted) with its time and script, and every failed `media-*` or
 Configarr run with the last lines it printed. It keeps about its last 5000
 lines. `mediactl log` shows the end of it (`mediactl log 200`, or
@@ -106,13 +109,14 @@ the admin's home sections and the playback keys already in `user.json` (a new
 playback key has to be added to the file by hand to be tracked).
 
 `mediactl` drives the stack from the terminal, and the `midia` skill teaches
-agents to use it: search, request, releases and grab, `info` (file, quality,
-audio and subtitles), `subs` (missing subtitles), `research` (search again),
-`watched` (what each Jellyfin user played last), `delete` (unmonitor, then
-delete the file), `queue`, `log` and `status` (disk, torrent tags, downloads,
-health problems and the runs that failed in the last 7 days). It and the
-other scripts share `media/bin/media-lib.sh` (`api <app> <method> <path>`,
-`qbt`, `env_get`, `health`, `log`).
+agents to use it: `search` and `add` (through Radarr and Sonarr, with the same
+rules as the Stremio plugin and no search), `info` (file, quality, audio and
+subtitles), `subs` (missing subtitles), `watched` (what each Jellyfin user
+played last), `delete` (unmonitor, then delete the file), `queue`, `log` and
+`status` (disk, torrent tags, downloads, health problems and the runs that
+failed in the last 7 days). It and the other scripts share
+`media/bin/media-lib.sh` (`api <app> <method> <path>`, `qbt`, `env_get`,
+`health`, `log`, `notify`).
 
 `media-original-audio` makes the film or series' original language the
 default audio track of MKV files that have more than one, so a dual audio
@@ -153,14 +157,6 @@ finished download stuck waiting for a manual import when Radarr
 or Sonarr grabbed it itself (its history names the film or series) and has no
 objection to the files, so a release with an odd title no longer waits.
 
-`media-dub-search` (weekly) asks Sonarr to search every anime episode whose
-file has no Portuguese track; Sonarr only swaps the file when a dub turns up.
-
-`media-letterboxd` (every 6 hours) requests in Seerr the films on the
-Letterboxd list in `MEDIA_LETTERBOXD_LIST` (set in the unit, now
-`prayplagues/list/jellyfin-library`; `<user>/watchlist` also works). Taking a
-film off the list does not remove it.
-
 `media/autostart` starts qBittorrent hidden at login.
 
 Prowlarr searches 1337x, The Pirate Bay, YTS, EZTV, LimeTorrents, Knaben,
@@ -178,6 +174,35 @@ subtitle site has the episode or film. Whisper writes the language spoken in
 the audio or English, never a translation to Portuguese: a Japanese anime
 without pt-BR subtitles on the sites gets English ones made by Whisper.
 
+## Picking a release in Stremio
+
+The `hyprland` module installs Stremio Enhanced (the latest AppImage, unpacked
+in `~/.local/opt/stremio-enhanced`, started by `stremio-enhanced`) on both PCs
+and links `media/stremio/manual-pick.plugin.js` into its plugins folder.
+
+Torrentio rows of a film or episode stop playing: the play icon becomes a
+download icon, and clicking the row, or "Baixar no PC" (the old "Play") in its
+right-click menu, adds the title to Radarr or Sonarr if it is not there
+(`Manual` profile, no search; anime by genre goes to `~/Media/Anime` with the
+`anime` tag), monitors that film or the episodes the release covers (a whole
+season for a season pack), and pushes that release. The row then shows
+"Baixando" with the percentage from Radarr's or Sonarr's queue (refreshed every
+5 seconds, still there after reopening the title), or the reason it failed
+("servidor fora de alcance", "o servidor demorou demais", "perfil Manual não
+existe no Radarr", or the app's rejection). Errors also go to Stremio
+Enhanced's log, tagged `manual-pick`.
+
+A downloading row shows an X: clicking it, or "Cancelar download" in its menu,
+asks for confirmation and removes the download from the queue and qBittorrent
+(no blocklist). If the title is left with no file and nothing downloading, it
+leaves Radarr or Sonarr too. The release whose file is in the library shows
+"No PC" with a check, and clicking it does nothing.
+
+Once per PC: open Stremio Enhanced, sign in, install Torrentio, enable
+`manual-pick` in Settings > Plugins and fill its settings: server
+`http://fedora.local`, and the Radarr and Sonarr API keys from `media.env`
+(`RADARR__AUTH__APIKEY`, `SONARR__AUTH__APIKEY`).
+
 ## Once, after the first deploy
 
 1. Subtitles: create a free account at <https://www.opensubtitles.com>, put
@@ -189,13 +214,8 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
    `/dev/dri/renderD128`. In Dashboard → API Keys create a key and put it in
    `media.env` as `JELLYFIN_TOKEN` (`media-cleanup` reads watch history with
    it). Turn on "Automatically add to collection" in the Movies library. The
-   rest of Jellyfin comes from `media/jellyfin` on the `dotter deploy` after
-   step 3 (see below).
-3. Seerr, at <http://127.0.0.1:5055>: sign in with the Jellyfin account
-   (server `http://jellyfin:8096`, external URL `http://fedora.local:8096`),
-   then `dotter deploy` again. The deploy sets the Application URL and adds
-   Radarr and Sonarr from `media/seerr` (profiles and roots by name, keys from
-   `media.env`), then applies the Jellyfin settings.
+   rest of Jellyfin comes from `media/jellyfin` on the next `dotter deploy`.
+3. Stremio Enhanced on each PC: see "Picking a release in Stremio".
 4. TV (Samsung QN55Q80A, `192.168.1.78`): the store app doesn't show up on
    this set, so it is sideloaded. Turn on Developer Mode (Apps, then `12345`
    from the SmartThings remote) with host IP `192.168.1.250`, restart the TV
@@ -206,38 +226,27 @@ without pt-BR subtitles on the sites gets English ones made by Whisper.
 
 ## Quality
 
-Films use `4K (1080p fallback)`: 2160p WEB or Bluray encode first, 1080p when
-there is none, no Remux. 4K is capped at 200 MB per minute (about 24 GB for
-two hours, 27 Mbit/s on average, which the 2.4 GHz Wi-Fi to the TV carries);
-1080p at 120 MB per minute. Series use `1080p (4K when available)`: WEB 2160p
-above WEB 1080p, with the same caps per minute of episode.
-
-YTS, YIFY and the other `LQ` groups score -10000 and are never grabbed: they
-squeeze a film into 2 Mbit/s.
+Radarr and Sonarr have one profile, `Manual`: every quality allowed, no
+upgrades, no custom format scores. What gets downloaded is exactly what was
+picked in Stremio, so the size, codec and audio choices are made there. The
+2.4 GHz Wi-Fi to the TV carries about 27 Mbit/s on average, roughly a 24 GB
+two hour 4K film.
 
 Embedded image subtitles (PGS, VobSub) don't satisfy Bazarr: the Samsung app
 can't draw them, so Jellyfin would burn them in and re-encode the film to SDR
 H.264, which looks visibly worse. Bazarr downloads a text subtitle instead,
 and with that the TV plays the file untouched.
 
-Dolby Vision without an HDR fallback is rejected, since the TV would show it
-with wrong colors.
-
 A 4K film download that ran 30 minutes and still expects more than 12 hours
-(`MEDIA_SLOW_4K_HOURS`) is swapped by `media-torrents` for the best 1080p
-release that is smaller than what is left and has more seeders (at least 5,
-`MEDIA_MIN_SEEDS`); the 4K one is blocklisted and Radarr can still upgrade to
-a faster 4K later. When no 1080p release is faster the 4K keeps going and is
-not checked again (`~/.local/share/media/slow-4k-kept`); a slow 4K upgrade of
-a film that already has a file is dropped.
+(`MEDIA_SLOW_4K_HOURS`) is dropped by `media-torrents`: it leaves the Radarr
+queue and qBittorrent, nothing is blocklisted or searched, and a notification
+(also in the media log) asks for another release in Stremio.
 
-Anime (Seerr sends a series there when TMDB tags it as anime) uses `Anime`,
-the TRaSH anime profile: Bluray and WEB from the fansub and release groups
-TRaSH ranks. On top of that, a release with a
-Portuguese dub (`Dublado`, `PT-BR`, `Dual Audio PT`, or a Portuguese audio
-track) scores 2000, so a dubbed version wins whenever one exists. A Netflix
-`MULTi` release scores 1500: VARYG and ToonsHub put the pt-BR dub in it
-without naming it (Tsundere-Raws' `MULTi` is French and does not count).
+Dolby Vision without an HDR fallback shows wrong colors on the TV, and a dub
+is rarely named in the release title: check those in the Torrentio row before
+picking, and `mediactl audio` after the download. The `Manual` profile does
+not upgrade, so to swap a file for another release, delete it first (in
+Jellyfin or with `mediactl delete`) and then pick again.
 
 To check the TV plays without transcoding, start something and open
 Dashboard → Activity in Jellyfin: the session should say "Direct Playing".
@@ -261,17 +270,17 @@ Torrents in `Movies`, `Series` and `Anime` carry one tag, kept by
 `media-torrents` from the watchdog: `library` (a library file is a hardlink of
 it), `seeding-only` (it left the library and waits for the seeding rule) or
 `stalled` (a download that moved nothing for 6 hours, `MEDIA_STALL_HOURS`).
-A stalled download Radarr or Sonarr grabbed is removed and blocklisted
-instead, and the app searches for another release. Games are left alone.
+A stalled download Radarr or Sonarr grabbed is dropped instead, the same way
+as a slow 4K one, with a notification. Games are left alone.
 
 Radarr and Sonarr download into the qBittorrent categories `Movies`, `Series`
 and `Anime` (`~/Media/Downloads/<category>`) and hardlink the finished file
 into `~/Media/Movies`, `~/Media/Series` or `~/Media/Anime`, renamed. Series
 tagged `anime` in Sonarr go through the `qBittorrent Anime` client (priority 1,
-category `Anime`); Seerr adds that tag to anime requests. The untagged client
+category `Anime`); the Stremio plugin and `mediactl add` tag anime. The untagged client
 (priority 2) takes everything else. A torrent added by hand
 with one of those categories is imported the same way when its film or series
-is already in Radarr or Sonarr (request it in Seerr first); otherwise it waits
+is already in Radarr or Sonarr (`mediactl add` it first); otherwise it waits
 in that app's Activity queue for a manual import. After each import Radarr and
 Sonarr ask Jellyfin to rescan (Connect > Jellyfin, using `JELLYFIN_TOKEN`), so
 new files show up without waiting for the library's file watcher.

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Stremio
+GenericName=Media Center
+Comment=Stremio Enhanced, with the Baixar no PC button
+Exec=stremio-enhanced %U
+Icon=stremio-enhanced
+Terminal=false
+Categories=AudioVideo;Video;Player;
+StartupWMClass=Stremio Enhanced
+MimeType=x-scheme-handler/stremio;

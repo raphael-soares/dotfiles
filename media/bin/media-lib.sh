@@ -23,15 +23,21 @@ log() {
   (($(stat -c %s "$LOG") < 1048576)) || { tail -n 5000 "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"; }
 }
 
+# notify <message>: log, plus a desktop notification when a session bus is reachable.
+notify() {
+  log "$*"
+  [[ -n ${DBUS_SESSION_BUS_ADDRESS:-} ]] && command -v notify-send >/dev/null || return 0
+  notify-send -a Media "$*" || true
+}
+
 # api <app> <method> <path> [curl args...]: path is relative to the app's API root.
 api() {
   local app=$1 method=$2 path=$3 url auth
   shift 3
   case $app in
     radarr) url=http://127.0.0.1:7878/api/v3 auth="X-Api-Key: $(env_get RADARR__AUTH__APIKEY)" ;;
-    sonarr) url=http://127.0.0.1:8989/api/v3 auth="X-Api-Key: $(env_get SONARR__AUTH__APIKEY)" ;;
+    sonarr) url=http://127.0.0.1:8990/api/v3 auth="X-Api-Key: $(env_get SONARR__AUTH__APIKEY)" ;;
     prowlarr) url=http://127.0.0.1:9696/api/v1 auth="X-Api-Key: $(env_get PROWLARR__AUTH__APIKEY)" ;;
-    seerr) url=http://127.0.0.1:5055/api/v1 auth="X-Api-Key: $(jq -r .main.apiKey "$STATE/seerr/settings.json")" ;;
     bazarr) url=http://127.0.0.1:6767/api auth="X-API-KEY: $(env_get BAZARR_API_KEY)" ;;
     jellyfin) url=$JF auth="Authorization: MediaBrowser Token=\"$(env_get JELLYFIN_TOKEN)\"" ;;
     *) echo "api: unknown app $app" >&2; return 2 ;;
@@ -73,7 +79,7 @@ health() {
     echo "bazarr: not answering"
   qbt /transfer/info 2>/dev/null | jq -r 'select(.connection_status != "connected") | "qbittorrent: \(.connection_status)"' ||
     echo "qbittorrent: not answering"
-  systemctl --user list-units --failed --plain --no-legend 'media-*' configarr.service jellyfin.service seerr.service \
+  systemctl --user list-units --failed --plain --no-legend 'media-*' configarr.service jellyfin.service \
     radarr.service sonarr.service prowlarr.service bazarr.service flaresolverr.service whisper.service whisper-cpp.service |
     awk '{print "systemd: " $1 " failed"}'
 }

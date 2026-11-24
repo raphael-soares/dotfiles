@@ -2,7 +2,11 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd -P)
-MEDIA_TORRENTS_LIB=1 MEDIA_STALL_HOURS=6 MEDIA_SLOW_4K_HOURS=12 MEDIA_MIN_SEEDS=5 source "$REPO/media/bin/media-torrents"
+T=$(mktemp -d)
+trap 'rm -rf "$T"' EXIT
+export MEDIA_LOG=$T/media.log
+unset DBUS_SESSION_BUS_ADDRESS
+MEDIA_TORRENTS_LIB=1 MEDIA_STALL_HOURS=6 MEDIA_SLOW_4K_HOURS=12 source "$REPO/media/bin/media-torrents"
 
 failures=0
 fail() { echo "FAILED: $*"; failures=$((failures + 1)); }
@@ -30,33 +34,32 @@ queue='[
   {"id":4,"movieId":14,"downloadId":"HD","quality":{"quality":{"resolution":1080}}},
   {"id":5,"movieId":15,"downloadId":"DONE","quality":{"quality":{"resolution":2160}}}
 ]'
-got=$(slow_4k "$queue" "$now" <<EOF | cut -f1-5 | tr '\t' : | paste -sd,
+got=$(slow_4k "$queue" "$now" <<EOF | tr '\t' : | paste -sd,
 [
-  {"hash":"slow","name":"a","progress":0.1,"added_on":$((now - 2 * h)),"eta":$((13 * h)),"amount_left":900,"num_complete":40},
-  {"hash":"fast","name":"b","progress":0.1,"added_on":$((now - 2 * h)),"eta":$((3 * h)),"amount_left":900,"num_complete":40},
-  {"hash":"fresh","name":"c","progress":0,"added_on":$((now - 600)),"eta":8640000,"amount_left":900,"num_complete":0},
-  {"hash":"hd","name":"d","progress":0.1,"added_on":$((now - 2 * h)),"eta":8640000,"amount_left":900,"num_complete":0},
-  {"hash":"done","name":"e","progress":1,"added_on":$((now - 2 * h)),"eta":8640000,"amount_left":0,"num_complete":9}
+  {"hash":"slow","name":"a","progress":0.1,"added_on":$((now - 2 * h)),"eta":$((13 * h))},
+  {"hash":"fast","name":"b","progress":0.1,"added_on":$((now - 2 * h)),"eta":$((3 * h))},
+  {"hash":"fresh","name":"c","progress":0,"added_on":$((now - 600)),"eta":8640000},
+  {"hash":"hd","name":"d","progress":0.1,"added_on":$((now - 2 * h)),"eta":8640000},
+  {"hash":"done","name":"e","progress":1,"added_on":$((now - 2 * h)),"eta":8640000}
 ]
 EOF
 )
-[[ $got == 1:11:SLOW:900:40 ]] || fail "slow_4k picked: $got"
+[[ $got == SLOW:a ]] || fail "slow_4k picked: $got"
 
-gb=1000000000
-releases='[
-  {"guid":"g-4k","indexerId":1,"title":"4k","size":'$((5 * gb))',"seeders":90,"customFormatScore":3000,"quality":{"quality":{"resolution":2160}},"rejections":[]},
-  {"guid":"g-few","indexerId":1,"title":"few","size":'$((6 * gb))',"seeders":4,"customFormatScore":2000,"quality":{"quality":{"resolution":1080}},"rejections":["Release in queue is of equal or higher preference"]},
-  {"guid":"g-big","indexerId":1,"title":"big","size":'$((17 * gb))',"seeders":80,"customFormatScore":1900,"quality":{"quality":{"resolution":1080}},"rejections":["Release in queue is of equal or higher preference"]},
-  {"guid":"g-small","indexerId":1,"title":"small","size":'$((2 * gb))',"seeders":80,"customFormatScore":1800,"quality":{"quality":{"resolution":1080}},"rejections":["Release in queue is of equal or higher preference","1.7 GB is smaller than minimum allowed"]},
-  {"guid":"g-ok","indexerId":2,"title":"ok","size":'$((7 * gb))',"seeders":6,"customFormatScore":1500,"quality":{"quality":{"resolution":1080}},"rejections":["Release in queue is of equal or higher preference"]},
-  {"guid":"g-more","indexerId":2,"title":"more","size":'$((8 * gb))',"seeders":60,"customFormatScore":0,"quality":{"quality":{"resolution":1080}},"rejections":[]}
-]'
-got=$(pick_1080p $((12 * gb)) 0 <<<"$releases" | cut -f1)
-[[ $got == g-ok ]] || fail "pick_1080p with a dead 4K swarm picked: $got"
-got=$(pick_1080p $((12 * gb)) 40 <<<"$releases" | cut -f1)
-[[ $got == g-more ]] || fail "pick_1080p against a 40 seeder 4K picked: $got"
-got=$(pick_1080p $((7 * gb)) 0 <<<"$releases" | cut -f1)
-[[ -z $got ]] || fail "pick_1080p picked a release no smaller than the 4K left: $got"
+api() {
+  case "$1 $2" in
+    "radarr GET") echo '{"records":[{"id":7,"downloadId":"MOVIE"}]}' ;;
+    "sonarr GET") echo '{"records":[{"id":3,"downloadId":"EPISODE"}]}' ;;
+    *) echo "$1 $2 $3" >>"$T/api" ;;
+  esac
+}
+drop episode "Show S01" "parou" 2>/dev/null || fail "drop did not find a download in Sonarr's queue"
+[[ $(cat "$T/api") == "sonarr DELETE /queue/3?removeFromClient=true&blocklist=false" ]] ||
+  fail "drop sent: $(cat "$T/api")"
+grep -q 'Show S01 parou' "$MEDIA_LOG" || fail "drop did not log the dropped download"
+rm "$T/api"
+! drop byhand "Mine" "parou" 2>/dev/null || fail "drop claimed a download no app grabbed"
+[[ ! -e $T/api ]] || fail "drop touched an app for a download no app grabbed"
 
 ((failures == 0)) || { echo "media_torrents: $failures failure(s)"; exit 1; }
 echo "media_torrents: ok"

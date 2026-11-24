@@ -15,7 +15,7 @@ fail=0
 for db in $(cd "$work/media" && find . \( -name '*.db' -o -name '*.sqlite3' \) -printf '%P\n'); do
   [[ $(sqlite3 "$work/media/$db" 'PRAGMA integrity_check') == ok ]] || { echo "media-restore-test: $db is corrupt" >&2; fail=1; }
 done
-for svc in radarr sonarr prowlarr jellyfin seerr; do
+for svc in radarr sonarr prowlarr jellyfin; do
   find "$work/media/$svc" \( -name '*.db' -o -name '*.sqlite3' \) | grep -q . ||
     { echo "media-restore-test: no $svc database" >&2; fail=1; }
 done
