@@ -203,7 +203,7 @@ fi
 # Moonlight's stream settings, the same on both machines: Super and the other system
 # shortcuts always go to the other side, 10 Mbit/s (fedora is on Wi-Fi), the mouse set
 # for a desktop ("mouseacceleration" is Moonlight's key for that option) and full screen
-# (windowmode=1, WM_FULLSCREEN_DESKTOP; on Wayland the default is a window).
+# (windowmode=1). Under Hyprland remote.lua makes the window fullscreen either way.
 moonlight_conf="$HOME/.config/Moonlight Game Streaming Project/Moonlight.conf"
 if pgrep -x moonlight >/dev/null; then
   echo "==> Moonlight is open and rewrites its settings on exit; deploy again after closing it"

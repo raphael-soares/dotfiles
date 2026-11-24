@@ -1,31 +1,69 @@
 #!/usr/bin/env bash
-# usage: monitor-away OUTPUT PEER_INPUT
-# Asks the monitor on OUTPUT over DDC which input it shows. While that is PEER_INPUT
-# (the other machine's cable), $XDG_RUNTIME_DIR/hypr-away/OUTPUT exists and monitors.lua
-# treats the output as unplugged. One instance per output.
+# usage: monitor-away OUTPUT MODEL PEER_INPUT
+# Asks the monitor on OUTPUT over DDC which input it shows. While it is MODEL showing
+# PEER_INPUT (the other machine's cable), $XDG_RUNTIME_DIR/hypr-away/OUTPUT holds this
+# process's PID and monitors.lua lays the screens out without that output. One
+# instance per output, living as long as the Hyprland that started it.
 set -uo pipefail
 
-out=$1 peer_input=$(printf 'x%02x' "$(($2))")
+out=$1 model=$2 peer_input=$(printf 'x%02x' "$(($3))")
 dir=${XDG_RUNTIME_DIR:?}/hypr-away
+drm=${DRM_DIR:-/sys/class/drm}
+away_file=$dir/$out
+# A monitor that stops answering while away is shown again after this many polls:
+# a lit screen on the wrong input beats one that never turns back on.
+MAX_FAILS=10
+
+away=0 fails=0 bus=
+
+plugged() { [[ $(cat "$drm"/card*-"$out"/status 2>/dev/null) == connected ]]; }
+
+# The I2C bus of OUTPUT when the monitor on it is MODEL; a dock replug renumbers it.
+find_bus() {
+  ddcutil detect --brief 2>/dev/null | awk -v c="-$out\$" -v m="$model" '
+    /^(Display|Invalid display)/ {bus = ""; conn = ""}
+    /I2C bus:/ {bus = $3; sub(/.*i2c-/, "", bus)}
+    /DRM connector:/ {conn = $3}
+    /Monitor:/ && conn ~ c && index($0, m) {print bus; exit}'
+}
+
+mark() {
+  [[ $1 == "$away" ]] && return
+  away=$1
+  if ((away)); then echo $$ >"$away_file"; else rm -f "$away_file"; fi
+  hyprctl eval 'require("monitors").evaluate()' >/dev/null 2>&1 9>&-
+}
+
+poll() {
+  if ! plugged; then
+    bus= fails=0
+    mark 0
+    return
+  fi
+  [[ -n $bus ]] || bus=$(find_bus 9>&-)
+  local input=
+  [[ -n $bus ]] && input=$(ddcutil --bus "$bus" --brief getvcp 60 2>/dev/null 9>&- | awk '$1 == "VCP" {print tolower($4)}')
+  if [[ -z $input ]]; then
+    bus=
+    ((++fails >= MAX_FAILS)) && mark 0
+    return
+  fi
+  fails=0
+  if [[ $input == "$peer_input" ]]; then mark 1; else mark 0; fi
+}
+
+[[ -n ${MONITOR_AWAY_LIB:-} ]] && return 0
+
 mkdir -p "$dir"
 exec 9>"$dir/.$out.lock"
 flock -n 9 || exit 0
+hypr_pid=$(head -1 "$XDG_RUNTIME_DIR/hypr/${HYPRLAND_INSTANCE_SIGNATURE:?}/hyprland.lock" 2>/dev/null)
+[[ -n $hypr_pid ]] || exit 1
+trap exit TERM INT HUP
+trap 'mark 0' EXIT
+rm -f "$away_file"
 
-bus=$(ddcutil detect --brief 2>/dev/null | awk -v c="-$out\$" '/I2C bus/ {b = $3} $0 ~ c {sub(/.*i2c-/, "", b); print b; exit}')
-[[ -n $bus ]] || { echo "monitor-away: no DDC bus for $out" >&2; exit 1; }
-
-away=
-while :; do
-  input=$(ddcutil --bus "$bus" --brief getvcp 60 2>/dev/null 9>&- | awk '{print tolower($4)}')
-  now=
-  [[ $input == "$peer_input" ]] && now=1
-  if [[ -n $input && $now != "$away" ]]; then
-    away=$now
-    if [[ -n $away ]]; then touch "$dir/$out"; else rm -f "$dir/$out"; fi
-    hyprctl eval 'require("monitors").evaluate()' >/dev/null 9>&-
-    # Noctalia dies on a Wayland protocol error when the output it draws on goes away.
-    sleep 3 9>&-
-    pgrep -x noctalia >/dev/null || hyprctl eval 'hl.exec_cmd("noctalia")' >/dev/null 9>&-
-  fi
-  sleep 1 9>&-
+while kill -0 "$hypr_pid" 2>/dev/null; do
+  poll
+  if [[ -n $bus ]]; then sleep 1 9>&-; else sleep 5 9>&-; fi
 done

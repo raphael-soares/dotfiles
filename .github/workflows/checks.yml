@@ -29,6 +29,7 @@ jobs:
       - run: bash tests/secrets.sh
       - run: bash tests/remote_serving.sh
       - run: bash tests/remote_control.sh
+      - run: bash tests/monitor_away.sh
       - run: lua5.4 tests/remote_state.lua
 
   shellcheck:

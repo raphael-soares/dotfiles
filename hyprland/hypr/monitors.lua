@@ -65,8 +65,11 @@ local settleTimer, enableTimer
 
 -- A monitor showing the other machine (bin/monitor-away) is still plugged in: lid.lua
 -- must not suspend while that machine streams this one. Only the layout skips it.
+-- The file holds the watcher's PID, so one left by a dead watcher is ignored.
 local function away(name)
-  return RUNTIME_DIR ~= nil and readFile(RUNTIME_DIR .. "/hypr-away/" .. name) ~= nil
+  local pid = RUNTIME_DIR and readFile(RUNTIME_DIR .. "/hypr-away/" .. name)
+  pid = pid and pid:match("^%d+")
+  return pid ~= nil and readFile("/proc/" .. pid .. "/stat") ~= nil
 end
 local function connected(name)
   local status = readFile("/sys/class/drm/" .. entries[name] .. "/status")
@@ -209,12 +212,16 @@ end
 hl.on("monitor.added", schedule)
 hl.on("monitor.removed", schedule)
 
-hl.on("hyprland.start", function()
+-- Started on every load: a watcher already running keeps the lock and the new one exits.
+local function startWatchers()
   for name, rule in pairs(RULES) do
-    if rule.peer_input then
-      hl.exec_cmd("monitor-away " .. name .. " " .. rule.peer_input)
+    local shared = rule.shared
+    if shared then
+      hl.exec_cmd(string.format("monitor-away %s '%s' %d", name, shared.model, shared.peer_input))
     end
   end
-end)
+end
+hl.on("hyprland.start", startWatchers)
+hl.on("config.reloaded", startWatchers)
 
 return M
