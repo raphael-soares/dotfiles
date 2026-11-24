@@ -514,7 +514,7 @@ browser_placement = "floating"
 w-engine-panel_position = "center"
 
 [plugins]
-enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-shots", "raphael/hypr-remote" ]
+enabled = [ "raphael/hypr-displays", "raphael/hypr-active-workspace", "raphael/hypr-remote" ]
 
     [[plugins.source]]
     kind = "git"
@@ -613,6 +613,12 @@ source = "builtin"
         [theme.templates.user.qt6ct-colors]
         input_path = "$XDG_CONFIG_HOME/noctalia/templates/qt6ct-colors.conf"
         output_path = "$XDG_CONFIG_HOME/qt6ct/colors/noctalia-breeze.conf"
+
+        # Flameshot's whole config, so its buttons follow the palette. Flameshot only
+        # writes this file from its own settings window, which is not used.
+        [theme.templates.user.flameshot]
+        input_path = "$XDG_CONFIG_HOME/noctalia/templates/flameshot.ini"
+        output_path = "$XDG_CONFIG_HOME/flameshot/flameshot.ini"
 
 [wallpaper]
 directory = "/home/raphael/Pictures/Wallpaper"

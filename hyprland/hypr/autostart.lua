@@ -11,4 +11,6 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("zapfast --start-hidden")
   hl.exec_cmd("spotifast --start-hidden")
   hl.exec_cmd("udiskie --automount --no-notify --no-tray")
+  -- Flameshot's daemon owns the copied image, so it stays pasteable after the shot closes.
+  hl.exec_cmd("flameshot")
 end)

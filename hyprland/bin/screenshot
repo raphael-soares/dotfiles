@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# usage: screenshot [window]
+# Flameshot on the focused monitor. It captures at once, so popups and menus open under
+# the mouse stay in the shot, then shows the frozen image to select, draw, copy or save.
+# With "window" the focused window starts out selected.
+set -euo pipefail
+
+monitor=$(hyprctl monitors -j | jq -c 'first(.[] | select(.focused))')
+name=$(jq -r .name <<<"$monitor")
+# Flameshot numbers screens in the order Wayland announced them. Hyprland's ids part
+# ways with that order once a monitor is replugged or turned back on.
+number=$(wayland-info -i wl_output | awk -v want="$name" '/^\tname:/ {if ($2 == want) {print n + 0; exit} n++}')
+[[ -n $number ]] || { echo "screenshot: $name is not a Wayland output" >&2; exit 1; }
+
+args=(screen --number "$number" --edit)
+if [[ ${1:-} == window ]]; then
+  # --region is in the monitor's pixels, counted from its top left corner.
+  region=$(hyprctl activewindow -j | jq -r --argjson m "$monitor" '
+    select(.at != null) | [.size[0], .size[1], .at[0] - $m.x, .at[1] - $m.y]
+    | map(. * $m.scale | round) | "\(.[0])x\(.[1])+\(.[2])+\(.[3])"')
+  [[ -n $region ]] && args+=(--region "$region")
+fi
+exec flameshot "${args[@]}"

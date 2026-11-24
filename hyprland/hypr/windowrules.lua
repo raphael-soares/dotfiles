@@ -35,6 +35,14 @@ hl.window_rule({
 })
 
 hl.window_rule({
+  -- The frozen screen Flameshot draws on. Fullscreen, so it covers the bar too.
+  name = "flameshot-capture",
+  match = { class = "^flameshot$" },
+  fullscreen = true,
+  no_anim = true,
+})
+
+hl.window_rule({
   -- Fix some dragging issues with XWayland
   name = "fix-xwayland-drags",
   match = {

@@ -8,10 +8,8 @@ gcr
 adwaita-cursor-theme
 udiskie
 socat
-grim
-slurp
-hyprshot
-satty
+flameshot
+wayland-utils
 nautilus
 loupe
 papers
