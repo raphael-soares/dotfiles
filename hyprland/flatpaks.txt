@@ -1,0 +1,12 @@
+app.zen_browser.zen
+org.gnome.Loupe
+org.gnome.Papers
+org.gnome.Showtime
+org.gnome.TextEditor
+org.gnome.Calculator
+io.missioncenter.MissionCenter
+com.github.wwmm.easyeffects
+https://raphael-soares.github.io/syncfast/io.github.raphael_soares.syncfast.flatpakref
+io.github.kolunmi.Bazaar
+com.discordapp.Discord
+com.obsproject.Studio

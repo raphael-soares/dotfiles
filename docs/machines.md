@@ -6,7 +6,12 @@
 the machine has:
 
 - installs missing packages from `<module>/packages.<distro>.txt` (`yay`/`pacman`
-  on Arch, `dnf` on Fedora);
+  on Arch, `dnf` on Fedora) and removes the ones in `<module>/remove.<distro>.txt`;
+- installs missing apps from `<module>/flatpaks.txt`, in the user installation.
+  User apps go here, so both machines get the same version and name: `hyprland`
+  for both, `laptop` for the notebook, `home` for the home PC. What talks to the
+  system (portals, Sunshine, Moonlight, Flameshot, Nautilus) stays native. Apps
+  dropped from a list are not uninstalled;
 - copies the Fuxi-H3 udev rule, the greetd config and the Sunshine units to
   `/etc` with sudo;
 - sets gsettings, `gcr-ssh-agent`, the work omp profile, and reloads Hyprland.

@@ -9,7 +9,6 @@ udiskie
 socat
 flameshot
 wayland-utils
-gnome-calculator
 gvfs-mtp
 gvfs-smb
 seahorse
@@ -22,9 +21,5 @@ yaru-icon-theme
 qt6ct
 breeze
 nautilus
-loupe
-papers
-showtime
-gnome-text-editor
 moonlight-qt
 sunshine-bin
