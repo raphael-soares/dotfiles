@@ -26,7 +26,7 @@ exists() { [[ -e $H/$1 || -L $H/$1 ]] || fail "$1 does not exist"; }
 absent() { [[ ! -e $H/$1 && ! -L $H/$1 ]] || fail "$1 exists and should not"; }
 
 for f in .bashrc .bash_profile .gitconfig .config/git/ignore .config/starship.toml \
-  .config/fzf/fzf.sh .config/mise/config.toml .config/nvim .config/ghostty/config \
+  .config/fzf/fzf.sh .config/mise/config.toml .config/nvim .config/ghostty/base \
   .config/fastfetch/config.jsonc \
   .claude/CLAUDE.md .claude/settings.json .claude/skills .claude/hooks/rtk-rewrite.sh \
   .omp/agent/AGENTS.md .omp/agent/config.yml .omp/agent/skills .omp/agent/extensions \

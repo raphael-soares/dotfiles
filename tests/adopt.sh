@@ -26,7 +26,7 @@ HOME=$H DOTFILES_LINKS_ONLY=1 "$REPO/.dotter/adopt.sh" -l .dotter/arch.toml \
 failures=0
 fail() { echo "FAILED: $*"; failures=$((failures + 1)); }
 
-for f in .bashrc .gitconfig .config/hypr .config/nvim .config/ghostty/config; do
+for f in .bashrc .gitconfig .config/hypr .config/nvim .config/ghostty/base; do
   [[ -L $H/$f && $(readlink -f "$H/$f") == "$REPO"/* ]] || fail "$f did not become a link into the repo"
 done
 backup=$(find "$H/.dotfiles-backup" -mindepth 1 -maxdepth 1 -type d)
