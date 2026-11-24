@@ -193,6 +193,23 @@ if command -v firewall-cmd >/dev/null; then
     --add-port=47984-47990/tcp --add-port=48010/tcp --add-port=47998-48000/udp
   sudo firewall-cmd -q --reload
 fi
+# Moonlight's stream settings, the same on both machines: Super and the other system
+# shortcuts always go to the other side, 10 Mbit/s (fedora is on Wi-Fi), and the mouse
+# set for a desktop ("mouseacceleration" is Moonlight's key for that option).
+moonlight_conf="$HOME/.config/Moonlight Game Streaming Project/Moonlight.conf"
+if pgrep -x moonlight >/dev/null; then
+  echo "==> Moonlight is open and rewrites its settings on exit; deploy again after closing it"
+else
+  mkdir -p "${moonlight_conf%/*}"
+  grep -qx '\[General\]' "$moonlight_conf" 2>/dev/null || printf '[General]\n' >>"$moonlight_conf"
+  for setting in capturesyskeys=2 bitrate=10000 autoadjustbitrate=false mouseacceleration=true; do
+    if grep -q "^${setting%%=*}=" "$moonlight_conf"; then
+      sed -i "s/^${setting%%=*}=.*/$setting/" "$moonlight_conf"
+    else
+      sed -i "/^\[General\]$/a $setting" "$moonlight_conf"
+    fi
+  done
+fi
 if [[ $DISTRO == fedora ]] && ! flatpak info io.missioncenter.MissionCenter >/dev/null 2>&1; then
   flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
   flatpak install --user -y --noninteractive flathub io.missioncenter.MissionCenter
