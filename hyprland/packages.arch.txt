@@ -23,3 +23,8 @@ papirus-icon-theme
 yaru-icon-theme
 qt6ct
 breeze
+nautilus
+loupe
+papers
+showtime
+gnome-text-editor

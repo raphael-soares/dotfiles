@@ -158,6 +158,13 @@ printf '[Icon Theme]\nInherits=Adwaita\n' >"$HOME/.icons/default/index.theme"
 if command -v flatpak >/dev/null; then
   flatpak override --user --unset-env=ICON_THEME --env=XCURSOR_THEME=Adwaita
 fi
+xdg-mime default org.gnome.Nautilus.desktop inode/directory
+xdg-mime default org.gnome.Loupe.desktop image/png image/jpeg image/gif image/webp \
+  image/avif image/heif image/tiff image/bmp image/svg+xml
+xdg-mime default org.gnome.Papers.desktop application/pdf
+xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
+  video/quicktime video/x-msvideo video/mpeg
+xdg-mime default org.gnome.TextEditor.desktop text/plain
 # Swapping the ~/.config/hypr link while Hyprland is running drops it into emergency mode.
 if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
   hyprctl reload >/dev/null && { noctalia msg config-reload || true; }
@@ -211,13 +218,6 @@ if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
   sudo systemctl enable --force greetd.service
   echo "==> Reboot to log in through greetd"
 fi
-xdg-mime default org.gnome.Nautilus.desktop inode/directory
-xdg-mime default org.gnome.Loupe.desktop image/png image/jpeg image/gif image/webp \
-  image/avif image/heif image/tiff image/bmp image/svg+xml
-xdg-mime default org.gnome.Papers.desktop application/pdf
-xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
-  video/quicktime video/x-msvideo video/mpeg
-xdg-mime default org.gnome.TextEditor.desktop text/plain
 # pcmanfm-qt rewrites its whole settings file on exit, so it is a real file and the
 # repo only merges in the keys it owns. The top margin sits below the bar: its
 # thickness minus the 1px that margin_edge = -1 pushes off screen.

@@ -61,11 +61,11 @@ else
   fail "hook was not rendered"
 fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
-shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/config.toml io.missioncenter.MissionCenter
+shared_in_hook=(sshd_config.d avahi-daemon hyprctl lionheartp/Hyprland greetd/config.toml io.missioncenter.MissionCenter 'xdg-mime default'
   'remote-add --user --if-not-exists flathub')
 laptop_only_in_hook=(enterprise)
 desktop_only_in_hook=(setcap drm.edid_firmware dracut.conf.d 'capture = kms' media-deploy remove_packages\ home
-  home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' 'xdg-mime default' org.kde.haruna
+  home/greetd/config.toml 'home/greetd/pam /etc/pam.d/greetd' 'enable --force greetd' org.kde.haruna
   'tuned-adm profile throughput-performance' packaging/nautilus/syncfast_nautilus.py)
 gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners)
 for p in "${gone_from_hook[@]}"; do ! hook_has "$p" || fail "$machine hook still has $p"; done
