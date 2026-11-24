@@ -64,7 +64,7 @@ echo 'user = @USER@' >"$R/files/tmpl.conf"
 cat >"$R/files/manual.sh" <<'EOF'
 need_file files/plain.conf /etc/plain.conf "sudo udevadm control --reload"
 need_file files/tmpl.conf /etc/tmpl.conf "" "s/@USER@/ana/"
-need_file files/plain.conf /etc/locked.conf
+need_file files/plain.conf /etc/locked/x.conf
 EOF
 : >"$R/done/manual.sh"
 echo 'need_restart demo.service demo "$REPO/files/plain.conf"' >"$R/restart.sh"
@@ -113,17 +113,23 @@ expect "flatpaks, all installed" "" "$(run fedora flat)"
 mkdir -p "$T/root/etc"
 cp "$R/files/plain.conf" "$T/root/etc/plain.conf"
 echo 'user = ana' >"$T/root/etc/tmpl.conf"
-cp "$R/files/plain.conf" "$T/root/etc/locked.conf"
-chmod 000 "$T/root/etc/locked.conf"
+mkdir -p "$T/root/etc/locked"
+cp "$R/files/plain.conf" "$T/root/etc/locked/x.conf"
+chmod 000 "$T/root/etc/locked"
 out=$(run fedora files)
 lacks "file equal" "/etc/plain.conf" "$out"
 lacks "rendered file equal" "/etc/tmpl.conf" "$out"
-if [[ -r $T/root/etc/locked.conf ]]; then
+if [[ -r $T/root/etc/locked/x.conf ]]; then
   echo "skipped: unreadable file check (running as root)"
 else
-  has "unreadable file" "sudo install -Dm644 $R/files/plain.conf /etc/locked.conf" "$out"
-  has "unreadable file" "# could not check /etc/locked.conf" "$out"
+  grep -qF "sudo install -Dm644 $R/files/plain.conf /etc/locked/x.conf && mkdir -p " <<<"$out" ||
+    fail "unreadable file: no copy line in [$out]"
+  has "unreadable file" "# could not read /etc/locked/x.conf; asked until the command above runs" "$out"
+  mkdir -p "$T/state/dotfiles"
+  sha256sum "$R/files/plain.conf" | cut -d' ' -f1 >"$T/state/dotfiles/manual-file-_etc_locked_x.conf"
+  lacks "unreadable file, recorded" "/etc/locked/x.conf" "$(run fedora files)"
 fi
+chmod 755 "$T/root/etc/locked"
 echo 'conf = 0' >"$T/root/etc/plain.conf"
 echo 'user = bob' >"$T/root/etc/tmpl.conf"
 out=$(run fedora files)
@@ -156,6 +162,45 @@ has "no args read the machine's modules" "==> pkgs" "$out"
 rc=0
 run fedora nosuch >/dev/null 2>&1 || rc=$?
 expect "unknown module" 2 "$rc"
+
+# The repo's own modules, on the same stubbed machine.
+real() {
+  local distro=$1
+  shift
+  PATH=$T/bin:$T/tools HOME=$T/home DOTFILES_DISTRO=$distro DOTFILES_ROOT=$T/root \
+    DOTFILES_CMDLINE=$T/cmdline XDG_STATE_HOME=$T/state DOTFILES_REPO=$REPO \
+    bash "$REPO/.dotter/missing.sh" "$@"
+}
+mkdir -p "$T/home"
+echo 'BOOT_IMAGE=/vmlinuz root=UUID=x ro' >"$T/cmdline"
+has "home without the EDID argument" \
+  'sudo grubby --update-kernel=ALL --args="drm.edid_firmware=DP-1:edid/lg-ultragear.bin video=DP-1:e"' \
+  "$(real fedora home)"
+echo 'BOOT_IMAGE=/vmlinuz drm.edid_firmware=DP-1:edid/lg-ultragear.bin video=DP-1:e' >"$T/cmdline"
+lacks "home with the EDID argument" "grubby" "$(real fedora home)"
+
+has "laptop greetd config" \
+  "sed 's/@GREETER@/greeter/' $REPO/hyprland/greetd/config.toml | sudo install -Dm644 /dev/stdin /etc/greetd/config.toml" \
+  "$(real arch laptop)"
+grep -q "s/@GREETER@/greetd/" <<<"$(real fedora home)" || fail "home greetd config is not rendered for greetd"
+
+lacks "hyprland on arch" "dnf copr" "$(real arch hyprland)"
+has "hyprland on fedora without the copr" "sudo dnf copr enable -y lionheartp/Hyprland" "$(real fedora hyprland)"
+
+out=$(real fedora sshd)
+has "sshd without a key" "# add ~/.ssh/keys/personal.pub to ~/.ssh/authorized_keys, then run this again" "$out"
+lacks "sshd without a key" "50-key-only" "$out"
+mkdir -p "$T/home/.ssh" && echo 'ssh-ed25519 AAAA' >"$T/home/.ssh/authorized_keys"
+has "sshd with a key" "sudo systemctl enable --now sshd avahi-daemon" "$(real fedora sshd)"
+
+while read -r p; do touch "$S/rpm/$p"; done <"$REPO/media/packages.fedora.txt"
+touch "$S/fw/7878_tcp" "$S/fw/8990_tcp"
+expect "media with everything in place" "" "$(real fedora media)"
+rm "$S/fw/8990_tcp"
+has "media with a port closed" "sudo firewall-cmd --permanent --add-port=8990/tcp && sudo firewall-cmd --reload" "$(real fedora media)"
+
+real fedora terminal ai desktop hyprland laptop work sshd home media >/dev/null 2>"$T/err" || fail "a real module failed"
+[[ ! -s $T/err ]] || fail "real modules wrote errors: $(cat "$T/err")"
 
 if ((failures)); then
   echo "missing: $failures failure(s)"

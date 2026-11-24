@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Prints the x86_64 rpm of a GitHub repo's latest release: latest-rpm <owner/repo>.
+set -euo pipefail
+
+curl -fsSL "https://api.github.com/repos/${1:?usage: latest-rpm owner/repo}/releases/latest" |
+  jq -r '.assets[].browser_download_url | select(endswith(".x86_64.rpm"))'

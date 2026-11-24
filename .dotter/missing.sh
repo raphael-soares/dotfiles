@@ -68,23 +68,27 @@ need_copr() {
 }
 
 # need_file <repo file> <system path> [<reload command>] [<sed script>]
+# A path only root can read (sshd_config.d is 0700) is compared to the hash its
+# printed command records once it runs.
 need_file() {
-  local src=$1 dest=$2 reload=${3:-} script=${4:-} cmd
+  local src=$1 dest=$2 reload=${3:-} script=${4:-} cmd want key dir=$2
   if [[ -n $script ]]; then
     cmd="sed '$script' $REPO_SHOWN/$src | sudo install -Dm644 /dev/stdin $dest"
+    want=$(sed "$script" "$REPO/$src" | sha256sum | cut -d' ' -f1)
   else
     cmd="sudo install -Dm644 $REPO_SHOWN/$src $dest"
+    want=$(sha256sum <"$REPO/$src" | cut -d' ' -f1)
   fi
   [[ -n $reload ]] && cmd+=" && $reload"
-  if [[ -e $ROOT$dest && ! -r $ROOT$dest ]]; then
-    step "$cmd"
-    note "could not check $dest"
-  elif [[ -n $script ]]; then
-    sed "$script" "$REPO/$src" | cmp -s - "$ROOT$dest" || step "$cmd"
-  else
-    cmp -s "$REPO/$src" "$ROOT$dest" || step "$cmd"
+  until [[ -z $dir || -d $ROOT$dir ]]; do dir=${dir%/*}; done
+  if [[ -r $ROOT$dest || ( -x $ROOT${dir:-/} && ! -e $ROOT$dest ) ]]; then
+    [[ $({ sha256sum <"$ROOT$dest"; } 2>/dev/null | cut -d' ' -f1) == "$want" ]] || step "$cmd"
+    return 0
   fi
-  return 0
+  key=manual-file-$(tr / _ <<<"$dest")
+  [[ $(cat "$STATE/$key" 2>/dev/null) == "$want" ]] && return 0
+  step "$cmd && mkdir -p ${STATE/#"$HOME"/\~} && echo $want > ${STATE/#"$HOME"/\~}/$key"
+  note "could not read $dest; asked until the command above runs"
 }
 
 need_enabled() {
