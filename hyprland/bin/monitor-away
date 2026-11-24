@@ -23,6 +23,9 @@ while :; do
     away=$now
     if [[ -n $away ]]; then touch "$dir/$out"; else rm -f "$dir/$out"; fi
     hyprctl eval 'require("monitors").evaluate()' >/dev/null 9>&-
+    # Noctalia dies on a Wayland protocol error when the output it draws on goes away.
+    sleep 3 9>&-
+    pgrep -x noctalia >/dev/null || hyprctl eval 'hl.exec_cmd("noctalia")' >/dev/null 9>&-
   fi
   sleep 3 9>&-
 done

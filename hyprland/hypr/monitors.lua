@@ -63,12 +63,12 @@ if not MODES[pref] then pref = DEFAULT_MODE end
 local declared = {}
 local settleTimer, enableTimer
 
--- An output whose monitor shows the other machine counts as unplugged (bin/monitor-away).
+-- A monitor showing the other machine (bin/monitor-away) is still plugged in: lid.lua
+-- must not suspend while that machine streams this one. Only the layout skips it.
 local function away(name)
   return RUNTIME_DIR ~= nil and readFile(RUNTIME_DIR .. "/hypr-away/" .. name) ~= nil
 end
 local function connected(name)
-  if away(name) then return false end
   local status = readFile("/sys/class/drm/" .. entries[name] .. "/status")
   return status ~= nil and trim(status) == "connected"
 end
@@ -107,10 +107,12 @@ function M.anyExternalConnected()
   end
   return false
 end
-local anyExternalConnected = M.anyExternalConnected
 
 local function target()
-  local anyExt = anyExternalConnected()
+  local anyExt = false
+  for _, name in ipairs(externals) do
+    if connected(name) and not (internal and away(name)) then anyExt = true end
+  end
   local extOn = pref ~= "internal" or internal == nil
   local intOn = not anyExt or pref == "internal" or (pref == "extend" and not lidClosed())
 
