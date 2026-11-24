@@ -75,7 +75,6 @@ default_target_type = "symbolic"
 "home/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
 "home/noctalia/machine.toml" = "~/.config/noctalia/machine.toml"
 "home/noctalia/fedora-symbolic.svg" = "~/.config/noctalia/icons/fedora-symbolic.svg"
-"home/pcmanfm-qt/transparent.svg" = "~/.config/pcmanfm-qt/transparent.svg"
 
 [media.files]
 "media/containers" = { type = "symbolic", target = "~/.config/containers/systemd/media", recurse = false }

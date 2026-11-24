@@ -109,11 +109,3 @@ hl.window_rule({
   match = { class = "^org\\.pulseaudio\\.pavucontrol$" },
   size = { 900, 600 },
 })
-
-hl.window_rule({
-  -- pcmanfm-qt only draws the desktop icons; its windows are preferences and file dialogs.
-  name = "desktop-icons-dialogs",
-  match = { class = "^pcmanfm-qt$" },
-  float = true,
-  center = true,
-})

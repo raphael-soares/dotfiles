@@ -15,3 +15,12 @@ spectacle
 ark
 kcalc
 konsole-part
+pcmanfm-qt
+libfm-qt
+libfm
+menu-cache
+liblxqt
+libqtxdg
+lxqt-sudo
+qterminal
+qtermwidget
