@@ -140,8 +140,23 @@ hl.window_rule({
 hl.on("workspace.special_active", function(ws)
   run(R.special_active(state, ws and ws.name))
 end)
+-- The fullscreen rule alone leaves Moonlight windowed: it maps first and sizes itself
+-- after, so the stream window is made fullscreen once it has settled.
+local function fullscreen_stream(address)
+  for _, w in ipairs(hl.get_windows()) do
+    if w.address == address and (w.fullscreen or 0) == 0 then
+      hl.dispatch(hl.dsp.window.fullscreen({ window = "address:" .. address }))
+    end
+  end
+end
 hl.on("window.open", function(w)
   run(R.window_open(state, w.class, w.workspace and w.workspace.name, w.address))
+  if w.class == R.CLASS then
+    local address = w.address
+    hl.timer(function()
+      fullscreen_stream(address)
+    end, { timeout = 1000, type = "oneshot" })
+  end
 end)
 local close_pending = false
 hl.on("window.close", function(w)
