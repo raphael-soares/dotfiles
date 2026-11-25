@@ -97,7 +97,9 @@ Identities live in `~/Design/Identidades/<nome>/` and music in
 
 Pre-production runs through two blind reviewer agents, `video-espectador` and
 `video-critico` (`ai/.omp/agent/agents/`, linked to `~/.omp/agent/agents`). The
-skill stages what each may see with `ai/skills/video/revisao.py` and cuts the
-animatic with `ai/skills/video/animatic.py`; both need only Python and ffmpeg
-and are tested by `tests/video_tools.py`. Storyboard stills come from the
-identity's `Cena`, which saves one frame per plano when Manim runs with `-s`.
+skill stages what each may see with `ai/skills/video/revisao.py`, cuts the
+animatic with `ai/skills/video/animatic.py` and checks the 10% margin of
+rendered frames with `ai/skills/video/margem.py`; all three need only Python
+and ffmpeg and are tested by `tests/video_tools.py`. Storyboard stills come
+from the identity's `Cena`, which saves one frame per plano and the scene's
+opening frame when Manim runs with `-s`.

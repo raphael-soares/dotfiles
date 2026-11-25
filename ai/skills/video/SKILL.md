@@ -79,7 +79,7 @@ onde essa pessoa se perde; por isso o espectador cego revisa cada etapa.
 | `direcao.md` | metáfora central, mapa visual de cada conceito, mapa de termos, arco do vídeo |
 | `roteiro.md` | roteiro em duas colunas, plano por plano, cada um com a fonte |
 | `audio/planos/<id>-<n>.wav`, `audio/<id>.wav`, `audio/duracoes.json` | narração por plano, por cena e as durações |
-| `storyboard/<id>-<n>.png` | pose final de cada plano |
+| `storyboard/<id>-<n>.png`, `storyboard/inicio/<id>.png` | pose final de cada plano e a abertura de cada cena |
 | `animatic.mp4` | os quadros do storyboard no tempo da narração, com a voz |
 | `rascunho.mp4` | as cenas do rascunho animado montadas com a voz |
 | `revisao/<etapa>-<k>/entrada/` | o que o revisor recebeu na rodada `k` |
@@ -120,6 +120,13 @@ parado se retoma.
    - os momentos de palpite antes da revelação;
    - o arco: gancho, promessa, pergunta em aberto, blocos ligados por "mas" e
      "então", resposta, resumo visual;
+   - as cores: um sentido por cor no vídeo inteiro. Se a fala vai nomear uma
+     cor ("a parte laranja"), a direção fixa qual cor e o que ela quer dizer,
+     porque trocar depois é regravar a narração. Medidor e gráfico têm título
+     neutro ("tempo da CPU") e legenda com amostra de cada cor;
+   - os objetos que voltam (aparelho, ícone, personagem): o mesmo desenho e o
+     mesmo tamanho em todas as cenas, e o que sai de uma cena sai à vista no
+     começo da seguinte;
    - o mapa de termos (formato abaixo).
 5. **Roteiro** (`roteiro.md`) em duas colunas, plano por plano, de 3 a 10
    segundos. Escreva primeiro a coluna da tela inteira; a fala vem depois, como
@@ -144,9 +151,13 @@ parado se retoma.
    animatic e as cenas têm o tamanho da fala.
 7. **Storyboard.** Escreva cada cena em `cenas/manim/<id>.py` chegando na pose
    final de cada plano, com movimento simples, e renderize com `-s`: sai um
-   quadro por plano em `storyboard/` (veja `manim.md`, Tempo e poses). Cena
-   EffectCraft: exporte o quadro do fim de cada plano com o mesmo nome. Olhe os
-   quadros e depois faça a **rodada do crítico no storyboard**.
+   quadro por plano em `storyboard/` e o quadro de abertura da cena em
+   `storyboard/inicio/` (veja `manim.md`, Tempo e poses). Cena EffectCraft:
+   exporte o quadro do fim de cada plano com o mesmo nome e o do começo em
+   `storyboard/inicio/<id>.png`. Rode `python3
+   ~/.omp/agent/skills/video/margem.py <pasta>`, que lista cada quadro a menos
+   de 10% da borda e o lado; corrija até ele dizer `margem ok`. Olhe os quadros
+   e depois faça a **rodada do crítico no storyboard**.
 8. **Animatic.** `python3 ~/.omp/agent/skills/video/animatic.py <pasta>` gera
    `animatic.mp4` (480p, cada quadro pelo tempo da fala do seu plano, com a voz).
    Assista; depois **rodada do espectador no animatic**. **Ponto 2: pare e
@@ -235,11 +246,17 @@ Para cada rodada:
    qualquer coisa a mais acaba com a cegueira. No rascunho os dois agentes
    recebem a mesma pasta.
 3. Escreva `revisao/<etapa>-<k>.md`: o relatório do revisor, a correção do quiz
-   contra o gabarito (espectador) e, para cada achado, "corrigido" (onde) ou
-   "rejeitado" (por quê). Achado não some: o que você rejeitar fica com o
-   motivo.
-4. A rodada passa com o quiz todo certo e todo achado corrigido ou rejeitado
-   com motivo. Não passou: corrija e rode de novo, com uma rodada nova.
+   contra o gabarito (espectador) e os achados numa tabela `| Plano | Achado |
+   Decisão |`, com a decisão começando por "corrigido" (onde) ou "rejeitado"
+   (por quê). Achado não some: o que você rejeitar fica com o motivo. Escreva
+   o motivo completo, sem "pelo motivo da rodada 1": o `revisao.py` passa ao
+   crítico da rodada seguinte só as linhas rejeitadas (`rejeitados.md`), para
+   ele não repetir o que já foi recusado.
+4. A rodada passa quando o crítico não aponta nada grave, ou quando o
+   espectador acerta o quiz inteiro e não marca "não" em "Mostrado antes?" nem
+   em "Nomeado antes?". Achado leve se corrige ou se rejeita com motivo e não
+   pede rodada nova. Não passou: corrija tudo e rode uma rodada nova, que
+   confere as correções.
 5. Três rodadas sem passar: pare nessa etapa, não construa a seguinte em cima
    dela. Mostre ao dono os achados em aberto num `ask` e siga o que ele decidir.
 
@@ -356,7 +373,8 @@ exemplo e só salve na biblioteca com aprovação.
 Confira o resultado em vez de supor: extraia quadros das cenas
 (`ffmpeg -ss <t> -i cena.mp4 -frames:v 1 q.png`) e olhe com `read`. Para o vídeo
 inteiro, uma folha de contato mostra tudo de uma vez: `ffmpeg -i rascunho.mp4
--vf "fps=1/3.5,scale=427:240,tile=4x5" folha%d.png`. Confira a
+-vf "fps=1/3.5,scale=427:240,tile=4x5" folha%d.png`. Os quadros extraídos
+passam pelo `margem.py` (aceita pastas e arquivos `.png`). Confira a
 duração das cenas contra as narrações e o volume com
 `ffmpeg -i final.mp4 -af volumedetect -f null -`. Texto cortado, elemento fora
 da tela ou a menos de 10% da borda, fala sem som ou estourada voltam para a

@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 ETAPAS = ("roteiro", "storyboard", "animatic", "rascunho")
+CRITICO = ("storyboard", "rascunho")
 USO = "uso: python3 revisao.py <pasta-do-video> <roteiro|storyboard|animatic|rascunho>"
 
 
@@ -90,6 +91,29 @@ def stills(video, cenas):
     return [Path(video) / "storyboard" / f"{cena}-{i}.png" for cena, linhas in cenas for i in range(1, len(linhas) + 1)]
 
 
+def aberturas(video, cenas):
+    return [Path(video) / "storyboard" / "inicio" / f"{cena}.png" for cena, _ in cenas]
+
+
+def recusados(revisao, etapa, k):
+    linhas = []
+    for j in range(1, k):
+        relatorio = revisao / f"{etapa}-{j}.md"
+        if not relatorio.is_file():
+            continue
+        for linha in relatorio.read_text().splitlines():
+            if not linha.lstrip().startswith("|"):
+                continue
+            c = celulas(linha)
+            if len(c) >= 3 and "rejeit" in c[-1].lower():
+                linhas.append(f"| {j} | {c[0]} | {c[1]} | {c[-1]} |")
+    if not linhas:
+        return None
+    return ("# Achados recusados em rodadas anteriores\n\n"
+            "Cada linha já foi levantada e recusada com o motivo ao lado. Não repita sem um fato novo no quadro.\n\n"
+            "| Rodada | Plano | Achado | Decisão |\n|---|---|---|---|\n" + "\n".join(linhas) + "\n")
+
+
 def quadro(origem, destino, *posicao):
     destino.parent.mkdir(parents=True, exist_ok=True)
     r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *posicao, "-i", str(origem), "-frames:v", "1", "-update", "1", str(destino)], capture_output=True, text=True)
@@ -117,6 +141,8 @@ def preparar(video, etapa):
         quiz, publico = briefing(video)
     if etapa in ("storyboard", "animatic"):
         exigir(stills(video, cenas))
+    if etapa == "storyboard":
+        exigir(aberturas(video, cenas))
     if etapa == "rascunho":
         exigir([video / "audio" / "duracoes.json"] + [video / "cenas" / "render" / f"{c}.mp4" for c, _ in cenas])
         tempos = duracoes(video)
@@ -136,12 +162,20 @@ def preparar(video, etapa):
             (entrada / "roteiro.md").write_text(tabela(cenas, ["Tela", "Fala"]))
         if etapa == "storyboard":
             (entrada / "tela.md").write_text(tabela(cenas, ["Tela"]))
+            for cena, linhas in cenas:
+                (entrada / "inicio").mkdir(exist_ok=True)
+                (entrada / "fim").mkdir(exist_ok=True)
+                shutil.copy(video / "storyboard" / "inicio" / f"{cena}.png", entrada / "inicio" / f"{cena}.png")
+                shutil.copy(video / "storyboard" / f"{cena}-{len(linhas)}.png", entrada / "fim" / f"{cena}.png")
+            folha(stills(video, cenas), entrada / "folha.png")
         if etapa in ("storyboard", "animatic"):
             (entrada / "quadros").mkdir()
             for s in stills(video, cenas):
                 shutil.copy(s, entrada / "quadros" / s.name)
-        if etapa in ("animatic", "rascunho"):
+        if etapa != "roteiro":
             (entrada / "fala.md").write_text(tabela(cenas, ["Fala"]))
+        if etapa in CRITICO and (texto := recusados(revisao, etapa, k)):
+            (entrada / "rejeitados.md").write_text(texto)
         if etapa == "rascunho":
             ordem = []
             for cena, _ in cenas:

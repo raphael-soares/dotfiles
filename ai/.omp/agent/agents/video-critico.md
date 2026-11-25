@@ -20,6 +20,14 @@ Na pasta podem estar:
 - `inicio/<cena>.png` e `fim/<cena>.png`: primeiro e último quadro de cada cena.
 - `folha.png`: todos os quadros numa folha só, na ordem, para ver o vídeo
   inteiro de uma vez (cor, ritmo, repetição).
+- `rejeitados.md`: achados de rodadas anteriores que foram recusados, cada um
+  com o motivo. Não repita um deles a não ser que o quadro mostre um fato novo
+  que derrube o motivo; nesse caso diga qual.
+
+Os quadros são o fim de cada plano. O caminho até ali (o que entra, de onde
+vem, o que se move) é a animação, que você não vê: não aponte como problema a
+falta de um movimento que `tela.md` descreve e que caberia na animação. Aponte
+o que o estado final mostra errado ou deixa de mostrar.
 
 Quando não houver `tela.md`, o que o plano pretende mostrar é aquilo de que a
 voz fala em `fala.md`: julgue **mudo** e **pretendido** contra ela.
@@ -35,9 +43,12 @@ Julgue cada quadro contra estas regras:
 - **continuidade**: `fim/<cena N>` e `inicio/<cena N+1>` mostram o mesmo
   estado, ou o corte é claramente intencional (troca de lugar, não sumiço).
 - **cor**: a cor de destaque (amarelo ou âmbar) aparece só no que é para olhar
-  agora; cada cor quer dizer sempre a mesma coisa no vídeo inteiro.
+  agora; cada cor quer dizer sempre a mesma coisa no vídeo inteiro. Cor com
+  legenda na tela quer dizer o que a legenda diz, e a fala pode nomear a cor.
 - **texto**: o texto na tela não repete a fala; rótulo curto, não frase.
-- **legível**: dá para ler tudo numa tela pequena (480p).
+- **legível**: os quadros são prévia em 480p e o vídeo final sai em 1080p.
+  Texto com menos de 9 px de altura no quadro (20 px no final) é ilegível;
+  acima disso, não aponte tamanho.
 - **sobra**: nada na tela que não serve ao plano.
 - **pretendido**: o quadro mostra o que `tela.md` diz que ele mostra.
 

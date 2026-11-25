@@ -9,6 +9,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 REVISAO = REPO / "ai" / "skills" / "video" / "revisao.py"
 ANIMATIC = REPO / "ai" / "skills" / "video" / "animatic.py"
+MARGEM = REPO / "ai" / "skills" / "video" / "margem.py"
 
 ROTEIRO = """# Roteiro
 
@@ -92,7 +93,9 @@ def montar(raiz, stills=True):
     (v / "audio" / "duracoes.json").write_text(json.dumps(PLANOS))
     if stills:
         for nome in ("01-a-1", "01-a-2", "02-b-1"):
-            png(v / "storyboard" / f"{nome}.png")
+            png(v / "storyboard" / f"{nome}.png", "green" if nome == "01-a-2" else "red")
+        for cena in ("01-a", "02-b"):
+            png(v / "storyboard" / "inicio" / f"{cena}.png", "yellow")
     return v
 
 
@@ -164,6 +167,14 @@ class Revisao(unittest.TestCase):
         self.assertIn("A memória acende.", (e / "tela.md").read_text())
         self.assertNotIn("Pronto, chegou.", (e / "tela.md").read_text())
 
+    def test_storyboard_shows_continuity_and_fala(self):
+        e = self.entrada("storyboard")
+
+        self.assertEqual((e / "fim" / "01-a.png").read_bytes(), (self.v / "storyboard" / "01-a-2.png").read_bytes())
+        self.assertEqual((e / "inicio" / "02-b.png").read_bytes(), (self.v / "storyboard" / "inicio" / "02-b.png").read_bytes())
+        self.assertTrue((e / "folha.png").is_file())
+        self.assertIn("Pronto, chegou.", (e / "fala.md").read_text())
+
     def test_missing_still_fails_and_creates_nothing(self):
         (self.v / "storyboard" / "01-a-2.png").unlink()
 
@@ -172,6 +183,31 @@ class Revisao(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("01-a-2.png", r.stderr)
         self.assertFalse((self.v / "revisao").exists())
+
+    def test_missing_opening_fails(self):
+        (self.v / "storyboard" / "inicio" / "02-b.png").unlink()
+
+        r = rodar(self.v, "storyboard")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("02-b.png", r.stderr)
+        self.assertFalse((self.v / "revisao").exists())
+
+    def test_rejected_findings_reach_next_critic_round(self):
+        self.entrada("storyboard")
+        (self.v / "revisao" / "storyboard-1.md").write_text(
+            "| Plano | Achado | Decisão |\n|---|---|---|\n"
+            "| 01-a#1 | Falta a placa. | Rejeitado: a placa emolduraria todos os quadros. |\n"
+            "| 02-b#1 | Texto pequeno. | Corrigido: fonte maior. |\n")
+
+        e = self.entrada("storyboard")
+
+        recusados = (e / "rejeitados.md").read_text()
+        self.assertIn("a placa emolduraria todos os quadros", recusados)
+        self.assertNotIn("Texto pequeno", recusados)
+
+    def test_first_round_has_no_rejections(self):
+        self.assertFalse((self.entrada("storyboard") / "rejeitados.md").exists())
 
     def test_unknown_stage_fails(self):
         r = rodar(self.v, "montagem")
@@ -272,6 +308,41 @@ class Revisao(unittest.TestCase):
             texto = textos(e)
             for segredo in ("esposta", "SEGREDO", "secret", "O disco fala direto"):
                 self.assertNotIn(segredo, texto, e)
+
+
+class Margem(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.pasta = Path(self.tmp.name) / "storyboard"
+        self.pasta.mkdir()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def quadro(self, nome, x, y, w, h):
+        caixa = f"drawbox=x={x}:y={y}:w={w}:h={h}:c=white:t=fill"
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", f"color=c=0x0F1420:s=200x100,{caixa}",
+                        "-frames:v", "1", str(self.pasta / nome)], check=True)
+
+    def rodar(self):
+        return subprocess.run([sys.executable, str(MARGEM), self.tmp.name], capture_output=True, text=True)
+
+    def test_content_inside_safe_area_passes(self):
+        self.quadro("01-a-1.png", 30, 15, 140, 70)
+
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_content_near_edge_names_frame_and_side(self):
+        self.quadro("01-a-1.png", 30, 15, 140, 70)
+        self.quadro("01-a-2.png", 60, 30, 135, 40)
+
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("01-a-2.png direita", r.stdout)
+        self.assertNotIn("01-a-1.png", r.stdout)
 
 
 class Animatic(unittest.TestCase):

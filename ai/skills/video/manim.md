@@ -30,11 +30,13 @@ para a duração da narração.
 
 Com `-s`, as animações pulam para o fim e o `Cena` grava a pose de cada plano:
 `self.ate(k)` salva `storyboard/<id>-<k>.png` (o fim do plano `k`, contado a
-partir de 1, como no roteiro) e `self.fechar()` salva o último. Uma cena por
+partir de 1, como no roteiro), `self.fechar()` salva o último e o primeiro
+`play` salva antes `storyboard/inicio/<id>.png`, a abertura da cena, que o
+crítico compara com o fim da cena anterior. Uma cena por
 segundo, mais ou menos. Por isso toda cena chama `self.ate(k)` na virada de
 cada plano, mesmo a que só tem um movimento: plano sem `ate` fica sem quadro e
-o `revisao.py` recusa a rodada. Identidade antiga sem `_pose`, `p` ou `ate`:
-atualize o `tema.py` dela antes do storyboard.
+o `revisao.py` recusa a rodada. Identidade antiga sem `_pose`, `_comecar`, `p`
+ou `ate`: atualize o `tema.py` dela antes do storyboard.
 
 Pose a pose: o arquivo da cena escrito no storyboard já chega em cada pose
 final, com movimento simples. No rascunho você troca só o caminho entre as
@@ -48,8 +50,12 @@ para que qualquer cena renderize sozinha e comece onde a anterior terminou.
   aparecer outra. O olho acompanha o objeto.
 - Grupo entra com `LaggedStart` (`lag_ratio` de 0,1 a 0,3), não tudo de uma vez
   nem um por vez em `play` separados.
-- O que não é o assunto agora fica apagado (`set_opacity(0.25)`), não some: o
-  contexto continua ali.
+- O que não é o assunto agora fica apagado, não some: o contexto continua ali.
+  Em forma só de contorno, `set_opacity` acende o preenchimento vazio e vira
+  bloco; apague com `set_stroke(opacity=0.25)` e, no que tem preenchimento,
+  `set_fill(opacity=...)` proporcional. Peça redesenhada a cada quadro (um
+  `always_redraw`, como um medidor) não herda a opacidade do grupo: ela tem de
+  ler a opacidade da moldura ao se redesenhar.
 - A revelação ganha aproximação de câmera
   (`self.camera.frame.animate.scale(0.6).move_to(alvo)`); a volta ao quadro
   inteiro marca que o bloco acabou.
@@ -64,10 +70,14 @@ para que qualquer cena renderize sozinha e comece onde a anterior terminou.
 
 ## Margem e forma
 
-Nada a menos de 10% da borda (conteúdo dentro de `x` entre -6,4 e 6,4 e `y`
-entre -3,6 e 3,6). O `tema.py` define essa área (`AREA_SEGURA`,
-`encaixar(grupo)`); a cena encaixa o grupo nela em vez de posicionar perto da
-borda. Prefira aproximar a câmera a encolher tudo para caber.
+Nada a menos de 10% da borda. O `tema.py` da identidade fixa o quadro em 16×9
+unidades (`config.frame_width = 16.0`, `config.frame_height = 9.0`); no quadro
+padrão do Manim (14,2×8) os mesmos números dariam 5%. Com 16×9, o conteúdo
+fica com `x` entre -6,4 e 6,4 e `y` entre -3,6 e 3,6: a `AREA_SEGURA` e o
+`encaixar(grupo)` do `tema.py`. Identidade nova copia essas duas linhas de
+`config`. A cena encaixa o grupo nessa área em vez de posicionar perto da
+borda; prefira aproximar a câmera a encolher tudo para caber. O `margem.py`
+confere os quadros renderizados.
 
 Emoji não renderiza em `Text`: desenhe ícones com formas (polígono, arco).
 Texto sobre bloco de destaque usa a cor de texto clara, não a do fundo. Forma
