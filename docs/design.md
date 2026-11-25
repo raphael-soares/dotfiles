@@ -74,37 +74,43 @@ reopening the app fixes it, from the menu or by asking the agent again.
 ## Video
 
 The `video` skill turns a topic and the owner's material into a narrated 16:9
-`.mp4` and a thumbnail, in `~/Design/Videos/<slug>/`. Besides the apps above it
-uses these tools on the desktop:
+`.mp4` and a thumbnail, in `~/Design/Projetos/<projeto>/<peça>/`. Besides the
+apps above it uses these tools on the desktop:
 
 | Tool | From | Used for |
 | --- | --- | --- |
 | Manim | `uv tool install manim`, printed by `missing.sh design` | algorithm, diagram and formula scenes |
 | Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
-| Kokoro | `kokoro.service`, a podman quadlet on `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
+| OmniVoice | audio.cpp in the Docker container `audiocpp` (`~/.config/audiocpp/compose.yaml`), `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
+| Whisper | local ASR on `127.0.0.1:9000` | `ai/skills/video/ouvir.py` checks each narrated plano |
 
-Kokoro does not start with the session: the skill runs `systemctl --user start
-kokoro` before narrating (the first start downloads a 1.5 GB image).
-`narrar.py` posts each plano's fala to Kokoro's OpenAI-style speech endpoint
-and fails with that hint when the server is down; it never falls back to
-another engine. omp's `tts` tool is not used: it resolves a speech model
-through omp's roles and failed with "No available speech model matches the
-speech role" even with Kokoro up. On the laptop there is no Kokoro.
+OmniVoice does not start with the session: the skill runs `docker compose -f
+~/.config/audiocpp/compose.yaml up -d` and waits for `/v1/models` before
+narrating. `narrar.py` posts each plano's fala to the OpenAI-style speech
+endpoint with `speed` 0.9 (at the default speed the last sound of a sentence
+gets cut) and never falls back to another engine. omp's `tts` tool is not
+used: it failed with "No available speech model matches the speech role".
 
-Voices: `pf_dora` for pt-BR, `af_heart` for English, read from the `- Voz:`
-line of the video's `video.md`. The prefix picks the language (`pf_`/`pm_` are
-pt-BR).
+Voices: `professora` for pt-BR, `teacher` for English, cloned from a fixed
+synthetic recording and read from the `- Voz:` line of the video's
+`video.md`.
 
-Identities live in `~/Design/Identidades/<nome>/` and music in
-`~/Design/Videos/Musicas/`.
+`~/Design` holds `Biblioteca/` (third-party assets, music included), `Estilos/<nome>/`
+(own visual identities) and `Projetos/<projeto>/` with one folder per deliverable.
 
-Pre-production runs through two blind reviewer agents, `video-espectador` and
-`video-critico` (`ai/.omp/agent/agents/`, linked to `~/.omp/agent/agents`). The
-skill stages what each may see with `ai/skills/video/revisao.py`, narrates each
-plano straight through Kokoro with `ai/skills/video/narrar.py`, cuts the
-animatic with `ai/skills/video/animatic.py`, joins each rendered scene with its
-narration into the draft with `ai/skills/video/rascunho.py` and checks the 10%
-margin of rendered frames with `ai/skills/video/margem.py`; all five need only
-Python and ffmpeg and are tested by `tests/video_tools.py`. Storyboard stills come
-from the identity's `Cena`, which saves one frame per plano and the scene's
-opening frame when Manim runs with `-s`.
+Every stage ends in a sketch the owner approves. The skill's `repertorio/`
+holds consolidated techniques the per-video direction picks from, and
+`oficio/` holds how to work in each app. Two blind reviewer agents,
+`video-espectador` and `video-critico` (`ai/.omp/agent/agents/`, linked to
+`~/.omp/agent/agents`), review the roteiro, storyboard, animatic, draft and
+first cut. The skill stages what each may see with
+`ai/skills/video/revisao.py`, narrates each plano with
+`ai/skills/video/narrar.py`, cuts the animatic with
+`ai/skills/video/animatic.py`, joins each rendered scene with its narration
+into the draft with `ai/skills/video/rascunho.py`, checks the 10% margin of
+frames with `ai/skills/video/margem.py` and renders one clip per plano with
+`ai/skills/video/planos.py`; sound and edit are done by hand in SoundCraft and
+FilmCraft. The scripts need only Python and ffmpeg (Manim for `planos.py`) and
+are tested by `tests/video_tools.py`. Storyboard stills come from the style's
+`Cena`, which saves one frame per plano and the scene's opening frame when
+Manim runs with `-s`.

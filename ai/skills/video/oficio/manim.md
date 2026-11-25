@@ -1,22 +1,40 @@
-# Manim na skill video
+# Manim
 
-Referência do `SKILL.md` para storyboard, rascunho e passada final.
+Como trabalhar no Manim. Quando ele é o meio certo para um bloco, quem decide é
+a direção do vídeo (`repertorio/visual.md#Diagrama que se mexe (Manim)`).
+
+## Quando usar
+
+Serve quando o conteúdo é um mecanismo que se mexe com precisão: diagrama,
+algoritmo passo a passo, estrutura de dados, gráfico, fórmula. O desenho sai
+exato, repetível e no tempo da fala.
+
+Não serve para tipografia livre, colagem, foto ou vídeo real, personagem com
+expressão, textura e acabamento: isso vai para EffectCraft, VectorCraft,
+PhotoCraft ou FilmCraft (`oficio/`). Manim por hábito deixa todo vídeo com cara
+de slide animado.
 
 ## Rodar
 
 Cenas importam a identidade por variável de ambiente: rode com
-`VIDEO_DIR=<pasta do vídeo> IDENTIDADE=<pasta da identidade>` e, na cena,
+`VIDEO_DIR=<pasta da peça> IDENTIDADE=~/Design/Estilos/<nome>` e, na cena,
 `sys.path.insert(0, os.environ["IDENTIDADE"])` e `from tema import *`.
 
 | Para quê | Comando |
 |---|---|
-| storyboard | `manim -ql -s --media_dir cenas/.manim --disable_caching <arquivo> C` |
-| rascunho | `manim -ql --media_dir cenas/.manim --disable_caching <arquivo> C` |
-| final | `manim -r 1920,1080 --fps 30 --media_dir cenas/.manim --disable_caching <arquivo> C` (o `-qh` sai a 60 fps) |
+| storyboard | `PLANOS=0 manim -ql -s --media_dir cenas/.manim --disable_caching <arquivo> C` |
+| rascunho | `PLANOS=0 manim -ql --media_dir cenas/.manim --disable_caching <arquivo> C` |
+| final | `python3 ~/.omp/agent/skills/video/planos.py <pasta> [cena...]` (1920x1080, 30 fps, um clipe por plano em `cenas/planos/`) |
 
-Copie o `.mp4` para `cenas/render/<id>.mp4`. Renderizar em paralelo corrompe o
-cache de texto (`ParseError: no element found`): uma cena por vez, e a que
-falhou roda de novo sozinha.
+Sem `PLANOS=0` o rascunho sai com a folga de cada plano e imagem e voz
+dessincronizam no `rascunho.py`.
+
+Cada `self.ate(k)` acrescenta `FOLGA` segundos (3 por padrão) com a câmera
+respirando e abre uma seção nova; o `planos.py` corta as seções em clipes. Com
+`PLANOS=0` a cena sai inteira, sem folga, como antes (`manim -r 1920,1080 --fps
+30`, copiada para `cenas/render/<id>.mp4`). Renderizar em paralelo na mesma
+`--media_dir` corrompe o cache de texto (`ParseError: no element found`): cada
+cena na sua (o `planos.py` já faz assim).
 
 ## Tempo e poses
 
@@ -70,7 +88,7 @@ para que qualquer cena renderize sozinha e comece onde a anterior terminou.
   inteiro marca que o bloco acabou.
 - Uma mudança por vez. Duas coisas mexendo em lugares diferentes dividem o olho.
 - Depois da ideia principal, um respiro sem nada novo: "pausa" na coluna Tom e o
-  `.wav` do plano esticado na narração (seção Voz do `SKILL.md`). A cena só
+  `.wav` do plano esticado na narração (`oficio/voz.md`). A cena só
   espera.
 - A cor de destaque da identidade é "olhe aqui agora". Usada em tudo, não aponta
   para nada.
@@ -86,7 +104,13 @@ fica com `x` entre -6,4 e 6,4 e `y` entre -3,6 e 3,6: a `AREA_SEGURA` e o
 `encaixar(grupo)` do `tema.py`. Identidade nova copia essas duas linhas de
 `config`. A cena encaixa o grupo nessa área em vez de posicionar perto da
 borda; prefira aproximar a câmera a encolher tudo para caber. O `margem.py`
-confere os quadros renderizados.
+confere os quadros renderizados: borda, tamanho (`pequeno`) e centro
+(`descentrado`).
+
+O `Cena` confere cada pose em `ate()` e `fechar()`: imprime `fonte pequena`
+para todo `Text` visível abaixo de 24 pt na tela (o tamanho conta escala e
+zoom da câmera; `FONTE_MIN` muda o piso) e `estourou` quando a animação passa
+do fim do plano. Identidade nova copia esse `_conferir` junto com o `Cena`.
 
 Emoji não renderiza em `Text`: desenhe ícones com formas (polígono, arco).
 Texto sobre bloco de destaque usa a cor de texto clara, não a do fundo. Forma

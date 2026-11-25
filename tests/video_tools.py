@@ -198,18 +198,20 @@ class Revisao(unittest.TestCase):
         self.assertIn("02-b.png", r.stderr)
         self.assertFalse((self.v / "revisao").exists())
 
-    def test_rejected_findings_reach_next_critic_round(self):
-        self.entrada("storyboard")
-        (self.v / "revisao" / "storyboard-1.md").write_text(
-            "| Plano | Achado | Decisão |\n|---|---|---|\n"
-            "| 01-a#1 | Falta a placa. | Rejeitado: a placa emolduraria todos os quadros. |\n"
-            "| 02-b#1 | Texto pequeno. | Corrigido: fonte maior. |\n")
+    def test_rejected_findings_reach_next_round_of_each_reviewer(self):
+        for etapa in ("storyboard", "roteiro"):
+            with self.subTest(etapa=etapa):
+                self.entrada(etapa)
+                (self.v / "revisao" / f"{etapa}-1.md").write_text(
+                    "| Plano | Achado | Decisão |\n|---|---|---|\n"
+                    "| 01-a#1 | Falta a placa. | Rejeitado: a placa emolduraria todos os quadros. |\n"
+                    "| 02-b#1 | Texto pequeno. | Corrigido: fonte maior. |\n")
 
-        e = self.entrada("storyboard")
+                e = self.entrada(etapa)
 
-        recusados = (e / "rejeitados.md").read_text()
-        self.assertIn("a placa emolduraria todos os quadros", recusados)
-        self.assertNotIn("Texto pequeno", recusados)
+                recusados = (e / "rejeitados.md").read_text()
+                self.assertIn("a placa emolduraria todos os quadros", recusados)
+                self.assertNotIn("Texto pequeno", recusados)
 
     def test_first_round_has_no_rejections(self):
         self.assertFalse((self.entrada("storyboard") / "rejeitados.md").exists())
@@ -245,6 +247,35 @@ class Revisao(unittest.TestCase):
 
         self.assertEqual(r.returncode, 1)
         self.assertIn("Quiz", r.stderr)
+        self.assertFalse((self.v / "revisao").exists())
+
+    def test_briefing_without_quiz_section_sends_no_quiz(self):
+        sem_quiz = BRIEFING.split("## Quiz")[0] + "## Ideias erradas\n- O disco fala direto com a CPU.\n"
+        (self.v / "briefing.md").write_text(sem_quiz)
+
+        e = self.entrada("roteiro")
+
+        self.assertFalse((e / "quiz.md").exists())
+        self.assertIn("Estudante do segundo semestre", (e / "publico.md").read_text())
+
+    def test_corte_takes_each_plano_end_from_the_cut(self):
+        video(self.v / "corte-1.mp4", 3, "blue")
+        (self.v / "corte-1.json").write_text(json.dumps({"01-a-1": 1.0, "01-a-2": 2.0, "02-b-1": 3.0}))
+
+        e = self.entrada("corte")
+
+        self.assertEqual(sorted(p.name for p in (e / "quadros").iterdir()), ["01-a-1.png", "01-a-2.png", "02-b-1.png"])
+        self.assertTrue((e / "folha.png").is_file())
+        self.assertNotIn("SEGREDO", textos(e))
+
+    def test_corte_without_every_plano_end_fails(self):
+        video(self.v / "corte-1.mp4", 3, "blue")
+        (self.v / "corte-1.json").write_text(json.dumps({"01-a-1": 1.0}))
+
+        r = rodar(self.v, "corte")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("01-a-2", r.stderr)
         self.assertFalse((self.v / "revisao").exists())
 
     def test_missing_fala_column_fails(self):
@@ -453,16 +484,16 @@ class Rascunho(unittest.TestCase):
         self.assertFalse((self.v / "rascunho.mp4").exists())
 
 
-class Kokoro(http.server.BaseHTTPRequestHandler):
+class Voz(http.server.BaseHTTPRequestHandler):
     pedidos = []
     som = b""
 
     def do_POST(self):
-        Kokoro.pedidos.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+        Voz.pedidos.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
         self.send_response(200)
         self.send_header("Content-Type", "audio/wav")
         self.end_headers()
-        self.wfile.write(Kokoro.som)
+        self.wfile.write(Voz.som)
 
     def log_message(self, *args):
         pass
@@ -477,7 +508,7 @@ def som(segundos):
 class Narrar(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.servidor = http.server.HTTPServer(("127.0.0.1", 0), Kokoro)
+        cls.servidor = http.server.HTTPServer(("127.0.0.1", 0), Voz)
         threading.Thread(target=cls.servidor.serve_forever, daemon=True).start()
 
     @classmethod
@@ -485,18 +516,18 @@ class Narrar(unittest.TestCase):
         cls.servidor.shutdown()
 
     def setUp(self):
-        Kokoro.pedidos, Kokoro.som = [], som(1.0)
+        Voz.pedidos, Voz.som = [], som(1.0)
         self.tmp = tempfile.TemporaryDirectory()
         self.v = montar(self.tmp.name, stills=False)
         (self.v / "roteiro.md").write_text(ROTEIRO.replace("| firme |", "| firme; pausa |"))
-        (self.v / "video.md").write_text("# Vídeo\n\n- Idioma: pt-BR\n- Voz: pf_dora\n")
+        (self.v / "video.md").write_text("# Vídeo\n\n- Idioma: pt-BR\n- Voz: professora\n")
 
     def tearDown(self):
         self.tmp.cleanup()
 
     def rodar(self, *cenas, porta=None):
         url = f"http://127.0.0.1:{porta or self.servidor.server_port}"
-        return subprocess.run([sys.executable, str(NARRAR), str(self.v), *cenas], capture_output=True, text=True, env={**os.environ, "KOKORO_URL": url})
+        return subprocess.run([sys.executable, str(NARRAR), str(self.v), *cenas], capture_output=True, text=True, env={**os.environ, "VOZ_URL": url})
 
     def test_measures_each_plano_and_pads_pauses(self):
         r = self.rodar()
@@ -507,8 +538,9 @@ class Narrar(unittest.TestCase):
         self.assertAlmostEqual(t["01-a#planos"][1], 1.8, delta=0.05)
         self.assertAlmostEqual(t["01-a"], 2.8, delta=0.05)
         self.assertAlmostEqual(duracao(self.v / "audio" / "01-a.wav"), 2.8, delta=0.05)
-        self.assertEqual([p["input"] for p in Kokoro.pedidos], ["O disco guarda os dados.", "E manda tudo para a memória.", "Pronto, chegou."])
-        self.assertEqual({p["voice"] for p in Kokoro.pedidos}, {"pf_dora"})
+        self.assertEqual([p["input"] for p in Voz.pedidos], ["O disco guarda os dados.", "E manda tudo para a memória.", "Pronto, chegou."])
+        self.assertEqual({p["voice"] for p in Voz.pedidos}, {"professora"})
+        self.assertEqual({p["speed"] for p in Voz.pedidos}, {0.9})
 
     def test_named_scene_only_keeps_the_others(self):
         r = self.rodar("02-b")
@@ -517,24 +549,57 @@ class Narrar(unittest.TestCase):
         t = json.loads((self.v / "audio" / "duracoes.json").read_text())
         self.assertEqual(t["01-a#planos"], PLANOS["01-a#planos"])
         self.assertAlmostEqual(t["02-b"], 1.0, delta=0.05)
-        self.assertEqual(len(Kokoro.pedidos), 1)
+        self.assertEqual(len(Voz.pedidos), 1)
 
     def test_flags_plano_far_over_target(self):
         curto = self.rodar("02-b")
-        Kokoro.som = som(4.0)
+        Voz.som = som(4.0)
+        roteiro = self.v / "roteiro.md"
+        roteiro.write_text(roteiro.read_text().replace("Pronto, chegou.", "Pronto, agora chegou."))
         longo = self.rodar("02-b")
 
         self.assertNotIn("02-b#1", curto.stdout)
         self.assertIn("02-b#1", longo.stdout)
+
+    def test_second_run_speaks_only_changed_fala(self):
+        self.rodar()
+        Voz.pedidos = []
+        roteiro = self.v / "roteiro.md"
+        roteiro.write_text(roteiro.read_text().replace("Pronto, chegou.", "Pronto, agora chegou."))
+
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([p["input"] for p in Voz.pedidos], ["Pronto, agora chegou."])
+        self.assertAlmostEqual(duracao(self.v / "audio" / "01-a.wav"), 2.8, delta=0.05)
+
+    def test_plano_id_speaks_that_plano_again_despite_cache(self):
+        self.rodar()
+        Voz.pedidos, Voz.som = [], som(2.0)
+
+        r = self.rodar("01-a#2")
+
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([p["input"] for p in Voz.pedidos], ["E manda tudo para a memória."])
+        t = json.loads((self.v / "audio" / "duracoes.json").read_text())
+        self.assertAlmostEqual(t["01-a#planos"][0], 1.0, delta=0.05)
+        self.assertAlmostEqual(t["01-a#planos"][1], 2.8, delta=0.05)
+
+    def test_plano_beyond_scene_fails_before_speaking(self):
+        r = self.rodar("01-a#9")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("01-a#9", r.stderr)
+        self.assertEqual(Voz.pedidos, [])
 
     def test_unknown_scene_fails_before_speaking(self):
         r = self.rodar("99-x")
 
         self.assertEqual(r.returncode, 1)
         self.assertIn("99-x", r.stderr)
-        self.assertEqual(Kokoro.pedidos, [])
+        self.assertEqual(Voz.pedidos, [])
 
-    def test_kokoro_down_says_how_to_start(self):
+    def test_voice_down_says_how_to_start(self):
         with socket.socket() as s:
             s.bind(("127.0.0.1", 0))
             porta = s.getsockname()[1]
@@ -542,7 +607,7 @@ class Narrar(unittest.TestCase):
         r = self.rodar(porta=porta)
 
         self.assertEqual(r.returncode, 1)
-        self.assertIn("systemctl --user start kokoro", r.stderr)
+        self.assertIn("docker compose -f ~/.config/audiocpp/compose.yaml up -d", r.stderr)
 
 
 if __name__ == "__main__":

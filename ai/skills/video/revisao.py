@@ -6,9 +6,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-ETAPAS = ("roteiro", "storyboard", "animatic", "rascunho")
-CRITICO = ("storyboard", "rascunho")
-USO = "uso: python3 revisao.py <pasta-do-video> <roteiro|storyboard|animatic|rascunho>"
+ETAPAS = ("roteiro", "storyboard", "animatic", "rascunho", "corte")
+USO = "uso: python3 revisao.py <pasta-do-video> <roteiro|storyboard|animatic|rascunho|corte>"
 
 
 class Falha(Exception):
@@ -60,10 +59,12 @@ def briefing(video):
         raise Falha(f"falta {caminho}")
     texto = caminho.read_text()
     try:
-        quiz = [l for l in secao(texto, "Quiz") if re.match(r"\d+\.\s", l)]
         publico = secao(texto, "Quem assiste")
     except ValueError as e:
         raise Falha(f"briefing.md sem a seção esperada: {e}")
+    if "## Quiz" not in texto.splitlines():
+        return "", "\n".join(publico).strip() + "\n"
+    quiz = [l for l in secao(texto, "Quiz") if re.match(r"\d+\.\s", l)]
     if not quiz:
         raise Falha("briefing.md sem perguntas numeradas (1. ...) na seção Quiz")
     return "\n".join(quiz) + "\n", "\n".join(publico).strip() + "\n"
@@ -110,7 +111,7 @@ def recusados(revisao, etapa, k):
     if not linhas:
         return None
     return ("# Achados recusados em rodadas anteriores\n\n"
-            "Cada linha já foi levantada e recusada com o motivo ao lado. Não repita sem um fato novo no quadro.\n\n"
+            "Cada linha já foi levantada e recusada com o motivo ao lado. Não repita sem um fato novo no material.\n\n"
             "| Rodada | Plano | Achado | Decisão |\n|---|---|---|---|\n" + "\n".join(linhas) + "\n")
 
 
@@ -159,6 +160,14 @@ def preparar(video, etapa):
             render = video / "cenas" / "render" / f"{cena}.mp4"
             if duracao(render) < sum(planos_cena) - 0.1:
                 raise Falha(f"{render.name}: render de {duracao(render):.2f} s, mais curto que a narração de {sum(planos_cena):.2f} s")
+    if etapa == "corte":
+        corte, marcas = video / "corte-1.mp4", video / "corte-1.json"
+        exigir([corte, marcas])
+        fins = json.loads(marcas.read_text())
+        faltam = [f"{c}-{i}" for c, linhas in cenas for i in range(1, len(linhas) + 1) if f"{c}-{i}" not in fins]
+        if faltam:
+            raise Falha(f"corte-1.json sem o fim de: {', '.join(faltam)}")
+        limite = duracao(corte)
 
     revisao = video / "revisao"
     k = 1
@@ -184,7 +193,7 @@ def preparar(video, etapa):
                 shutil.copy(s, entrada / "quadros" / s.name)
         if etapa != "roteiro":
             (entrada / "fala.md").write_text(tabela(cenas, ["Fala"]))
-        if etapa in CRITICO and (texto := recusados(revisao, etapa, k)):
+        if texto := recusados(revisao, etapa, k):
             (entrada / "rejeitados.md").write_text(texto)
         if etapa == "rascunho":
             ordem = []
@@ -199,8 +208,16 @@ def preparar(video, etapa):
                 quadro(render, entrada / "inicio" / f"{cena}.png")
                 quadro(render, entrada / "fim" / f"{cena}.png", "-sseof", "-0.2")
             folha(ordem, entrada / "folha.png")
+        if etapa == "corte":
+            ordem = []
+            for cena, linhas in cenas:
+                for i in range(1, len(linhas) + 1):
+                    ordem.append(entrada / "quadros" / f"{cena}-{i}.png")
+                    quadro(corte, ordem[-1], "-ss", f"{max(0.0, min(fins[f'{cena}-{i}'], limite) - 0.1):.3f}")
+            folha(ordem, entrada / "folha.png")
         if etapa != "storyboard":
-            (entrada / "quiz.md").write_text(quiz)
+            if quiz:
+                (entrada / "quiz.md").write_text(quiz)
             (entrada / "publico.md").write_text(publico)
 
         registro = revisao / f"{etapa}-{k}" / "entrada"

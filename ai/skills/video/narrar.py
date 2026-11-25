@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -11,8 +12,20 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from revisao import Falha, concat, exigir, planos
 
-USO = "uso: python3 narrar.py <pasta-do-video> [cena...]"
+USO = "uso: python3 narrar.py <pasta-do-video> [cena | cena#n ...]"
 FOLGA = 2.5
+VELOCIDADE = 0.9
+PASSOS = 16
+
+
+def guardada(cache, url, voz_id, texto, refazer):
+    chave = hashlib.sha256(json.dumps([voz_id, VELOCIDADE, PASSOS, texto]).encode()).hexdigest()[:16]
+    som = cache / f"{chave}.wav"
+    if refazer or not som.exists():
+        parcial = som.with_suffix(".parcial")
+        falar(url, voz_id, texto, parcial)
+        parcial.rename(som)
+    return som
 
 
 def voz(video):
@@ -25,13 +38,13 @@ def voz(video):
 def falar(url, voz_id, texto, saida):
     pedido = urllib.request.Request(
         f"{url}/v1/audio/speech",
-        json.dumps({"model": "kokoro", "voice": voz_id, "input": texto, "response_format": "wav"}).encode(),
+        json.dumps({"model": "omnivoice", "voice": voz_id, "input": texto, "response_format": "wav", "speed": VELOCIDADE, "num_inference_steps": PASSOS}).encode(),
         {"Content-Type": "application/json"},
     )
     try:
         saida.write_bytes(urllib.request.urlopen(pedido, timeout=300).read())
     except (urllib.error.URLError, ConnectionError) as e:
-        raise Falha(f"Kokoro não respondeu em {url} ({e}); suba com systemctl --user start kokoro")
+        raise Falha(f"a voz não respondeu em {url} ({e}); suba com docker compose -f ~/.config/audiocpp/compose.yaml up -d")
 
 
 def dur(caminho):
@@ -39,16 +52,26 @@ def dur(caminho):
     return round(float(r.stdout), 3)
 
 
-def narrar(video, so):
+def fora(pedido, tamanho):
+    cena, marca, n = pedido.partition("#")
+    return cena not in tamanho or bool(marca) and not (n.isdigit() and 1 <= int(n) <= tamanho[cena])
+
+
+def narrar(video, pedidos):
     video = Path(video)
     exigir([video / "roteiro.md", video / "video.md"])
     cenas = planos(video)
-    faltam = set(so) - {c for c, _ in cenas}
+    tamanho = {c: len(ls) for c, ls in cenas}
+    so = {p.partition("#")[0] for p in pedidos}
+    refazer = {p for p in pedidos if "#" in p}
+    faltam = [p for p in pedidos if fora(p, tamanho)]
     if faltam:
-        raise Falha("cena fora do roteiro: " + ", ".join(sorted(faltam)))
-    voz_id, url = voz(video), os.environ.get("KOKORO_URL", "http://127.0.0.1:8880")
+        raise Falha("cena ou plano fora do roteiro: " + ", ".join(sorted(faltam)))
+    voz_id, url = voz(video), os.environ.get("VOZ_URL", "http://127.0.0.1:8880")
     pasta = video / "audio" / "planos"
     pasta.mkdir(parents=True, exist_ok=True)
+    cache = video / "audio" / "cache"
+    cache.mkdir(exist_ok=True)
     arq = video / "audio" / "duracoes.json"
     tempos = json.loads(arq.read_text()) if arq.exists() else {}
     relatorio = []
@@ -58,8 +81,8 @@ def narrar(video, so):
                 continue
             partes = []
             for i, linha in enumerate(linhas, 1):
-                bruto, final = Path(tmp) / f"{cena}-{i}.wav", pasta / f"{cena}-{i}.wav"
-                falar(url, voz_id, linha["Fala"], bruto)
+                final = pasta / f"{cena}-{i}.wav"
+                bruto = guardada(cache, url, voz_id, linha["Fala"], f"{cena}#{i}" in refazer)
                 pausa = ["-af", "apad=pad_dur=0.8"] if "pausa" in linha.get("Tom", "") else []
                 subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(bruto), *pausa, "-ar", "24000", "-ac", "1", str(final)], check=True)
                 partes.append(final)

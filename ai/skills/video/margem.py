@@ -6,6 +6,7 @@ from pathlib import Path
 USO = "uso: python3 margem.py <pasta-do-video | pasta de quadros | quadro.png>..."
 MINIMO = 0.10
 TOLERANCIA = 40
+ALTURA_MIN, LARGURA_MIN, DESVIO_MAX = 0.45, 0.65, 0.12
 
 
 class Falha(Exception):
@@ -73,15 +74,22 @@ def main(args):
             lados = extensao(*pixels(q))
             if lados is None:
                 continue
-            perto = {lado: v for lado, v in lados.items() if v < MINIMO}
-            if perto:
+            problemas = [f"{lado} {v:.1%}" for lado, v in lados.items() if v < MINIMO]
+            altura = 1 - lados["topo"] - lados["base"]
+            largura = 1 - lados["esquerda"] - lados["direita"]
+            desvio = (lados["topo"] - lados["base"]) / 2
+            if altura < ALTURA_MIN and largura < LARGURA_MIN:
+                problemas.append(f"pequeno {altura:.0%}x{largura:.0%} do quadro")
+            if abs(desvio) > DESVIO_MAX:
+                problemas.append(f"descentrado {'para baixo' if desvio > 0 else 'para cima'} {abs(desvio):.0%}")
+            if problemas:
                 ruins += 1
-                print(q.name, " ".join(f"{lado} {v:.1%}" for lado, v in perto.items()))
+                print(q.name, " ".join(problemas))
     except Falha as e:
         print(e, file=sys.stderr)
         return 1
     if ruins:
-        print(f"{ruins} de {len(todos)} quadros a menos de {MINIMO:.0%} da borda", file=sys.stderr)
+        print(f"{ruins} de {len(todos)} quadros fora da regra (borda, tamanho ou centro)", file=sys.stderr)
         return 1
     print(f"margem ok: {len(todos)} quadros")
     return 0
