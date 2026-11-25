@@ -192,9 +192,14 @@ parado se retoma.
     -frames:v <teto(duração do wav x 30)> -r 30 -c:v libx264 -crf 18
     cenas/render/<id>.mp4`. **Montagem** no
     FilmCraft e exportação de `final.mp4`. **Miniatura** no VectorCraft,
-    1280x720, no idioma do vídeo, a partir do modelo da identidade, exportada
-    para `miniatura.png`, que também passa no `margem.py` (o fundo do modelo
-    não pode ter contorno, que o `margem.py` lê como conteúdo na borda).
+    1280x720, no idioma do vídeo, com o fundo e as cores da identidade e o
+    estilo de miniatura do YouTube (referência do dono: Fireship): duas ou três
+    palavras em peso Black, cada uma na cor do que significa, e uma imagem
+    grande do próprio vídeo ao lado. Não repita o título, que o YouTube já
+    mostra ao lado; nada de cartão de título com subtítulo. Confira reduzida a
+    168 px de largura (a lista lateral): o essencial ainda se lê. Exporte para
+    `miniatura.png`, que também passa no `margem.py` (fundo sem contorno, que o
+    `margem.py` lê como conteúdo na borda).
     **Ponto 4: corte final.** Informe duração, caminhos e o que você conferiu.
 
 ### Formato do briefing
@@ -383,7 +388,8 @@ use-o no lugar das narrações na montagem.
 
 `~/Design/Identidades/<nome>/` tem `identidade.md` (paleta, fontes, títulos,
 legendas, transições), `tema.py` (os mesmos valores para o Manim, com o `Cena`
-que mede o tempo e grava as poses), `abertura.ecproj` e `miniatura.vectorcraft`.
+que mede o tempo e grava as poses), `abertura-modelo.ecproj` e
+`miniatura-modelo.vectorcraft` (fundo, cores e fontes da miniatura).
 
 A identidade se decide com o dono antes de qualquer cena, nunca por conta
 própria. Primeiro um `ask`: usar uma existente (liste as da biblioteca) ou criar
