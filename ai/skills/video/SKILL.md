@@ -195,9 +195,12 @@ parado se retoma.
     1280x720, no idioma do vídeo, com o fundo e as cores da identidade e o
     estilo de miniatura do YouTube (referência do dono: Fireship): duas ou três
     palavras em peso Black, cada uma na cor do que significa, e uma imagem
-    grande do próprio vídeo ao lado. Não repita o título, que o YouTube já
-    mostra ao lado; nada de cartão de título com subtítulo. Confira reduzida a
-    168 px de largura (a lista lateral): o essencial ainda se lê. Exporte para
+    grande ao lado que quem nunca viu o vídeo entende: objetos conhecidos numa
+    situação (o chip que pergunta ao disco "já terminou?"), nunca um gráfico ou
+    medidor que só faz sentido depois de assistir. Não repita o título, que o
+    YouTube já mostra ao lado; nada de cartão de título com subtítulo. Confira
+    reduzida a 168 px de largura (a lista lateral): o essencial ainda se lê.
+    Exporte para
     `miniatura.png`, que também passa no `margem.py` (fundo sem contorno, que o
     `margem.py` lê como conteúdo na borda).
     **Ponto 4: corte final.** Informe duração, caminhos e o que você conferiu.
