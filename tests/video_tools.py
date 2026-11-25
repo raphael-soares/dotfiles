@@ -1,8 +1,11 @@
+import http.server
 import json
 import os
+import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -10,6 +13,7 @@ REPO = Path(__file__).resolve().parent.parent
 REVISAO = REPO / "ai" / "skills" / "video" / "revisao.py"
 ANIMATIC = REPO / "ai" / "skills" / "video" / "animatic.py"
 MARGEM = REPO / "ai" / "skills" / "video" / "margem.py"
+NARRAR = REPO / "ai" / "skills" / "video" / "narrar.py"
 
 ROTEIRO = """# Roteiro
 
@@ -399,6 +403,98 @@ class Animatic(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("01-a-2.png", r.stderr)
         self.assertFalse((self.v / "animatic.mp4").exists())
+
+
+class Kokoro(http.server.BaseHTTPRequestHandler):
+    pedidos = []
+    som = b""
+
+    def do_POST(self):
+        Kokoro.pedidos.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+        self.send_response(200)
+        self.send_header("Content-Type", "audio/wav")
+        self.end_headers()
+        self.wfile.write(Kokoro.som)
+
+    def log_message(self, *args):
+        pass
+
+
+def som(segundos):
+    with tempfile.TemporaryDirectory() as tmp:
+        wav(Path(tmp) / "s.wav", segundos)
+        return (Path(tmp) / "s.wav").read_bytes()
+
+
+class Narrar(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.servidor = http.server.HTTPServer(("127.0.0.1", 0), Kokoro)
+        threading.Thread(target=cls.servidor.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.servidor.shutdown()
+
+    def setUp(self):
+        Kokoro.pedidos, Kokoro.som = [], som(1.0)
+        self.tmp = tempfile.TemporaryDirectory()
+        self.v = montar(self.tmp.name, stills=False)
+        (self.v / "roteiro.md").write_text(ROTEIRO.replace("| firme |", "| firme; pausa |"))
+        (self.v / "video.md").write_text("# Vídeo\n\n- Idioma: pt-BR\n- Voz: pf_dora\n")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def rodar(self, *cenas, porta=None):
+        url = f"http://127.0.0.1:{porta or self.servidor.server_port}"
+        return subprocess.run([sys.executable, str(NARRAR), str(self.v), *cenas], capture_output=True, text=True, env={**os.environ, "KOKORO_URL": url})
+
+    def test_measures_each_plano_and_pads_pauses(self):
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 0, r.stderr)
+        t = json.loads((self.v / "audio" / "duracoes.json").read_text())
+        self.assertAlmostEqual(t["01-a#planos"][0], 1.0, delta=0.05)
+        self.assertAlmostEqual(t["01-a#planos"][1], 1.8, delta=0.05)
+        self.assertAlmostEqual(t["01-a"], 2.8, delta=0.05)
+        self.assertAlmostEqual(duracao(self.v / "audio" / "01-a.wav"), 2.8, delta=0.05)
+        self.assertEqual([p["input"] for p in Kokoro.pedidos], ["O disco guarda os dados.", "E manda tudo para a memória.", "Pronto, chegou."])
+        self.assertEqual({p["voice"] for p in Kokoro.pedidos}, {"pf_dora"})
+
+    def test_named_scene_only_keeps_the_others(self):
+        r = self.rodar("02-b")
+
+        self.assertEqual(r.returncode, 0, r.stderr)
+        t = json.loads((self.v / "audio" / "duracoes.json").read_text())
+        self.assertEqual(t["01-a#planos"], PLANOS["01-a#planos"])
+        self.assertAlmostEqual(t["02-b"], 1.0, delta=0.05)
+        self.assertEqual(len(Kokoro.pedidos), 1)
+
+    def test_flags_plano_far_over_target(self):
+        curto = self.rodar("02-b")
+        Kokoro.som = som(4.0)
+        longo = self.rodar("02-b")
+
+        self.assertNotIn("02-b#1", curto.stdout)
+        self.assertIn("02-b#1", longo.stdout)
+
+    def test_unknown_scene_fails_before_speaking(self):
+        r = self.rodar("99-x")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("99-x", r.stderr)
+        self.assertEqual(Kokoro.pedidos, [])
+
+    def test_kokoro_down_says_how_to_start(self):
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            porta = s.getsockname()[1]
+
+        r = self.rodar(porta=porta)
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("systemctl --user start kokoro", r.stderr)
 
 
 if __name__ == "__main__":

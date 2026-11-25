@@ -81,25 +81,29 @@ uses these tools on the desktop:
 | --- | --- | --- |
 | Manim | `uv tool install manim`, printed by `missing.sh design` | algorithm, diagram and formula scenes |
 | Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
-| Kokoro | `kokoro.service`, a podman quadlet on `127.0.0.1:8880` | narration through omp's `tts` |
+| Kokoro | `kokoro.service`, a podman quadlet on `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
 
 Kokoro does not start with the session: the skill runs `systemctl --user start
-kokoro` before narrating (the first start downloads a 1.5 GB image). omp's speech
-role points at it with an empty fallback chain, so a stopped server makes `tts`
-fail instead of falling back to Phonon, which only speaks English. On the laptop
-there is no Kokoro and `tts` fails the same way.
+kokoro` before narrating (the first start downloads a 1.5 GB image).
+`narrar.py` posts each plano's fala to Kokoro's OpenAI-style speech endpoint
+and fails with that hint when the server is down; it never falls back to
+another engine. omp's `tts` tool is not used: it resolves a speech model
+through omp's roles and failed with "No available speech model matches the
+speech role" even with Kokoro up. On the laptop there is no Kokoro.
 
-Voices: `pf_dora` for pt-BR, `af_heart` for English. The prefix picks the
-language (`pf_`/`pm_` are pt-BR), so the skill always passes `voice_id`.
+Voices: `pf_dora` for pt-BR, `af_heart` for English, read from the `- Voz:`
+line of the video's `video.md`. The prefix picks the language (`pf_`/`pm_` are
+pt-BR).
 
 Identities live in `~/Design/Identidades/<nome>/` and music in
 `~/Design/Videos/Musicas/`.
 
 Pre-production runs through two blind reviewer agents, `video-espectador` and
 `video-critico` (`ai/.omp/agent/agents/`, linked to `~/.omp/agent/agents`). The
-skill stages what each may see with `ai/skills/video/revisao.py`, cuts the
+skill stages what each may see with `ai/skills/video/revisao.py`, narrates each
+plano straight through Kokoro with `ai/skills/video/narrar.py`, cuts the
 animatic with `ai/skills/video/animatic.py` and checks the 10% margin of
-rendered frames with `ai/skills/video/margem.py`; all three need only Python
+rendered frames with `ai/skills/video/margem.py`; all four need only Python
 and ffmpeg and are tested by `tests/video_tools.py`. Storyboard stills come
 from the identity's `Cena`, which saves one frame per plano and the scene's
 opening frame when Manim runs with `-s`.

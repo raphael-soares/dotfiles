@@ -43,6 +43,9 @@ Na pasta podem estar:
    plano que a sustenta. Se o material não sustenta, responda "não sei".
 6. Anote onde se perdeu: um termo usado antes da hora, um "por que isso agora"
    sem resposta, um salto entre planos, uma imagem que não diz nada no mudo.
+   Cada quadro é o fim do plano: julgue "imagem muda" pelo que ficou na tela,
+   e não aponte só porque o quadro parado não mostra um movimento que o
+   roteiro descreve no meio do plano.
 
 ## Formato da resposta
 

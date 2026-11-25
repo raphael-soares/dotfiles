@@ -146,7 +146,17 @@ parado se retoma.
    tipografia animada. Algoritmo passo a passo vira um plano por passo.
 
    Confira o roteiro contra o mapa de termos, plano por plano, e corrija os dois
-   até baterem. Depois, **rodada do espectador no roteiro** (veja Revisores).
+   até baterem. Palavra técnica do dia a dia de quem faz o vídeo também é termo:
+   "chip", "tempo real", "KB", "sistema operacional" entram no mapa, a não ser
+   que estejam no "Já sabe". Plano de pergunta mostra a pergunta na tela (um "?"
+   âmbar onde está a dúvida) e, se o vídeo apresentou dois cenários, diz em qual
+   a pergunta vale. Todo termo nomeado ganha um uso na tela (duas instruções
+   apresentadas, duas setas). Quantidade desenhada bate com o número dito: 64 KB
+   em pedaços de 4 KB são 16 blocos contra 1, não 16 contra 4. Quando o vídeo
+   mostra dois jeitos e segue com um, a fala diz qual ("daqui em diante..."),
+   nunca "tanto faz". Palavra que não é assunto da aula sai pela do "Já sabe"
+   ("programa", não "software"). Depois, **rodada do espectador no roteiro**
+   (veja Revisores).
 6. **Narração** por plano (veja Voz). Ela vem antes do storyboard porque o
    animatic e as cenas têm o tamanho da fala.
 7. **Storyboard.** Escreva cada cena em `cenas/manim/<id>.py` chegando na pose
@@ -156,8 +166,12 @@ parado se retoma.
    exporte o quadro do fim de cada plano com o mesmo nome e o do começo em
    `storyboard/inicio/<id>.png`. Rode `python3
    ~/.omp/agent/skills/video/margem.py <pasta>`, que lista cada quadro a menos
-   de 10% da borda e o lado; corrija até ele dizer `margem ok`. Olhe os quadros
-   e depois faça a **rodada do crítico no storyboard**.
+   de 10% da borda e o lado; corrija até ele dizer `margem ok`. O quadro do fim
+   do plano é o que os revisores veem: a ideia do plano, sobretudo o que a fala
+   diz por último, fica na tela até o plano acabar, nunca some antes dele (o
+   dado perdido ganha o estouro e a legenda; a espera pelo barramento fica
+   desenhada). Olhe os quadros e depois faça a **rodada do crítico no
+   storyboard**.
 8. **Animatic.** `python3 ~/.omp/agent/skills/video/animatic.py <pasta>` gera
    `animatic.mp4` (480p, cada quadro pelo tempo da fala do seu plano, com a voz).
    Assista; depois **rodada do espectador no animatic**. **Ponto 2: pare e
@@ -291,20 +305,25 @@ systemctl --user start kokoro
 timeout 600 bash -c 'until curl -sf 127.0.0.1:8880/v1/models >/dev/null; do sleep 3; done'
 ```
 
-A primeira subida baixa a imagem e demora. Se o `tts` falhar com conexão
-recusada, suba o serviço e tente de novo com a mesma voz. Nunca troque de voz,
-modelo ou motor para contornar: a alternativa do omp só fala inglês. Se continuar
-falhando, pare e conte ao dono o erro.
+A primeira subida baixa a imagem e demora. Se o `narrar.py` disser que o Kokoro
+não respondeu, suba o serviço e rode de novo. Nunca troque de voz, modelo ou
+motor para contornar. Se continuar falhando, pare e conte ao dono o erro.
 
-Narre plano por plano: uma chamada `tts` por linha do roteiro, sempre com
-`voice_id` (`pf_dora` em pt-BR, `af_heart` em inglês, ou a voz de `video.md`),
-saída `audio/planos/<id>-<n>.wav`. Plano com "pausa" no Tom: estique o `.wav`
-dele com `apad=pad_dur=0.8` (de 0,5 a 1,2 s) antes de medir. A concatenação dos
-planos é `audio/<id>.wav`. Meça com `ffprobe` e grave `audio/duracoes.json` com
-a duração de cada cena em `<id>` e a de cada plano em `<id>#planos` (as cenas e
-o `animatic.py` leem dele). Respiro no fim da cena (o dono pode pedir): estique
-o `.wav` da cena com `apad=whole_dur=<total>` e grave o total novo em `<id>`,
-sem mexer nos planos. Depois do Ponto 2 isso é mudança de tempo.
+Narre com `python3 ~/.omp/agent/skills/video/narrar.py <pasta> [cena...]`. Ele
+chama o Kokoro direto (`KOKORO_URL`, padrão `http://127.0.0.1:8880`) com a voz
+da linha `- Voz:` do `video.md` (`pf_dora` em pt-BR, `af_heart` em inglês),
+grava cada plano em `audio/planos/<id>-<n>.wav`, estica 0,8 s o plano com
+"pausa" no Tom, junta a cena em `audio/<id>.wav` e regrava em
+`audio/duracoes.json` a duração de cada cena (`<id>`) e de cada plano
+(`<id>#planos`), que as cenas e o `animatic.py` leem. Avisa o plano cuja fala
+passa 2,5 s do Tempo do roteiro: encurte a fala ou ajuste o Tempo. Sem cena,
+narra tudo; com cenas, só elas, e as outras ficam como estão. O Kokoro dá o
+mesmo áudio para o mesmo texto, então renarrar uma cena só muda os planos cuja
+fala mudou. Não use a ferramenta `tts` do omp: ela depende de um modelo de fala
+configurado no omp e já falhou com "No available speech model matches the
+speech role". Respiro no fim da cena (o dono pode pedir): estique o `.wav` da
+cena com `apad=whole_dur=<total>` e grave o total novo em `<id>`, sem mexer nos
+planos. Depois do Ponto 2 isso é mudança de tempo.
 
 ### Pronúncia
 
