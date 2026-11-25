@@ -10,7 +10,7 @@ description: >
 # Vídeo explicativo
 
 O dono não aparece no vídeo: nada de voz, rosto ou gravação dele. O vídeo é
-gráfico e animação, com voz Kokoro local, em pt-BR ou inglês. O agente faz o
+gráfico e animação, com voz OmniVoice local, em pt-BR ou inglês. O agente faz o
 trabalho e para em três pontos para o dono aprovar: direção e roteiro, rascunho
 animado e corte final. Regras dos apps (formato nativo, `open_window`, lotes):
 skill `artcraft`. Ferramentas e serviço: `docs/design.md` do dotfiles, seção
@@ -96,14 +96,14 @@ parado se retoma.
    | Tempo | duração alvo, em segundos |
    | Fonte | arquivo e página ou slide |
 
-   Ritmo da fala: o Kokoro fala perto de 170 palavras por minuto. Motor de
+   Ritmo da fala: a voz fala perto de 170 palavras por minuto. Motor de
    cada plano: Manim para mecanismo, diagrama, algoritmo e fórmula (sempre em
    Typst, nunca LaTeX nem `MathTex`); EffectCraft para título, cartão e
    tipografia animada. Algoritmo passo a passo vira um plano por passo.
 
    **Ponto 1: pare e mostre a direção e o roteiro.** Nada de narrar antes do OK.
-5. **Narração.** Uma chamada `tts` por cena, sempre com `voice_id` (`pf_dora`
-   em pt-BR, `af_heart` em inglês, ou a voz de `video.md`), saída
+5. **Narração.** Uma chamada `tts` por cena, sempre com `voice_id`
+   (`professora` em pt-BR, `teacher` em inglês, ou a voz de `video.md`), saída
    `audio/<id>.wav`. Confira a pronúncia (veja Voz) e meça a duração com
    `ffprobe`. Narração vem antes da animação porque a cena tem o tamanho da fala.
 6. **Rascunho animado.** Todas as cenas em baixa resolução (`manim -ql`), já no
@@ -125,12 +125,18 @@ narração, nova renderização dessa cena e nova montagem; as outras cenas fica
 
 ## Voz
 
-O Kokoro roda em `kokoro.service`, que não sobe sozinho. Antes de narrar:
+A voz é o OmniVoice, servido pelo audio.cpp no container Docker `audiocpp`.
+Antes de narrar, garanta que ele está no ar (o comando não faz nada se já
+estiver):
 
 ```bash
-systemctl --user start kokoro
+docker compose -f ~/.config/audiocpp/compose.yaml up -d
 timeout 600 bash -c 'until curl -sf 127.0.0.1:8880/v1/models >/dev/null; do sleep 3; done'
 ```
+
+As vozes `professora` e `teacher` são clones de uma gravação sintética fixa, então
+todas as cenas soam como a mesma pessoa. A primeira chamada carrega o modelo na
+GPU e demora mais.
 
 A primeira subida baixa a imagem e demora. Se o `tts` falhar com conexão
 recusada, suba o serviço e tente de novo com a mesma voz. Nunca troque de voz,
@@ -141,21 +147,20 @@ Grave `audio/duracoes.json` com a duração de cada narração (as cenas leem de
 
 ### Pronúncia
 
-O Kokoro lê pela grafia portuguesa e não aceita fonema escrito (a sintaxe
-`[palavra](/fonemas/)` sai como lixo em pt-BR). A fala vai escrita do jeito que
-um brasileiro diz, e só a fala: na tela o termo aparece com a grafia certa.
+O OmniVoice lê "CPU", "DMA", "RAM" e "polling" escritos do jeito normal, e o
+Whisper devolveu a grafia original nesses termos. Escreva a fala com a grafia
+certa e só adapte o termo que sair errado.
 
-- Termo em inglês continua em inglês, abrasileirado como se fala numa aula
-  daqui: polling vira "pú-lin", buffer "bâfer", cache "quéche", driver
-  "dráiver", heap "rípi". Não traduza o termo que a área usa em inglês.
-- Sigla dita letra a letra vai soletrada em português: DMA vira "dê-éme-á",
-  CPU "cê-pê-u", USB "u-ésse-bê". RAM não sai certo de jeito nenhum ("ram",
-  "râm" e "rem" falharam): diga "memória principal".
+- Termo em inglês continua em inglês. Não traduza o termo que a área usa em
+  inglês.
+- Se um termo sair errado, escreva na fala do jeito que um brasileiro diz
+  (polling vira "pú-lin", sigla soletrada como "dê-éme-á"), só na fala: na tela
+  o termo aparece com a grafia certa.
 - Cada vídeo tem uma tabela "Pronúncia" em `video.md` (termo, como escrever na
   fala, conferido sim ou não). Use a mesma grafia no vídeo todo.
 - Confira cada termo novo antes de narrar o vídeo inteiro: gere uma frase curta,
-  passe no Whisper local (se estiver no ar) e ouça; troque a grafia até soar
-  certo. Whisper devolvendo a grafia original ("No DMA") é sinal de acerto.
+  passe no Whisper local (se estiver no ar) e ouça. Whisper devolvendo a grafia
+  original ("No DMA") é sinal de acerto.
   `curl -s "127.0.0.1:9000/asr?language=pt&output=txt" -F audio_file=@x.wav`
 
 ## Manim
