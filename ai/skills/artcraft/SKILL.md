@@ -35,7 +35,7 @@ por dentro: `docs/design.md` do dotfiles.
 - **Sem janela por padrão.** `open_window` só quando o dono pedir ("abre a
   janela", "quero ver", "me mostra no app"). Oferecer no fim está ok; chamar
   por conta própria, não.
-- **Projeto em `~/Design/<projeto>/`**, salvo no formato nativo da tabela. SVG,
+- **Projeto em `~/Design/Projetos/<projeto>/<peça>/`**, uma pasta por peça entregue e o comum na raiz do projeto, salvo no formato nativo da tabela. SVG,
   PNG, PDF e afins são exportação: só quando o dono pedir, ao lado do nativo.
 - **Texto continua texto.** Nada de converter em contorno ou curva, a não ser
   que o dono peça.
