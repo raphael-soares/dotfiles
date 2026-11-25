@@ -197,12 +197,13 @@ parado se retoma.
     palavras em peso Black, cada uma na cor do que significa, e uma imagem
     grande ao lado que quem nunca viu o vídeo entende: objetos conhecidos numa
     situação (o chip que pergunta ao disco "já terminou?"), nunca um gráfico ou
-    medidor que só faz sentido depois de assistir. Não repita o título, que o
-    YouTube já mostra ao lado; nada de cartão de título com subtítulo. Confira
-    reduzida a 168 px de largura (a lista lateral): o essencial ainda se lê.
-    Exporte para
-    `miniatura.png`, que também passa no `margem.py` (fundo sem contorno, que o
-    `margem.py` lê como conteúdo na borda).
+    medidor que só faz sentido depois de assistir. A imagem é grande e vaza um
+    pouco pela borda (direita ou de baixo), o que dá profundidade; texto e
+    balões ficam dentro dos 10%, conferidos pelos `bounds` do
+    `inspect_document` (o `margem.py` acusaria o vazamento). Não repita o
+    título, que o YouTube já mostra ao lado; nada de cartão de título com
+    subtítulo. Confira reduzida a 168 px de largura (a lista lateral): o
+    essencial ainda se lê. Exporte para `miniatura.png`.
     **Ponto 4: corte final.** Informe duração, caminhos e o que você conferiu.
 
 ### Formato do briefing
