@@ -114,11 +114,17 @@ def recusados(revisao, etapa, k):
             "| Rodada | Plano | Achado | Decisão |\n|---|---|---|---|\n" + "\n".join(linhas) + "\n")
 
 
+def duracao(path):
+    saida = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
+                           capture_output=True, text=True, check=True).stdout
+    return float(saida)
+
+
 def quadro(origem, destino, *posicao):
     destino.parent.mkdir(parents=True, exist_ok=True)
     r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *posicao, "-i", str(origem), "-frames:v", "1", "-update", "1", str(destino)], capture_output=True, text=True)
     if r.returncode != 0 or not destino.is_file():
-        raise Falha(f"{origem.name}: sem quadro em {' '.join(posicao) or 'início'}; o render é mais curto que a narração?\n{r.stderr}")
+        raise Falha(f"{origem.name}: sem quadro em {' '.join(posicao) or 'início'}\n{r.stderr}")
 
 
 def folha(quadros, destino):
@@ -147,8 +153,12 @@ def preparar(video, etapa):
         exigir([video / "audio" / "duracoes.json"] + [video / "cenas" / "render" / f"{c}.mp4" for c, _ in cenas])
         tempos = duracoes(video)
         for cena, linhas in cenas:
-            if len(tempos.get(f"{cena}#planos", [])) != len(linhas):
+            planos_cena = tempos.get(f"{cena}#planos", [])
+            if len(planos_cena) != len(linhas):
                 raise Falha(f"{cena}: duracoes.json não tem um tempo por plano do roteiro")
+            render = video / "cenas" / "render" / f"{cena}.mp4"
+            if duracao(render) < sum(planos_cena) - 0.1:
+                raise Falha(f"{render.name}: render de {duracao(render):.2f} s, mais curto que a narração de {sum(planos_cena):.2f} s")
 
     revisao = video / "revisao"
     k = 1
@@ -180,11 +190,12 @@ def preparar(video, etapa):
             ordem = []
             for cena, _ in cenas:
                 render = video / "cenas" / "render" / f"{cena}.mp4"
+                limite = duracao(render)
                 fim = 0.0
                 for i, t in enumerate(tempos[f"{cena}#planos"], 1):
                     fim += t
                     ordem.append(entrada / "quadros" / f"{cena}-{i}.png")
-                    quadro(render, ordem[-1], "-ss", f"{max(0.0, fim - 0.1):.3f}")
+                    quadro(render, ordem[-1], "-ss", f"{max(0.0, min(fim, limite) - 0.1):.3f}")
                 quadro(render, entrada / "inicio" / f"{cena}.png")
                 quadro(render, entrada / "fim" / f"{cena}.png", "-sseof", "-0.2")
             folha(ordem, entrada / "folha.png")

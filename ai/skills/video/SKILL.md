@@ -179,12 +179,13 @@ parado se retoma.
    a ordem dos planos e o tempo (veja Mudança pedida pelo dono).
 9. **Rascunho animado.** Agora o movimento: cada plano leva da pose anterior à
    próxima, seguindo `manim.md`, Movimento. As poses aprovadas não mudam. Todas
-   as cenas em baixa resolução (`manim -ql`), em `cenas/render/`, montadas com a
-   voz num `rascunho.mp4`: liste as cenas em ordem num arquivo `file '...'` do
-   concat do ffmpeg, faça o mesmo com `audio/<id>.wav` e junte com
-   `ffmpeg -f concat -safe 0 -i v.txt -f concat -safe 0 -i a.txt -c:v copy
-   -c:a aac -shortest rascunho.mp4`. **Rodada do crítico e do espectador no
-   rascunho.** **Ponto 3: pare e mostre o rascunho.**
+   as cenas em baixa resolução (`manim -ql`), em `cenas/render/`, uma por vez.
+   `python3 ~/.omp/agent/skills/video/rascunho.py <pasta>` junta cada cena com
+   a sua fala, segurando o último quadro até a fala acabar, e monta o
+   `rascunho.mp4`. Não concatene vídeo e áudio em duas trilhas separadas: a 15
+   fps cada cena sai até 65 ms mais curta que a fala, e a voz atrasa quase um
+   segundo no fim. **Rodada do crítico e do espectador no rascunho.** **Ponto 3:
+   pare e mostre o rascunho.**
 10. **Passada final** em 1920x1080 a 30 fps, cada cena do tamanho da sua
     narração; se a animação acaba antes, segure o último quadro. **Montagem** no
     FilmCraft e exportação de `final.mp4`. **Miniatura** no VectorCraft,

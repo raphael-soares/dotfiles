@@ -55,7 +55,16 @@ para que qualquer cena renderize sozinha e comece onde a anterior terminou.
   bloco; apague com `set_stroke(opacity=0.25)` e, no que tem preenchimento,
   `set_fill(opacity=...)` proporcional. Peça redesenhada a cada quadro (um
   `always_redraw`, como um medidor) não herda a opacidade do grupo: ela tem de
-  ler a opacidade da moldura ao se redesenhar.
+  ler a opacidade da moldura ao se redesenhar. Para entrar ou sair, adicione a
+  peça com `self.add` e anime só a moldura (`FadeIn(m.moldura)`): um `FadeIn` ou
+  `FadeOut` no grupo inteiro quebra com `zip() argument 2 is shorter than
+  argument 1`. O `-s` do storyboard pula as animações e não pega esse erro; ele
+  só aparece no rascunho.
+- O caminho que a coisa faz é conteúdo. `Transform` leva em linha reta, por
+  cima de tudo; quando o trajeto ensina (o dado passa pela CPU, sobe pelo
+  barramento), cada peça percorre a rota desenhada com `MoveAlongPath`, e não
+  só a primeira. Bloco que voa direto do disco para a memória numa cena de
+  polling desenha DMA.
 - A revelação ganha aproximação de câmera
   (`self.camera.frame.animate.scale(0.6).move_to(alvo)`); a volta ao quadro
   inteiro marca que o bloco acabou.

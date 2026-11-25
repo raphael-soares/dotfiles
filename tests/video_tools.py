@@ -14,6 +14,7 @@ REVISAO = REPO / "ai" / "skills" / "video" / "revisao.py"
 ANIMATIC = REPO / "ai" / "skills" / "video" / "animatic.py"
 MARGEM = REPO / "ai" / "skills" / "video" / "margem.py"
 NARRAR = REPO / "ai" / "skills" / "video" / "narrar.py"
+RASCUNHO = REPO / "ai" / "skills" / "video" / "rascunho.py"
 
 ROTEIRO = """# Roteiro
 
@@ -274,6 +275,15 @@ class Revisao(unittest.TestCase):
         self.assertIn("01-a", r.stderr)
         self.assertFalse((self.v / "revisao").exists())
 
+    def test_render_a_frame_short_still_gives_last_frames(self):
+        video(self.v / "cenas" / "render" / "01-a.mp4", 1.95)
+        video(self.v / "cenas" / "render" / "02-b.mp4", 0.95)
+
+        e = self.entrada("rascunho")
+
+        for rel in ("quadros/01-a-2.png", "quadros/02-b-1.png"):
+            self.assertTrue((e / rel).is_file(), rel)
+
     def test_rascunho_contact_sheet(self):
         video(self.v / "cenas" / "render" / "01-a.mp4", 2)
         video(self.v / "cenas" / "render" / "02-b.mp4", 1)
@@ -403,6 +413,44 @@ class Animatic(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("01-a-2.png", r.stderr)
         self.assertFalse((self.v / "animatic.mp4").exists())
+
+
+class Rascunho(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.v = montar(self.tmp.name, stills=False)
+        video(self.v / "cenas" / "render" / "01-a.mp4", 2.0, "red")
+        video(self.v / "cenas" / "render" / "02-b.mp4", 1.0, "blue")
+        wav(self.v / "audio" / "01-a.wav", 2.4)
+        wav(self.v / "audio" / "02-b.wav", 1.2)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def rodar(self):
+        return subprocess.run([sys.executable, str(RASCUNHO), str(self.v)], capture_output=True, text=True)
+
+    def test_length_matches_narration(self):
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertAlmostEqual(duracao(self.v / "rascunho.mp4"), 3.6, delta=0.15)
+
+    def test_short_scene_holds_last_frame_until_its_narration_ends(self):
+        self.rodar()
+
+        cores = [cor_em(self.v / "rascunho.mp4", t) for t in (1.0, 2.2, 2.7)]
+
+        self.assertEqual(cores, ["r", "r", "b"])
+
+    def test_missing_render_fails(self):
+        (self.v / "cenas" / "render" / "02-b.mp4").unlink()
+
+        r = self.rodar()
+
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("02-b.mp4", r.stderr)
+        self.assertFalse((self.v / "rascunho.mp4").exists())
 
 
 class Kokoro(http.server.BaseHTTPRequestHandler):
