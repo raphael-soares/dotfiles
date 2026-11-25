@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Fortinet SSL VPN through NetworkManager (networkmanager-fortisslvpn plugin).
-# Everything company-specific comes from $VPN_ENV (default ~/Unimed/Envs/vpn.env, kept in the
+# Everything company-specific comes from $VPN_ENV (default ~/Documents/Unimed/Envs/vpn.env, kept in the
 # Bitwarden vault by `secrets`): VPN_NAME, VPN_HOST, VPN_PORT, VPN_USER, VPN_PASSWORD and the
 # optional VPN_DNS and VPN_DNS_SEARCH (internal DNS and "~" suffixes for split DNS).
 # Usage: vpn [up|down|status]
 
 set -euo pipefail
 
-VPN_ENV=${VPN_ENV:-$HOME/Unimed/Envs/vpn.env}
+VPN_ENV=${VPN_ENV:-$HOME/Documents/Unimed/Envs/vpn.env}
 if [[ -f $VPN_ENV ]]; then
     # shellcheck source=/dev/null
     source "$VPN_ENV"

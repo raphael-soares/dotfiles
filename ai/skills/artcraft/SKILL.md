@@ -10,11 +10,11 @@ description: >
 
 # Apps do ArtCraft
 
-Cada app é um servidor MCP no omp (`craft-mcp <app>`, do módulo `design` do
+Cada app é um servidor MCP no omp (`craft-mcp <app>`, do módulo `creative` do
 dotfiles). Ele trabalha sem janela até o dono pedir para ver; aí a ferramenta
 `open_window` abre o app no arquivo salvo e daí em diante o agente e o dono
 mexem no mesmo documento, com o mesmo Histórico e o mesmo Ctrl+Z. Como funciona
-por dentro: `docs/design.md` do dotfiles.
+por dentro: `docs/creative.md` do dotfiles.
 
 ## Qual app
 
@@ -35,7 +35,7 @@ por dentro: `docs/design.md` do dotfiles.
 - **Sem janela por padrão.** `open_window` só quando o dono pedir ("abre a
   janela", "quero ver", "me mostra no app"). Oferecer no fim está ok; chamar
   por conta própria, não.
-- **Projeto em `~/Design/Projetos/<projeto>/<peça>/`**, uma pasta por peça entregue e o comum na raiz do projeto, salvo no formato nativo da tabela. SVG,
+- **Projeto em `~/Creative/Projetos/<projeto>/<peça>/`**, uma pasta por peça entregue e o comum na raiz do projeto, salvo no formato nativo da tabela. SVG,
   PNG, PDF e afins são exportação: só quando o dono pedir, ao lado do nativo.
 - **Texto continua texto.** Nada de converter em contorno ou curva, a não ser
   que o dono peça.
@@ -62,7 +62,7 @@ por dentro: `docs/design.md` do dotfiles.
 
 ## Erros comuns
 
-- PhotoCraft só aceita caminho dentro de `~/Design`; fora dela recusa com
+- PhotoCraft só aceita caminho dentro de `~/Creative`; fora dela recusa com
   "automation path rejected".
 - LightCraft lista as ferramentas em modo compacto: o que não estiver na lista
   roda por `run_command` depois de `command_list`.

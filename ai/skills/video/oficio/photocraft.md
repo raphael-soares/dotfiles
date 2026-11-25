@@ -5,7 +5,7 @@ Imagem raster: texturas, fundo, tratamento de foto, composição para miniatura.
 ## Usos
 
 - Textura do estilo (papel, grão, poeira), 1920x1080, a partir de
-  `~/Design/Biblioteca/texturas/`; salva no estilo (`~/Design/Estilos/<nome>/`)
+  `~/Creative/Biblioteca/texturas/`; salva no estilo (`~/Creative/Estilos/<nome>/`)
   ou na peça.
 - Foto ou captura tratada para entrar numa cena (recorte, cor, contraste).
 - Fundo ou elemento raster da miniatura.
@@ -18,7 +18,7 @@ nativo; PNG, JPG e outros por extensão).
 
 ## Armadilhas
 
-- Só aceita caminho dentro de `~/Design`: arquivo de trabalho fica na peça, nunca
+- Só aceita caminho dentro de `~/Creative`: arquivo de trabalho fica na peça, nunca
   em `/tmp`.
 - Textura forte rouba a leitura: o FilmCraft sobrepõe em Sobreposição com
   opacidade baixa (perto de 35% para papel, 8% para grão).

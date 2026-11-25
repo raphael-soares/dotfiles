@@ -77,5 +77,5 @@ não rode comando assim com segredo injetado.
   roda).
 - `secrets check`: acusa arquivo legível por outros, fora do cofre ou
   faltando. A conferência diária da mídia (`media-drift`) também roda.
-- `.env` de projeto: `.envrc` no projeto com `dotenv ~/TEAjudo/Env/api-local.env`,
+- `.env` de projeto: `.envrc` no projeto com `dotenv ~/Documents/TEAjudo/Env/api-local.env`,
   depois `direnv allow`.

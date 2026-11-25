@@ -9,7 +9,7 @@ downloads or removes anything:
 - sets gsettings, `gcr-ssh-agent`, the xdg-mime defaults and the Flatpak cursor
   override, and merges the Ghostty, Sunshine and Moonlight settings;
 - pulls the secrets, restarts WirePlumber when its rules change, reloads Hyprland;
-- links the work omp profile and runs `media-deploy` and `design-deploy`;
+- links the work omp profile and runs `media-deploy` and `creative-deploy`;
 - ends with `.dotter/missing.sh` for the same modules.
 
 `.dotter/missing.sh [module...]` only reads the machine and prints what is
@@ -103,8 +103,8 @@ content. `secrets` (in `terminal/bin`, on both machines) moves them with `rbw`:
   `~/*/Env/*.env`, `~/*/Envs/*.env`) or one missing here; `media-drift` runs it.
 
 `~/.config/secrets/shell.env` is loaded by the bashrc (keep it to keys every
-shell needs). The VPN reads `~/Unimed/Envs/vpn.env`. A project loads its own
-`.env` with direnv (`.envrc` with `dotenv ~/TEAjudo/Env/api-local.env`). The
+shell needs). The VPN reads `~/Documents/Unimed/Envs/vpn.env`. A project loads its own
+`.env` with direnv (`.envrc` with `dotenv ~/Documents/TEAjudo/Env/api-local.env`). The
 `Env` and `Envs` folders are not synced to Google Drive. `~/.bash_profile.local`
 stays a local file.
 

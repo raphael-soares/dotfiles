@@ -70,37 +70,39 @@ tarefa que o criou.
 ## Onde as coisas ficam no home
 
 Dois PCs com a mesma convenção: o notebook (trabalho, programação, startup,
-faculdade) e o PC de casa (jogos, design, música). Uma pasta por área em
-`~/<Área>`, nome em inglês capitalizado. Cada área tem um alcance: compartilhada
-(existe nos dois PCs, um par do syncfast por área) ou local (existe só no PC
-onde é usada, sem par). Área nova: crie a pasta, escolha o alcance e acrescente
-uma linha aqui.
+faculdade) e o PC de casa (jogos, design, música). O primeiro nível do home é
+tipo de coisa (o padrão XDG); o domínio vem um nível abaixo, como em
+`~/Code/<Área>`. Nome em inglês capitalizado. Cada área tem um alcance:
+compartilhada (existe nos dois PCs, um par do syncfast por área, com o mesmo
+caminho no Drive: `Raphael:Documents/<Área>`) ou local (existe só no PC onde é
+usada, sem par). Área nova: crie a pasta no tipo certo, escolha o alcance e
+acrescente uma linha aqui.
 
 | Área | Conteúdo | Alcance |
 |---|---|---|
-| `~/Personal` | documentos, currículo, finanças, segurança, arquivo de `.torrent` | compartilhada |
-| `~/Udesc` | faculdade, padrão de disciplina em `~/Udesc/README.md` | compartilhada |
-| `~/Design` | `Projetos/<projeto>/` com uma pasta por peça (vídeo, áudio, arte e marca juntos), `Biblioteca/` de assets de terceiros, `Estilos/` de identidades próprias | compartilhada |
-| `~/Unimed` | trabalho: docs, envs, assets | compartilhada |
-| `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | compartilhada |
+| `~/Documents/Personal` | documentos, currículo, finanças, segurança, arquivo de `.torrent` | compartilhada |
+| `~/Documents/Udesc` | faculdade, padrão de disciplina em `~/Documents/Udesc/README.md` | compartilhada |
+| `~/Documents/Unimed` | trabalho: docs, envs, assets | compartilhada |
+| `~/Documents/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | compartilhada |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
-| `~/Games` | jogos, ROMs, saves | só PC de casa |
+| `~/Creative` | projetos criativos multidisciplinares: `Projetos/<projeto>/` com uma pasta por peça (vídeo, áudio, arte e marca juntos), `Biblioteca/` de assets de terceiros, `Estilos/` de identidades próprias | só PC de casa |
 | `~/Studio` | produção musical: samples, presets, projetos | só PC de casa |
-| `~/Media` | consumo, uma pasta por tipo: `Movies`, `Shows` (séries e anime), `Books`, e o que vier (`Mangas`) | só PC de casa |
+| `~/Games` | jogos, ROMs, saves (o XDG não tem pasta para jogo) | só PC de casa |
+| `~/Media` | consumo, uma pasta por tipo: `Movies`, `Shows` (séries e anime), `Books`, e o que vier (`Mangas`); fica inteira numa árvore por causa do hardlink do Radarr e do Sonarr | só PC de casa |
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
-  `~/Code/<Área>/`. `~/TEAjudo` e `~/Unimed` sincronizam documento, marca e
-  env; o código delas fica em `~/Code` e não entra no sync.
-- Marca de uma área (logo da TEAjudo) fica na área. `~/Design` é para projeto
-  de design próprio.
+  `~/Code/<Área>/`. `~/Documents/TEAjudo` e `~/Documents/Unimed` sincronizam
+  documento, marca e env; o código delas fica em `~/Code` e não entra no sync.
+- Marca de uma área (logo da TEAjudo) fica na área. `~/Creative` é para
+  projeto criativo próprio.
 - O que acabou vai para `0-Archive/` dentro da própria área (o número faz ela
   aparecer primeiro no Nautilus, que ignora `_` ao ordenar). Pasta oculta, nunca.
-- `~/Downloads` (também o `XDG_DOCUMENTS_DIR`), `~/Pictures` (Screenshots,
-  Wallpaper, Icons) e `~/Videos` são pastas de sistema de cada PC, não áreas: o
-  que chega nelas vai para a área certa.
+- `~/Downloads`, `~/Pictures` (Screenshots, Wallpaper, Icons) e `~/Videos` são
+  pastas de sistema de cada PC, não áreas: o que chega nelas vai para a área
+  certa. As pastas XDG ficam em `desktop/xdg/user-dirs.dirs`.
 - Foto fica só no Drive (`Raphael:Fotos`). Livro e mangá de leitura ficam em
   `~/Media`, no PC de casa, fora do sync.
-- `.torrent` vai sempre para `~/Personal/Torrents`, nunca junto do conteúdo: o
+- `.torrent` vai sempre para `~/Documents/Personal/Torrents`, nunca junto do conteúdo: o
   conteúdo não sincroniza, o ponteiro sim. O qBittorrent é o app desktop do
   PC de casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para
   lá e cada categoria dele cai na área certa: `Books` e `Mangas` em
@@ -113,7 +115,8 @@ uma linha aqui.
   `~/Games`, `~/Media`, `~/Studio` e `~/Videos`, que não são pares do syncfast:
   nada ali sobe pro Drive. Os pares compartilhados ainda barram `*.mkv`,
   `*.mp4`, `*.iso`, `*.nsp`, `*.xci` e `*.nsz` por filtro.
-- Não existem `~/Documents`, `~/Notes` nem `~/University`. Não recrie.
+- Nenhuma área solta no home fora das da tabela. Não existem `~/Notes` nem
+  `~/University`. Não recrie.
 
 ---
 

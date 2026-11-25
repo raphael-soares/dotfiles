@@ -1,14 +1,14 @@
 # ArtCraft apps in omp
 
 omp drives the ArtCraft Crafting Apps (Flatpaks installed with the ArtCraft
-Launcher). By default the agent works without a window, on files in `~/Design`.
+Launcher). By default the agent works without a window, on files in `~/Creative`.
 When the owner asks to see the work, the agent calls `open_window`: the app opens
 on the saved file, and from then on the agent and the owner edit the same
 document, with one History and one Ctrl+Z. When the owner closes the window, the
 agent goes back to working without one and reopens the saved file.
 
-The `design` module (only on `fedora`) has one table, `design/apps`, a proxy,
-`craft-mcp`, and a deploy step, `design-deploy`. Design:
+The `creative` module (only on `fedora`) has one table, `creative/apps`, a proxy,
+`craft-mcp`, and a deploy step, `creative-deploy`. Design:
 [`superpowers/specs/2026-11-24-craft-apps-mcp-design.md`](superpowers/specs/2026-11-24-craft-apps-mcp-design.md).
 
 ## The apps
@@ -17,7 +17,7 @@ The `design` module (only on `fedora`) has one table, `design/apps`, a proxy,
 |---|---|---|---|
 | VectorCraft | 7979 | no | |
 | LightCraft | 7980 | no | `--compact` (409 tools otherwise) |
-| PhotoCraft | 7981 | yes | automation roots on `~/Design`, its CLI refuses absolute paths without them |
+| PhotoCraft | 7981 | yes | automation roots on `~/Creative`, its CLI refuses absolute paths without them |
 | WordCraft | none | no | windowless only: 0.18.1 keeps the window's key per Flatpak instance, so the server cannot find it, and upstream refuses `--connect` for now (wordcraft#7124) |
 | GridCraft | 7983 | yes | |
 | FilmCraft | 7984 | yes | |
@@ -52,16 +52,16 @@ server and fails that one call with "Open <path> to continue".
 
 | What | Path |
 |---|---|
-| App table | `design/apps` |
-| Proxy and deploy step | `design/bin` → `~/.local/bin` |
-| Port, token, `~/Design` access | `flatpak override --user --show ai.storyteller.<app>` |
+| App table | `creative/apps` |
+| Proxy and deploy step | `creative/bin` → `~/.local/bin` |
+| Port, token, `~/Creative` access | `flatpak override --user --show ai.storyteller.<app>` |
 | omp server list | `~/.omp/agent/.mcp.json`, written by the deploy for installed apps |
-| App output when the proxy opens a window | `~/.local/state/dotfiles/design/<app>.log` |
-| Files the agent works on | `~/Design` |
+| App output when the proxy opens a window | `~/.local/state/dotfiles/creative/<app>.log` |
+| Files the agent works on | `~/Creative` |
 
 ## Add an app
 
-Install it with the ArtCraft Launcher, add one line to `design/apps` (the fields
+Install it with the ArtCraft Launcher, add one line to `creative/apps` (the fields
 come from `<app>-cli mcp --help`), run `dotter deploy`, then `/mcp reload` in omp.
 An app installed after the deploy only shows up in omp after the next deploy.
 
@@ -74,21 +74,21 @@ reopening the app fixes it, from the menu or by asking the agent again.
 ## Video
 
 The `video` skill turns a topic and the owner's material into a narrated 16:9
-`.mp4` and a thumbnail, in `~/Design/Projetos/<projeto>/<peça>/`. Besides the
+`.mp4` and a thumbnail, in `~/Creative/Projetos/<projeto>/<peça>/`. Besides the
 apps above it uses these tools on the desktop:
 
 | Tool | From | Used for |
 | --- | --- | --- |
-| Manim | `uv tool install manim`, printed by `missing.sh design` | algorithm, diagram and formula scenes |
+| Manim | `uv tool install manim`, printed by `missing.sh creative` | algorithm, diagram and formula scenes |
 | Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
-| OmniVoice | `design/audiocpp/compose.yaml`, audio.cpp on Vulkan in Docker at `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
+| OmniVoice | `creative/audiocpp/compose.yaml`, audio.cpp on Vulkan in Docker at `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
 | Whisper | local ASR on `127.0.0.1:9000` | `ai/skills/video/ouvir.py` checks each narrated plano |
 
 The container restarts with Docker (`restart: unless-stopped`) and starts idle:
 the model loads on the first request and leaves the GPU after 10 idle minutes.
 Bring it up once with `docker compose -f ~/.config/audiocpp/compose.yaml up -d`.
 It needs the model in `~/.cache/audiocpp/models` (1.6 GB, printed by
-`missing.sh design`). omp's speech role points at it with an empty fallback
+`missing.sh creative`). omp's speech role points at it with an empty fallback
 chain, so a stopped server makes `tts` fail instead of falling back to Phonon,
 which only speaks English. On the laptop there is no server and `tts` fails the
 same way.
@@ -100,12 +100,12 @@ with "No available speech model matches the speech role".
 
 OmniVoice is CC-BY-NC: fine for study videos, not for monetized ones. Voices
 are clones of two references generated once by voice design and kept in
-`design/audiocpp/vozes/`, so every scene sounds like the same person:
+`creative/audiocpp/vozes/`, so every scene sounds like the same person:
 `professora` (pt-BR, the default) and `teacher` (English). `server.json` sets
 each preset's reference transcript and language; the skill reads the voice
 from the `- Voz:` line of the video's `video.md`.
 
-`~/Design` holds `Biblioteca/` (third-party assets, music included), `Estilos/<nome>/`
+`~/Creative` holds `Biblioteca/` (third-party assets, music included), `Estilos/<nome>/`
 (own visual identities) and `Projetos/<projeto>/` with one folder per deliverable.
 
 Every stage ends in a sketch the owner approves. The skill's `repertorio/`

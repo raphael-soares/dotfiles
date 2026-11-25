@@ -27,7 +27,7 @@ jobs:
       - run: bash tests/media_deploy.sh
       - run: bash tests/media_cleanup.sh
       - run: bash tests/media_torrents.sh
-      - run: bash tests/design_deploy.sh
+      - run: bash tests/creative_deploy.sh
       - run: python3 tests/craft_mcp.py
       - run: python3 tests/video_tools.py
       - run: bash tests/secrets.sh

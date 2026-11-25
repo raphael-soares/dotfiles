@@ -42,6 +42,7 @@ default_target_type = "symbolic"
 "desktop/webapps/icons" = "~/.local/share/icons/hicolor/scalable/apps"
 "desktop/audio/wireplumber" = "~/.config/wireplumber/wireplumber.conf.d"
 "desktop/syncfast/config.toml" = "~/.config/syncfast/config.toml"
+"desktop/xdg/user-dirs.dirs" = "~/.config/user-dirs.dirs"
 
 [hyprland.files]
 "hyprland/hypr" = { type = "symbolic", target = "~/.config/hypr", recurse = false }
@@ -86,7 +87,7 @@ default_target_type = "symbolic"
 "media/stremio/stremio-enhanced.desktop" = "~/.local/share/applications/stremio-enhanced.desktop"
 "media/autostart" = "~/.config/autostart"
 
-[design.files]
-"design/bin" = "~/.local/bin"
-"design/omp/models.yml" = "~/.omp/agent/models.yml"
-"design/audiocpp" = { type = "symbolic", target = "~/.config/audiocpp", recurse = false }
+[creative.files]
+"creative/bin" = "~/.local/bin"
+"creative/omp/models.yml" = "~/.omp/agent/models.yml"
+"creative/audiocpp" = { type = "symbolic", target = "~/.config/audiocpp", recurse = false }

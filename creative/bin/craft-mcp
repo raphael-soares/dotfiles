@@ -155,7 +155,7 @@ class Proxy:
             "name": "open_window",
             "description": (
                 f"Open the {t} window so the owner can watch and edit along, and carry the work into it. "
-                f"Only when the owner asks. Save the current document under ~/Design first and pass its path: "
+                f"Only when the owner asks. Save the current document under ~/Creative first and pass its path: "
                 f"unsaved work in the windowless engine does not travel. If {t} is already open, this joins "
                 f"that window instead of opening another."
             ),
@@ -228,7 +228,7 @@ class Proxy:
 
     def launch(self, path):
         log_dir = os.environ.get("CRAFT_MCP_LOG_DIR") or os.path.join(
-            os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local", "state"), "dotfiles", "design")
+            os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local", "state"), "dotfiles", "creative")
         os.makedirs(log_dir, exist_ok=True)
         with open(os.path.join(log_dir, f"{self.app.name}.log"), "ab") as log:
             subprocess.Popen(

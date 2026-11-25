@@ -26,25 +26,25 @@ chmod +x "$T/bin/rbw" "$T/bin/vault"
 fail=0
 expect() { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; fail=1; fi; }
 
-mkdir -p "$VAULT/dotfiles/TEAjudo/Env"
-printf 'A=1\nB=two words\n' >"$VAULT/dotfiles/TEAjudo/Env/api.env"
+mkdir -p "$VAULT/dotfiles/Documents/TEAjudo/Env"
+printf 'A=1\nB=two words\n' >"$VAULT/dotfiles/Documents/TEAjudo/Env/api.env"
 "$REPO/terminal/bin/secrets" pull >/dev/null
-expect "pull writes the item to its path" 'cmp -s "$VAULT/dotfiles/TEAjudo/Env/api.env" "$HOME/TEAjudo/Env/api.env"'
-expect "pull writes mode 600" '[[ $(stat -c %a "$HOME/TEAjudo/Env/api.env") == 600 ]]'
+expect "pull writes the item to its path" 'cmp -s "$VAULT/dotfiles/Documents/TEAjudo/Env/api.env" "$HOME/Documents/TEAjudo/Env/api.env"'
+expect "pull writes mode 600" '[[ $(stat -c %a "$HOME/Documents/TEAjudo/Env/api.env") == 600 ]]'
 
-mkdir -p "$HOME/Unimed/Envs"
-printf 'VPN_HOST=x\n' >"$HOME/Unimed/Envs/vpn.env"
-chmod 644 "$HOME/Unimed/Envs/vpn.env"
+mkdir -p "$HOME/Documents/Unimed/Envs"
+printf 'VPN_HOST=x\n' >"$HOME/Documents/Unimed/Envs/vpn.env"
+chmod 644 "$HOME/Documents/Unimed/Envs/vpn.env"
 out=$("$REPO/terminal/bin/secrets" check || true)
-expect "check flags a file others can read" '[[ $out == *"Unimed/Envs/vpn.env can be read by others"* ]]'
-expect "check flags a file outside the vault" '[[ $out == *"Unimed/Envs/vpn.env is not in the vault"* ]]'
+expect "check flags a file others can read" '[[ $out == *"Documents/Unimed/Envs/vpn.env can be read by others"* ]]'
+expect "check flags a file outside the vault" '[[ $out == *"Documents/Unimed/Envs/vpn.env is not in the vault"* ]]'
 
-"$REPO/terminal/bin/secrets" push "$HOME/Unimed/Envs/vpn.env" >/dev/null
-expect "push stores the content" 'cmp -s "$HOME/Unimed/Envs/vpn.env" "$VAULT/dotfiles/Unimed/Envs/vpn.env"'
+"$REPO/terminal/bin/secrets" push "$HOME/Documents/Unimed/Envs/vpn.env" >/dev/null
+expect "push stores the content" 'cmp -s "$HOME/Documents/Unimed/Envs/vpn.env" "$VAULT/dotfiles/Documents/Unimed/Envs/vpn.env"'
 expect "check passes after push" '"$REPO/terminal/bin/secrets" check'
 
-rm "$HOME/TEAjudo/Env/api.env"
+rm "$HOME/Documents/TEAjudo/Env/api.env"
 out=$("$REPO/terminal/bin/secrets" check || true)
-expect "check flags a vault file missing here" '[[ $out == *"TEAjudo/Env/api.env is in the vault but missing here"* ]]'
+expect "check flags a vault file missing here" '[[ $out == *"Documents/TEAjudo/Env/api.env is in the vault but missing here"* ]]'
 
 exit "$fail"

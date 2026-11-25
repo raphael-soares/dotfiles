@@ -115,8 +115,8 @@ fi
 "$REPO/media/bin/media-deploy" "$REPO" || echo "==> media-deploy failed, see above" >&2
 {{/if}}
 
-{{#if dotter.packages.design}}
-"$REPO/design/bin/design-deploy" "$REPO" || echo "==> design-deploy failed, see above" >&2
+{{#if dotter.packages.creative}}
+"$REPO/creative/bin/creative-deploy" "$REPO" || echo "==> creative-deploy failed, see above" >&2
 {{/if}}
 
 {{#if dotter.packages.work}}

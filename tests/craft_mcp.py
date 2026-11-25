@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROXY = os.path.join(REPO, "design", "bin", "craft-mcp")
+PROXY = os.path.join(REPO, "creative", "bin", "craft-mcp")
 FIXTURES = os.path.join(REPO, "tests", "fixtures", "craft")
 
 

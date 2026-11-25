@@ -55,7 +55,7 @@ laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/media/compose.yaml .config/media/configarr .local/bin/media-deploy .local/bin/media-compose
   .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer .config/systemd/user/configarr.service
-  .local/bin/craft-mcp .local/bin/design-deploy .config/containers/systemd/design .omp/agent/models.yml)
+  .local/bin/craft-mcp .local/bin/creative-deploy .config/containers/systemd/design .omp/agent/models.yml)
 
 hook=$T/cache/.dotter/post_deploy.sh
 if [[ -f $hook ]]; then
@@ -66,7 +66,7 @@ fi
 hook_has() { [[ -f $hook ]] && grep -q -- "$1" "$hook"; }
 shared_in_hook=(hyprctl 'xdg-mime default' 'capture = kms' missing.sh)
 laptop_only_in_hook=(enterprise)
-desktop_only_in_hook=(media-deploy design-deploy)
+desktop_only_in_hook=(media-deploy creative-deploy)
 # The deploy configures; installing, downloading and anything needing root is printed
 # by missing.sh for the owner to run.
 gone_from_hook=(plasmalogin kwriteconfig6 kwinrc roundcorners home/greetd/config.toml laptop/greetd/config.toml

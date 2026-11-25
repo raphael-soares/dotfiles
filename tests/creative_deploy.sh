@@ -45,21 +45,21 @@ fail() { echo "FAILED: $*"; failures=$((failures + 1)); }
 has() { grep -qx -- "$2" "$T/overrides/ai.storyteller.$1" 2>/dev/null; }
 token() { sed -n "s/^${1^^}_CONTROL_TOKEN=//p" "$T/overrides/ai.storyteller.$1" | tail -1; }
 
-"$REPO/design/bin/design-deploy" "$REPO" >/dev/null
+"$REPO/creative/bin/creative-deploy" "$REPO" >/dev/null
 
 has filmcraft FILMCRAFT_CONTROL_PORT=7984 || fail "filmcraft lacks its port"
 [[ $(token filmcraft) =~ ^[0-9a-f]{64}$ ]] || fail "filmcraft token is not 64 hex"
-has filmcraft 'filesystems=~/Design;' || fail "filmcraft lacks ~/Design"
+has filmcraft 'filesystems=~/Creative;' || fail "filmcraft lacks ~/Creative"
 has vectorcraft VECTORCRAFT_CONTROL_PORT=7979 || fail "vectorcraft lacks its port"
 [[ -z $(token vectorcraft) ]] || fail "vectorcraft got a token"
-has photocraft "PHOTOCRAFT_AUTOMATION_READ_ROOT=$HOME/Design" || fail "photocraft lacks its read root"
-has photocraft "PHOTOCRAFT_AUTOMATION_WRITE_ROOT=$HOME/Design" || fail "photocraft lacks its write root"
-has pdfcraft 'filesystems=~/Design;' || fail "pdfcraft lacks ~/Design"
+has photocraft "PHOTOCRAFT_AUTOMATION_READ_ROOT=$HOME/Creative" || fail "photocraft lacks its read root"
+has photocraft "PHOTOCRAFT_AUTOMATION_WRITE_ROOT=$HOME/Creative" || fail "photocraft lacks its write root"
+has pdfcraft 'filesystems=~/Creative;' || fail "pdfcraft lacks ~/Creative"
 [[ ! -e $T/overrides/ai.storyteller.gridcraft ]] || fail "uninstalled gridcraft got an override"
-[[ -d $HOME/Design ]] || fail "the Design folder was not created"
+[[ -d $HOME/Creative ]] || fail "the Creative folder was not created"
 
 first=$(token filmcraft)
-"$REPO/design/bin/design-deploy" "$REPO" >/dev/null
+"$REPO/creative/bin/creative-deploy" "$REPO" >/dev/null
 [[ $(token filmcraft) == "$first" ]] || fail "second run changed the filmcraft token"
 
 mcp=$HOME/.omp/agent/.mcp.json
@@ -70,7 +70,7 @@ jq -e '.mcpServers.vectorcraft == {"command":"craft-mcp","args":["vectorcraft"],
   fail ".mcp.json lists other apps than the installed ones: $(jq -c '.mcpServers | keys' "$mcp")"
 
 grep -qx -- '--user daemon-reload' "$FAKE_LOG/systemctl" 2>/dev/null || fail "systemd was not reloaded"
-[[ ! -s $FAKE_LOG/uv ]] || fail "design-deploy installed something: $(cat "$FAKE_LOG/uv")"
+[[ ! -s $FAKE_LOG/uv ]] || fail "creative-deploy installed something: $(cat "$FAKE_LOG/uv")"
 
 ((failures == 0)) || exit 1
-echo "design deploy: ok"
+echo "creative deploy: ok"

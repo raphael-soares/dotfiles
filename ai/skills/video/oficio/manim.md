@@ -17,7 +17,7 @@ de slide animado.
 ## Rodar
 
 Cenas importam a identidade por variável de ambiente: rode com
-`VIDEO_DIR=<pasta da peça> IDENTIDADE=~/Design/Estilos/<nome>` e, na cena,
+`VIDEO_DIR=<pasta da peça> IDENTIDADE=~/Creative/Estilos/<nome>` e, na cena,
 `sys.path.insert(0, os.environ["IDENTIDADE"])` e `from tema import *`.
 
 | Para quê | Comando |

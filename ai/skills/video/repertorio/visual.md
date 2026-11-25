@@ -57,7 +57,7 @@ O que é: cena montada com ilustração, ícone, foto recortada e textura.
 Quando usar: situar no mundo real (pessoa, lugar, objeto do dia a dia); tom
 leve.
 Quando evitar: mecanismo preciso, que pede diagrama.
-Como fazer aqui: só material da Biblioteca (`~/Design/Biblioteca/`), com a
+Como fazer aqui: só material da Biblioteca (`~/Creative/Biblioteca/`), com a
 licença do `FONTES.md`; Humaaans pede o crédito "Humaaans, Pablo Stanley, CC BY
 4.0".
 Referência: princípio de personalização de Mayer (pessoas e situações
