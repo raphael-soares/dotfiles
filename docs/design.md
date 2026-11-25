@@ -81,16 +81,22 @@ uses these tools on the desktop:
 | --- | --- | --- |
 | Manim | `uv tool install manim`, printed by `missing.sh design` | algorithm, diagram and formula scenes |
 | Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
-| Kokoro | `kokoro.service`, a podman quadlet on `127.0.0.1:8880` | narration through omp's `tts` |
+| OmniVoice | `design/audiocpp/compose.yaml`, audio.cpp on Vulkan in Docker at `127.0.0.1:8880` | narration through omp's `tts` |
 
-Kokoro does not start with the session: the skill runs `systemctl --user start
-kokoro` before narrating (the first start downloads a 1.5 GB image). omp's speech
-role points at it with an empty fallback chain, so a stopped server makes `tts`
-fail instead of falling back to Phonon, which only speaks English. On the laptop
-there is no Kokoro and `tts` fails the same way.
+The container restarts with Docker (`restart: unless-stopped`) and starts idle:
+the model loads on the first request and leaves the GPU after 10 idle minutes.
+Bring it up once with `docker compose -f ~/.config/audiocpp/compose.yaml up -d`.
+It needs the model in `~/.cache/audiocpp/models` (1.6 GB, printed by
+`missing.sh design`). omp's speech role points at it with an empty fallback
+chain, so a stopped server makes `tts` fail instead of falling back to Phonon,
+which only speaks English. On the laptop there is no server and `tts` fails the
+same way.
 
-Voices: `pf_dora` for pt-BR, `af_heart` for English. The prefix picks the
-language (`pf_`/`pm_` are pt-BR), so the skill always passes `voice_id`.
+OmniVoice is CC-BY-NC: fine for study videos, not for monetized ones. Voices
+are clones of two references generated once by voice design and kept in
+`design/audiocpp/vozes/`, so every scene sounds like the same person:
+`professora` (pt-BR, the default) and `teacher` (English). `server.json` sets
+each preset's reference transcript and language; the skill passes `voice_id`.
 
 Identities live in `~/Design/Identidades/<nome>/` and music in
 `~/Design/Videos/Musicas/`.
