@@ -4,249 +4,262 @@ description: >
   Use para fazer vídeo explicativo no PC fedora: aula a partir do material do
   dono em ~/Udesc, vídeo de YouTube, animação de algoritmo ou estrutura de
   dados, narração com voz sintética, miniatura; também para retomar ou mudar um
-  vídeo em ~/Design/Videos.
+  vídeo em ~/Design/Projetos.
 ---
 
 # Vídeo explicativo
 
-O dono não aparece no vídeo: nada de voz, rosto ou gravação dele. O vídeo é
-gráfico e animação, com voz OmniVoice local, em pt-BR ou inglês. O agente faz o
-trabalho e para em três pontos para o dono aprovar: direção e roteiro, rascunho
-animado e corte final. Regras dos apps (formato nativo, `open_window`, lotes):
-skill `artcraft`. Ferramentas e serviço: `docs/design.md` do dotfiles, seção
-Video.
+O dono encomenda e aprova; você produz, como um produtor faria. Cada etapa
+termina num esboço que o dono vê, e a seguinte só começa com o OK dele. Nada
+aqui é fórmula: a direção de cada vídeo escolhe, no repertório, o que serve
+àquele vídeo e diz por quê.
 
-## A imagem explica, a voz acompanha
+O dono não aparece no vídeo (nem voz, nem rosto). O vídeo é gráfico e animação
+com voz OmniVoice local, em pt-BR ou inglês.
 
-O vídeo não é slide narrado. Quem ensina é a imagem em movimento; a voz comenta o
-que está acontecendo na tela. Regras:
-
-- Cada conceito vira uma metáfora visual ou um mecanismo que se mexe (a CPU
-  batendo na porta do dispositivo, um contador subindo, dados andando pelo
-  barramento), nunca uma caixa com o nome do conceito.
-- Teste do mudo: sem som, o vídeo ainda tem que dar a ideia. Se só a voz
-  explica, o plano está errado.
-- Texto na tela só para o termo-chave ou um número. Nunca escreva a frase que a
-  voz está falando: texto e voz dizendo a mesma coisa atrapalham o aprendizado
-  (princípio da redundância, Mayer).
-- A imagem aparece quando a voz fala dela, não antes nem depois. Use cor e
-  movimento para apontar onde olhar; o que não serve à ideia sai da tela.
-- Algo muda na tela a cada 5 a 8 segundos (entra elemento, câmera aproxima,
-  estado muda). Imagem parada com voz por cima perde a pessoa.
-
-## Estrutura que prende
-
-- **0 a 5 s:** imagem que intriga, sem logo nem saudação (a CPU parada,
-  esperando uma tecla que não vem).
-- **5 a 15 s:** a promessa concreta do vídeo ("em 3 minutos, as três formas de
-  a CPU falar com o hardware e quando cada uma vale a pena").
-- **até 30 s:** uma pergunta em aberto que o vídeo só responde mais adiante.
-- **Meio:** cada bloco abre com uma pergunta ou um problema visível e fecha com a
-  resposta na tela. Compare o novo com o anterior lado a lado quando der.
-- **Fim:** resumo visual (as ideias lado a lado, na mesma metáfora do vídeo),
-  não uma lista de frases. Sem "deixe seu like" e sem despedida longa.
-
-## Pasta do vídeo
-
-`~/Design/Videos/<slug>/`:
-
-| Caminho | O quê |
+| Onde | O quê |
 |---|---|
-| `video.md` | idioma, voz, identidade, música, duração alvo, fontes, pronúncia, etapa atual |
-| `direcao.md` | metáfora central, mapa visual de cada conceito, arco do vídeo |
-| `roteiro.md` | roteiro em duas colunas, plano por plano, cada um com a fonte |
-| `cenas/manim/<id>.py` | cena Manim |
-| `cenas/effectcraft/<id>.ecproj` | cena EffectCraft |
-| `cenas/render/<id>.mp4` | cena renderizada no tamanho da narração |
-| `audio/<id>.wav` | narração da cena |
-| `montagem.fcproj` | projeto do FilmCraft |
-| `final.mp4` | exportação |
-| `miniatura.vectorcraft`, `miniatura.png` | miniatura 1280x720 |
+| `repertorio/README.md` | técnicas consolidadas, por situação, com quando usar e quando evitar |
+| `oficio/<app>.md` | como trabalhar em cada ferramenta: Manim, EffectCraft, FilmCraft, SoundCraft, VectorCraft, PhotoCraft, voz |
+| skill `artcraft` | regras dos apps (formato nativo, `open_window`, lotes) |
+| `docs/design.md` do dotfiles, seção Video | serviços e ferramentas instalados |
+
+## Etapas
+
+1. **Conversa inicial.** Tema, material, objetivo, público, duração, idioma,
+   estilo, se tem música. O que o dono não disse, um `ask` por pergunta.
+   Escreva `video.md`.
+2. **Briefing** (`briefing.md`). Quem assiste e o que já sabe, a ideia que
+   fica, objetivos, ideias erradas comuns; quiz com gabarito só se a direção
+   for de aula. O vídeo diz o que o material diz: leia com `read` (PDF traz
+   `<!-- Page N -->` para a citação); o que vier de fora entra marcado e só com
+   o OK do dono. Material sem texto legível: avise e leia as páginas como
+   imagem. *Esboço: o briefing.*
+3. **Direção** (`direcao.md`, seção abaixo). *Esboço: `direcao.md` e uma folha
+   de referência do estilo (`oficio/vectorcraft.md`) antes de animar.*
+4. **Roteiro** (`roteiro.md`). Plano por plano, de 3 a 10 segundos, colunas
+   Tela, Fala, Tom, Tempo, Fonte. Escreva a Tela inteira primeiro; a Fala vem
+   depois, como comentário dela, escrita para o ouvido (`repertorio/fala.md`).
+   A voz fala perto de 170 palavras por minuto. Rodada do espectador. Narre
+   duas ou três cenas (`oficio/voz.md`). *Esboço: o roteiro e a amostra
+   narrada.* O OK trava o texto: daqui em diante a fala só muda por achado do
+   dono ou do espectador, e cada mudança se narra de novo antes de animar.
+5. **Narração, storyboard e animatic.** Narre tudo e rode o `ouvir.py`
+   (`oficio/voz.md#conferir`); os planos que sobrarem vão para o dono ouvir.
+   Storyboard: o quadro do fim de cada plano em `storyboard/<id>-<n>.png`
+   e o começo de cada cena em `storyboard/inicio/<id>.png`, feitos no motor que
+   a direção escolheu; `margem.py` até `margem ok`. Rodada do crítico.
+   `animatic.py <pasta>` monta `animatic.mp4` no tempo da voz; rodada do
+   espectador. *Esboço: o animatic.* O OK trava a lista de planos e o tempo:
+   nada se anima antes dele, e cada plano se anima uma vez, já na duração da
+   sua fala.
+6. **Rascunho animado.** O movimento de pose a pose, em baixa resolução (no
+   Manim, `PLANOS=0`, `oficio/manim.md`); `rascunho.py <pasta>` junta cada cena
+   com a sua fala. Rodadas do crítico e do espectador. *Esboço:
+   `rascunho.mp4`.*
+7. **Primeiro corte.** Passada final por plano: `planos.py` no Manim (zero
+   `estourou`, `fonte pequena` e `CURTO`), o mesmo formato nos outros motores;
+   `conferir.py` para as folhas. Som no SoundCraft e edição no FilmCraft,
+   feitos à mão pelo MCP, cada escolha vinda da direção
+   (`oficio/soundcraft.md`, `oficio/filmcraft.md`); o motivo de cada efeito
+   sonoro em `som.md` da peça. Rodada do espectador no corte. *Esboço:
+   `corte-1.mp4`; ofereça abrir o FilmCraft no projeto (`open_window`).*
+8. **Corte final e miniatura.** Ajustes do dono, `final.mp4` e `final.srt`,
+   miniatura (`oficio/vectorcraft.md`). Informe duração, caminhos e o que você
+   conferiu. Aprovado, apague o que se regenera: `cenas/.manim*`, os
+   `__pycache__`, versões de comparação e cópias `*.conflictN` do syncfast que
+   forem versões antigas suas.
 
 Atualize a etapa atual em `video.md` a cada passo: é por ela que um vídeo
 parado se retoma.
 
-## Fluxo
+Cronometre cada etapa: anote em `video.md`, numa tabela "Tempos", o início e o
+fim de cada uma (`date`), separando o tempo de máquina (voz, render), o seu e
+a espera pelo dono. É assim que se sabe onde o tempo vai.
 
-1. **Início.** Antes de ler ou escrever qualquer coisa, pergunte o que o dono
-   não disse, um `ask` por pergunta: idioma; duração alvo; identidade visual
-   (veja Identidades); música (veja abaixo). Escreva `video.md`.
-2. **Material.** Leia com `read` (PDF vem com `<!-- Page N -->`, que dá a
-   página da citação). O vídeo diz o que o material diz e dá peso ao que ele
-   enfatiza; o que vier de fora entra marcado como tal e só com o OK do dono. Se
-   o material não tem texto legível (PDF escaneado), diga ao dono e leia as
-   páginas como imagem ou use outra fonte que ele indicar; nunca escreva do
-   conhecimento geral como se viesse do material.
-3. **Direção** (`direcao.md`), antes de qualquer fala:
-   - a pergunta que o vídeo responde e a promessa dos primeiros 15 segundos;
-   - a metáfora central, que atravessa o vídeo inteiro (uma só, reaproveitada);
-   - para cada conceito: como ele aparece e se mexe na tela, e que contraste
-     com o conceito anterior a imagem mostra;
-   - o arco: gancho, promessa, pergunta em aberto, blocos, resposta, resumo
-     visual.
-4. **Roteiro** (`roteiro.md`) em duas colunas, plano por plano, de 3 a 10
-   segundos. Escreva primeiro a coluna da tela inteira; a fala vem depois, como
-   comentário dela. Cada plano tem:
+Em todo esboço, mostre o resultado das rodadas desde o anterior: quantas
+rodadas cada revisor fez, o que foi corrigido e cada achado rejeitado com o
+motivo.
 
-   | Campo | O quê |
-   |---|---|
-   | Tela | o que aparece e como se mexe: entrada, câmera, cor que chama o olho |
-   | Fala | o texto exato, já com a pronúncia adaptada (veja Voz) |
-   | Tom | curioso, firme, pausa antes do termo, ênfase numa palavra |
-   | Tempo | duração alvo, em segundos |
-   | Fonte | arquivo e página ou slide |
+## Direção
 
-   Ritmo da fala: a voz fala perto de 170 palavras por minuto. Motor de
-   cada plano: Manim para mecanismo, diagrama, algoritmo e fórmula (sempre em
-   Typst, nunca LaTeX nem `MathTex`); EffectCraft para título, cartão e
-   tipografia animada. Algoritmo passo a passo vira um plano por passo.
+`direcao.md` é o plano do vídeo e responde, citando as entradas do repertório
+(`repertorio/<arquivo>.md#<nome>`):
 
-   **Ponto 1: pare e mostre a direção e o roteiro.** Nada de narrar antes do OK.
-5. **Narração.** Uma chamada `tts` por cena, sempre com `voice_id`
-   (`professora` em pt-BR, `teacher` em inglês, ou a voz de `video.md`), saída
-   `audio/<id>.wav`. Confira a pronúncia (veja Voz) e meça a duração com
-   `ffprobe`. Narração vem antes da animação porque a cena tem o tamanho da fala.
-6. **Rascunho animado.** Todas as cenas em baixa resolução (`manim -ql`), já no
-   tempo da narração, montadas com a voz num `rascunho.mp4`. Confira quadros e
-   margens antes. **Ponto 2: pare e mostre o rascunho.**
-7. **Passada final** em 1920x1080 a 30 fps, cada cena do tamanho da sua
-   narração; se a animação acaba antes, segure o último quadro.
-8. **Montagem** no FilmCraft e exportação de `final.mp4`.
-9. **Miniatura** no VectorCraft, 1280x720, no idioma do vídeo, a partir do
-   modelo da identidade, exportada para `miniatura.png`.
-10. **Ponto 3: corte final.** Informe duração, caminhos e o que você conferiu.
+- formato e tom;
+- estrutura e arco, com o gancho, os laços abertos e onde a atenção é
+  retomada;
+- para cada bloco: o que a tela faz, com que técnica e com que motor (Manim,
+  EffectCraft, imagem, VectorCraft); Manim só com o motivo dito
+  (`oficio/manim.md#Quando usar`), nunca por hábito;
+- estilo visual: o estilo de `~/Design/Estilos/` usado, adaptado ou novo;
+  paleta e o sentido de cada cor; tipografia; objetos que voltam; textura;
+- voz: tom, ritmo, onde entram pausas;
+- som: ambiente, que momentos ganham efeito e por quê, música (só se o dono
+  pediu) e onde ela abaixa;
+- edição: ritmo de corte, transições, respiros, aproximações, legenda;
+- miniatura e título.
+
+O que a direção não tira do repertório, ela justifica. Na estrutura de aula,
+ela leva também o mapa de termos (abaixo).
+
+Estilo novo se decide com o dono: proponha paleta, fonte e tom num `ask` (cores
+em hex, uma recomendação marcada), mostre um quadro e uma miniatura de exemplo
+e só salve em `~/Design/Estilos/<nome>/` com aprovação.
+
+### Mapa de termos
+
+Só quando a direção adota a estrutura de aula. Um termo por linha, na ordem em
+que aparecem:
+
+| Termo | Mostrado em | Nomeado em | Primeiro uso |
+|---|---|---|---|
+| barramento | 01-gancho#3 | 01-gancho#3 | 03-controlador#1 |
+
+"Mostrado" é o plano em que ele aparece como coisa na tela; "nomeado", o plano
+em que ganha o nome enquanto é mostrado; "primeiro uso", o primeiro plano em que
+a fala ou um rótulo conta com ele. O primeiro uso nunca vem antes dos outros
+dois. Termo do "Já sabe" do briefing não entra; palavra técnica do dia a dia
+de quem faz o vídeo ("chip", "KB") entra.
+
+### Formato do briefing
+
+```markdown
+# Briefing
+
+## Quem assiste
+<uma frase: quem é e de onde chega>
+Já sabe:
+- ...
+Não sabe:
+- ...
+
+## A ideia que fica
+<uma frase>
+
+## Objetivos
+1. Depois do vídeo, a pessoa consegue ...
+
+## Quiz
+1. <pergunta>
+   Resposta: <gabarito, em linhas indentadas abaixo da pergunta>
+
+## Ideias erradas
+- ...
+```
+
+O `revisao.py` lê esses títulos. `## Quiz` é opcional: sem ele, o espectador
+não recebe quiz. Cada pergunta cabe numa linha começando por `1.`, `2.` na
+margem; o indentado abaixo dela não sai para o revisor.
+
+## Peça
+
+Cada vídeo é uma peça em `~/Design/Projetos/<projeto>/<peça>/`. O que é comum a
+várias peças de um projeto (kit de cenas, `arte/`, contrato) fica em
+`~/Design/Projetos/<projeto>/kit/`. Estilos reaproveitáveis ficam em
+`~/Design/Estilos/<nome>/`; o que acabou vai para `~/Design/0-Archive/`.
+
+| Caminho | O quê |
+|---|---|
+| `video.md` | idioma, voz, estilo, música, duração alvo, fontes, pronúncia, etapa atual |
+| `briefing.md`, `direcao.md`, `roteiro.md` | pré-produção |
+| `audio/planos/<id>-<n>.wav`, `audio/<id>.wav`, `audio/duracoes.json` | narração por plano, por cena e as durações |
+| `storyboard/`, `animatic.mp4`, `rascunho.mp4` | esboços das etapas 5 e 6 |
+| `revisao/<etapa>-<k>/entrada/`, `revisao/<etapa>-<k>.md` | o que o revisor recebeu e o relatório com as decisões |
+| `cenas/manim/`, `cenas/effectcraft/` | cenas por motor |
+| `cenas/planos/<id>-<n>.mp4`, `cenas/planos/indice.json` | um clipe por plano (fala mais folga), formato comum a todos os motores |
+| `cenas/planos/<id>.eventos.json` | quando cada animação acontece, apoio para achar momentos no som |
+| `audio/som.scraft`, `audio/mix.wav`, `som.md` | sessão do SoundCraft, mixagem e o motivo de cada efeito |
+| `corte.fcproj`, `corte-1.mp4` | projeto do FilmCraft e primeiro corte |
+| `final.mp4`, `final.srt` | exportação e legenda à parte |
+| `miniatura.vectorcraft`, `miniatura.png` | miniatura 1280x720 |
+
+Scripts (em `~/.omp/agent/skills/video/`, todos com `<pasta> [cena...]`):
+`narrar.py`, `ouvir.py`, `margem.py`, `animatic.py`, `rascunho.py`,
+`planos.py`, `conferir.py`, `revisao.py`. O `planos.linha()` dá, para a
+edição, cada plano com seu clipe, sua fala e o início na linha do tempo.
+
+## Revisores
+
+Dois agentes sem contexto revisam: `video-espectador` (assiste como quem chega
+de paraquedas; aponta termo antes da hora, salto, imagem que não diz nada no
+mudo e, depois que há voz, fala que soa lida) e `video-critico` (julga quadros
+contra margem, foco, continuidade e cor). Eles nunca veem material, briefing
+inteiro, direção nem gabarito. Briefing, direção e amostra de narração vão só
+ao dono. Os dois rodam num modelo diferente do seu (o `model` do agente): um
+revisor igual ao autor tende a não enxergar o que o autor não enxergou.
+
+| Rodada | Agente | `etapa` |
+|---|---|---|
+| roteiro | `video-espectador` | `roteiro` |
+| storyboard | `video-critico` | `storyboard` |
+| animatic | `video-espectador` | `animatic` |
+| rascunho | `video-critico` e `video-espectador` | `rascunho` |
+| primeiro corte | `video-espectador` | `corte` (lê `corte-1.mp4` e `corte-1.json`) |
+
+1. `python3 ~/.omp/agent/skills/video/revisao.py <pasta> <etapa>` monta só o
+   que o revisor pode ver, guarda uma cópia em `revisao/<etapa>-<k>/entrada/`
+   e imprime o caminho de outra, fora da peça.
+2. `task` com `agent: video-espectador` ou `video-critico` e, na tarefa, só
+   `Pasta: <caminho impresso>`. Qualquer contexto a mais acaba com a cegueira.
+3. Escreva `revisao/<etapa>-<k>.md`: o relatório, a correção do quiz (se
+   houver) e os achados numa tabela `| Plano | Achado | Decisão |`, com
+   "corrigido" (onde) ou "rejeitado" (motivo completo; o `revisao.py` passa as
+   rejeições ao revisor da rodada seguinte, que só repete com fato novo).
+4. A rodada passa quando o crítico não aponta nada grave, ou quando o
+   espectador acerta o quiz (se houver) e não marca termo antes da hora.
+   Achado leve se corrige ou se rejeita com motivo. Não passou: corrija tudo e
+   rode de novo.
+5. Não há teto de rodadas; siga sem parar para pedir aval no meio. Rodada que
+   passa no item 4 e não traz nenhum achado novo (só repete rejeitado) fecha a
+   etapa. Quando uma rodada piora, a próxima parte da versão com menos achados.
+
+Os revisores julgam contra a direção escolhida e os padrões de qualidade, não
+contra uma fórmula: mapa de termos e quiz só contam na estrutura de aula.
+
+## Padrões de qualidade
+
+Valem em todo vídeo, qualquer que seja a direção:
+
+- texto e desenho dentro das margens seguras (`margem.py`), nunca encostando na
+  borda; `fonte pequena` zerado;
+- a narração nunca corta o último som de uma frase (`ouvir.py` até `voz ok`);
+- fala em grafia normal, nunca grafia fonética;
+- a imagem passa no teste do mudo quando a direção é de explicação;
+- mixagem em -16 LUFS integrado, pico até -1 dBTP (`ffmpeg -i final.mp4 -af
+  ebur128 -f null -`);
+- legenda em arquivo separado, nunca queimada;
+- música só se o dono pedir;
+- assets de terceiros só de `~/Design/Biblioteca/` (leia o `README.md` e o
+  `FONTES.md` do pacote); Humaaans leva "Humaaans, Pablo Stanley, CC BY 4.0"
+  na descrição; pacote novo só com licença conferida e linha no `FONTES.md`.
+
+Confira o resultado em vez de supor: quadro solto com `ffmpeg -ss <t> -i x.mp4
+-frames:v 1 q.png` e `read`; duração exportada contra a linha do tempo.
 
 ## Mudança pedida pelo dono
 
-Volte só à etapa onde a mudança mora e refaça só o que ela atinge. Mudou uma
-cena do roteiro: reescreva esse plano, deixe a direção e os outros como estão e
-mostre o roteiro de novo. Mudou a narração de uma cena no corte final: nova
-narração, nova renderização dessa cena e nova montagem; as outras cenas ficam.
+Volte só à etapa onde a mudança mora e refaça só o que ela atinge. Depois do OK
+do animatic, mudança de tempo (fala reescrita, plano novo, tirado ou trocado de
+ordem) volta ao storyboard e ao animatic das cenas atingidas, com a rodada do
+espectador. Movimento e acabamento ficam na etapa em que estão. Narração nova
+no corte: se a fala cabe no clipe (fala antiga mais a folga), só a edição muda;
+se não cabe, a cena volta ao `planos.py <pasta> <cena>`. Som, legenda, textura
+e corte se ajustam no SoundCraft e no FilmCraft, sem renderizar cena.
 
-## Voz
+O dono pode pedir para ver qualquer coisa no app a qualquer hora: salve e chame
+o `open_window` do app (skill `artcraft`).
 
-A voz é o OmniVoice, servido pelo audio.cpp no container Docker `audiocpp`.
-Antes de narrar, garanta que ele está no ar (o comando não faz nada se já
-estiver):
+## Produção com subagentes
 
-```bash
-docker compose -f ~/.config/audiocpp/compose.yaml up -d
-timeout 600 bash -c 'until curl -sf 127.0.0.1:8880/v1/models >/dev/null; do sleep 3; done'
-```
+Série ou vídeo longo pode dividir o render entre agentes `task`:
 
-As vozes `professora` e `teacher` são clones de uma gravação sintética fixa, então
-todas as cenas soam como a mesma pessoa. A primeira chamada carrega o modelo na
-GPU e demora mais.
-
-A primeira subida baixa a imagem e demora. Se o `tts` falhar com conexão
-recusada, suba o serviço e tente de novo com a mesma voz. Nunca troque de voz,
-modelo ou motor para contornar: a alternativa do omp só fala inglês. Se continuar
-falhando, pare e conte ao dono o erro.
-
-Grave `audio/duracoes.json` com a duração de cada narração (as cenas leem dele).
-
-### Pronúncia
-
-O OmniVoice lê "CPU", "DMA", "RAM" e "polling" escritos do jeito normal, e o
-Whisper devolveu a grafia original nesses termos. Escreva a fala com a grafia
-certa e só adapte o termo que sair errado.
-
-- Termo em inglês continua em inglês. Não traduza o termo que a área usa em
-  inglês.
-- Se um termo sair errado, escreva na fala do jeito que um brasileiro diz
-  (polling vira "pú-lin", sigla soletrada como "dê-éme-á"), só na fala: na tela
-  o termo aparece com a grafia certa.
-- Cada vídeo tem uma tabela "Pronúncia" em `video.md` (termo, como escrever na
-  fala, conferido sim ou não). Use a mesma grafia no vídeo todo.
-- Confira cada termo novo antes de narrar o vídeo inteiro: gere uma frase curta,
-  passe no Whisper local (se estiver no ar) e ouça. Whisper devolvendo a grafia
-  original ("No DMA") é sinal de acerto.
-  `curl -s "127.0.0.1:9000/asr?language=pt&output=txt" -F audio_file=@x.wav`
-
-## Manim
-
-Cenas importam a identidade por variável de ambiente: rode com
-`VIDEO_DIR=<pasta do vídeo> IDENTIDADE=<pasta da identidade>` e, na cena,
-`sys.path.insert(0, os.environ["IDENTIDADE"])` e `from tema import *`. Rascunho
-com `manim -ql`; final com `manim -r 1920,1080 --fps 30` (o `-qh` sai a 60 fps).
-Renderize com `--media_dir cenas/.manim --disable_caching` e copie o `.mp4` para
-`cenas/render/<id>.mp4`. Renderizar em paralelo corrompe o cache de texto
-(`ParseError: no element found`): rode de novo a cena que falhou, sozinha.
-
-Tempo da cena: o `tema.py` lê `$VIDEO_DIR/audio/duracoes.json`; a cena usa
-`self.t(fração)` para os `run_time` e termina com `self.fechar()`, que espera o
-que falta para a duração da narração.
-
-Margem de segurança: nada a menos de 10% da borda (no Manim, conteúdo dentro de
-`x` entre -6,4 e 6,4 e `y` entre -3,6 e 3,6). O `tema.py` da identidade define
-essa área (`AREA_SEGURA`, `encaixar(grupo)`); a cena encaixa o grupo nela em vez de posicionar perto da borda.
-Prefira mexer a câmera (`MovingCameraScene`) para aproximar um detalhe a
-encolher tudo para caber.
-
-Emoji não renderiza em `Text`: desenhe ícones com formas (polígono, arco).
-Texto sobre bloco de destaque usa a cor de texto clara, não a do fundo.
-
-Fórmula em Typst:
-
-```typst
-#set page(width: auto, height: auto, margin: 4pt, fill: none)
-#set text(fill: white, size: 28pt)
-$ "FB"(n) = h_"esq" - h_"dir" $
-```
-
-`typst compile --format svg f.typ f.svg`, depois `SVGMobject("f.svg")` na cena.
-Use a cor do texto que a identidade manda.
-
-## EffectCraft
-
-Sem janela, pelo MCP: `open_project {new: true}`, ou o `abertura.ecproj` da
-identidade; `comp.new {name, width: 1920, height: 1080, frameRate: 30,
-duration: <narração>}`; camadas; `save_project {path}` (o render exige projeto
-salvo); `renderQueue.add {comp, format: "h264", output:
-"cenas/render/<id>.mp4", timeSpan: "comp"}`; `renderQueue.render {wait: true}`.
-Apague o `<id>_RenderLog.txt` que ele deixa ao lado.
-
-## Montagem
-
-FilmCraft sem janela: `file.newProject {}`; `media_import {paths}` com as cenas
-e as narrações; `file.newSequence {name, width: 1920, height: 1080, fps: 30}`
-(sem `fps` ele cria 23,976); `timeline.place {items: [cenas em ordem], track:
-"V1", seconds: 0}`; cada narração com `timeline.place {item, track: "A1",
-seconds: <início da cena>}` (início = soma das durações reais dos `.mp4`
-anteriores); `file.exportMedia {path: "final.mp4", format: "h264",
-loudnessLufs: -16, wait: true}`; `file.saveAs {path: "montagem.fcproj"}`. Corte
-seco entre cenas, a não ser que a identidade diga outra coisa.
-
-## Música
-
-`~/Design/Videos/Musicas/` é a pasta de trilhas do dono. Com arquivos, pergunte
-se este vídeo tem música e qual (ou se você escolhe uma que combine). Vazia,
-pergunte se o vídeo terá música; se sim, o dono põe o arquivo lá. Com música,
-mixe no SoundCraft (trilha abaixada enquanto a voz fala), exporte um `.wav` e
-use-o no lugar das narrações na montagem.
-
-## Identidades
-
-`~/Design/Identidades/<nome>/` tem `identidade.md` (paleta, fontes, títulos,
-legendas, transições), `tema.py` (os mesmos valores para o Manim),
-`abertura.ecproj` e `miniatura.vectorcraft`.
-
-A identidade se decide com o dono antes de qualquer cena, nunca por conta
-própria. Primeiro um `ask`: usar uma existente (liste as da biblioteca) ou criar
-uma nova. Nova: proponha paleta, fonte e tom num `ask` (cores em hex, uma
-recomendação marcada) e espere o aval antes de escrever o `tema.py`. Depois
-mostre um quadro e uma miniatura de exemplo e só salve na biblioteca com
-aprovação.
-
-## Antes de cada ponto de aprovação
-
-Confira o resultado em vez de supor: extraia quadros das cenas
-(`ffmpeg -ss <t> -i cena.mp4 -frames:v 1 q.png`) e olhe com `read`; confira a
-duração das cenas contra as narrações e o volume com
-`ffmpeg -i final.mp4 -af volumedetect -f null -`. Texto cortado, elemento fora
-da tela ou a menos de 10% da borda, fala sem som ou estourada voltam para a
-etapa antes de mostrar. Faça também o teste do mudo: olhe os quadros sem ler a
-fala e veja se a ideia de cada cena aparece.
-
-O dono pode pedir para ver uma cena no app a qualquer hora: salve e chame o
-`open_window` do app (regras na skill `artcraft`).
+- a voz de todas as peças vem antes, conferida pelo `ouvir.py`;
+- no máximo quatro cenas por agente;
+- o contrato vai num arquivo do kit (`kit/contrato.md`) e a tarefa só aponta
+  para ele: área útil, `audio/duracoes.json` oficial, comando de render,
+  quantos renders ao mesmo tempo, arquivos editáveis, edição só pela
+  ferramenta `edit`;
+- ajudante que dois agentes precisam vai para o kit antes de começarem;
+- quem orquestra julga pelas folhas do `conferir.py` e confirma num quadro
+  direto do mp4 antes de mandar refazer.

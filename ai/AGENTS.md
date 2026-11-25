@@ -80,7 +80,7 @@ uma linha aqui.
 |---|---|---|
 | `~/Personal` | documentos, currículo, finanças, segurança, arquivo de `.torrent` | compartilhada |
 | `~/Udesc` | faculdade, padrão de disciplina em `~/Udesc/README.md` | compartilhada |
-| `~/Design` | projetos de design e vetores, uma pasta por projeto | compartilhada |
+| `~/Design` | `Projetos/<projeto>/` com uma pasta por peça (vídeo, áudio, arte e marca juntos), `Biblioteca/` de assets de terceiros, `Estilos/` de identidades próprias | compartilhada |
 | `~/Unimed` | trabalho: docs, envs, assets | compartilhada |
 | `~/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | compartilhada |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |

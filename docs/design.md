@@ -74,14 +74,15 @@ reopening the app fixes it, from the menu or by asking the agent again.
 ## Video
 
 The `video` skill turns a topic and the owner's material into a narrated 16:9
-`.mp4` and a thumbnail, in `~/Design/Videos/<slug>/`. Besides the apps above it
-uses these tools on the desktop:
+`.mp4` and a thumbnail, in `~/Design/Projetos/<projeto>/<peça>/`. Besides the
+apps above it uses these tools on the desktop:
 
 | Tool | From | Used for |
 | --- | --- | --- |
 | Manim | `uv tool install manim`, printed by `missing.sh design` | algorithm, diagram and formula scenes |
 | Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
-| OmniVoice | `design/audiocpp/compose.yaml`, audio.cpp on Vulkan in Docker at `127.0.0.1:8880` | narration through omp's `tts` |
+| OmniVoice | `design/audiocpp/compose.yaml`, audio.cpp on Vulkan in Docker at `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
+| Whisper | local ASR on `127.0.0.1:9000` | `ai/skills/video/ouvir.py` checks each narrated plano |
 
 The container restarts with Docker (`restart: unless-stopped`) and starts idle:
 the model loads on the first request and leaves the GPU after 10 idle minutes.
@@ -92,11 +93,34 @@ chain, so a stopped server makes `tts` fail instead of falling back to Phonon,
 which only speaks English. On the laptop there is no server and `tts` fails the
 same way.
 
+`narrar.py` posts each plano's fala to the OpenAI-style speech endpoint with
+`speed` 0.9 (at the default speed the last sound of a sentence gets cut) and
+never falls back to another engine. omp's `tts` tool is not used: it failed
+with "No available speech model matches the speech role".
+
 OmniVoice is CC-BY-NC: fine for study videos, not for monetized ones. Voices
 are clones of two references generated once by voice design and kept in
 `design/audiocpp/vozes/`, so every scene sounds like the same person:
 `professora` (pt-BR, the default) and `teacher` (English). `server.json` sets
-each preset's reference transcript and language; the skill passes `voice_id`.
+each preset's reference transcript and language; the skill reads the voice
+from the `- Voz:` line of the video's `video.md`.
 
-Identities live in `~/Design/Identidades/<nome>/` and music in
-`~/Design/Videos/Musicas/`.
+`~/Design` holds `Biblioteca/` (third-party assets, music included), `Estilos/<nome>/`
+(own visual identities) and `Projetos/<projeto>/` with one folder per deliverable.
+
+Every stage ends in a sketch the owner approves. The skill's `repertorio/`
+holds consolidated techniques the per-video direction picks from, and
+`oficio/` holds how to work in each app. Two blind reviewer agents,
+`video-espectador` and `video-critico` (`ai/.omp/agent/agents/`, linked to
+`~/.omp/agent/agents`), review the roteiro, storyboard, animatic, draft and
+first cut. The skill stages what each may see with
+`ai/skills/video/revisao.py`, narrates each plano with
+`ai/skills/video/narrar.py`, cuts the animatic with
+`ai/skills/video/animatic.py`, joins each rendered scene with its narration
+into the draft with `ai/skills/video/rascunho.py`, checks the 10% margin of
+frames with `ai/skills/video/margem.py` and renders one clip per plano with
+`ai/skills/video/planos.py`; sound and edit are done by hand in SoundCraft and
+FilmCraft. The scripts need only Python and ffmpeg (Manim for `planos.py`) and
+are tested by `tests/video_tools.py`. Storyboard stills come from the style's
+`Cena`, which saves one frame per plano and the scene's opening frame when
+Manim runs with `-s`.

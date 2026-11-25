@@ -16,7 +16,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -q
-          sudo apt-get install -yq jq lua5.4
+          sudo apt-get install -yq jq lua5.4 ffmpeg
           sudo curl -sSfL -o /usr/local/bin/dotter \
             https://github.com/SuperCuber/dotter/releases/download/v0.13.5/dotter-linux-x64-musl
           sudo chmod +x /usr/local/bin/dotter
@@ -29,6 +29,7 @@ jobs:
       - run: bash tests/media_torrents.sh
       - run: bash tests/design_deploy.sh
       - run: python3 tests/craft_mcp.py
+      - run: python3 tests/video_tools.py
       - run: bash tests/secrets.sh
       - run: bash tests/remote_serving.sh
       - run: bash tests/remote_control.sh

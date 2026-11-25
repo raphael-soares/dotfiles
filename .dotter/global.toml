@@ -33,6 +33,7 @@ default_target_type = "symbolic"
 "ai/.omp/agent/rules" = { type = "symbolic", target = "~/.omp/agent/rules", recurse = false }
 "ai/.omp/agent/prompts" = { type = "symbolic", target = "~/.omp/agent/prompts", recurse = false }
 "ai/.omp/agent/themes" = { type = "symbolic", target = "~/.omp/agent/themes", recurse = false }
+"ai/.omp/agent/agents" = { type = "symbolic", target = "~/.omp/agent/agents", recurse = false }
 "ai/.local/bin" = "~/.local/bin"
 
 [desktop.files]
