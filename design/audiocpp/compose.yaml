@@ -1,0 +1,14 @@
+name: audiocpp
+
+services:
+  audiocpp:
+    container_name: audiocpp
+    image: ghcr.io/0xshug0/audio.cpp:full-vulkan-20261122-337af0c
+    command: server --config /config/server.json --no-ui
+    restart: unless-stopped
+    devices: [/dev/dri]
+    security_opt: [label=disable]
+    ports: ["127.0.0.1:8880:8880"]
+    volumes:
+      - ${HOME}/.config/audiocpp:/config:ro
+      - ${HOME}/.cache/audiocpp/models:/models:ro

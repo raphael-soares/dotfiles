@@ -6,7 +6,7 @@ modelRoles:
   commit: anthropic/claude-haiku-5-5
   advisor: anthropic/claude-opus-5-5:medium
   default: anthropic/claude-opus-5-5
-  speech: kokoro/kokoro
+  speech: audiocpp/omnivoice
 retry:
   modelFallback: false
   fallbackChains:

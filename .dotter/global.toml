@@ -88,5 +88,5 @@ default_target_type = "symbolic"
 
 [design.files]
 "design/bin" = "~/.local/bin"
-"design/containers" = { type = "symbolic", target = "~/.config/containers/systemd/design", recurse = false }
 "design/omp/models.yml" = "~/.omp/agent/models.yml"
+"design/audiocpp" = { type = "symbolic", target = "~/.config/audiocpp", recurse = false }

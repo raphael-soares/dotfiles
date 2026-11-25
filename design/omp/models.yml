@@ -1,9 +1,9 @@
 providers:
-  kokoro:
+  audiocpp:
     baseUrl: http://127.0.0.1:8880/v1
     auth: none
     models:
-      - id: kokoro
-        name: Kokoro 82M
+      - id: omnivoice
+        name: OmniVoice
         api: openai-speech
         kind: tts

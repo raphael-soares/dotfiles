@@ -1,0 +1,31 @@
+{
+  "host": "0.0.0.0",
+  "port": 8880,
+  "backend": "vulkan",
+  "device": 0,
+  "threads": 4,
+  "lazy_load": true,
+  "idle_unload_ms": 600000,
+  "models": [
+    {
+      "id": "omnivoice",
+      "family": "omnivoice",
+      "path": "/models/OmniVoice-GGUF/omnivoice-f16.gguf",
+      "task": "tts",
+      "mode": "offline",
+      "voice_presets": {
+        "professora": {
+          "voice_ref": "/config/vozes/professora.wav",
+          "reference_text": "Imagine a CPU parada, esperando uma tecla que não chega. Ela pode perguntar ao teclado, mil vezes por segundo, se já tem alguma coisa nova.",
+          "options": { "language": "pt" }
+        },
+        "teacher": {
+          "voice_ref": "/config/vozes/teacher.wav",
+          "reference_text": "Imagine a processor sitting idle, waiting for a key that never comes. It can ask the keyboard a thousand times per second whether anything new has arrived. That is polling. It works, but it wastes time.",
+          "options": { "language": "en" }
+        }
+      },
+      "default_voice_preset": "professora"
+    }
+  ]
+}

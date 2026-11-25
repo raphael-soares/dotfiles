@@ -81,19 +81,29 @@ apps above it uses these tools on the desktop:
 | --- | --- | --- |
 | Manim | `uv tool install manim`, printed by `missing.sh design` | algorithm, diagram and formula scenes |
 | Typst | mise (`terminal/mise/config.toml`) | formulas, compiled to SVG and loaded into Manim |
-| OmniVoice | audio.cpp in the Docker container `audiocpp` (`~/.config/audiocpp/compose.yaml`), `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
+| OmniVoice | `design/audiocpp/compose.yaml`, audio.cpp on Vulkan in Docker at `127.0.0.1:8880` | narration through `ai/skills/video/narrar.py` |
 | Whisper | local ASR on `127.0.0.1:9000` | `ai/skills/video/ouvir.py` checks each narrated plano |
 
-OmniVoice does not start with the session: the skill runs `docker compose -f
-~/.config/audiocpp/compose.yaml up -d` and waits for `/v1/models` before
-narrating. `narrar.py` posts each plano's fala to the OpenAI-style speech
-endpoint with `speed` 0.9 (at the default speed the last sound of a sentence
-gets cut) and never falls back to another engine. omp's `tts` tool is not
-used: it failed with "No available speech model matches the speech role".
+The container restarts with Docker (`restart: unless-stopped`) and starts idle:
+the model loads on the first request and leaves the GPU after 10 idle minutes.
+Bring it up once with `docker compose -f ~/.config/audiocpp/compose.yaml up -d`.
+It needs the model in `~/.cache/audiocpp/models` (1.6 GB, printed by
+`missing.sh design`). omp's speech role points at it with an empty fallback
+chain, so a stopped server makes `tts` fail instead of falling back to Phonon,
+which only speaks English. On the laptop there is no server and `tts` fails the
+same way.
 
-Voices: `professora` for pt-BR, `teacher` for English, cloned from a fixed
-synthetic recording and read from the `- Voz:` line of the video's
-`video.md`.
+`narrar.py` posts each plano's fala to the OpenAI-style speech endpoint with
+`speed` 0.9 (at the default speed the last sound of a sentence gets cut) and
+never falls back to another engine. omp's `tts` tool is not used: it failed
+with "No available speech model matches the speech role".
+
+OmniVoice is CC-BY-NC: fine for study videos, not for monetized ones. Voices
+are clones of two references generated once by voice design and kept in
+`design/audiocpp/vozes/`, so every scene sounds like the same person:
+`professora` (pt-BR, the default) and `teacher` (English). `server.json` sets
+each preset's reference transcript and language; the skill reads the voice
+from the `- Voz:` line of the video's `video.md`.
 
 `~/Design` holds `Biblioteca/` (third-party assets, music included), `Estilos/<nome>/`
 (own visual identities) and `Projetos/<projeto>/` with one folder per deliverable.
