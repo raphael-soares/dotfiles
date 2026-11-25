@@ -187,11 +187,15 @@ parado se retoma.
    segundo no fim. **Rodada do crítico e do espectador no rascunho.** **Ponto 3:
    pare e mostre o rascunho.**
 10. **Passada final** em 1920x1080 a 30 fps, cada cena do tamanho da sua
-    narração; se a animação acaba antes, segure o último quadro. **Montagem** no
+    narração; se a animação acaba antes, segure o último quadro: `ffmpeg -i
+    <render> -vf "tpad=stop_mode=clone:stop_duration=2,format=yuv420p"
+    -frames:v <teto(duração do wav x 30)> -r 30 -c:v libx264 -crf 18
+    cenas/render/<id>.mp4`. **Montagem** no
     FilmCraft e exportação de `final.mp4`. **Miniatura** no VectorCraft,
     1280x720, no idioma do vídeo, a partir do modelo da identidade, exportada
-    para `miniatura.png`. **Ponto 4: corte final.** Informe duração, caminhos e
-    o que você conferiu.
+    para `miniatura.png`, que também passa no `margem.py` (o fundo do modelo
+    não pode ter contorno, que o `margem.py` lê como conteúdo na borda).
+    **Ponto 4: corte final.** Informe duração, caminhos e o que você conferiu.
 
 ### Formato do briefing
 
