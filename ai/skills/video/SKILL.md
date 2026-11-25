@@ -205,6 +205,9 @@ parado se retoma.
     subtítulo. Confira reduzida a 168 px de largura (a lista lateral): o
     essencial ainda se lê. Exporte para `miniatura.png`.
     **Ponto 4: corte final.** Informe duração, caminhos e o que você conferiu.
+    Aprovado, apague o que se regenera e não deve subir pelo sync:
+    `cenas/.manim`, os `__pycache__` (do vídeo e da identidade) e cópias
+    `*.conflictN` do syncfast que forem versões antigas suas.
 
 ### Formato do briefing
 
