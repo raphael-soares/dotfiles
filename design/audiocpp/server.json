@@ -16,7 +16,7 @@
       "voice_presets": {
         "professora": {
           "voice_ref": "/config/vozes/professora.wav",
-          "reference_text": "Imagine a CPU parada, esperando uma tecla que não chega. Ela pode perguntar ao teclado, mil vezes por segundo, se já tem alguma coisa nova: isso é o polling. Funciona, mas desperdiça tempo. A alternativa é deixar o dispositivo avisar quando estiver pronto, com uma interrupção. E quando o volume de dados é grande, entra o DMA, que copia direto para a memória sem ocupar o processador.",
+          "reference_text": "Imagine a CPU parada, esperando uma tecla que não chega. Ela pode perguntar ao teclado, mil vezes por segundo, se já tem alguma coisa nova.",
           "options": { "language": "pt" }
         },
         "teacher": {
