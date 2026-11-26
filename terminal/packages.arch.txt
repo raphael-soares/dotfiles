@@ -18,3 +18,5 @@ zenity
 sops
 age
 pinentry
+aws-cli-v2
+aws-session-manager-plugin
