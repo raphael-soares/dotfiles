@@ -37,8 +37,10 @@ fi
 {{#if dotter.packages.sshd}}
 # Both machines share the personal key, so each one lets the other in after a clean deploy.
 pub=$HOME/.ssh/keys/personal.pub
-if [[ -f $pub ]] && ! grep -qxF "$(<"$pub")" "$HOME/.ssh/authorized_keys" 2>/dev/null; then
-  (umask 077 && cat "$pub" >>"$HOME/.ssh/authorized_keys")
+ak=$HOME/.ssh/authorized_keys
+if [[ -f $pub ]] && ! grep -qxF "$(<"$pub")" "$ak" 2>/dev/null; then
+  (umask 077 && { [[ ! -s $ak || -z $(tail -c1 "$ak") ]] || echo; cat "$pub"; } >>"$ak") ||
+    echo "==> could not add personal.pub to authorized_keys" >&2
 fi
 {{/if}}
 
