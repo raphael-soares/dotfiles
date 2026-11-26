@@ -169,18 +169,17 @@ one does not unlock the other.
 
 ## Tests
 
-Each script in `tests/` runs on its own with `bash tests/<name>.sh`:
+Tests cover only what fails silently and costs a lot: the deploy, the secrets
+and the scripts that move or delete files on their own. The rest (configs,
+helpers, skill tooling) breaks where you see it and has no test. Each script
+runs on its own with `bash tests/<name>.sh`:
 
 - `machines.sh arch|fedora` and `adopt.sh` deploy into a fake HOME and check
   the links, the rendered hook and the `~/Documents` and `~/Pictures/Wallpaper`
   links each machine gets;
-- `missing.sh` runs every module's `manual.sh` against a stubbed machine;
-- `secrets.sh` covers `secrets check`, `secrets aws` and the stray-file scan;
-- `triage.sh` covers the daily triage; `media_deploy.sh`, `media_cleanup.sh`,
-  `media_torrents.sh`, `media_backup.sh`, `creative_deploy.sh`, `craft_mcp.py`
-  and `video_tools.py` cover the media and creative modules;
-- `remote_serving.sh`, `remote_control.sh`, `monitor_away.sh`, `screenshot.sh`
-  and `remote_state.lua` cover the Hyprland helpers.
+- `secrets.sh` covers `secrets check`, `ssh`, `init`, `aws` and the stray-file scan;
+- `media_deploy.sh` covers the media stack deploy and its per-service secrets;
+- `media_cleanup.sh` and `triage.sh` cover what deletes or moves files.
 
 Every PR and push to `main` runs `.github/workflows/checks.yml`: all of the
 above, shellcheck at warning level and gitleaks on the tree and the new

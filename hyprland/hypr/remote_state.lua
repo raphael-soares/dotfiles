@@ -1,6 +1,5 @@
 -- Decisions for the special workspace that shows the other machine, kept free
--- of `hl` so plain Lua can test them (tests/remote_state.lua). remote.lua
--- executes the actions.
+-- of `hl`. remote.lua executes the actions.
 local M = {}
 
 M.CLASS = "com.moonlight_stream.Moonlight"

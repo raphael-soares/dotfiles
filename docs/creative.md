@@ -126,8 +126,8 @@ first cut. The skill stages what each may see with
 into the draft with `ai/skills/video/rascunho.py`, checks the 10% margin of
 frames with `ai/skills/video/margem.py` and renders one clip per plano with
 `ai/skills/video/planos.py`; sound and edit are done by hand in SoundCraft and
-FilmCraft. The scripts need only Python and ffmpeg (Manim for `planos.py`) and
-are tested by `tests/video_tools.py`. Storyboard stills come from the style's
+FilmCraft. The scripts need only Python and ffmpeg (Manim for `planos.py`).
+Storyboard stills come from the style's
 `Cena`, which saves one frame per plano and the scene's opening frame when
 Manim runs with `-s`.
 
