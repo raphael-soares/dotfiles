@@ -82,12 +82,14 @@ sem mexer no syncfast.
 Dentro de `~/Documents`, cada área tem categorias de nome em inglês
 capitalizado (`Personal/Finance`), e dentro delas tudo é em inglês, minúsculo
 com hífen (`invoices-and-receipts/`). Uma coisa de um arquivo só fica solta
-na categoria; pasta só quando junta mais de um arquivo.
+na categoria; pasta só quando junta mais de um arquivo. Nome próprio e nome de
+sistema não se traduzem (`auditoria-centralizada-architecture/`,
+`junta-medica.md`).
 
 | Área | Conteúdo | Alcance |
 |---|---|---|
 | `~/Documents/Personal` | `Identity`, `Finance`, `Career` (currículo), `Media` (`torrents/`) | compartilhada |
-| `~/Documents/Udesc` | `University` (calendário, matrícula), `Courses` (uma pasta por disciplina); padrão em `Udesc/README.md` | compartilhada |
+| `~/Documents/Udesc` | `University` (calendário, matrícula), `Courses/<ano>-<semestre>/<SIGLA>-<nome-em-portugues>` (`2026-2/SOP-sistemas-operacionais`); padrão em `Udesc/README.md` | compartilhada |
 | `~/Documents/Unimed` | `Admin` (crachá), `Brand`, `Technical` (arquitetura, API, notas) | compartilhada |
 | `~/Documents/TEAjudo` | `Legal`, `Commercial`, `Brand`, `Engineering` (`environment-files/`, fora do sync) | compartilhada |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
