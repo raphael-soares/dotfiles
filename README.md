@@ -42,8 +42,8 @@ dotter picks `.dotter/<hostname>.toml`.
 Put it in its module folder and map it in `.dotter/global.toml`. A package or a
 step to run by hand goes in the module's `packages.<distro>.txt`, `flatpaks.txt` or
 `manual.sh`. A test in `tests/` only when a failure would be silent and costly
-(secrets, deploy, deleting or moving files). Secrets go encrypted in `secrets/`,
-never in a module.
+(secrets, deploy, deleting or moving files). Secrets go in the Bitwarden folder
+`Dotfiles` (`secrets put`), never in the repository.
 
 More in [`docs/`](docs/machines.md); where each folder of the home lives is in
 [`docs/home.md`](docs/home.md).

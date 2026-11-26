@@ -150,14 +150,16 @@ fetched again; the torrent keeps seeding and leaves through the rule above.
 `media-backup` copies the databases (`sqlite3 .backup`, safe while the
 services run), the rest of each service's settings and qBittorrent's config
 and torrent state into one archive. Those files hold API keys and logins, so
-the archive is encrypted with `age` to the recipient in `~/.dotfiles/.sops.yaml`
-before it leaves the PC: `media-YYYY-MM-DD.tar.zst.age` on Google Drive
+the archive is encrypted with `age` to the recipient in
+`~/.dotfiles/media/backup.recipient` before it leaves the PC:
+`media-YYYY-MM-DD.tar.zst.age` on Google Drive
 (`Raphael:Backups/media`, through syncfast's rclone config); archives older
-than 30 days are deleted. `media.env` is not in it: it comes back from
-`secrets/media.env` when `media-deploy` runs. To restore on a fresh install
-(`~/.config/sops/age/keys.txt` must be on the machine, `secrets` needs it too):
-deploy, stop the stack (`media-compose stop`), `rclone copy` the archive
-down, `age -d -i ~/.config/sops/age/keys.txt media-*.tar.zst.age | zstd -dc | tar -x`,
+than 30 days are deleted. `media.env` is not in it: it comes back from the vault
+item `env media` when `media-deploy` runs. The private key is the vault item
+`Dotfiles/age backup`, which `secrets pull` writes to `~/.config/age/backup.key`.
+To restore on a fresh install: deploy, `secrets pull`, stop the stack
+(`media-compose stop`), `rclone copy` the archive down,
+`age -d -i ~/.config/age/backup.key media-*.tar.zst.age | zstd -dc | tar -x`,
 put each `.db`/`.sqlite3` back under `~/.local/share/media/<service>`, untar
 `files.tar` there and `qbittorrent.tar` in `~`, then `media-compose up -d`.
 `media-restore-test` (weekly) downloads the newest archive, decrypts and

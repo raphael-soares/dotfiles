@@ -1,4 +1,4 @@
-# The access key lives encrypted in secrets/aws.env; `secrets aws` decrypts it on every call.
+# The access key is the vault item "Dotfiles/env aws"; `secrets aws` reads its local copy.
 [default]
 region = us-east-1
 credential_process = sh -c 'exec "$HOME/.local/bin/secrets" aws'

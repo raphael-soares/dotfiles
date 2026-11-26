@@ -3,7 +3,7 @@ set -euo pipefail
 
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 REMOTE=${MEDIA_BACKUP_REMOTE:-Raphael:Backups/media}
-AGE_KEY=${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}
+AGE_KEY=${MEDIA_BACKUP_KEY:-${XDG_CONFIG_HOME:-$HOME/.config}/age/backup.key}
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT

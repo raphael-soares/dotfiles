@@ -13,5 +13,4 @@ fastfetch
 rbw
 direnv
 zenity
-age
 pinentry

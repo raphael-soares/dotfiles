@@ -38,8 +38,8 @@ Superpowers, e as preferências do dono que vencem as skills dele ficam em
   criar, mover ou organizar pasta. Em resumo: o que precisa existir nos dois PCs
   ou no celular vai em `~/Drive/<Área>`; o resto fica na pasta XDG local.
 - Segredo nunca entra no Drive nem fica em texto puro na home: segredo do dono
-  vai no sops (`secrets/*.env`), login no cofre (skill `cofre`), segredo de
-  projeto no gerenciador do projeto (TEAjudo: SSM da AWS).
+  vai no cofre, pasta `Dotfiles` (`secrets put`), login no cofre (skill
+  `cofre`), segredo de projeto no gerenciador do projeto (TEAjudo: SSM da AWS).
 
 ## Escrita
 

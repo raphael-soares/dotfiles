@@ -16,18 +16,18 @@ apply() {
   return 1
 }
 
-# secrets/media.env (sops) is the source of truth; the plain file is what the compose stack reads.
+# The vault item "env media" is the source of truth; secrets pull keeps a local copy of it, and the
+# plain file is what the compose stack reads.
 ensure_env() {
   mkdir -p "$CONF"
-  local tmp line key enc=$REPO/secrets/media.env synced=0 generated=0
-  if [[ -f $enc ]] && command -v sops >/dev/null && (umask 077 && sops decrypt --output "$ENV_FILE.new" "$enc" 2>/dev/null); then
-    mv "$ENV_FILE.new" "$ENV_FILE"
+  local tmp line key src=${XDG_STATE_HOME:-$HOME/.local/state}/secrets/media.env synced=0 generated=0
+  if [[ -f $src ]]; then
+    install -m 600 "$src" "$ENV_FILE"
     synced=1
   elif [[ ! -f $ENV_FILE ]]; then
     install -m 600 "$REPO/media/media.env.example" "$ENV_FILE"
     log "created $ENV_FILE"
   fi
-  rm -f "$ENV_FILE.new"
   while IFS= read -r line; do
     [[ $line == *=* && $line != \#* ]] || continue
     grep -q "^${line%%=*}=" "$ENV_FILE" || printf '%s\n' "$line" >>"$ENV_FILE"
@@ -44,13 +44,11 @@ ensure_env() {
   done <"$ENV_FILE" >"$tmp"
   ((generated)) || { rm "$tmp"; return 0; }
   mv "$tmp" "$ENV_FILE"
-  if ((synced)) && (cd "$REPO" && sops encrypt --filename-override secrets/media.env --input-type dotenv \
-    --output-type dotenv "$ENV_FILE" >"$enc.new"); then
-    mv "$enc.new" "$enc"
-    log "secrets/media.env has new keys: commit it"
+  if ((synced)) && rbw unlocked >/dev/null 2>&1 && "$REPO/terminal/bin/secrets" put "env media" "$ENV_FILE" >/dev/null; then
+    install -m 600 "$ENV_FILE" "$src"
+    log "the vault item \"env media\" has the new keys"
   else
-    rm -f "$enc.new"
-    log "generated keys are only in $ENV_FILE: encrypt it into secrets/media.env with sops"
+    log "generated keys are only in $ENV_FILE: run secrets put \"env media\" $ENV_FILE"
   fi
 }
 

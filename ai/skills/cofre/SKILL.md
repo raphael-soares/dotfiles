@@ -3,50 +3,49 @@ name: cofre
 description: >
   Use para o cofre Bitwarden do dono: organizar itens e pastas, achar
   duplicados, guardar senha, token ou chave nova, usar um segredo num comando,
-  e os segredos dos dotfiles (sops, chaves SSH, secrets run/ssh/check). Não use para
-  segredo de outra pessoa ou de outro cofre.
+  e os segredos da máquina (pasta Dotfiles, chaves SSH, secrets pull/put/run/check).
+  Não use para segredo de outra pessoa ou de outro cofre.
 ---
 
 # Cofre
 
-O cofre é o Bitwarden do dono. Três ferramentas, nesta ordem de preferência:
+O cofre é o Bitwarden do dono, acessado só pelo `rbw`. Duas ferramentas:
 
 | Ferramenta | Para quê |
 |---|---|
 | `vault` | Organizar, guardar e usar segredo. A listagem nunca mostra senha, nota, campo nem TOTP |
-| `secrets` | Segredos do dono criptografados com sops em `secrets/` dos dotfiles: `*.env` e `ssh/` |
-| MCP `bitwarden` | Só o que o `vault` não faz (anexo, Send, item de cartão ou identidade) |
+| `secrets` | Segredos da máquina na pasta `Dotfiles` do cofre: `env *`, `ssh *`, `age backup` |
+
+O que nenhuma das duas faz (mudar item de pasta, renomear, anexo, Send,
+cartão) é no app do Bitwarden, pelo dono.
 
 ## Regra de ouro
 
 Valor de segredo nunca entra na conversa. Tudo o que você lê vai para o
 modelo, fora do PC do dono.
 
-- Não rode `bw get password`, `bw get item`, `bw list items`, `rbw get` nem
-  `cat` de arquivo de segredo com a saída visível. Não use as ferramentas
-  `get` e `list` do MCP em item de login ou nota segura: elas devolvem a senha.
-- Para ver o que existe, use `vault ls [busca]`, `vault folders` e
-  `vault dupes`.
+- Não rode `rbw get`, `cat` de arquivo de segredo nem
+  `secrets run -- env` com a saída visível.
+- Para ver o que existe: `vault ls [busca]`, `vault folders`, `vault dupes`
+  e `secrets ls`.
 - Se o dono colar um segredo no chat, avise que ele ficou no histórico e
   sugira trocar.
 
 ## Destravar
 
-- `vault` e o MCP abrem uma janela pedindo a senha mestra. Só o dono digita.
-  Com o cofre trancado, diga que a janela vai abrir e espere.
-- `rbw` (usado por `vault run`) fica destravado por 8 h. `secrets` não pede
-  senha: a chave age fica em `~/.config/sops/age/keys.txt`. Máquina nova sem a
-  chave: o dono roda `rbw unlock` e depois `secrets init`.
-- `bw` sem login na máquina: peça ao dono para rodar `bw login` uma vez.
+- `rbw` fica destravado por 8 h. Trancado, o comando abre uma janela pedindo
+  a senha mestra, que só o dono digita. Pelo shell do agente essa janela não
+  aparece: peça ao dono para rodar `rbw unlock` num terminal dele e espere.
+- O deploy nunca pede senha: com o `rbw` trancado ele mantém as cópias que já
+  estão no disco.
 
 ## Organizar
 
 1. `vault ls` e `vault dupes` para montar a proposta: pastas novas, nomes
    padronizados (o nome do serviço, como "GitHub"), duplicados, itens sem URL.
 2. Mostre a proposta em tabela e espere o dono aprovar.
-3. Aplique com `vault mv <id> <pasta>`, `vault rename <id> <nome>` e
-   `vault rm <id>`. `rm` manda para a lixeira (30 dias); mesmo assim, confirme
-   cada exclusão com o dono, citando nome e id.
+3. Mover de pasta e renomear: o dono faz no app. Excluir: `vault rm <id>`,
+   só depois de confirmar cada item com o dono, citando nome e id.
 
 Duplicado com o mesmo nome e host pode ter senhas diferentes. Você não as
 compara: pergunte ao dono qual fica.
@@ -57,23 +56,25 @@ compara: pergunte ao dono qual fica.
   A senha gerada não aparece; o dono pega no app.
 - Token que está numa variável ou arquivo: `--from-env VAR` ou
   `--from-file caminho`. Nunca cole o valor num comando.
-- Variável de ambiente do dono (token pessoal, VPN, mídia): o dono roda
-  `sops edit secrets/personal.env`. Para importar de um arquivo sem ver o
-  valor: `sops encrypt --filename-override secrets/personal.env --input-type dotenv --output-type dotenv arquivo`.
-- Segredo de projeto de código não entra no sops nem no cofre: mora no
-  gerenciador do próprio projeto (TEAjudo: SSM da AWS em `/teajudo/<env>/`,
-  lido com `aws ssm get-parameters-by-path --with-decryption`). O `.env` local
-  sai do `.env.example` e não guarda segredo.
-- Chave SSH nova:
-  `sops encrypt --input-type binary --output-type binary --filename-override secrets/ssh/keys/<nome> <arquivo> > secrets/ssh/keys/<nome>`,
-  e o host em `sops edit secrets/ssh/config.d/<área>.conf`. O deploy (ou
-  `secrets ssh`) coloca em `~/.ssh` com modo 600.
-- Nota segura de volta para arquivo, sem imprimir: `vault env <nota> <arquivo>`.
+- Segredo da máquina: `secrets put "<item>" <arquivo>` (ou pela entrada
+  padrão), sem imprimir. O nome diz o destino:
+  - `env personal`, `env aws`, `env media`: linhas `CHAVE=valor`. Para trocar um
+    valor, monte o arquivo inteiro sem exibir e faça `put` dele;
+  - `ssh key <nome>`: chave privada, vai para `~/.ssh/keys/<nome>`;
+  - `ssh config`, `ssh config.d/<área>.conf`: arquivos do `~/.ssh`;
+  - `age backup`: chave do backup da mídia.
+  Depois, `secrets pull` escreve no disco. Pode criar e trocar sem perguntar;
+  apagar, só com o dono.
+- Segredo de projeto de código não entra no cofre: mora no gerenciador do
+  próprio projeto (TEAjudo: SSM da AWS em `/teajudo/<env>/`, lido com
+  `aws ssm get-parameters-by-path --with-decryption`). O `.env` local sai do
+  `.env.example` e não guarda segredo.
+- Notas de um item de volta para arquivo, sem imprimir: `vault env <item> <arquivo>`.
 
 ## Usar com permissão
 
-Antes de cada uso, pergunte ao dono com `ask`: qual item, para qual comando.
-Aprovado, injete direto no processo:
+Antes de cada uso de item fora da pasta `Dotfiles`, pergunte ao dono com
+`ask`: qual item, para qual comando. Aprovado, injete direto no processo:
 
 ```bash
 vault run "GitHub token" GH_TOKEN -- gh repo list
@@ -83,18 +84,16 @@ vault run "Servidor X" --field username DB_USER -- ...
 A saída do comando pode ecoar o segredo (`env`, `--verbose`, `set -x`):
 não rode comando assim com segredo injetado.
 
-## Segredos de ambiente
+## Segredos da máquina
 
-- `secrets run -- comando`: roda o comando com `secrets/personal.env` como
-  variáveis. Não rode `sops decrypt` nem `secrets run -- env` com a saída
-  visível.
-- `secrets aws`: entrega a chave de `secrets/aws.env` ao `credential_process`
-  do perfil default da AWS. Não rode no terminal com a saída visível; para
-  conferir, `aws sts get-caller-identity`.
-- `secrets ssh`: decifra `secrets/ssh/` para `~/.ssh`. O deploy roda.
-- `secrets check`: acusa chave age ausente, arquivo legível por outros,
+- `secrets pull`: sincroniza a pasta `Dotfiles` e escreve cada item no lugar
+  (modo 600, só o que mudou). Rode depois que o dono editar no app.
+- `secrets run -- comando`: roda o comando com `env personal` como variáveis.
+- `secrets aws`: entrega `env aws` ao `credential_process` do perfil default
+  da AWS. Não rode com a saída visível; para conferir,
+  `aws sts get-caller-identity`.
+- `secrets check`: acusa cópia local ausente, arquivo legível por outros,
   credencial em texto puro largada na home (`~/.netrc`, credentials da AWS,
-  `.env` com chave, token ou senha fora de `~/Code`), arquivo do `~/.ssh` que
-  difere de `secrets/ssh/` e chave em `~/.ssh/keys` que não está lá. O deploy
-  e a conferência diária da mídia (`media-drift`) rodam. Achou algo: leve para
-  o sops ou o cofre e apague o arquivo.
+  `.env` com chave, token ou senha fora de `~/Code`) e chave em `~/.ssh/keys`
+  sem item no cofre. O deploy e a conferência diária da mídia rodam. Achou
+  algo: `secrets put` e apague o arquivo.

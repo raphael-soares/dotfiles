@@ -4,11 +4,12 @@ set -euo pipefail
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 REMOTE=${MEDIA_BACKUP_REMOTE:-Raphael:Backups/media}
 KEEP_DAYS=${MEDIA_BACKUP_KEEP_DAYS:-30}
-SOPS_CONFIG=${MEDIA_SOPS_CONFIG:-$HOME/.dotfiles/.sops.yaml}
+RECIPIENT_FILE=${MEDIA_BACKUP_RECIPIENT:-$HOME/.dotfiles/media/backup.recipient}
 
-# The archive holds API keys and logins, so it only leaves this PC encrypted to the dotfiles' age key.
-recipient=$(sed -n 's/^ *age: *\(age1[0-9a-z]*\).*/\1/p' "$SOPS_CONFIG" 2>/dev/null | head -1) || true
-[[ -n $recipient ]] || { echo "media-backup: no age recipient in $SOPS_CONFIG" >&2; exit 1; }
+# The archive holds API keys and logins, so it only leaves this PC encrypted to the backup age key
+# (vault item "age backup"; its public half is versioned in media/backup.recipient).
+recipient=$(grep -m1 '^age1' "$RECIPIENT_FILE" 2>/dev/null) || true
+[[ -n $recipient ]] || { echo "media-backup: no age recipient in $RECIPIENT_FILE" >&2; exit 1; }
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT

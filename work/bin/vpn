@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Fortinet SSL VPN through NetworkManager (networkmanager-fortisslvpn plugin).
-# Everything company-specific comes from secrets/personal.env (sops) through `secrets run`: VPN_NAME,
+# Everything company-specific comes from the vault item "env personal" through `secrets run`: VPN_NAME,
 # VPN_HOST, VPN_PORT, VPN_USER, VPN_PASSWORD and the optional VPN_DNS and VPN_DNS_SEARCH (internal
 # DNS and "~" suffixes for split DNS).
 # Usage: vpn [up|down|status]
 
 set -euo pipefail
 
-if [[ -z ${VPN_HOST:-} && -z ${VPN_SECRETS_LOADED:-} && -f ${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt} ]]; then
+if [[ -z ${VPN_HOST:-} && -z ${VPN_SECRETS_LOADED:-} && -f ${XDG_STATE_HOME:-$HOME/.local/state}/secrets/personal.env ]]; then
     VPN_SECRETS_LOADED=1 exec secrets run -- "$0" "$@"
 fi
 
@@ -24,7 +24,7 @@ require_env() {
         [[ -z "${!var:-}" ]] && missing+=("$var")
     done
     if [[ ${#missing[@]} -gt 0 ]]; then
-        echo "Missing from secrets/personal.env (sops edit): ${missing[*]}" >&2
+        echo "Missing from the vault item \"Dotfiles/env personal\" (edit in the app, then secrets pull): ${missing[*]}" >&2
         exit 1
     fi
 }

@@ -32,7 +32,7 @@ nothing. Each module lists its own steps in `<module>/manual.sh`:
   kernel argument and the tuned profile, each as the `sudo` command to run;
 - what the repo does not package: Spotifast and ZapFast rpms, Stremio Enhanced
   (`media/install/stremio-enhanced`, fedora only), Arr Pick, herdr-setup, the syncfast
-  Nautilus extension, the omp plugin and the Bitwarden MCP for Claude Code.
+  Nautilus extension and the omp plugin.
 
 Run the printed commands, then `missing.sh` again until it prints nothing.
 A step for a distro the machine does not run is never printed. Packages or apps
@@ -99,41 +99,43 @@ cable does:
 
 ## Secrets
 
-The owner's secrets live encrypted with sops and age in `secrets/`:
-`personal.env` for the shell and the VPN, `media.env` for the media stack,
-`aws.env` for the AWS CLI and SDKs, and `secrets/ssh/` for the SSH config and
-private keys. In the `.env` files only values are encrypted and the key names stay
-readable; each file under `secrets/ssh/` is encrypted whole, because the config
-names servers and the repository is public. The age key is
-`~/.config/sops/age/keys.txt` (mode 600), the same on both machines, backed up in
-the vault item `age (dotfiles)`. It is the only thing a new machine needs: the
-Bitwarden master password unlocks it, and it unlocks the rest.
+The owner's machine secrets live in the Bitwarden folder `Dotfiles`, read and
+written through `rbw` only. The item name says where it lands: `env personal`
+(shell and VPN), `env aws`, `env media`, `ssh config`, `ssh config.d/<name>.conf`,
+`ssh key <name>` and `age backup` (the media backup key, written only where the
+media module runs). Anything else in the folder is left alone. The repository
+holds no secret, not even encrypted. The Bitwarden master password is the only
+thing a new machine needs.
 
-A new machine: `rbw unlock`, then `secrets init` (writes the age key from the
-vault without printing it), then `dotter deploy`. `missing.sh terminal` prints
-the first two while the key is absent.
+A new machine: `rbw unlock`, then `dotter deploy`. `missing.sh terminal` prints
+`rbw unlock && secrets pull` while the local copies are absent.
 
-- `sops edit secrets/personal.env` adds or changes a value, and
-  `sops edit secrets/ssh/config.d/unimed.conf` a host;
-- a new SSH key goes in with
-  `sops encrypt --input-type binary --output-type binary --filename-override secrets/ssh/keys/<name> <file> > secrets/ssh/keys/<name>`;
-- `secrets ssh`, run by the deploy, decrypts `secrets/ssh/` into the same paths
-  under `~/.ssh` (mode 600), rewrites only what changed and derives each key's
-  `.pub`. `known_hosts`, `authorized_keys` and other local files are left alone;
-  the `sshd` module adds `personal.pub` to `authorized_keys`, so both machines
-  reach each other;
-- `secrets run -- <command>` runs the command with `personal.env` as variables
-  (`vpn` uses it; the bashrc never decrypts at shell start);
-- `media-deploy` decrypts `media.env` to `~/.config/media/media.env` (mode 600)
-  and, when it generates a key, encrypts it back for a commit;
-- `secrets aws` prints `aws.env` as the JSON of `credential_process`, which
-  `terminal/aws/config` uses for the default profile; the key never sits in plain
-  text, never expires and works from services and scheduled jobs;
-- `secrets check` reports a missing age key, a secret file others can read, a
+- edit an item in the Bitwarden app, then run `secrets pull`;
+- `secrets put "<item>" <file>` (or stdin) creates or replaces an item without
+  printing it; that is how agents and scripts store a new key or token;
+- `secrets pull` syncs the folder and writes each item to its place, mode 600,
+  only when it changed: `~/.ssh` (deriving each key's `.pub`) and local copies of
+  the `env` items in `~/.local/state/secrets/`. The deploy runs
+  `secrets pull --if-unlocked`, so it never asks for the password: with `rbw`
+  locked it keeps what is already on disk. `known_hosts`, `authorized_keys` and
+  other local files are left alone; the `sshd` module adds `personal.pub` to
+  `authorized_keys`, so both machines reach each other;
+- `secrets run -- <command>` runs the command with `env personal` as variables
+  (`vpn` uses it; the bashrc never loads it at shell start);
+- `media-deploy` writes `~/.config/media/media.env` (mode 600) from `env media`
+  and, when it generates a key, stores it back with `secrets put`;
+- `secrets aws` prints `env aws` as the JSON of `credential_process`, which
+  `terminal/aws/config` uses for the default profile; it works from services and
+  scheduled jobs because it reads the local copy;
+- `secrets check` reports missing local copies, a secret file others can read, a
   plain-text credential left in the home (`~/.netrc`, an AWS credentials file, a
-  `.env` with a key, token or password outside `~/Code`), a `~/.ssh` file that
-  differs from `secrets/ssh/` and a key in `~/.ssh/keys` that is not there; the
-  deploy and `media-drift` run it.
+  `.env` with a key, token or password outside `~/Code`) and, with `rbw`
+  unlocked, a key in `~/.ssh/keys` with no vault item; the deploy and
+  `media-drift` run it.
+
+The copies on disk (`~/.ssh`, the state folder, `media.env`) are plain on
+purpose: the media stack and SSH between the machines run with nobody logged in.
+Design: `docs/superpowers/specs/2026-11-26-segredos-no-cofre-design.md`.
 
 Code projects keep their secrets in the project's own store (TEAjudo: AWS SSM under
 `/teajudo/<env>/`) and a gitignored local `.env` made from `.env.example`, holding no
@@ -152,20 +154,14 @@ key through `credential_process`. The shells source the file once per login
 a service or a program started from Hyprland sees the same paths as a terminal.
 A change there reaches the graphical session and the user services after a new login.
 
-`vault` (also `terminal/bin`) is the vault for people and agents: `ls`,
-`folders` and `dupes` print metadata only, `mv`/`rename`/`rm` organize, `add`
-stores a generated or file/variable secret without echoing it, and
-`vault run <item> VAR -- cmd` hands one secret to one command. The `cofre` skill
-holds the agent rules. The official Bitwarden MCP server is registered for omp
-(`ai/.omp/agent/mcp.json`) and Claude Code (post-deploy) for what `vault` lacks.
-
-Both Bitwarden clients stay on purpose. `rbw` is a native package, so it works on
-a fresh machine before mise and npm exist: the age-key restore and
-`vault run` use it, and its agent reads one item with no session variable. `bw`
-(the Node CLI, installed by mise) is the only one that creates, moves and
-organizes items and generates passwords, which `vault add`, `mv`, `rename`, `rm`
-and `unlock` need. Each has its own login and unlocked session, so unlocking
-one does not unlock the other.
+`vault` (also `terminal/bin`) is the vault for people and agents, on `rbw`:
+`ls`, `folders` and `dupes` print metadata only, `rm` deletes, `add` stores a
+generated or file/variable secret without echoing it, `note` and `env` move a
+file in and out of an item's notes, and `vault run <item> VAR -- cmd` hands one
+secret to one command. The `cofre` skill holds the agent rules. `rbw` is the
+only Bitwarden client: one login, unlocked for 8 hours. Moving an item to
+another folder and renaming it are done in the Bitwarden app, since `rbw`
+cannot.
 
 ## Tests
 

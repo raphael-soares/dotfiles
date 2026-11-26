@@ -7,9 +7,10 @@ trap 'rm -rf "$T"' EXIT
 export HOME=$T/home
 mkdir -p "$HOME"
 export MEDIA_LOG=$T/media.log
+unset XDG_STATE_HOME
 mkdir -p "$T/stub"
-printf '#!/bin/sh\nexit 1\n' >"$T/stub/sops"
-chmod +x "$T/stub/sops"
+printf '#!/bin/sh\nexit 1\n' >"$T/stub/rbw"
+chmod +x "$T/stub/rbw"
 export PATH=$T/stub:$PATH
 
 MEDIA_DEPLOY_LIB=1 source "$REPO/media/bin/media-deploy" "$REPO"
@@ -37,6 +38,17 @@ grep -qx 'RADARR__AUTH__APIKEY=abc' "$env_file" || fail "pre-filled key was over
 sed -i '/^QBITTORRENT_WEBUI_PASSWORD=/d' "$env_file"
 ensure_env
 grep -Eq '^QBITTORRENT_WEBUI_PASSWORD=[0-9a-f]{32}$' "$env_file" || fail "key added to the example did not reach an existing env file"
+
+vault_copy=$HOME/.local/state/secrets/media.env
+mkdir -p "${vault_copy%/*}"
+sed 's/^RADARR__AUTH__APIKEY=.*/RADARR__AUTH__APIKEY=fromvault/' "$env_file" >"$vault_copy"
+ensure_env
+grep -qx 'RADARR__AUTH__APIKEY=fromvault' "$env_file" || fail "the local copy of the vault item did not win"
+sed -i '/^SONARR__AUTH__APIKEY=/d' "$vault_copy"
+ensure_env
+grep -Eq '^SONARR__AUTH__APIKEY=[0-9a-f]{32}$' "$env_file" || fail "a key missing from the vault copy was not generated"
+grep -q 'run secrets put "env media"' "$MEDIA_LOG" || fail "a generated key with a locked vault does not say how to store it"
+rm "$vault_copy"
 
 ensure_dirs
 while IFS= read -r src; do

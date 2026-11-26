@@ -30,7 +30,7 @@ ghostty_template=$HOME/.config/ghostty/config.ghostty
 if [[ -f $ghostty_template ]] && ! grep -qvE '^[[:space:]]*(#|$)' "$ghostty_template"; then
   rm -f "$ghostty_template"
 fi
-"$REPO/terminal/bin/secrets" ssh || echo "==> secrets ssh failed, see above" >&2
+"$REPO/terminal/bin/secrets" pull --if-unlocked || echo "==> secrets pull failed, see above" >&2
 "$REPO/terminal/bin/secrets" check || true
 {{/if}}
 
