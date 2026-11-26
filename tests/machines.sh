@@ -25,7 +25,7 @@ real_dir() { [[ -d $H/$1 && ! -L $H/$1 ]] || fail "$1 is not a real directory"; 
 exists() { [[ -e $H/$1 || -L $H/$1 ]] || fail "$1 does not exist"; }
 absent() { [[ ! -e $H/$1 && ! -L $H/$1 ]] || fail "$1 exists and should not"; }
 
-for f in .bashrc .bash_profile .profile .config/environment.d/10-session.conf .config/aws/config \
+for f in .bashrc .bash_profile .profile .config/environment.d/99-session.conf .config/aws/config \
   .config/git/config .config/git/ignore .config/starship.toml \
   .config/fzf/fzf.sh .config/mise/config.toml .config/nvim .config/ghostty/base \
   .config/fastfetch/config.jsonc \
@@ -56,7 +56,7 @@ laptop_only=(.local/bin/vpn .local/bin/omp-agendado-work .omp/overlays
   .config/shell/rc.d/work.sh)
 desktop_only=(.config/media/compose.yaml .config/media/configarr .local/bin/media-deploy .local/bin/media-compose
   .config/autostart/org.qbittorrent.qBittorrent.desktop .config/systemd/user/configarr.timer .config/systemd/user/configarr.service
-  .local/bin/craft-mcp .local/bin/creative-deploy .config/containers/systemd/design .omp/agent/models.yml)
+  .local/bin/craft-mcp .local/bin/creative-deploy .config/audiocpp .omp/agent/models.yml)
 
 hook=$T/cache/.dotter/post_deploy.sh
 if [[ -f $hook ]]; then
@@ -92,7 +92,7 @@ done
 printf '#!/bin/sh\necho "No such schema" >&2\nexit 1\n' >"$T/bare/gsettings"
 chmod +x "$T/bare/gsettings"
 rc=0
-out=$(env -i HOME="$H" PATH="$T/bare" bash "$hook" 2>&1) || rc=$?
+out=$("$(type -P env)" -i HOME="$H" PATH="$T/bare" "$(type -P bash)" "$hook" 2>&1) || rc=$?
 [[ $rc == 0 ]] || fail "$machine deploy on a bare machine exited $rc: $out"
 grep -q "Still to do by hand:" <<<"$out" || fail "$machine deploy on a bare machine printed no manual steps: $out"
 for f in "${hypr_shared[@]}"; do exists "$f"; done
@@ -101,6 +101,20 @@ repo_link .config/hypr
 [[ -f $H/.config/hypr/remote.lua ]] || fail ".config/hypr does not reach the shared remote.lua"
 [[ ! -e $H/.config/hypr-machine/remote.lua ]] || fail "hypr-machine has its own remote.lua, which shadows the shared one"
 links_to() { [[ $(readlink -f "$H/$1") == "$REPO/$2" ]] || fail "$1 does not point to $2"; }
+drive_link() {
+  [[ -L $H/$1 && $(readlink "$H/$1") == "$H/$2" ]] || fail "$1 is not a link to $2"
+}
+drive_link Documents Drive/Documents
+drive_link Pictures/Wallpaper Drive/Personal/Wallpaper
+[[ -L $H/Pictures/Wallpaper/forest-4.jpg && -f $H/Drive/Personal/Wallpaper/forest-4.jpg ]] ||
+  fail "forest-4.jpg is not linked inside the Drive wallpaper folder"
+[[ ! -e $H/.config/go/env ]] || fail "go/env is back; GOPATH lives in session.conf"
+for v in GOPATH PATH EDITOR BROWSER; do
+  grep -q "^$v=" "$H/.config/environment.d/99-session.conf" || fail "session.conf lacks $v"
+done
+! grep -q AWS_SHARED_CREDENTIALS_FILE "$H/.config/environment.d/99-session.conf" ||
+  fail "session.conf forces a plain credentials file; the AWS CLI uses credential_process"
+repo_link .local/bin/zen
 links_to .config/noctalia/base.toml hyprland/noctalia/base.toml
 ! grep -qx com.stremio.Stremio "$REPO"/*/flatpaks.txt || fail "the Flathub Stremio is still listed"
 ! git -C "$REPO" ls-files --error-unmatch hyprland/hypr/hyprtoolkit.conf >/dev/null 2>&1 ||

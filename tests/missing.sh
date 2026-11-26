@@ -5,6 +5,9 @@ REPO=$(cd "$(dirname "$0")/.." && pwd -P)
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 
+# The stubs above must win over the host's id, getent and the like, so missing.sh runs
+# under a real bash that resolves them through PATH.
+BASH_REAL=$(type -P bash)
 failures=0
 fail() { echo "FAILED: $*"; failures=$((failures + 1)); }
 
@@ -82,7 +85,7 @@ run() {
   local distro=$1
   shift
   PATH=$T/bin:$T/tools HOME=$T/home DOTFILES_DISTRO=$distro DOTFILES_ROOT=$T/root \
-    XDG_STATE_HOME=$T/state bash "$R/.dotter/missing.sh" "$@"
+    XDG_STATE_HOME=$T/state "$BASH_REAL" "$R/.dotter/missing.sh" "$@"
 }
 expect() {
   local name=$1 want=$2 got=$3
@@ -186,7 +189,7 @@ real() {
   shift
   PATH=$T/bin:$T/tools HOME=$T/home DOTFILES_DISTRO=$distro DOTFILES_ROOT=$T/root \
     DOTFILES_CMDLINE=$T/cmdline XDG_STATE_HOME=$T/state DOTFILES_REPO=$REPO \
-    bash "$REPO/.dotter/missing.sh" "$@"
+    "$BASH_REAL" "$REPO/.dotter/missing.sh" "$@"
 }
 mkdir -p "$T/home"
 echo 'BOOT_IMAGE=/vmlinuz root=UUID=x ro' >"$T/cmdline"
@@ -196,11 +199,16 @@ has "home without the EDID argument" \
 echo 'BOOT_IMAGE=/vmlinuz drm.edid_firmware=DP-1:edid/lg-ultragear.bin video=DP-1:e' >"$T/cmdline"
 lacks "home with the EDID argument" "grubby" "$(real fedora home)"
 
-has "laptop greetd config" \
+has "arch greetd config" \
   "sed 's/@GREETER@/greeter/' $REPO/hyprland/greetd/config.toml | sudo install -Dm644 /dev/stdin /etc/greetd/config.toml" \
-  "$(real arch laptop)"
-grep -q "s/@GREETER@/greetd/" <<<"$(real fedora home)" || fail "home greetd config is not rendered for greetd"
-grep -q "s/@GREETER@/greetd/" <<<"$(real fedora laptop)" || fail "the greetd user does not follow the distro"
+  "$(real arch hyprland)"
+grep -q "s/@GREETER@/greetd/" <<<"$(real fedora hyprland)" || fail "the greetd user does not follow the distro"
+has "greetd is enabled by the shared module" "sudo systemctl enable --force greetd.service" "$(real arch hyprland)"
+for m in "arch laptop" "fedora home"; do
+  lacks "$m does not repeat the greetd config" "greetd/config.toml" "$(real $m)"
+  lacks "$m does not repeat the greetd enable" "enable --force greetd" "$(real $m)"
+  has "$m has its own PAM file" "sudo install -Dm644 $REPO/${m#* }/greetd/pam /etc/pam.d/greetd" "$(real $m)"
+done
 [[ $(real fedora home | grep -cx "sudo dracut -f --regenerate-all") == 1 ]] ||
   fail "home does not regenerate the initramfs exactly once"
 

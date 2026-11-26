@@ -9,6 +9,8 @@ REPO={{dotter.current_dir}}
 STATE=${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles
 mkdir -p "$STATE"
 have() { command -v "$1" >/dev/null; }
+# An optional step that fails must not skip the steps after it.
+try() { "$@" || echo "==> failed: $*" >&2; }
 # On a fresh machine a step below can fail for a package not installed yet; the list of
 # what to install is printed anyway.
 trap '"$REPO/.dotter/missing.sh" {{#each dotter.packages}}{{#if this}}{{@key}} {{/if}}{{/each}}|| true' EXIT
@@ -21,6 +23,12 @@ ghostty_config=$HOME/.config/ghostty/config
 if [[ -L $ghostty_config || ! -e $ghostty_config ]]; then
   rm -f "$ghostty_config"
   printf 'config-file = base\nconfig-file = ?machine.conf\n' >"$ghostty_config"
+fi
+# Ghostty also reads config.ghostty and writes a template with no setting in it there
+# when it starts before ~/.config/ghostty/config exists; it only repeats the comments.
+ghostty_template=$HOME/.config/ghostty/config.ghostty
+if [[ -f $ghostty_template ]] && ! grep -qvE '^[[:space:]]*(#|$)' "$ghostty_template"; then
+  rm -f "$ghostty_template"
 fi
 "$REPO/terminal/bin/secrets" check || true
 {{/if}}
@@ -48,8 +56,8 @@ done
 sunshine_apps=${sunshine_conf%/*}/apps.json
 if have jq && jq -e 'any(.apps[] | select(.name == "Desktop") | ."prep-cmd"[]?; .do | test("kscreen-doctor"))' \
   "$sunshine_apps" >/dev/null 2>&1; then
-  jq '(.apps[] | select(.name == "Desktop")) |= del(."prep-cmd")' "$sunshine_apps" >"$sunshine_apps.new"
-  mv "$sunshine_apps.new" "$sunshine_apps"
+  jq '(.apps[] | select(.name == "Desktop")) |= del(."prep-cmd")' "$sunshine_apps" >"$sunshine_apps.new" &&
+    mv "$sunshine_apps.new" "$sunshine_apps" || echo "==> failed: Sunshine apps.json" >&2
 fi
 for unit in app-dev.lizardbyte.app.Sunshine.service sunshine.service; do
   systemctl --user disable --now "$unit" 2>/dev/null || true
@@ -75,15 +83,15 @@ fi
 # Fedora's hyprland pulls in uwsm, whose %post starts its failed-unit notifier in every
 # graphical session, Plasma included. Neither session here runs under uwsm.
 if systemctl --user cat fumon.service >/dev/null 2>&1; then
-  systemctl --user mask --now fumon.service
+  try systemctl --user mask --now fumon.service
 fi
 # libadwaita apps read the font from dconf, not from settings.ini. The icon theme comes
 # from the Noctalia qt6ct template hook (noctalia/icon-theme.sh).
 if have gsettings && gsettings writable org.gnome.desktop.interface font-name >/dev/null 2>&1; then
-  gsettings set org.gnome.desktop.interface font-name 'Sans 10'
-  gsettings set org.gnome.desktop.interface monospace-font-name 'Monospace 10'
-  gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita'
-  gsettings set org.gnome.desktop.wm.preferences button-layout ':'
+  try gsettings set org.gnome.desktop.interface font-name 'Sans 10'
+  try gsettings set org.gnome.desktop.interface monospace-font-name 'Monospace 10'
+  try gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita'
+  try gsettings set org.gnome.desktop.wm.preferences button-layout ':'
 fi
 systemctl --user enable --now gcr-ssh-agent.socket 2>/dev/null || true
 # The "default" theme is what XCursor uses when the app asks for none.
@@ -91,23 +99,24 @@ mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/icons/default"
 printf '[Icon Theme]\nInherits=Adwaita\n' >"${XDG_DATA_HOME:-$HOME/.local/share}/icons/default/index.theme"
 # Flatpak does not read the host settings.ini for the cursor; icons come from the portal.
 if have flatpak; then
-  flatpak override --user --unset-env=ICON_THEME --env=XCURSOR_THEME=Adwaita
+  try flatpak override --user --unset-env=ICON_THEME --env=XCURSOR_THEME=Adwaita
   # ~/Documents is a symlink into ~/Drive; xdg-documents alone does not reach the target.
-  flatpak override --user --filesystem="$HOME/Drive"
+  try flatpak override --user --filesystem="$HOME/Drive"
 fi
 if have xdg-mime; then
-  xdg-mime default org.gnome.Nautilus.desktop inode/directory
-  xdg-mime default org.gnome.Loupe.desktop image/png image/jpeg image/gif image/webp \
+  try xdg-mime default org.gnome.Nautilus.desktop inode/directory
+  try xdg-mime default org.gnome.Loupe.desktop image/png image/jpeg image/gif image/webp \
     image/avif image/heif image/tiff image/bmp image/svg+xml
-  xdg-mime default org.gnome.Papers.desktop application/pdf
-  xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
+  try xdg-mime default org.gnome.Papers.desktop application/pdf
+  try xdg-mime default org.gnome.Showtime.desktop video/mp4 video/x-matroska video/webm \
     video/quicktime video/x-msvideo video/mpeg
-  xdg-mime default org.gnome.TextEditor.desktop text/plain
+  try xdg-mime default org.gnome.TextEditor.desktop text/plain
 fi
 # Swapping the ~/.config/hypr link while Hyprland is running drops it into emergency mode.
 if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
-  hyprctl reload >/dev/null && { noctalia msg config-reload || true; }
-  hyprctl configerrors
+  try hyprctl reload >/dev/null
+  try noctalia msg config-reload
+  try hyprctl configerrors
 fi
 {{/if}}
 
@@ -123,7 +132,7 @@ fi
 # Enterprise omp profile: its own auth (agent.db), the rest shared with the default one.
 profile=$HOME/.omp/profiles/enterprise/agent
 mkdir -p "$profile"
-for item in AGENTS.md RULES.md config.yml keybindings.yml lsp.json skills prompts rules extensions themes; do
+for item in AGENTS.md RULES.md config.yml keybindings.yml lsp.json mcp.json skills prompts rules extensions themes agents; do
   ln -sfn "$REPO/ai/.omp/agent/$item" "$profile/$item"
 done
 {{/if}}

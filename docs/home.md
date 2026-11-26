@@ -20,7 +20,7 @@ Otherwise, the local XDG folder.
 |`TEAjudo`|`Projects/<project>`, `Legal`, `Commercial`, `Brand`, `Archive`|
 |`Documents`|`~/Documents` links here: documents with no area (manuals, templates, references)|
 |`Inbox`|the door from the phone and the web; the daily triage empties it|
-|`Backups`|cloud only, outside the pair: `media/` (`media-backup`), `fedora/` (`creative-backup`, `~/Creative` and `~/Studio`)|
+|`Backups`|cloud only, outside the pair: `media/` (`media-backup`, encrypted with age), `fedora/` (`creative-backup`, `~/Creative` and `~/Studio`, not encrypted because nothing in it is sensitive)|
 
 - Inside an area: work that ends goes in `Projects/<project>`, named like the
   worktree or feature; ongoing reference goes in a category (2 or 3 per area); a
@@ -37,7 +37,13 @@ Otherwise, the local XDG folder.
   `docs/machines.md`, Secrets).
 - A colleague's material is copied into the course, never linked.
 - The pair excludes `*.mkv`, `*.iso`, `*.nsp`, `*.xci`, `*.nsz`, `/Backups`,
-  `Personal/Wallpaper/wallz` (a third-party clone) and dotter's `forest-4.jpg`.
+  `Personal/Wallpaper/wallz` (a third-party clone) and `forest-4.jpg`. That file
+  is a link dotter makes from the repo (`hyprland/noctalia/`) into the wallpaper
+  folder, which is itself a link into the Drive, so it exists on each machine
+  and never travels.
+- `.dotter/pre_deploy.sh` makes `~/Documents` and `~/Pictures/Wallpaper` those
+  links before dotter links anything into them; a real folder holding files
+  there stops it with a message to move them first.
 
 ## Local home
 

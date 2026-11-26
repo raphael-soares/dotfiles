@@ -25,3 +25,7 @@ qt6ct
 plasma-breeze-qt6
 moonlight-qt
 nautilus-python
+greetd
+noctalia-greeter-git
+libnotify
+Sunshine

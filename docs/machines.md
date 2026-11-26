@@ -2,14 +2,19 @@
 
 ## What the deploy does besides links
 
-`dotter deploy` only configures the home. `.dotter/post_deploy.sh` runs after
-it, only for the modules the machine has, and never uses sudo, installs,
-downloads or removes anything:
+`dotter deploy` only configures the home. `.dotter/pre_deploy.sh` runs before
+it and makes `~/Documents` and `~/Pictures/Wallpaper` links into `~/Drive`, so
+dotter never meets a real folder there. `.dotter/post_deploy.sh` runs after
+it, only for the modules the machine has, and never uses sudo, installs or
+downloads anything. The only thing it removes is Ghostty's own `config.ghostty`
+when it holds nothing but comments. A step that fails prints `==> failed: ...`
+and the next ones still run:
 
 - sets gsettings, `gcr-ssh-agent`, the xdg-mime defaults and the Flatpak cursor
   override, and merges the Ghostty, Sunshine and Moonlight settings;
-- pulls the secrets, restarts WirePlumber when its rules change, reloads Hyprland;
-- links the work omp profile and runs `media-deploy` and `creative-deploy`;
+- runs `secrets check`, restarts WirePlumber when its rules change, reloads Hyprland;
+- links the work omp profile (including `mcp.json` and `agents`) and runs
+  `media-deploy` and `creative-deploy`;
 - ends with `.dotter/missing.sh` for the same modules.
 
 `.dotter/missing.sh [module...]` only reads the machine and prints what is
@@ -58,8 +63,8 @@ shows. While it shows the other machine, `monitors.lua` turns the output off and
 the laptop works on its own screen; the lid still counts it as plugged in. When
 it switches back, the output returns and `laptop/hypr/machine.lua` moves
 workspaces 1 to 10 onto it. A monitor that stops answering is turned back on
-after 10 s. Reading the input needs the `i2c` group on Arch (the deploy adds
-it). To find a code: `ddcutil --brief getvcp 60` with the monitor on each input.
+after 10 s. Reading the input needs the `i2c` group on Arch (`missing.sh` prints
+the command). To find a code: `ddcutil --brief getvcp 60` with the monitor on each input.
 
 Noctalia works the same way. `hyprland/noctalia/base.toml` is the shared
 base in `~/.config/noctalia/`, with the default theme (Gruvbox, dark) and
@@ -78,6 +83,10 @@ new default, copy the key into the base or the machine's `machine.toml`.
 One app file stays a real file instead of a link, because the app rewrites it:
 `~/.config/ghostty/config` (Noctalia's Ghostty template edits its theme line) only
 includes the linked `base` and `machine.conf`.
+
+Greetd is shared too: `hyprland/manual.sh` installs `/etc/greetd/config.toml`
+(the greeter account is `greeter` on Arch and `greetd` on Fedora) and enables
+the service; `laptop` and `home` only add their own PAM file.
 
 ## Fuxi-H3 on the `fedora` machine
 
@@ -117,9 +126,13 @@ secret. Neither goes through `secrets` or the vault. `vault env <note> <file>` w
 any secure note back to a file (mode 600) without printing it.
 `~/.bash_profile.local` stays a local file.
 
-The session environment (XDG base directories and the variables that move
-dotfiles there, such as `AWS_CONFIG_FILE` and `GNUPGHOME`) lives in
-`terminal/env/session.conf`. systemd reads it as `environment.d` for user services,
+The session environment (XDG base directories, the variables that move
+dotfiles there, such as `AWS_CONFIG_FILE`, `GNUPGHOME` and `GOPATH`, plus `PATH`,
+`EDITOR` and `BROWSER`) lives in `terminal/env/session.conf`. `BROWSER` is the
+`zen` wrapper in `terminal/bin`, since a value with spaces cannot go in that
+file. The AWS CLI needs no credentials variable: `terminal/aws/config` resolves the
+key through `credential_process`. The shells source the file once per login
+(`SESSION_ENV` marks it). systemd reads it as `environment.d` for user services,
 `~/.profile` sources it for the graphical login and the bashrc for every shell, so
 a service or a program started from Hyprland sees the same paths as a terminal.
 A change there reaches the graphical session and the user services after a new login.
@@ -131,13 +144,34 @@ stores a generated or file/variable secret without echoing it, and
 holds the agent rules. The official Bitwarden MCP server is registered for omp
 (`ai/.omp/agent/mcp.json`) and Claude Code (post-deploy) for what `vault` lacks.
 
+Both Bitwarden clients stay on purpose. `rbw` is a native package, so it works on
+a fresh machine before mise and npm exist: the age-key restore and
+`vault run` use it, and its agent reads one item with no session variable. `bw`
+(the Node CLI, installed by mise) is the only one that creates, moves and
+organizes items and generates passwords, which `vault add`, `mv`, `rename`, `rm`
+and `unlock` need. Each has its own login and unlocked session, so unlocking
+one does not unlock the other.
+
 ## Tests
 
-`tests/machines.sh arch`, `tests/machines.sh fedora` and `tests/adopt.sh`
-deploy into a fake HOME and check what each machine gets.
-Every PR and push to `main` runs `.github/workflows/checks.yml`: all of
-`tests/`, shellcheck at warning level and gitleaks on the tree and the new
-commits. Merge only when it is green.
+Each script in `tests/` runs on its own with `bash tests/<name>.sh`:
+
+- `machines.sh arch|fedora` and `adopt.sh` deploy into a fake HOME and check
+  the links, the rendered hook and the `~/Documents` and `~/Pictures/Wallpaper`
+  links each machine gets;
+- `missing.sh` runs every module's `manual.sh` against a stubbed machine;
+- `secrets.sh` covers `secrets check`, `secrets aws` and the stray-file scan;
+- `triage.sh` covers the daily triage; `media_deploy.sh`, `media_cleanup.sh`,
+  `media_torrents.sh`, `media_backup.sh`, `creative_deploy.sh`, `craft_mcp.py`
+  and `video_tools.py` cover the media and creative modules;
+- `remote_serving.sh`, `remote_control.sh`, `monitor_away.sh`, `screenshot.sh`
+  and `remote_state.lua` cover the Hyprland helpers.
+
+Every PR and push to `main` runs `.github/workflows/checks.yml`: all of the
+above, shellcheck at warning level and gitleaks on the tree and the new
+commits. Merge only when it is green. The scripts that stub `PATH` call the real
+`bash` and `env` through `type -P`, because a harness with its own builtins
+would otherwise ignore the stubs.
 
 ## Visual
 

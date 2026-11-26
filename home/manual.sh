@@ -1,16 +1,8 @@
 # shellcheck shell=bash  # sourced by .dotter/missing.sh
 need_packages
 need_flatpaks
-# The greeter account is greetd on Fedora and greeter on Arch.
-greeter=greeter
-[[ $DISTRO == fedora ]] && greeter=greetd
-need_file hyprland/greetd/config.toml /etc/greetd/config.toml "" "s/@GREETER@/$greeter/"
 # Fedora's own file: rpm leaves a stray copy in place, and the Arch one denies every login.
 need_file home/greetd/pam /etc/pam.d/greetd
-if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
-  step "sudo systemctl enable --force greetd.service"
-  note "reboot to log in through greetd"
-fi
 # The monitor shows the laptop most of the time and then stops answering on DP-1,
 # leaving the session without a screen and Sunshine with nothing to stream. The kernel
 # replays the LG's own EDID there (amdgpu loads from the initramfs, hence dracut).

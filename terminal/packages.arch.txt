@@ -17,3 +17,4 @@ direnv
 zenity
 sops
 age
+pinentry

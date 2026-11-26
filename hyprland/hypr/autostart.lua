@@ -1,16 +1,21 @@
--- The whole session environment goes to systemd before anything else: without it
--- xdg-desktop-portal does not match the Hyprland backend (it requires
--- XDG_CURRENT_DESKTOP=Hyprland) and the GTK portal fails with "cannot open display".
-hl.on("hyprland.start", function()
-  hl.exec_cmd(
-    "systemctl --user import-environment $(env | cut -d= -f1) && dbus-update-activation-environment --systemd --all"
-  )
-  hl.exec_cmd("noctalia")
-  hl.exec_cmd("flatpak run io.github.raphael_soares.syncfast --start-hidden")
-  hl.exec_cmd("flatpak run com.github.wwmm.easyeffects --service-mode --hide-window")
-  hl.exec_cmd("zapfast --start-hidden")
-  hl.exec_cmd("spotifast --start-hidden")
-  hl.exec_cmd("udiskie --automount --no-notify --no-tray")
+-- The session environment goes to systemd before anything launches, in one shell so
+-- the order holds: without it xdg-desktop-portal does not match the Hyprland backend
+-- (it requires XDG_CURRENT_DESKTOP=Hyprland) and the GTK portal fails with "cannot open display".
+local apps = {
+  "noctalia",
+  "flatpak run io.github.raphael_soares.syncfast --start-hidden",
+  "flatpak run com.github.wwmm.easyeffects --service-mode --hide-window",
+  "zapfast --start-hidden",
+  "spotifast --start-hidden",
+  "udiskie --automount --no-notify --no-tray",
   -- Flameshot's daemon owns the copied image, so it stays pasteable after the shot closes.
-  hl.exec_cmd("flameshot")
+  "flameshot",
+}
+
+hl.on("hyprland.start", function()
+  local script = "systemctl --user import-environment; dbus-update-activation-environment --systemd --all; "
+  for _, app in ipairs(apps) do
+    script = script .. app .. " & "
+  end
+  hl.exec_cmd(script)
 end)

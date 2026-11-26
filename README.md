@@ -33,12 +33,16 @@ dotter picks `.dotter/<hostname>.toml`.
 | `laptop` | the laptop's monitors and lid, the greetd PAM file | ✓ | |
 | `work` | VPN and the work omp profile | ✓ | |
 | `sshd` | key-only SSH and mDNS, so each machine reaches the other ([remote access](docs/remote-desktop.md)) | ✓ | ✓ |
-| `home` | the desktop's monitor, greetd PAM file, theme and autostart | | ✓ |
+| `home` | the desktop's monitor, EDID override, greetd PAM file and Noctalia settings | | ✓ |
 | `media` | Jellyfin, Radarr, Sonarr, Prowlarr and Bazarr as Docker containers, plus qBittorrent and Jellyfin Desktop; releases are picked in Stremio Enhanced ([media](docs/media.md)) | | ✓ |
 | `creative` | omp drives the ArtCraft apps (VectorCraft, PhotoCraft and the rest), without a window by default ([creative](docs/creative.md)) | | ✓ |
 
 ## Add a file
 
-Put it in its module folder and map it in `.dotter/global.toml`.
+Put it in its module folder and map it in `.dotter/global.toml`. A package or a
+step to run by hand goes in the module's `packages.<distro>.txt`, `flatpaks.txt` or
+`manual.sh`, and a test in `tests/`. Secrets go encrypted in `secrets/`, never in a
+module.
 
-More in [`docs/`](docs/machines.md).
+More in [`docs/`](docs/machines.md); where each folder of the home lives is in
+[`docs/home.md`](docs/home.md).

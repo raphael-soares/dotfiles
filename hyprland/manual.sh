@@ -3,6 +3,15 @@ need_copr lionheartp/Hyprland
 need_copr lizardbyte/stable
 need_packages
 need_flatpaks
+# Each machine adds its own PAM file (laptop/, home/); the config and the unit are shared.
+# The greeter account is greetd on Fedora and greeter on Arch.
+greeter=greeter
+[[ $DISTRO == fedora ]] && greeter=greetd
+need_file hyprland/greetd/config.toml /etc/greetd/config.toml "" "s/@GREETER@/$greeter/"
+if [[ $(systemctl is-enabled greetd.service 2>/dev/null) != enabled ]]; then
+  step "sudo systemctl enable --force greetd.service"
+  note "reboot to log in through greetd"
+fi
 # Fedora has no syncfast-nautilus package (AUR only): the extension comes from the
 # tag of the installed Flatpak, so it speaks the same D-Bus API.
 if [[ $DISTRO == fedora ]]; then

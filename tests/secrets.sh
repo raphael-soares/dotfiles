@@ -45,16 +45,18 @@ out=$("$S" check || true)
 expect "check flags media.env readable by others" '[[ $out == *"media.env can be read by others"* ]]'
 chmod 600 "$HOME/.config/media/media.env"
 
-mkdir -p "$HOME/Code/app" "$HOME/Drive/TEAjudo" "$HOME/.config/tool"
+mkdir -p "$HOME/Code/app" "$HOME/Notes/TEAjudo" "$HOME/Drive/TEAjudo" "$HOME/.config/tool"
 printf 'X_TOKEN=1\n' >"$HOME/Code/app/.env"
 printf 'POSITION=left\n' >"$HOME/.config/tool/config.env"
 expect "check leaves a project .env and a .env without secrets alone" '"$S" check >/dev/null'
 printf 'machine x login a password b\n' >"$HOME/.netrc"
+printf 'DB_PASSWORD=x\n' >"$HOME/Notes/TEAjudo/api-prod.env"
 printf 'DB_PASSWORD=x\n' >"$HOME/Drive/TEAjudo/api-prod.env"
 out=$("$S" check || true)
 expect "check flags a .netrc" '[[ $out == *"plain-text credential at ~/.netrc"* ]]'
-expect "check flags a stray .env outside Code" '[[ $out == *"~/Drive/TEAjudo/api-prod.env"* ]]'
-rm "$HOME/.netrc" "$HOME/Drive/TEAjudo/api-prod.env"
+expect "check flags a stray .env outside Code" '[[ $out == *"~/Notes/TEAjudo/api-prod.env"* ]]'
+expect "check does not walk into Drive" '[[ $out != *"~/Drive/"* ]]'
+rm "$HOME/.netrc" "$HOME/Notes/TEAjudo/api-prod.env" "$HOME/Drive/TEAjudo/api-prod.env"
 
 mv "$key" "$T/key.bak"
 out=$("$S" check || true)

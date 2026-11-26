@@ -22,7 +22,9 @@ while IFS= read -r -d '' link; do
   rm "$link"
 done < <(find "$HOME" -xdev -maxdepth 7 \
   \( -path "$REPO" -o -path "$HOME/.workmux" -o -path "$HOME/Code" -o -path "$HOME/.cache" \
-  -o -path "$HOME/.dotfiles-backup" -o -path "$HOME/.local/share/Trash" \) -prune \
+  -o -path "$HOME/.dotfiles-backup" -o -path "$HOME/.local/share/Trash" -o -path "$HOME/Drive" \
+  -o -path "$HOME/Media" -o -path "$HOME/Games" -o -path "$HOME/Creative" -o -path "$HOME/Studio" \
+  -o -path "$HOME/.var" -o -path "$HOME/.local/share/Steam" \) -prune \
   -o -type l -print0)
 
 dry_run=$(dotter -d "$@" deploy 2>&1 || true)

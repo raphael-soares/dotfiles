@@ -1,2 +1,0 @@
-greetd
-noctalia-greeter-git

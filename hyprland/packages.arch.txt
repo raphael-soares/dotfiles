@@ -23,3 +23,7 @@ breeze
 nautilus
 moonlight-qt
 sunshine-bin
+greetd
+noctalia-greeter
+libnotify
+pavucontrol

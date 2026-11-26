@@ -1,3 +1,5 @@
-set -a
-. "$HOME/.config/environment.d/10-session.conf"
-set +a
+[ -n "${SESSION_ENV:-}" ] || {
+  set -a
+  . "$HOME/.config/environment.d/99-session.conf"
+  set +a
+}
