@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+# Daily triage of the home's entry points. See `triage --help`.
+set -euo pipefail
+
+HOME_DIR=${TRIAGE_HOME:-$HOME}
+LOG_DIR=${XDG_STATE_HOME:-$HOME_DIR/.local/state}/triage
+GAMES_HOST=${TRIAGE_GAMES_HOST:-fedora}
+GAMES_DIR=Games/Switch
+MIN_AGE_SECONDS=3600
+
+usage() {
+  cat <<'EOF'
+Usage:
+  triage run [--dry-run]       apply the fixed rules to Downloads, Drive/Inbox and
+                               loose files in Pictures; prints JSON on stdout:
+                               {"moved":[{"from":..,"to":..,"rule":..}],"pending":[paths]}
+  triage pending               list, one per line, what no rule decided (moves nothing)
+  triage move <from> <to>      move one file (never overwrites, creates the folder,
+                               logs rule "agent"); <to> is a folder when it ends
+                               in "/" or already is one, else the new file path.
+                               Prints {"moved":[{"from":..,"to":..,"rule":"agent"}]}
+  triage undo <YYYY-MM-DD>     revert that day's logged moves in reverse order, when
+                               the origin is gone and the destination exists.
+                               Prints {"restored":[{"from":..,"to":..}],
+                               "skipped":[{"from":..,"to":..,"reason":..}]}
+
+Rules (rule name in the log): *.torrent -> Drive/Personal/Torrents (torrent);
+screenshots -> Pictures/Screenshots (screenshot); *.csv with a "Paciente" column ->
+Code/TEAjudo/teajudo/attachments/inbox (csv-paciente); *.nsp *.xci *.nsz -> rsync to
+$TRIAGE_GAMES_HOST:Games/Switch/ when the host answers (switch).
+Ignored: modified in the last 60 minutes, *.part *.crdownload *.tmp, hidden files,
+folders, symlinks. Nothing is ever overwritten or deleted. Files no rule decides,
+and games while the host is down, are pending.
+
+Environment: TRIAGE_HOME ($HOME), XDG_STATE_HOME (log in <it>/triage/<date>.log),
+TRIAGE_GAMES_HOST (fedora).
+Log line: ISO-timestamp<TAB>from<TAB>to<TAB>rule
+EOF
+}
+
+die() {
+  echo "triage: $*" >&2
+  exit 1
+}
+
+DRY=0
+MOVED=""
+PENDING=""
+declare -A PLANNED=()
+DEST=""
+GAMES_UP=""
+
+log_move() {
+  mkdir -p "$LOG_DIR"
+  printf '%s\t%s\t%s\t%s\n' "$(date -Iseconds)" "$1" "$2" "$3" >>"$LOG_DIR/$(date +%F).log"
+}
+
+# Sets DEST to the first free "<dir>/<name>", "<stem> (2).<ext>", "<stem> (3).<ext>", ...
+unique_dest() {
+  local dir=${1%/} name=$2 stem ext="" n=2
+  stem=$name
+  if [[ $name == ?*.* ]]; then
+    stem=${name%.*}
+    ext=.${name##*.}
+  fi
+  DEST=$dir/$name
+  while [[ -e $DEST || -L $DEST || -n ${PLANNED[$DEST]:-} ]]; do
+    DEST="$dir/$stem ($n)$ext"
+    n=$((n + 1))
+  done
+}
+
+# move_local <src> <dir> <name> <rule>: never overwrites; records the move.
+move_local() {
+  local src=$1 dir=$2 name=$3 rule=$4
+  unique_dest "$dir" "$name"
+  if ((DRY)); then
+    PLANNED[$DEST]=1
+  else
+    mkdir -p -- "$dir"
+    mv -n -- "$src" "$DEST"
+    [[ ! -e $src ]] || die "could not move $src to $DEST"
+    log_move "$src" "$DEST" "$rule"
+  fi
+  MOVED+=$(printf '%s\t%s\t%s' "$src" "$DEST" "$rule")$'\n'
+}
+
+games_up() {
+  if [[ -z $GAMES_UP ]]; then
+    if ssh -o BatchMode=yes -o ConnectTimeout=5 "$GAMES_HOST" true </dev/null >/dev/null 2>&1; then
+      GAMES_UP=1
+    else
+      GAMES_UP=0
+    fi
+  fi
+  [[ $GAMES_UP == 1 ]]
+}
+
+remote() {
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$GAMES_HOST" "$1" </dev/null
+}
+
+# move_game <src>: rsync to the games host, delete the local copy only once
+# the remote size matches. Returns 1 (file untouched) on any failure.
+move_game() {
+  local src=$1 name size n=2 stem ext="" rname rsize
+  name=$(basename -- "$src")
+  stem=${name%.*}
+  ext=.${name##*.}
+  rname=$name
+  while remote "test -e $(printf '%q' "$GAMES_DIR/$rname")"; do
+    rname="$stem ($n)$ext"
+    n=$((n + 1))
+  done
+  DEST=$GAMES_HOST:$GAMES_DIR/$rname
+  if ! ((DRY)); then
+    size=$(stat -c %s -- "$src")
+    remote "mkdir -p $(printf '%q' "$GAMES_DIR")" || return 1
+    rsize=""
+    if rsync -- "$src" "$DEST" </dev/null >&2; then
+      rsize=$(remote "stat -c %s -- $(printf '%q' "$GAMES_DIR/$rname")") || rsize=""
+    fi
+    if [[ $rsize != "$size" ]]; then
+      # the name was free a moment ago, so whatever is there is our partial copy
+      remote "rm -f -- $(printf '%q' "$GAMES_DIR/$rname")" || true
+      return 1
+    fi
+    rm -f -- "$src"
+    log_move "$src" "$DEST" switch
+  fi
+  MOVED+=$(printf '%s\t%s\t%s' "$src" "$DEST" switch)$'\n'
+}
+
+csv_has_patient() {
+  local header
+  header=$(head -n 1 -- "$1" | sed 's/^\xef\xbb\xbf//' | tr -d '\r') || return 1
+  tr ',;\t' '\n\n\n' <<<"$header" | sed -e 's/^[[:space:]"]*//' -e 's/[[:space:]"]*$//' | grep -x 'Paciente' >/dev/null
+}
+
+is_screenshot() {
+  local lower=${1,,}
+  [[ $lower == *.png || $lower == *.jpg || $lower == *.jpeg ]] &&
+    [[ $lower == *screenshot* || $lower == *hyprshot* ]]
+}
+
+entries() {
+  local d
+  for d in "$HOME_DIR/Downloads" "$HOME_DIR/Drive/Inbox" "$HOME_DIR/Pictures"; do
+    [[ -d $d ]] || continue
+    find "$d" -mindepth 1 -maxdepth 1 -type f -print0 | sort -z
+  done
+}
+
+cmd_run() {
+  local now f name lower mtime
+  now=$(date +%s)
+  local -a files
+  mapfile -d '' files < <(entries)
+  for f in "${files[@]}"; do
+    name=$(basename -- "$f")
+    lower=${name,,}
+    [[ $name != .* ]] || continue
+    case $lower in *.part | *.crdownload | *.tmp) continue ;; esac
+    mtime=$(stat -c %Y -- "$f") || continue
+    ((now - mtime >= MIN_AGE_SECONDS)) || continue
+
+    case $lower in
+      *.torrent)
+        move_local "$f" "$HOME_DIR/Drive/Personal/Torrents" "$name" torrent
+        continue
+        ;;
+      *.csv)
+        if csv_has_patient "$f"; then
+          move_local "$f" "$HOME_DIR/Code/TEAjudo/teajudo/attachments/inbox" "$name" csv-paciente
+          continue
+        fi
+        ;;
+      *.nsp | *.xci | *.nsz)
+        if games_up && move_game "$f"; then
+          continue
+        fi
+        ;;
+      *)
+        if is_screenshot "$name"; then
+          move_local "$f" "$HOME_DIR/Pictures/Screenshots" "$name" screenshot
+          continue
+        fi
+        ;;
+    esac
+    PENDING+=$f$'\n'
+  done
+}
+
+emit_run_json() {
+  jq -n --arg m "$MOVED" --arg p "$PENDING" '{
+    moved: ($m | split("\n") | map(select(length > 0) | split("\t") | {from: .[0], to: .[1], rule: .[2]})),
+    pending: ($p | split("\n") | map(select(length > 0)))
+  }'
+}
+
+cmd_move() {
+  (($# == 2)) || die "usage: triage move <from> <to>"
+  local src=$1 dst=$2 dir name
+  [[ -f $src && ! -L $src ]] || die "not a regular file: $src"
+  src=$(realpath -- "$src")
+  if [[ $dst == */ || -d $dst ]]; then
+    dir=${dst%/}
+    name=$(basename -- "$src")
+  else
+    dir=$(dirname -- "$dst")
+    name=$(basename -- "$dst")
+  fi
+  move_local "$src" "$dir" "$name" agent
+  jq -n --arg m "$MOVED" '{moved: ($m | split("\n") | map(select(length > 0) | split("\t") | {from: .[0], to: .[1], rule: .[2]}))}'
+}
+
+cmd_undo() {
+  (($# == 1)) || die "usage: triage undo <YYYY-MM-DD>"
+  [[ $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || die "date must be YYYY-MM-DD: $1"
+  local logfile=$LOG_DIR/$1.log ts from to rule
+  [[ -f $logfile ]] || die "no log for $1: $logfile"
+  local restored="" skipped=""
+  while IFS=$'\t' read -r ts from to rule; do
+    if [[ -e $from || -L $from ]]; then
+      skipped+=$(printf '%s\t%s\t%s' "$from" "$to" "origin exists")$'\n'
+    elif [[ ! -e $to ]]; then
+      skipped+=$(printf '%s\t%s\t%s' "$from" "$to" "destination missing or remote")$'\n'
+    else
+      mkdir -p -- "$(dirname -- "$from")"
+      mv -n -- "$to" "$from"
+      restored+=$(printf '%s\t%s' "$from" "$to")$'\n'
+    fi
+  done < <(tac -- "$logfile")
+  jq -n --arg r "$restored" --arg s "$skipped" '{
+    restored: ($r | split("\n") | map(select(length > 0) | split("\t") | {from: .[0], to: .[1]})),
+    skipped: ($s | split("\n") | map(select(length > 0) | split("\t") | {from: .[0], to: .[1], reason: .[2]}))
+  }'
+}
+
+(($# >= 1)) || {
+  usage >&2
+  exit 2
+}
+cmd=$1
+shift
+case $cmd in
+  -h | --help | help) usage ;;
+  run)
+    case ${1:-} in
+      "") ;;
+      --dry-run) DRY=1 ;;
+      *) die "unknown option for run: $1" ;;
+    esac
+    cmd_run
+    emit_run_json
+    ;;
+  pending)
+    DRY=1
+    cmd_run
+    printf '%s' "$PENDING"
+    ;;
+  move) cmd_move "$@" ;;
+  undo) cmd_undo "$@" ;;
+  *) die "unknown command: $cmd (try --help)" ;;
+esac
