@@ -81,10 +81,11 @@ sem mexer no syncfast.
 
 | Área | Conteúdo | Alcance |
 |---|---|---|
-| `~/Documents/Personal` | documentos, currículo, finanças, segurança, arquivo de `.torrent` | compartilhada |
+| `~/Documents/Personal` | documentos, currículo, finanças, identidade, notas, arquivo de `.torrent` | compartilhada |
 | `~/Documents/Udesc` | faculdade, padrão de disciplina em `~/Documents/Udesc/README.md` | compartilhada |
-| `~/Documents/Unimed` | trabalho: docs, envs, assets | compartilhada |
-| `~/Documents/TEAjudo` | startup: jurídico, comercial, marca, envs, gravações | compartilhada |
+| `~/Documents/Unimed` | trabalho: docs, marca, identidade | compartilhada |
+| `~/Documents/TEAjudo` | startup: jurídico, comercial, marca, gravações; `Env/` fica fora do sync | compartilhada |
+| `~/Documents/Resources` | material de consulta sem domínio: manual, modelo, referência, curso avulso; subpasta por tipo, criada quando houver conteúdo | compartilhada |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
 | `~/Creative` | projetos criativos multidisciplinares: `Projetos/<projeto>/` com uma pasta por peça (vídeo, áudio, arte e marca juntos), `Biblioteca/` de assets de terceiros, `Estilos/` de identidades próprias | só PC de casa |
 | `~/Studio` | produção musical: samples, presets, projetos | só PC de casa |
@@ -93,7 +94,7 @@ sem mexer no syncfast.
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
   `~/Code/<Área>/`. `~/Documents/TEAjudo` e `~/Documents/Unimed` sincronizam
-  documento, marca e env; o código delas fica em `~/Code` e não entra no sync.
+  documento e marca; o código delas fica em `~/Code` e não entra no sync.
 - Marca de uma área (logo da TEAjudo) fica na área. `~/Creative` é para
   projeto criativo próprio.
 - O que acabou vai para `0-Archive/` dentro da própria área (o número faz ela
