@@ -59,8 +59,12 @@ compara: pergunte ao dono qual fica.
 - Variável de ambiente do dono (token pessoal, VPN, mídia): o dono roda
   `sops edit secrets/personal.env`. Para importar de um arquivo sem ver o
   valor: `sops encrypt --filename-override secrets/personal.env --input-type dotenv --output-type dotenv arquivo`.
-  Segredo de projeto de código não entra aqui nem no cofre: fica no `.env`
-  do projeto.
+- `.env` de projeto de código (TEAjudo, Unimed) não entra no sops: a fonte é
+  uma nota segura no cofre, uma por ambiente, na pasta do projeto
+  (`teajudo api-prod.env`). Guardar: `vault note TEAjudo "teajudo api-prod.env" arquivo`.
+  Recriar o `.env` local: `vault env "teajudo api-local.env" caminho/.env`
+  (grava com 600 e não imprime o valor). Pergunte ao dono antes, como em
+  qualquer uso.
 
 ## Usar com permissão
 
@@ -83,5 +87,8 @@ não rode comando assim com segredo injetado.
 - `secrets aws`: entrega a chave de `secrets/aws.env` ao `credential_process`
   do perfil default da AWS. Não rode no terminal com a saída visível; para
   conferir, `aws sts get-caller-identity`.
-- `secrets check`: acusa chave age ausente ou arquivo legível por outros. O
-  deploy e a conferência diária da mídia (`media-drift`) rodam.
+- `secrets check`: acusa chave age ausente, arquivo legível por outros e
+  credencial em texto puro largada na home (`~/.netrc`, credentials da AWS,
+  `.env` com chave, token ou senha fora de `~/Code`). O deploy e a conferência
+  diária da mídia (`media-drift`) rodam. Achou algo: leve para o sops ou o
+  cofre e apague o arquivo.

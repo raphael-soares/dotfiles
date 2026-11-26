@@ -105,7 +105,9 @@ pasta XDG local.
   `git_repos` do syncfast barra repo). O README da pasta do projeto aponta para
   o repo em `~/Code`.
 - Dado pessoal de terceiro (paciente, CPF) nunca entra no Drive: fica em
-  `attachments/` do repo, ignorado pelo git. Segredo fica no sops ou no cofre.
+  `attachments/` do repo, ignorado pelo git. Segredo nunca entra no Drive nem
+  fica em texto puro na home: segredo do dono vai no sops (`secrets/*.env`),
+  `.env` de projeto e login vão no cofre (skill `cofre`).
 - Material de colega é copiado para a disciplina, nunca como atalho.
 - O par barra `*.mkv`, `*.iso`, `*.nsp`, `*.xci` e `*.nsz`, mais `/Backups`,
   `Personal/Wallpaper/wallz` (clone de terceiro) e o `forest-4.jpg` do dotter.

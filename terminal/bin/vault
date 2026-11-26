@@ -20,6 +20,7 @@ usage: vault unlock | lock | status
        vault add <name> [--user U] [--uri U] [--folder F] (--generate [N] | --from-env VAR | --from-file F)
        vault run <name> [--field F] <VAR> -- <command>...
        vault note <folder> <name> <file>  store a file as a secure note, byte for byte
+       vault env <name> <file>       write a secure note back to a file (mode 600), never to stdout
 EOF
   exit 2
 }
@@ -127,6 +128,15 @@ note() {
   fi
 }
 
+env_file() {
+  local id
+  id=$(bwx list items --search "$1" | jq -r --arg n "$1" '.[] | select(.name == $n and .type == 2) | .id' | head -1)
+  [[ -n $id ]] || die "no secure note named \"$1\""
+  (umask 077; bwx get item "$id" | jq -j .notes >"$2")
+  chmod 600 "$2"
+  echo "vault: \"$1\" written to $2"
+}
+
 cmd=${1:-}; shift || true
 case $cmd in
   unlock) unlock ;;
@@ -142,5 +152,6 @@ case $cmd in
   add) (($#)) || usage; add "$@" ;;
   run) (($# >= 3)) || usage; run "$@" ;;
   note) (($# == 3)) || usage; note "$@" ;;
+  env) (($# == 2)) || usage; env_file "$@" ;;
   *) usage ;;
 esac

@@ -106,11 +106,15 @@ terminal` prints how to restore it.
 - `secrets aws` prints `aws.env` as the JSON of `credential_process`, which
   `terminal/aws/config` uses for the default profile; the key never sits in plain
   text, never expires and works from services and scheduled jobs;
-- `secrets check` reports a missing age key or a secret file others can read; the
-  deploy and `media-drift` run it.
+- `secrets check` reports a missing age key, a secret file others can read and a
+  plain-text credential left in the home (`~/.netrc`, an AWS credentials file, a
+  `.env` with a key, token or password outside `~/Code`); the deploy and
+  `media-drift` run it.
 
-Code projects keep their own gitignored `.env` and never go through `secrets`
-or the vault. `~/.bash_profile.local` stays a local file.
+Code projects keep their own gitignored `.env`. Its source is a secure note in the
+vault, one per environment (`teajudo api-prod.env` in the `TEAjudo` folder):
+`vault env "teajudo api-local.env" .env` writes it back, and a changed `.env` goes
+back with `vault note`. `~/.bash_profile.local` stays a local file.
 
 The session environment (XDG base directories and the variables that move
 dotfiles there, such as `AWS_CONFIG_FILE` and `GNUPGHOME`) lives in
