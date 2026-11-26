@@ -15,4 +15,3 @@ direnv
 zenity
 age
 pinentry
-awscli2
