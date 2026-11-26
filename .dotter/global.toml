@@ -43,7 +43,6 @@ default_target_type = "symbolic"
 "desktop/webapps/applications" = "~/.local/share/applications"
 "desktop/webapps/icons" = "~/.local/share/icons/hicolor/scalable/apps"
 "desktop/audio/wireplumber" = "~/.config/wireplumber/wireplumber.conf.d"
-"desktop/syncfast/config.toml" = "~/.config/syncfast/config.toml"
 "desktop/xdg/user-dirs.dirs" = "~/.config/user-dirs.dirs"
 
 [hyprland.files]
@@ -64,6 +63,7 @@ default_target_type = "symbolic"
 [laptop.files]
 "laptop/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
 "laptop/noctalia/machine.toml" = "~/.config/noctalia/machine.toml"
+"laptop/syncfast/config.toml" = "~/.config/syncfast/config.toml"
 
 [work.files]
 "work/bin" = "~/.local/bin"
@@ -78,6 +78,7 @@ default_target_type = "symbolic"
 "home/hypr" = { type = "symbolic", target = "~/.config/hypr-machine", recurse = false }
 "home/noctalia/machine.toml" = "~/.config/noctalia/machine.toml"
 "home/noctalia/fedora-symbolic.svg" = "~/.config/noctalia/icons/fedora-symbolic.svg"
+"home/syncfast/config.toml" = "~/.config/syncfast/config.toml"
 
 [media.files]
 "media/compose.yaml" = { type = "symbolic", target = "~/.config/media/compose.yaml" }
@@ -91,6 +92,5 @@ default_target_type = "symbolic"
 
 [creative.files]
 "creative/bin" = "~/.local/bin"
-"creative/systemd" = "~/.config/systemd/user"
 "creative/omp/models.yml" = "~/.omp/agent/models.yml"
 "creative/audiocpp" = { type = "symbolic", target = "~/.config/audiocpp", recurse = false }

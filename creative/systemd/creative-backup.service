@@ -1,7 +1,0 @@
-[Unit]
-Description=Back up ~/Creative and ~/Studio to Google Drive
-OnFailure=media-failure@%n.service
-
-[Service]
-Type=oneshot
-ExecStart=%h/.local/bin/creative-backup

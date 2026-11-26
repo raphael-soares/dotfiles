@@ -97,13 +97,13 @@ link_files 2>/dev/null
 [[ -z $(CHECK=1 link_files) ]] || fail "--check reports links that link_files just made"
 rm "$HOME/.local/bin/mediactl"
 ln -s "$REPO/media/bin/media-removed" "$HOME/.local/bin/media-removed"
-rm "$HOME/.local/bin/media-backup" && echo mine >"$HOME/.local/bin/media-backup"
+rm "$HOME/.local/bin/media-cleanup" && echo mine >"$HOME/.local/bin/media-cleanup"
 report=$(CHECK=1 link_files 2>&1)
 grep -q "differs: link $HOME/.local/bin/mediactl" <<<"$report" || fail "--check does not report a missing link"
 grep -q "differs: remove $HOME/.local/bin/media-removed" <<<"$report" || fail "--check does not report a link to a removed script"
 link_files 2>/dev/null
 [[ -L $HOME/.local/bin/mediactl && ! -L $HOME/.local/bin/media-removed ]] || fail "link_files did not restore and prune links"
-[[ $(cat "$HOME/.local/bin/media-backup") == mine ]] || fail "link_files replaced a file that is not a link"
+[[ $(cat "$HOME/.local/bin/media-cleanup") == mine ]] || fail "link_files replaced a file that is not a link"
 
 # links a removed repo file or an old worktree left behind, and one that is not the deploy's
 old=$HOME/.workmux/dotfiles/media-proxy/media

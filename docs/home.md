@@ -20,7 +20,7 @@ Otherwise, the local XDG folder.
 |`TEAjudo`|`Projects/<project>`, `Legal`, `Commercial`, `Brand`, `Archive`|
 |`Documents`|`~/Documents` links here: documents with no area (manuals, templates, references)|
 |`Inbox`|the door from the phone and the web; the daily triage empties it|
-|`Backups`|cloud only, outside the pair, empty while the backup timers are off: `media/` (`media-backup`, encrypted with age), `fedora/` (`creative-backup`, `~/Creative` and `~/Studio`, not encrypted because nothing in it is sensitive)|
+|`Backups`|cloud only, outside the pair (it excludes `/Backups`): where syncfast backups go, see Backups below|
 
 - Inside an area: work that ends goes in `Projects/<project>`, named like the
   worktree or feature; ongoing reference goes in a category (2 or 3 per area); a
@@ -44,6 +44,21 @@ Otherwise, the local XDG folder.
 - `.dotter/pre_deploy.sh` makes `~/Documents` and `~/Pictures/Wallpaper` those
   links before dotter links anything into them; a real folder holding files
   there stops it with a message to move them first.
+
+## Backups
+
+Backups are syncfast's (restic: encrypted, versioned, with retention), and
+none is defined now. Each machine has its own syncfast config, linked to
+`~/.config/syncfast/config.toml` (`laptop/syncfast/config.toml` on `arch`,
+`home/syncfast/config.toml` on `fedora`), so a backup made on one machine never
+shows up on the other. `syncfast backup add` on the machine that holds the
+folders writes the backup into that machine's file; commit it. Its destination
+goes under `Raphael:Backups/`, which the `Drive` pair excludes. Save the key the
+app shows in the vault; on a reinstalled machine the backup asks for it again
+(**Enter Key…**). A folder inside another Flatpak's `~/.var/app/<id>` needs a
+read grant, `flatpak override --user --filesystem=<folder>:ro
+io.github.raphael_soares.syncfast`, which syncfast prints when the folder is
+out of its sight.
 
 ## Local home
 

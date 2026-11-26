@@ -47,7 +47,6 @@ jq -n --arg tricky "$tricky" --rawfile key "$T/k" '[
   {name: "env aws", folder: "Dotfiles", type: "Note", notes: "AWS_ACCESS_KEY_ID=AKIAFAKE\nAWS_SECRET_ACCESS_KEY=s/e+cret"},
   {name: "ssh key personal", folder: "Dotfiles", type: "SSH Key", notes: null, private_key: ($key | rtrimstr("\n"))},
   {name: "ssh config", folder: "Dotfiles", type: "Note", notes: "Host x\n  HostName 10.0.0.1"},
-  {name: "age backup", folder: "Dotfiles", type: "Note", notes: "AGE-SECRET-KEY-FAKE"},
   {name: "notes about the PC", folder: "Dotfiles", type: "Note", notes: "free text"},
   {name: "ssh config", folder: "Personal", type: "Note", notes: "Host other-folder"}
 ]' >"$VAULT"
@@ -69,11 +68,6 @@ expect "pull writes the .pub of the key" '[[ $(cut -d" " -f1,2 "$HOME/.ssh/keys/
 expect "pull writes the ssh config from the Dotfiles folder only" '[[ $(cat "$HOME/.ssh/config") == $(printf "Host x\n  HostName 10.0.0.1") ]]'
 expect "pull leaves a file that is not in the vault alone" '[[ $(cat "$HOME/.ssh/known_hosts") == known ]]'
 expect "pull ignores items outside the name contract" '[[ $(find "$HOME" -type f | grep -c "notes") == 0 ]]'
-expect "pull skips the backup key without the media module" '[[ ! -e $HOME/.config/age/backup.key ]]'
-mkdir -p "$HOME/.local/bin" && printf '#!/bin/sh\n' >"$HOME/.local/bin/media-backup" && chmod +x "$HOME/.local/bin/media-backup"
-"$S" pull >/dev/null
-expect "pull writes the backup key with the media module, mode 600" \
-  '[[ $(cat "$HOME/.config/age/backup.key") == AGE-SECRET-KEY-FAKE && $(stat -c %a "$HOME/.config/age/backup.key") == 600 ]]'
 touch -d 2020-01-01 "$HOME/.ssh/config"
 expect "pull reports nothing and keeps an unchanged file" \
   '[[ -z $("$S" pull) && $(stat -c %Y "$HOME/.ssh/config") == $(date -d 2020-01-01 +%s) ]]'
@@ -92,6 +86,7 @@ printf 'VPN_PASSWORD=other\n' | "$S" put "env vpn" >/dev/null
 expect "put replaces an existing item instead of adding another" \
   '[[ $(jq "[.[] | select(.name == \"env vpn\")] | length" "$VAULT") == 1 && $(jq -r ".[] | select(.name == \"env vpn\") | .notes" "$VAULT") == VPN_PASSWORD=other ]]'
 expect "put refuses a name outside the contract" '! printf x | "$S" put "random" 2>/dev/null'
+expect "put refuses the removed age backup name" '! printf x | "$S" put "age backup" 2>/dev/null'
 printf '# servers\nHost a\n  HostName 10.0.0.2\n' | "$S" put "ssh config.d/a.conf" >/dev/null
 "$S" pull >/dev/null
 expect "put keeps a comment line through rbw, which drops lines starting with #" \

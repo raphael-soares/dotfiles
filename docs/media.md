@@ -90,9 +90,7 @@ the user in the `docker` group, which `missing.sh media` asks for.
 - makes qBittorrent the magnet link handler;
 - enables every `media-*.timer` in `media/systemd`: `media-original-audio`
   (every 15 minutes), `media-watchdog` (every 5 minutes), `media-update`,
-  `media-cleanup` and `media-drift` (daily). `media-backup` (daily) and
-  `media-restore-test` (weekly) are off until backups are wanted:
-  `systemctl --user enable --now media-backup.timer media-restore-test.timer`.
+  `media-cleanup` and `media-drift` (daily).
 
 `media-deploy ~/.dotfiles --check` changes nothing, prints one
 `media: differs:` line for each link, timer, container (stopped, or running an
@@ -106,7 +104,7 @@ subtitle site, qBittorrent offline, a stopped container or a failed unit) and ex
 
 The media log, `~/.local/state/media/media.log`, is one timeline of what the
 stack did and what broke: every change a script or the deploy made (a torrent
-dropped or deleted, a film removed, a backup uploaded, a setting applied, a
+dropped or deleted, a film removed, a setting applied, a
 service restarted) with its time and script, and every failed `media-*` or
 Configarr run with the last lines it printed. It keeps about its last 5000
 lines. `mediactl log` shows the end of it (`mediactl log 200`, or
@@ -146,25 +144,6 @@ lists what it would remove; `tests/media_cleanup.sh` covers the rules.
 Deleting a film or episode in Jellyfin deletes its library file. Radarr and
 Sonarr unmonitor what lost its file and remove empty folders, so it is not
 fetched again; the torrent keeps seeding and leaves through the rule above.
-
-`media-backup` copies the databases (`sqlite3 .backup`, safe while the
-services run), the rest of each service's settings and qBittorrent's config
-and torrent state into one archive. Those files hold API keys and logins, so
-the archive is encrypted with `age` to the recipient in
-`~/.dotfiles/media/backup.recipient` before it leaves the PC:
-`media-YYYY-MM-DD.tar.zst.age` on Google Drive
-(`Raphael:Backups/media`, through syncfast's rclone config); archives older
-than 30 days are deleted. `media.env` is not in it: it comes back from the vault
-item `env media` when `media-deploy` runs. The private key is the vault item
-`Dotfiles/age backup`, which `secrets pull` writes to `~/.config/age/backup.key`.
-To restore on a fresh install: deploy, `secrets pull`, stop the stack
-(`media-compose stop`), `rclone copy` the archive down,
-`age -d -i ~/.config/age/backup.key media-*.tar.zst.age | zstd -dc | tar -x`,
-put each `.db`/`.sqlite3` back under `~/.local/share/media/<service>`, untar
-`files.tar` there and `qbittorrent.tar` in `~`, then `media-compose up -d`.
-`media-restore-test` (weekly) downloads the newest archive, decrypts and
-unpacks it and checks every database with `PRAGMA integrity_check`, so a
-broken backup, or one the key cannot open, fails its unit.
 
 `media-watchdog` restarts a service whose web page stopped answering for two
 checks in a row (a crashed one is restarted by Docker's restart policy), reopens

@@ -101,9 +101,8 @@ cable does:
 
 The owner's machine secrets live in the Bitwarden folder `Dotfiles`, read and
 written through `rbw` only. The item name says where it lands: `env personal`
-(shell and VPN), `env aws`, `env media`, `ssh config`, `ssh config.d/<name>.conf`,
-`ssh key <name>` and `age backup` (the media backup key, written only where the
-media module runs). Anything else in the folder is left alone. The repository
+(shell and VPN), `env aws`, `env media`, `ssh config`, `ssh config.d/<name>.conf`
+and `ssh key <name>`. Anything else in the folder is left alone. The repository
 holds no secret, not even encrypted. The Bitwarden master password is the only
 thing a new machine needs.
 

@@ -14,7 +14,7 @@ O cofre é o Bitwarden do dono, acessado só pelo `rbw`. Duas ferramentas:
 | Ferramenta | Para quê |
 |---|---|
 | `vault` | Organizar, guardar e usar segredo. A listagem nunca mostra senha, nota, campo nem TOTP |
-| `secrets` | Segredos da máquina na pasta `Dotfiles` do cofre: `env *`, `ssh *`, `age backup` |
+| `secrets` | Segredos da máquina na pasta `Dotfiles` do cofre: `env *`, `ssh *` |
 
 O que nenhuma das duas faz (mudar item de pasta, renomear, anexo, Send,
 cartão) é no app do Bitwarden, pelo dono.
@@ -62,7 +62,6 @@ compara: pergunte ao dono qual fica.
     valor, monte o arquivo inteiro sem exibir e faça `put` dele;
   - `ssh key <nome>`: chave privada, vai para `~/.ssh/keys/<nome>`;
   - `ssh config`, `ssh config.d/<área>.conf`: arquivos do `~/.ssh`;
-  - `age backup`: chave do backup da mídia.
   Depois, `secrets pull` escreve no disco. Pode criar e trocar sem perguntar;
   apagar, só com o dono.
 - Segredo de projeto de código não entra no cofre: mora no gerenciador do

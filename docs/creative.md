@@ -94,10 +94,6 @@ chain, so a stopped server makes `tts` fail instead of falling back to Phonon,
 which only speaks English. On the laptop there is no server and `tts` fails the
 same way.
 
-A failed `creative-backup` run is written to the media log like a failed
-`media-*` unit (`OnFailure=media-failure@%n.service`), so the unit depends on
-the `media` module, which the same PC deploys.
-
 `narrar.py` posts each plano's fala to the OpenAI-style speech endpoint with
 `speed` 0.9 (at the default speed the last sound of a sentence gets cut) and
 never falls back to another engine. omp's `tts` tool is not used: it failed
@@ -133,11 +129,6 @@ Manim runs with `-s`.
 
 ## Backup
 
-`~/Creative` and `~/Studio` live only on `fedora`, outside the `~/Drive` sync.
-`creative-backup` (timer `creative-backup.timer`, daily, off until backups are
-wanted: `systemctl --user enable --now creative-backup.timer`) mirrors both to `Raphael:Backups/fedora/current/` and moves
-every file it replaces or deletes to `Raphael:Backups/fedora/old/<date>/`,
-kept for 30 days (`CREATIVE_BACKUP_KEEP_DAYS`). syncfast's own backup is not
-used because it refuses a destination inside the `~/Drive ↔ Raphael:` pair.
-To restore: `rclone copy Raphael:Backups/fedora/current/Creative ~/Creative`,
-and a deleted file from `old/<date>/`.
+`~/Creative` and `~/Studio` live only on `fedora`, outside the `~/Drive` sync,
+and nothing backs them up now. A backup, when wanted, is a syncfast backup on
+that machine (see `docs/home.md`, Backups).
