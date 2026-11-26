@@ -73,10 +73,11 @@ Dois PCs com a mesma convenção: o notebook (trabalho, programação, startup,
 faculdade) e o PC de casa (jogos, design, música). O primeiro nível do home é
 tipo de coisa (o padrão XDG); o domínio vem um nível abaixo, como em
 `~/Code/<Área>`. Nome em inglês capitalizado. Cada área tem um alcance:
-compartilhada (existe nos dois PCs, um par do syncfast por área, com o mesmo
-caminho no Drive: `Raphael:Documents/<Área>`) ou local (existe só no PC onde é
-usada, sem par). Área nova: crie a pasta no tipo certo, escolha o alcance e
-acrescente uma linha aqui.
+compartilhada (existe nos dois PCs, em `~/Documents/<Área>`, que o syncfast
+sincroniza inteiro num par só com `Raphael:Documents`) ou local (existe só no
+PC onde é usada, fora de `~/Documents`). Área nova: crie a pasta no tipo certo,
+escolha o alcance e acrescente uma linha aqui; área compartilhada sincroniza
+sem mexer no syncfast.
 
 | Área | Conteúdo | Alcance |
 |---|---|---|

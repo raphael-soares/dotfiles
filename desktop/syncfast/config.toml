@@ -9,37 +9,10 @@ theme = "dark"
 autostart = true
 
 [[pair]]
-id = "personal"
-name = "Personal"
-local = "/home/raphael/Documents/Personal"
-remote = "Raphael:Documents/Personal"
+id = "documents"
+name = "Documents"
+local = "/home/raphael/Documents"
+remote = "Raphael:Documents"
 enabled = true
 presets = ["system_junk", "dev_dirs"]
-filters = ["- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
-
-[[pair]]
-id = "udesc"
-name = "Udesc"
-local = "/home/raphael/Documents/Udesc"
-remote = "Raphael:Documents/Udesc"
-enabled = true
-presets = ["system_junk", "dev_dirs"]
-filters = ["- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
-
-[[pair]]
-id = "teajudo"
-name = "TEAjudo"
-local = "/home/raphael/Documents/TEAjudo"
-remote = "Raphael:Documents/TEAjudo"
-enabled = true
-presets = ["system_junk", "dev_dirs"]
-filters = ["- /Env/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
-
-[[pair]]
-id = "unimed"
-name = "Unimed"
-local = "/home/raphael/Documents/Unimed"
-remote = "Raphael:Documents/Unimed"
-enabled = true
-presets = ["system_junk", "dev_dirs"]
-filters = ["- /Envs/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
+filters = ["- /TEAjudo/Env/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]

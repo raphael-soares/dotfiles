@@ -27,8 +27,9 @@ primeiro nível deve ser tipo de coisa, como já é `~/Code/<Área>`.
 - O Drive segue o mesmo layout: `Raphael:Personal` vira
   `Raphael:Documents/Personal`, e assim para as quatro áreas. `Raphael:Fotos`
   fica onde está (foto só existe no Drive).
-- Cada área compartilhada continua sendo um par próprio do syncfast, agora
-  apontando para o caminho novo dos dois lados, sem reenvio de conteúdo.
+- Um par só do syncfast, `~/Documents` com `Raphael:Documents`, no lugar de um
+  par por área: área nova sincroniza sem mexer no config. Os dois lados já
+  tinham o mesmo conteúdo, então o primeiro round não reenvia nada.
 - `~/Design` vira `~/Creative`; o módulo `design/` do repo vira `creative/`.
 
 ## Não objetivos
