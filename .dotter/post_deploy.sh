@@ -22,9 +22,7 @@ if [[ -L $ghostty_config || ! -e $ghostty_config ]]; then
   rm -f "$ghostty_config"
   printf 'config-file = base\nconfig-file = ?machine.conf\n' >"$ghostty_config"
 fi
-if have rbw && { rbw unlocked 2>/dev/null || [[ -t 0 ]]; }; then
-  "$REPO/terminal/bin/secrets" pull || echo "==> secrets: run 'secrets setup' then 'secrets pull'"
-fi
+"$REPO/terminal/bin/secrets" check || true
 {{/if}}
 
 {{#if dotter.packages.desktop}}

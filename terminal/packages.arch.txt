@@ -15,3 +15,5 @@ dotter-rs-bin
 rbw
 direnv
 zenity
+sops
+age

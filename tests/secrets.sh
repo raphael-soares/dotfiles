@@ -1,50 +1,41 @@
 #!/usr/bin/env bash
-# secrets against a fake rbw whose vault is a directory of files.
-# shellcheck disable=SC2034  # $out is read inside the strings expect evals
+# secrets with the real sops and age, against a throwaway key and repo copy.
+# shellcheck disable=SC2016  # the expect bodies are eval'd later on purpose
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
-export HOME=$T/home XDG_STATE_HOME=$T/state VAULT=$T/vault PATH=$T/bin:$PATH
-mkdir -p "$HOME" "$VAULT/dotfiles" "$T/bin"
+export HOME=$T/home
+unset SOPS_AGE_KEY_FILE XDG_CONFIG_HOME
+key=$HOME/.config/sops/age/keys.txt
+mkdir -p "${key%/*}" "$T/repo/terminal/bin" "$T/repo/secrets"
+cp "$REPO/terminal/bin/secrets" "$T/repo/terminal/bin/"
+S=$T/repo/terminal/bin/secrets
+(umask 077 && age-keygen -o "$key" 2>/dev/null)
+printf 'creation_rules:\n  - path_regex: secrets/[^/]+\\.env$\n    age: %s\n' "$(age-keygen -y "$key")" >"$T/repo/.sops.yaml"
 
-cat >"$T/bin/rbw" <<'EOF'
-#!/usr/bin/env bash
-case $1 in
-  unlock|sync) ;;
-  list) cd "$VAULT" && find . -type f | sed 's|^\./||; s|/|\t|' ;;
-  get) jq -Rs '{notes: .}' "$VAULT/$3/$5" ;;
-esac
-EOF
-cat >"$T/bin/vault" <<'EOF'
-#!/usr/bin/env bash
-[[ $1 == note ]] && mkdir -p "$VAULT/$2/$(dirname "$3")" && cp "$4" "$VAULT/$2/$3"
-EOF
-chmod +x "$T/bin/rbw" "$T/bin/vault"
+tricky='a b=$c"d'"'"'e'
+(cd "$T/repo" && printf 'TRICKY=%s\n' "$tricky" |
+  sops encrypt --filename-override secrets/personal.env --input-type dotenv --output-type dotenv /dev/stdin >secrets/personal.env)
 
 fail=0
 expect() { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; fail=1; fi; }
 
-mkdir -p "$VAULT/dotfiles/Documents/TEAjudo/Env"
-printf 'A=1\nB=two words\n' >"$VAULT/dotfiles/Documents/TEAjudo/Env/api.env"
-"$REPO/terminal/bin/secrets" pull >/dev/null
-expect "pull writes the item to its path" 'cmp -s "$VAULT/dotfiles/Documents/TEAjudo/Env/api.env" "$HOME/Documents/TEAjudo/Env/api.env"'
-expect "pull writes mode 600" '[[ $(stat -c %a "$HOME/Documents/TEAjudo/Env/api.env") == 600 ]]'
+expect "the file in the repo holds no plain value" '! grep -qF "$tricky" "$T/repo/secrets/personal.env"'
+expect "run passes a value with spaces, = and quotes unchanged" '[[ $("$S" run -- printenv TRICKY) == "$tricky" ]]'
+expect "run passes arguments with spaces and \$ unchanged" '[[ $("$S" run -- printf "%s|" "x y" "\$TRICKY") == "x y|\$TRICKY|" ]]'
+expect "check passes with the key in place" '"$S" check'
 
-mkdir -p "$HOME/Documents/Unimed/Envs"
-printf 'VPN_HOST=x\n' >"$HOME/Documents/Unimed/Envs/vpn.env"
-chmod 644 "$HOME/Documents/Unimed/Envs/vpn.env"
-out=$("$REPO/terminal/bin/secrets" check || true)
-expect "check flags a file others can read" '[[ $out == *"Documents/Unimed/Envs/vpn.env can be read by others"* ]]'
-expect "check flags a file outside the vault" '[[ $out == *"Documents/Unimed/Envs/vpn.env is not in the vault"* ]]'
+mkdir -p "$HOME/.config/media"
+printf 'A=1\n' >"$HOME/.config/media/media.env"
+chmod 644 "$HOME/.config/media/media.env"
+out=$("$S" check || true)
+expect "check flags media.env readable by others" '[[ $out == *"media.env can be read by others"* ]]'
 
-"$REPO/terminal/bin/secrets" push "$HOME/Documents/Unimed/Envs/vpn.env" >/dev/null
-expect "push stores the content" 'cmp -s "$HOME/Documents/Unimed/Envs/vpn.env" "$VAULT/dotfiles/Documents/Unimed/Envs/vpn.env"'
-expect "check passes after push" '"$REPO/terminal/bin/secrets" check'
-
-rm "$HOME/Documents/TEAjudo/Env/api.env"
-out=$("$REPO/terminal/bin/secrets" check || true)
-expect "check flags a vault file missing here" '[[ $out == *"Documents/TEAjudo/Env/api.env is in the vault but missing here"* ]]'
+mv "$key" "$T/key.bak"
+out=$("$S" check || true)
+expect "check points to the vault when the key is missing" '[[ $out == *"age (dotfiles)"* ]]'
+expect "run fails without the key" '! "$S" run -- true 2>/dev/null'
 
 exit "$fail"

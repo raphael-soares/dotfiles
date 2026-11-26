@@ -3,7 +3,7 @@ name: cofre
 description: >
   Use para o cofre Bitwarden do dono: organizar itens e pastas, achar
   duplicados, guardar senha, token ou chave nova, usar um segredo num comando,
-  e os arquivos .env dos dotfiles (secrets pull/push/check). Não use para
+  e os segredos de ambiente dos dotfiles (sops, secrets run/check). Não use para
   segredo de outra pessoa ou de outro cofre.
 ---
 
@@ -14,7 +14,7 @@ O cofre é o Bitwarden do dono. Três ferramentas, nesta ordem de preferência:
 | Ferramenta | Para quê |
 |---|---|
 | `vault` | Organizar, guardar e usar segredo. A listagem nunca mostra senha, nota, campo nem TOTP |
-| `secrets` | Arquivos `.env` e de config que moram no cofre, pasta `dotfiles` |
+| `secrets` | Segredos de ambiente do dono, criptografados com sops em `secrets/*.env` dos dotfiles |
 | MCP `bitwarden` | Só o que o `vault` não faz (anexo, Send, item de cartão ou identidade) |
 
 ## Regra de ouro
@@ -34,7 +34,8 @@ modelo, fora do PC do dono.
 
 - `vault` e o MCP abrem uma janela pedindo a senha mestra. Só o dono digita.
   Com o cofre trancado, diga que a janela vai abrir e espere.
-- `rbw` (usado por `secrets` e `vault run`) fica destravado por 8 h.
+- `rbw` (usado por `vault run`) fica destravado por 8 h. `secrets` não pede
+  senha: a chave age fica em `~/.config/sops/age/keys.txt`.
 - `bw` sem login na máquina: peça ao dono para rodar `bw login` uma vez.
 
 ## Organizar
@@ -55,8 +56,11 @@ compara: pergunte ao dono qual fica.
   A senha gerada não aparece; o dono pega no app.
 - Token que está numa variável ou arquivo: `--from-env VAR` ou
   `--from-file caminho`. Nunca cole o valor num comando.
-- Arquivo `.env` ou de config: `secrets push <arquivo>`. Ele entra na pasta
-  `dotfiles` com o caminho relativo à home como nome.
+- Variável de ambiente do dono (token pessoal, VPN, mídia): o dono roda
+  `sops edit secrets/personal.env`. Para importar de um arquivo sem ver o
+  valor: `sops encrypt --filename-override secrets/personal.env --input-type dotenv --output-type dotenv arquivo`.
+  Segredo de projeto de código não entra aqui nem no cofre: fica no `.env`
+  do projeto.
 
 ## Usar com permissão
 
@@ -71,11 +75,10 @@ vault run "Servidor X" --field username DB_USER -- ...
 A saída do comando pode ecoar o segredo (`env`, `--verbose`, `set -x`):
 não rode comando assim com segredo injetado.
 
-## Arquivos .env
+## Segredos de ambiente
 
-- `secrets pull`: baixa tudo da pasta `dotfiles` com permissão 600 (o deploy
-  roda).
-- `secrets check`: acusa arquivo legível por outros, fora do cofre ou
-  faltando. A conferência diária da mídia (`media-drift`) também roda.
-- `.env` de projeto: `.envrc` no projeto com `dotenv ~/Documents/TEAjudo/Env/api-local.env`,
-  depois `direnv allow`.
+- `secrets run -- comando`: roda o comando com `secrets/personal.env` como
+  variáveis. Não rode `sops decrypt` nem `secrets run -- env` com a saída
+  visível.
+- `secrets check`: acusa chave age ausente ou arquivo legível por outros. O
+  deploy e a conferência diária da mídia (`media-drift`) rodam.

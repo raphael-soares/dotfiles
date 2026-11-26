@@ -16,10 +16,12 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -q
-          sudo apt-get install -yq jq lua5.4 ffmpeg
+          sudo apt-get install -yq jq lua5.4 ffmpeg age
           sudo curl -sSfL -o /usr/local/bin/dotter \
             https://github.com/SuperCuber/dotter/releases/download/v0.13.5/dotter-linux-x64-musl
-          sudo chmod +x /usr/local/bin/dotter
+          sudo curl -sSfL -o /usr/local/bin/sops \
+            https://github.com/getsops/sops/releases/download/v3.13.3/sops-v3.13.3.linux.amd64
+          sudo chmod +x /usr/local/bin/dotter /usr/local/bin/sops
       - run: bash tests/machines.sh arch
       - run: bash tests/machines.sh fedora
       - run: bash tests/missing.sh

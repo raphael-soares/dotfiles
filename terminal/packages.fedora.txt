@@ -13,3 +13,4 @@ fastfetch
 rbw
 direnv
 zenity
+age

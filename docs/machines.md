@@ -90,23 +90,23 @@ cable does:
 
 ## Secrets
 
-Secret files never enter the repo. Each one is an item in the Bitwarden folder
-`dotfiles`: the item name is its path under `$HOME` and the notes hold the
-content. `secrets` (in `terminal/bin`, on both machines) moves them with `rbw`:
+The owner's environment secrets (personal tokens, the VPN, the media stack) live
+encrypted with sops and age in `secrets/*.env`: `personal.env` for the shell and
+the VPN, `media.env` for the media stack. Only values are encrypted; the key names
+stay readable. The age key is `~/.config/sops/age/keys.txt` (mode 600), the same
+on both machines, backed up in the vault item `age (dotfiles)`; `missing.sh
+terminal` prints how to restore it.
 
-- `secrets setup` once per machine: email, 8 hour unlock, `rbw` and `bw` login;
-- `secrets pull` writes every item to its path with mode 600 (the deploy runs
-  it);
-- `secrets push <file>` stores a file in the vault (new or changed);
-- `secrets check` needs no unlocked vault and reports a secret file others can
-  read, one not in the vault (`~/.config/secrets/*`, `~/.config/media/media.env`,
-  `~/*/Env/*.env`, `~/*/Envs/*.env`) or one missing here; `media-drift` runs it.
+- `sops edit secrets/personal.env` adds or changes a value;
+- `secrets run -- <command>` runs the command with `personal.env` as variables
+  (`vpn` and the `gemini` alias use it; the bashrc never decrypts at shell start);
+- `media-deploy` decrypts `media.env` to `~/.config/media/media.env` (mode 600)
+  and, when it generates a key, encrypts it back for a commit;
+- `secrets check` reports a missing age key or a secret file others can read; the
+  deploy and `media-drift` run it.
 
-`~/.config/secrets/shell.env` is loaded by the bashrc (keep it to keys every
-shell needs). The VPN reads `~/Documents/Unimed/Envs/vpn.env`. A project loads its own
-`.env` with direnv (`.envrc` with `dotenv ~/Documents/TEAjudo/Env/api-local.env`). The
-`Env` and `Envs` folders are not synced to Google Drive. `~/.bash_profile.local`
-stays a local file.
+Code projects keep their own gitignored `.env` and never go through `secrets`
+or the vault. `~/.bash_profile.local` stays a local file.
 
 `vault` (also `terminal/bin`) is the vault for people and agents: `ls`,
 `folders` and `dupes` print metadata only, `mv`/`rename`/`rm` organize, `add`

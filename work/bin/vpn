@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 # Fortinet SSL VPN through NetworkManager (networkmanager-fortisslvpn plugin).
-# Everything company-specific comes from $VPN_ENV (default ~/Documents/Unimed/Envs/vpn.env, kept in the
-# Bitwarden vault by `secrets`): VPN_NAME, VPN_HOST, VPN_PORT, VPN_USER, VPN_PASSWORD and the
-# optional VPN_DNS and VPN_DNS_SEARCH (internal DNS and "~" suffixes for split DNS).
+# Everything company-specific comes from secrets/personal.env (sops) through `secrets run`: VPN_NAME,
+# VPN_HOST, VPN_PORT, VPN_USER, VPN_PASSWORD and the optional VPN_DNS and VPN_DNS_SEARCH (internal
+# DNS and "~" suffixes for split DNS).
 # Usage: vpn [up|down|status]
 
 set -euo pipefail
 
-VPN_ENV=${VPN_ENV:-$HOME/Documents/Unimed/Envs/vpn.env}
-if [[ -f $VPN_ENV ]]; then
-    # shellcheck source=/dev/null
-    source "$VPN_ENV"
+if [[ -z ${VPN_HOST:-} && -z ${VPN_SECRETS_LOADED:-} && -f ${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt} ]]; then
+    VPN_SECRETS_LOADED=1 exec secrets run -- "$0" "$@"
 fi
 
 CONN_NAME="${VPN_NAME:-VPN}"
@@ -26,7 +24,7 @@ require_env() {
         [[ -z "${!var:-}" ]] && missing+=("$var")
     done
     if [[ ${#missing[@]} -gt 0 ]]; then
-        echo "Missing from $VPN_ENV: ${missing[*]}" >&2
+        echo "Missing from secrets/personal.env (sops edit): ${missing[*]}" >&2
         exit 1
     fi
 }
@@ -67,7 +65,7 @@ ensure_connection() {
     # push on the phone, autoconnect would raise a notification you did not ask for.
     nmcli connection modify "$CONN_NAME" connection.autoconnect no
 
-    # The password always comes fresh from $VPN_ENV at this point, it does not depend on
+    # The password always comes fresh from secrets/personal.env at this point, it does not depend on
     # what is cached in the secret agent (KWallet/gnome-keyring).
     nmcli connection modify "$CONN_NAME" vpn.secrets "password=${VPN_PASSWORD}"
 }

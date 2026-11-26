@@ -7,6 +7,10 @@ trap 'rm -rf "$T"' EXIT
 export HOME=$T/home
 mkdir -p "$HOME"
 export MEDIA_LOG=$T/media.log
+mkdir -p "$T/stub"
+printf '#!/bin/sh\nexit 1\n' >"$T/stub/sops"
+chmod +x "$T/stub/sops"
+export PATH=$T/stub:$PATH
 
 MEDIA_DEPLOY_LIB=1 source "$REPO/media/bin/media-deploy" "$REPO"
 
