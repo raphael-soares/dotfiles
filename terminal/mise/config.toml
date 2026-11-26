@@ -1,7 +1,12 @@
+[settings]
+trusted_config_paths = ["~/Code", "~/.workmux"]
+idiomatic_version_file_enable_tools = ["node"]
+
 [tools]
 node = "22"
 python = "3.14"
 java = "corretto-26"
+maven = "3.9"
 lua = "5.5"
 "npm:@bitwarden/cli" = "latest"
 typst = "0.15"
