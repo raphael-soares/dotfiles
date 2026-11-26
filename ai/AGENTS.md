@@ -81,8 +81,8 @@ sem mexer no syncfast.
 
 | Área | Conteúdo | Alcance |
 |---|---|---|
-| `~/Documents/Personal` | documentos, currículo, finanças, identidade, notas, arquivo de `.torrent` | compartilhada |
-| `~/Documents/Udesc` | faculdade, padrão de disciplina em `~/Documents/Udesc/README.md` | compartilhada |
+| `~/Documents/Personal` | documentos, currículo, finanças, identidade, arquivo de `.torrent` | compartilhada |
+| `~/Documents/Udesc` | faculdade: disciplinas em `Courses/`, o que é da universidade na raiz; padrão em `~/Documents/Udesc/README.md` | compartilhada |
 | `~/Documents/Unimed` | trabalho: docs, marca, identidade | compartilhada |
 | `~/Documents/TEAjudo` | startup: jurídico, comercial, marca, gravações; `Env/` fica fora do sync | compartilhada |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
