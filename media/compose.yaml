@@ -1,4 +1,4 @@
-# Run through media-compose, which exports the MEDIA_* ids read below.
+# Run through media-compose, which exports the MEDIA_* ids and the values of media.env read below.
 name: media
 
 x-service: &service
@@ -7,13 +7,9 @@ x-service: &service
   networks: [media]
   security_opt: [label=disable]
 
-# raw: the values reach the container as written, like systemd's EnvironmentFile did.
-x-env: &env
-  env_file: [{path: "${HOME}/.config/media/media.env", format: raw}]
-
 services:
   jellyfin:
-    <<: [*service, *env]
+    <<: *service
     container_name: jellyfin
     image: docker.io/jellyfin/jellyfin:latest
     user: ${MEDIA_UID}:${MEDIA_GID}
@@ -28,7 +24,7 @@ services:
       - ${HOME}/.cache/media/jellyfin:/cache
 
   radarr:
-    <<: [*service, *env]
+    <<: *service
     container_name: radarr
     image: lscr.io/linuxserver/radarr:latest
     environment:
@@ -36,6 +32,7 @@ services:
       PUID: ${MEDIA_UID}
       PGID: ${MEDIA_GID}
       RADARR__AUTH__METHOD: External
+      RADARR__AUTH__APIKEY: ${RADARR__AUTH__APIKEY:-}
     ports: ["7878:7878"]
     extra_hosts: ["host.docker.internal:host-gateway"]
     volumes:
@@ -43,7 +40,7 @@ services:
       - ${HOME}/.local/share/media/radarr:/config
 
   sonarr:
-    <<: [*service, *env]
+    <<: *service
     container_name: sonarr
     image: lscr.io/linuxserver/sonarr:latest
     environment:
@@ -51,6 +48,7 @@ services:
       PUID: ${MEDIA_UID}
       PGID: ${MEDIA_GID}
       SONARR__AUTH__METHOD: External
+      SONARR__AUTH__APIKEY: ${SONARR__AUTH__APIKEY:-}
     # 8989 on the host belongs to Spotifast's Spotify login redirect.
     ports: ["8990:8989"]
     extra_hosts: ["host.docker.internal:host-gateway"]
@@ -59,7 +57,7 @@ services:
       - ${HOME}/.local/share/media/sonarr:/config
 
   prowlarr:
-    <<: [*service, *env]
+    <<: *service
     container_name: prowlarr
     image: lscr.io/linuxserver/prowlarr:latest
     environment:
@@ -67,13 +65,14 @@ services:
       PUID: ${MEDIA_UID}
       PGID: ${MEDIA_GID}
       PROWLARR__AUTH__METHOD: External
+      PROWLARR__AUTH__APIKEY: ${PROWLARR__AUTH__APIKEY:-}
     ports: ["127.0.0.1:9696:9696"]
     volumes:
       - ${HOME}/.local/share/media/prowlarr:/config
       - ${HOME}/.config/media/prowlarr-definitions:/config/Definitions/Custom:ro
 
   bazarr:
-    <<: [*service, *env]
+    <<: *service
     container_name: bazarr
     image: lscr.io/linuxserver/bazarr:latest
     environment:
@@ -86,7 +85,7 @@ services:
       - ${HOME}/.local/share/media/bazarr:/config
 
   flaresolverr:
-    <<: [*service, *env]
+    <<: *service
     container_name: flaresolverr
     image: ghcr.io/flaresolverr/flaresolverr:latest
     environment:
@@ -117,7 +116,7 @@ services:
 
   # Not a daemon: configarr.service runs it on its timer (media-compose run --rm configarr).
   configarr:
-    <<: [*service, *env]
+    <<: *service
     container_name: configarr
     image: ghcr.io/raydak-labs/configarr:latest
     profiles: [manual]
@@ -126,6 +125,11 @@ services:
     environment:
       TZ: America/Sao_Paulo
       CONFIGARR_ENFORCE_CONFIG_VALIDATION: "true"
+      RADARR__AUTH__APIKEY: ${RADARR__AUTH__APIKEY:-}
+      SONARR__AUTH__APIKEY: ${SONARR__AUTH__APIKEY:-}
+      PROWLARR__AUTH__APIKEY: ${PROWLARR__AUTH__APIKEY:-}
+      QBITTORRENT_WEBUI_PASSWORD: ${QBITTORRENT_WEBUI_PASSWORD:-}
+      JELLYFIN_TOKEN: ${JELLYFIN_TOKEN:-}
       STOP_ON_ERROR: "true"
       MEDIA_MOVIES: ${HOME}/Media/Movies
       MEDIA_SHOWS: ${HOME}/Media/Shows

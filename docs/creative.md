@@ -86,12 +86,17 @@ apps above it uses these tools on the desktop:
 
 The container restarts with Docker (`restart: unless-stopped`) and starts idle:
 the model loads on the first request and leaves the GPU after 10 idle minutes.
-Bring it up once with `docker compose -f ~/.config/audiocpp/compose.yaml up -d`.
+Bring it up once with `docker compose -f ~/.config/audiocpp/compose.yaml up -d`
+(Docker and its group come from the `media` module; `missing.sh creative` only checks that `docker` exists).
 It needs the model in `~/.cache/audiocpp/models` (1.6 GB, printed by
 `missing.sh creative`). omp's speech role points at it with an empty fallback
 chain, so a stopped server makes `tts` fail instead of falling back to Phonon,
 which only speaks English. On the laptop there is no server and `tts` fails the
 same way.
+
+A failed `creative-backup` run is written to the media log like a failed
+`media-*` unit (`OnFailure=media-failure@%n.service`), so the unit depends on
+the `media` module, which the same PC deploys.
 
 `narrar.py` posts each plano's fala to the OpenAI-style speech endpoint with
 `speed` 0.9 (at the default speed the last sound of a sentence gets cut) and

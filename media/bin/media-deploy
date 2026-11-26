@@ -94,18 +94,34 @@ link() {
   fi
 }
 
+# prune_links <dir> <depth> <glob>...: removes the dangling links under <dir> whose target matches a glob.
+prune_links() {
+  local dir=$1 depth=$2 rel glob
+  local -a match=()
+  shift 2
+  for glob; do match+=(-o -lname "$glob"); done
+  while IFS= read -r rel; do
+    apply "remove $rel (its file left the repo)" || continue
+    rm "$rel"
+    log "removed $rel"
+  done < <(find "$dir" -maxdepth "$depth" -xtype l \( "${match[@]:1}" \) 2>/dev/null)
+}
+
+# The links are the deploy's own when they point into media/ of this repo or of one of its old worktrees;
+# under systemd/user also the enable links in *.wants, which point at the unit links.
 link_files() {
   local repo pair src dest rel
+  local -a owned extra
   repo=$(readlink -f "$REPO")/media
+  owned=("$repo/*" "$HOME/.workmux/dotfiles/*/media/*")
   for pair in "${LINK_PATHS[@]}"; do link "$repo/${pair%%:*}" "$HOME/${pair#*:}"; done
+  prune_links "$HOME/.config/media" 1 "${owned[@]}"
   for pair in "${LINK_FILES[@]}"; do
     src=$repo/${pair%%:*} dest=$HOME/${pair#*:}
     while IFS= read -r rel; do link "$src/$rel" "$dest/$rel"; done < <(cd "$src" && find . -type f -printf '%P\n')
-    while IFS= read -r rel; do
-      apply "remove $rel (its file left the repo)" || continue
-      rm "$rel"
-      log "removed $rel"
-    done < <(find "$dest" -maxdepth 2 -xtype l -lname "$src/*" 2>/dev/null)
+    extra=()
+    [[ ${pair%%:*} == systemd ]] && extra=("$dest/*")
+    prune_links "$dest" 2 "${owned[@]}" "${extra[@]}"
   done
 }
 
@@ -365,7 +381,7 @@ main() {
   set_magnet_default
 }
 
-# Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every hour.
+# Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr every day.
 check() {
   local problems
   link_files

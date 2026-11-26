@@ -46,6 +46,13 @@ done < <(sed -n 's|^ *- \${HOME}\([^:]*\):.*|\1|p' "$REPO/media/compose.yaml" | 
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
   MEDIA_UID=1000 MEDIA_GID=1000 MEDIA_RENDER_GID=105 MEDIA_VIDEO_GID=39 \
     docker compose -f "$REPO/media/compose.yaml" --profile manual config -q || fail "compose.yaml is not valid"
+  MEDIA_UID=1000 MEDIA_GID=1000 MEDIA_RENDER_GID=105 MEDIA_VIDEO_GID=39 \
+    RADARR__AUTH__APIKEY=x SONARR__AUTH__APIKEY=x PROWLARR__AUTH__APIKEY=x QBITTORRENT_WEBUI_PASSWORD=x JELLYFIN_TOKEN=x \
+    docker compose -f "$REPO/media/compose.yaml" --profile manual config --format json |
+    jq -e '.services | map_values([(.environment // {}) | keys[] | select(test("APIKEY$|PASSWORD|TOKEN"))])
+      | .jellyfin == [] and .bazarr == [] and .flaresolverr == [] and .radarr == ["RADARR__AUTH__APIKEY"]
+      and .sonarr == ["SONARR__AUTH__APIKEY"] and .prowlarr == ["PROWLARR__AUTH__APIKEY"] and (.configarr | length) == 5' >/dev/null ||
+    fail "a service gets media.env values it does not read"
 fi
 
 mkdir "$T/bin"
@@ -85,6 +92,31 @@ grep -q "differs: remove $HOME/.local/bin/media-removed" <<<"$report" || fail "-
 link_files 2>/dev/null
 [[ -L $HOME/.local/bin/mediactl && ! -L $HOME/.local/bin/media-removed ]] || fail "link_files did not restore and prune links"
 [[ $(cat "$HOME/.local/bin/media-backup") == mine ]] || fail "link_files replaced a file that is not a link"
+
+# links a removed repo file or an old worktree left behind, and one that is not the deploy's
+old=$HOME/.workmux/dotfiles/media-proxy/media
+ln -s "$old/caddy" "$HOME/.config/media/caddy"
+ln -s "$REPO/media/gone" "$HOME/.config/media/gone"
+ln -s "$old/bin/media-names" "$HOME/.local/bin/media-names"
+ln -s "$old/systemd/media-names.service" "$HOME/.config/systemd/user/media-names.service"
+mkdir -p "$HOME/.config/systemd/user/default.target.wants"
+ln -s "$HOME/.config/systemd/user/media-names.service" "$HOME/.config/systemd/user/default.target.wants/media-names.service"
+ln -s "$T/elsewhere" "$HOME/.local/bin/not-ours"
+report=$(CHECK=1 link_files 2>&1)
+grep -q "differs: remove $HOME/.config/media/caddy" <<<"$report" || fail "--check does not report a dangling link in ~/.config/media"
+[[ -L $HOME/.config/media/caddy ]] || fail "--check removed a link"
+link_files 2>/dev/null
+for gone in .config/media/caddy .config/media/gone .local/bin/media-names .config/systemd/user/media-names.service \
+  .config/systemd/user/default.target.wants/media-names.service; do
+  [[ ! -L $HOME/$gone ]] || fail "link_files left the dangling link ~/$gone"
+done
+[[ -L $HOME/.local/bin/not-ours ]] || fail "link_files removed a dangling link that is not the deploy's"
+[[ -L $HOME/.config/media/compose.yaml ]] || fail "link_files pruned a live link"
+
+unset RADARR__AUTH__APIKEY
+leak=$( (docker() { printf '%s' "${RADARR__AUTH__APIKEY:-unset}"; } && compose) )
+[[ $leak == "$(sed -n 's/^RADARR__AUTH__APIKEY=//p' "$env_file")" ]] || fail "compose does not hand media.env values to compose.yaml"
+[[ -z ${RADARR__AUTH__APIKEY:-} ]] || fail "compose leaked a media.env value into the caller"
 
 # fake_arr <done>: Radarr and Sonarr before (0) or after (1) configure_arrs, recording writes in $T/arr.
 fake_arr() {

@@ -53,6 +53,7 @@ old "$H/Pictures/2026-11-26-101010_hyprshot.png"
 old "$H/Pictures/photo.jpg"
 old "$H/Pictures/Screenshots/keep.png"
 printf x >"$H/Downloads/fresh.torrent"
+mkdir -p "$H/Code/TEAjudo/teajudo/.git"
 
 # dry-run reports and moves nothing
 OUT=$("$TRIAGE" run --dry-run)
@@ -108,6 +109,13 @@ old "$H/Downloads/game.nsp" "second"
 [[ $(<"$T/remote/Games/Switch/game (2).nsp") == second ]] || fail "remote file was overwritten or not suffixed"
 [[ $(<"$T/remote/Games/Switch/game.nsp") == nsp-data ]] || fail "remote game.nsp changed"
 
+# patient csv without the TEAjudo checkout: nothing to receive it, so it stays pending
+rmdir "$H/Code/TEAjudo/teajudo/.git"
+old "$H/Downloads/pac2.csv" $'Paciente,Idade\n1,2\n'
+[[ $("$TRIAGE" pending | grep -c 'pac2.csv') == 1 ]] || fail "a patient csv is not pending without the TEAjudo checkout"
+mkdir "$H/Code/TEAjudo/teajudo/.git"
+rm "$H/Downloads/pac2.csv"
+
 # move for the agent
 old "$H/Downloads/x.txt" "x1"
 OUT=$("$TRIAGE" move "$H/Downloads/x.txt" "$H/Drive/Personal/Archive/")
@@ -132,6 +140,14 @@ gone "$H/Drive/Personal/Torrents/b (2).torrent"
 [[ $(<"$H/Downloads/x.txt") == x2 ]] || fail "undo restored the wrong x.txt"
 [[ $(<"$H/Drive/Personal/Archive/x.txt") == x1 ]] || fail "undo moved the wrong archive file"
 [[ $(jqe '[.skipped[] | select(.to | startswith("fedora:"))] | length') == 2 ]] || fail "remote moves should be skipped by undo: $OUT"
+
+# on the games host itself the game is moved locally, without ssh
+rm "$T/fedora_up"
+old "$H/Downloads/local.nsp" "local-data"
+OUT=$(TRIAGE_GAMES_HOST=$(uname -n) "$TRIAGE" run)
+gone "$H/Downloads/local.nsp"
+[[ $(<"$H/Games/Switch/local.nsp") == local-data ]] || fail "game not moved locally on the games host"
+[[ $(jqe '.moved[] | select(.to | endswith("local.nsp")) | .rule') == switch ]] || fail "local game move not reported as switch: $OUT"
 
 "$TRIAGE" undo 1999-01-01 2>/dev/null && fail "undo of a day without a log succeeded"
 "$TRIAGE" bogus 2>/dev/null && fail "an unknown command succeeded"

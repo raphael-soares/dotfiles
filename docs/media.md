@@ -44,7 +44,7 @@ the user in the `docker` group, which `missing.sh media` asks for.
 | What | Path |
 |---|---|
 | Compose file | `media/compose.yaml` → `~/.config/media/compose.yaml` |
-| Secrets (API keys, OpenSubtitles login) | `~/.config/media/media.env`, mode 600, generated on first deploy |
+| Secrets (API keys, OpenSubtitles login) | `~/.config/media/media.env`, mode 600, decrypted from `secrets/media.env` by `media-deploy`, which also generates the missing keys |
 | App state and databases | `~/.local/share/media/<service>` |
 | Caches (Jellyfin transcodes, TRaSH repos) | `~/.cache/media` |
 | Downloads | `~/Media/Downloads/{Movies,Shows}` |
@@ -98,7 +98,7 @@ the user in the `docker` group, which `missing.sh media` asks for.
 older `compose.yaml`), qBittorrent, Bazarr, Radarr
 or Jellyfin setting that is not what the repo says, and exits 1 when there is
 any (Configarr is left out: its timer re-applies Radarr, Sonarr and Prowlarr
-every hour). It also prints a `media: unhealthy:` line for each problem a
+every day). It also prints a `media: unhealthy:` line for each problem a
 service reports (a Radarr, Sonarr or Prowlarr health warning, a paused Bazarr
 subtitle site, qBittorrent offline, a stopped container or a failed unit) and exits 1 for those too.
 `media-drift` runs it daily, so either lands in the media log.
@@ -147,16 +147,21 @@ Sonarr unmonitor what lost its file and remove empty folders, so it is not
 fetched again; the torrent keeps seeding and leaves through the rule above.
 
 `media-backup` copies the databases (`sqlite3 .backup`, safe while the
-services run), the rest of each service's settings, `media.env` and
-qBittorrent's config and torrent state into one `media-YYYY-MM-DD.tar.zst` on
-Google Drive (`Raphael:Backups/media`, through syncfast's rclone config) and
-deletes archives older than 30 days. To restore on a fresh install: deploy,
-stop the stack (`media-compose stop`), `rclone copy` the archive down, unpack it, put each
-`.db`/`.sqlite3` back under `~/.local/share/media/<service>`, untar
-`files.tar` there and `qbittorrent.tar` in `~`, copy `media.env` to
-`~/.config/media/`, then `media-compose up -d`. `media-restore-test` (weekly)
-downloads the newest archive, unpacks it and checks every database with
-`PRAGMA integrity_check`, so a broken backup fails its unit.
+services run), the rest of each service's settings and qBittorrent's config
+and torrent state into one archive. Those files hold API keys and logins, so
+the archive is encrypted with `age` to the recipient in `~/.dotfiles/.sops.yaml`
+before it leaves the PC: `media-YYYY-MM-DD.tar.zst.age` on Google Drive
+(`Raphael:Backups/media`, through syncfast's rclone config); archives older
+than 30 days are deleted. `media.env` is not in it: it comes back from
+`secrets/media.env` when `media-deploy` runs. To restore on a fresh install
+(`~/.config/sops/age/keys.txt` must be on the machine, `secrets` needs it too):
+deploy, stop the stack (`media-compose stop`), `rclone copy` the archive
+down, `age -d -i ~/.config/sops/age/keys.txt media-*.tar.zst.age | zstd -dc | tar -x`,
+put each `.db`/`.sqlite3` back under `~/.local/share/media/<service>`, untar
+`files.tar` there and `qbittorrent.tar` in `~`, then `media-compose up -d`.
+`media-restore-test` (weekly) downloads the newest archive, decrypts and
+unpacks it and checks every database with `PRAGMA integrity_check`, so a
+broken backup, or one the key cannot open, fails its unit.
 
 `media-watchdog` restarts a service whose web page stopped answering for two
 checks in a row (a crashed one is restarted by Docker's restart policy), reopens

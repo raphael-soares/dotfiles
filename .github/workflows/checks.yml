@@ -16,7 +16,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -q
-          sudo apt-get install -yq jq lua5.4 ffmpeg age
+          sudo apt-get install -yq jq lua5.4 ffmpeg age zstd sqlite3
           sudo curl -sSfL -o /usr/local/bin/dotter \
             https://github.com/SuperCuber/dotter/releases/download/v0.13.5/dotter-linux-x64-musl
           sudo curl -sSfL -o /usr/local/bin/sops \
@@ -29,6 +29,8 @@ jobs:
       - run: bash tests/media_deploy.sh
       - run: bash tests/media_cleanup.sh
       - run: bash tests/media_torrents.sh
+      - run: bash tests/media_backup.sh
+      - run: bash tests/triage.sh
       - run: bash tests/creative_deploy.sh
       - run: python3 tests/craft_mcp.py
       - run: python3 tests/video_tools.py

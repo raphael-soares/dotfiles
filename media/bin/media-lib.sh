@@ -11,12 +11,19 @@ JF=http://127.0.0.1:8096
 
 env_get() { sed -n "s/^$1=//p" "$ENV_FILE"; }
 
-# compose <args>: docker compose on the media stack, with the ids compose.yaml reads.
-compose() {
+# compose <args>: docker compose on the media stack, with the ids and the media.env values compose.yaml
+# hands to each service (a subshell, so the secrets do not leak into the script's environment).
+compose() (
+  local line
+  if [[ -r $ENV_FILE ]]; then
+    while IFS= read -r line || [[ -n $line ]]; do
+      if [[ $line =~ ^[A-Z][A-Z0-9_]*= ]]; then export "${line%%=*}=${line#*=}"; fi
+    done <"$ENV_FILE"
+  fi
   MEDIA_UID=$(id -u) MEDIA_GID=$(id -g) MEDIA_RENDER_GID=$(getent group render | cut -d: -f3) \
     MEDIA_VIDEO_GID=$(getent group video | cut -d: -f3) \
     docker compose -f "$HOME/.config/media/compose.yaml" "$@"
-}
+)
 
 running() { [[ $(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null) == true ]]; }
 

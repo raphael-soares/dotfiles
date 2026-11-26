@@ -4,6 +4,11 @@ set -euo pipefail
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/media-lib.sh"
 REMOTE=${MEDIA_BACKUP_REMOTE:-Raphael:Backups/media}
 KEEP_DAYS=${MEDIA_BACKUP_KEEP_DAYS:-30}
+SOPS_CONFIG=${MEDIA_SOPS_CONFIG:-$HOME/.dotfiles/.sops.yaml}
+
+# The archive holds API keys and logins, so it only leaves this PC encrypted to the dotfiles' age key.
+recipient=$(sed -n 's/^ *age: *\(age1[0-9a-z]*\).*/\1/p' "$SOPS_CONFIG" 2>/dev/null | head -1) || true
+[[ -n $recipient ]] || { echo "media-backup: no age recipient in $SOPS_CONFIG" >&2; exit 1; }
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -23,8 +28,8 @@ tar -C "$STATE" -cf "$work/media/files.tar" \
 tar -C "$HOME" -cf "$work/media/qbittorrent.tar" --exclude=ipc-socket --exclude=lockfile --exclude=logs \
   .config/qBittorrent .local/share/qBittorrent
 
-archive=$work/media-$(date +%F).tar.zst
-tar -C "$work" -cf - media | zstd -q -19 -T0 -o "$archive"
+archive=$work/media-$(date +%F).tar.zst.age
+tar -C "$work" -cf - media | zstd -q -19 -T0 | age -r "$recipient" -o "$archive"
 rclone copy "$archive" "$REMOTE"
 rclone delete --min-age "${KEEP_DAYS}d" "$REMOTE"
 log "uploaded $(basename "$archive") ($(du -h "$archive" | cut -f1)) to $REMOTE"

@@ -26,8 +26,9 @@ Usage:
 
 Rules (rule name in the log): *.torrent -> Drive/Personal/Torrents (torrent);
 screenshots -> Pictures/Screenshots (screenshot); *.csv with a "Paciente" column ->
-Code/TEAjudo/teajudo/attachments/inbox (csv-paciente); *.nsp *.xci *.nsz -> rsync to
-$TRIAGE_GAMES_HOST:Games/Switch/ when the host answers (switch).
+Code/TEAjudo/teajudo/attachments/inbox (csv-paciente), only where Code/TEAjudo/teajudo/.git
+exists; *.nsp *.xci *.nsz -> Games/Switch (switch): a local move on the games host
+itself, else rsync to $TRIAGE_GAMES_HOST:Games/Switch/ when the host answers.
 Ignored: modified in the last 60 minutes, *.part *.crdownload *.tmp, hidden files,
 folders, symlinks. Nothing is ever overwritten or deleted. Files no rule decides,
 and games while the host is down, are pending.
@@ -94,6 +95,13 @@ games_up() {
     fi
   fi
   [[ $GAMES_UP == 1 ]]
+}
+
+# True on the games host itself, where Games/Switch is a plain folder.
+games_local() {
+  local me
+  me=$(uname -n)
+  [[ ${me%%.*} == "${GAMES_HOST%%.*}" ]]
 }
 
 remote() {
@@ -170,12 +178,16 @@ cmd_run() {
         continue
         ;;
       *.csv)
-        if csv_has_patient "$f"; then
+        if [[ -e $HOME_DIR/Code/TEAjudo/teajudo/.git ]] && csv_has_patient "$f"; then
           move_local "$f" "$HOME_DIR/Code/TEAjudo/teajudo/attachments/inbox" "$name" csv-paciente
           continue
         fi
         ;;
       *.nsp | *.xci | *.nsz)
+        if games_local; then
+          move_local "$f" "$HOME_DIR/$GAMES_DIR" "$name" switch
+          continue
+        fi
         if games_up && move_game "$f"; then
           continue
         fi

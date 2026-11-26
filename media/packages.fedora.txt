@@ -5,3 +5,6 @@ qbittorrent
 mkvtoolnix
 rclone
 sqlite
+zstd
+openssl
+age
