@@ -2,10 +2,9 @@
   "Movies": "~/Media/Downloads/Movies",
   "Shows": "~/Media/Downloads/Shows",
   "Books": "~/Media/Books",
-  "Mangas": "~/Media/Mangas",
-  "Games": "~/Games",
+  "Books/Mangas": "~/Media/Books/Mangas",
   "Games/PC": "~/Games/PC",
   "Games/Switch": "~/Games/Switch/Library",
-  "Games/PSP": "~/Games/ROMs/PSP",
-  "Games/PSX": "~/Games/ROMs/PSX"
+  "Games/ROMs/PSP": "~/Games/ROMs/PSP",
+  "Games/ROMs/PSX": "~/Games/ROMs/PSX"
 }

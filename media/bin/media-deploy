@@ -203,7 +203,10 @@ configure_qbittorrent() {
     [[ -z $hashes ]] || qbt /torrents/setAutoManagement -d "hashes=$hashes" -d enable=false
     qbt /torrents/removeCategories --data-urlencode "categories=$name"
     log "qbittorrent category $name removed"
-  done < <(jq -r --argjson w "$want" 'keys - ($w | keys) | .[]' <<<"$have")
+  # Removing a parent drops its subcategories and their torrents' category, so parents of a
+  # wanted subcategory (Games for Games/PC) stay.
+  done < <(jq -r --argjson w "$want" '($w | keys) as $k | keys - $k | .[]
+    | select(. as $n | $k | any(startswith($n + "/")) | not)' <<<"$have")
 }
 
 # Bazarr rewrites its config with every default on start, so the last render is compared, not the live file.

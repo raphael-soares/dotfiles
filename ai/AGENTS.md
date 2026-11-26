@@ -132,8 +132,9 @@ pasta XDG local.
 - `.torrent` vai para `~/Drive/Personal/Torrents`, nunca junto do conteúdo: o
   ponteiro sincroniza, o conteúdo não. O qBittorrent é o app desktop do PC de
   casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para lá e
-  cada categoria cai na pasta certa: `Books` e `Mangas` em `~/Media/<nome>`,
-  `Games/PC` e `Games/Switch` em `~/Games/<nome>`. Filme e série passam pelo
+  cada categoria cai na pasta de mesmo nome: `Books` e `Books/Mangas` em
+  `~/Media/Books`, `Games/PC`, `Games/Switch` e `Games/ROMs/<console>` em
+  `~/Games`. Filme e série passam pelo
   Radarr e pelo Sonarr: baixam em `~/Media/Downloads` e entram por hardlink em
   `~/Media/Movies` e `~/Media/Shows`. Categoria nova vai em
   `media/qbittorrent/categories.json`.
