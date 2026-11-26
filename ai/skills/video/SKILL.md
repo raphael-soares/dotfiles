@@ -2,9 +2,9 @@
 name: video
 description: >
   Use para fazer vídeo explicativo no PC fedora: aula a partir do material do
-  dono em ~/Documents/Udesc, vídeo de YouTube, animação de algoritmo ou estrutura de
+  dono em ~/Drive/Udesc, vídeo de YouTube, animação de algoritmo ou estrutura de
   dados, narração com voz sintética, miniatura; também para retomar ou mudar um
-  vídeo em ~/Creative/Projetos.
+  vídeo em ~/Creative/Projects.
 ---
 
 # Vídeo explicativo
@@ -92,7 +92,7 @@ motivo.
 - para cada bloco: o que a tela faz, com que técnica e com que motor (Manim,
   EffectCraft, imagem, VectorCraft); Manim só com o motivo dito
   (`oficio/manim.md#Quando usar`), nunca por hábito;
-- estilo visual: o estilo de `~/Creative/Estilos/` usado, adaptado ou novo;
+- estilo visual: o estilo de `~/Creative/Styles/` usado, adaptado ou novo;
   paleta e o sentido de cada cor; tipografia; objetos que voltam; textura;
 - voz: tom, ritmo, onde entram pausas;
 - som: ambiente, que momentos ganham efeito e por quê, música (só se o dono
@@ -105,7 +105,7 @@ ela leva também o mapa de termos (abaixo).
 
 Estilo novo se decide com o dono: proponha paleta, fonte e tom num `ask` (cores
 em hex, uma recomendação marcada), mostre um quadro e uma miniatura de exemplo
-e só salve em `~/Creative/Estilos/<nome>/` com aprovação.
+e só salve em `~/Creative/Styles/<nome>/` com aprovação.
 
 ### Mapa de termos
 
@@ -154,10 +154,10 @@ margem; o indentado abaixo dela não sai para o revisor.
 
 ## Peça
 
-Cada vídeo é uma peça em `~/Creative/Projetos/<projeto>/<peça>/`. O que é comum a
+Cada vídeo é uma peça em `~/Creative/Projects/<Área>/<projeto>/<peça>/`. O que é comum a
 várias peças de um projeto (kit de cenas, `arte/`, contrato) fica em
-`~/Creative/Projetos/<projeto>/kit/`. Estilos reaproveitáveis ficam em
-`~/Creative/Estilos/<nome>/`; o que acabou vai para `~/Creative/0-Archive/`.
+`~/Creative/Projects/<Área>/<projeto>/kit/`. Estilos reaproveitáveis ficam em
+`~/Creative/Styles/<nome>/`; o que acabou vai para `~/Creative/Archive/`.
 
 | Caminho | O quê |
 |---|---|
@@ -230,7 +230,7 @@ Valem em todo vídeo, qualquer que seja a direção:
   ebur128 -f null -`);
 - legenda em arquivo separado, nunca queimada;
 - música só se o dono pedir;
-- assets de terceiros só de `~/Creative/Biblioteca/` (leia o `README.md` e o
+- assets de terceiros só de `~/Creative/Library/` (leia o `README.md` e o
   `FONTES.md` do pacote); Humaaans leva "Humaaans, Pablo Stanley, CC BY 4.0"
   na descrição; pacote novo só com licença conferida e linha no `FONTES.md`.
 

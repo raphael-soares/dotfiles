@@ -30,7 +30,7 @@ fica dentro da pasta da peça, nunca em `/tmp`, que o Flatpak não enxerga.
    `som.md` da peça. `cenas/planos/<id>.eventos.json` lista quando cada animação
    acontece (plano e segundos dentro dele), para achar o momento; ele não diz
    que som pôr.
-4. Ambiente: tom de sala da Biblioteca em loop (`clip.loop {fill: true}`), bem
+4. Ambiente: tom de sala da Library em loop (`clip.loop {fill: true}`), bem
    baixo (perto de -32 dB).
 5. Música: `automation.write_range {track: "Musica", param: "volume", start,
    end, value}` abaixa nos trechos de fala (valor em dB).

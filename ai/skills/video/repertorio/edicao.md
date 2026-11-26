@@ -65,8 +65,8 @@ Quando evitar: estilo limpo e digital; e nunca forte a ponto de pesar sobre o
 texto.
 Como fazer aqui: textura do estilo em V2 e grão em V3, modo Sobreposição,
 opacidade perto de 35% e 8%.
-Referência: prática de acabamento em motion design; texturas da Biblioteca
-(`~/Creative/Biblioteca/texturas/`).
+Referência: prática de acabamento em motion design; texturas da Library
+(`~/Creative/Library/textures/`).
 
 ## Legenda à parte
 

@@ -1,7 +1,7 @@
 # EffectCraft
 
 Motion graphics: tipografia animada, títulos, cartões, colagem, ilustração da
-Biblioteca animada, composição com textura e luz.
+Library animada, composição com textura e luz.
 
 ## Quando usar
 
@@ -14,7 +14,7 @@ abertura. Mecanismo exato e diagrama ficam melhor no Manim (`oficio/manim.md`).
 Pelo MCP, sem janela: `open_project {new: true}` ou o modelo do estilo;
 `command_run comp.new {name, width: 1920, height: 1080, frameRate: 30,
 duration}`; camadas com `layer.newText`, `layer.newShape`, `layer.newSolid`,
-`file.import` (SVG e PNG da Biblioteca); `set_property` e `add_keyframe` para
+`file.import` (SVG e PNG da Library); `set_property` e `add_keyframe` para
 animar; `add_effect` para efeitos; `render_preview` para olhar. O dono pode
 acompanhar com `open_window`.
 
@@ -38,4 +38,4 @@ Apague o `<id>_RenderLog.txt` que o render deixa ao lado.
 ## Armadilhas
 
 - Texto fora da área segura: confira os quadros com `margem.py`.
-- Fonte só das instaladas ou da Biblioteca (`list_fonts`).
+- Fonte só das instaladas ou da Library (`list_fonts`).

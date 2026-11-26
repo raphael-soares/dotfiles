@@ -6,6 +6,6 @@
   "Games": "~/Games",
   "Games/PC": "~/Games/PC",
   "Games/Switch": "~/Games/Switch/Library",
-  "Games/PSP": "~/Games/PSP",
-  "Games/PSX": "~/Games/PSX"
+  "Games/PSP": "~/Games/ROMs/PSP",
+  "Games/PSX": "~/Games/ROMs/PSX"
 }

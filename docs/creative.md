@@ -74,7 +74,7 @@ reopening the app fixes it, from the menu or by asking the agent again.
 ## Video
 
 The `video` skill turns a topic and the owner's material into a narrated 16:9
-`.mp4` and a thumbnail, in `~/Creative/Projetos/<projeto>/<peça>/`. Besides the
+`.mp4` and a thumbnail, in `~/Creative/Projects/<Área>/<projeto>/<peça>/`. Besides the
 apps above it uses these tools on the desktop:
 
 | Tool | From | Used for |
@@ -105,8 +105,9 @@ are clones of two references generated once by voice design and kept in
 each preset's reference transcript and language; the skill reads the voice
 from the `- Voz:` line of the video's `video.md`.
 
-`~/Creative` holds `Biblioteca/` (third-party assets, music included), `Estilos/<nome>/`
-(own visual identities) and `Projetos/<projeto>/` with one folder per deliverable.
+`~/Creative` holds `Library/` (third-party assets, music included), `Styles/<nome>/`
+(own visual identities), `Projects/<Área>/<projeto>/` with one folder per deliverable,
+and `Archive/` for finished work.
 
 Every stage ends in a sketch the owner approves. The skill's `repertorio/`
 holds consolidated techniques the per-video direction picks from, and
@@ -124,3 +125,14 @@ FilmCraft. The scripts need only Python and ffmpeg (Manim for `planos.py`) and
 are tested by `tests/video_tools.py`. Storyboard stills come from the style's
 `Cena`, which saves one frame per plano and the scene's opening frame when
 Manim runs with `-s`.
+
+## Backup
+
+`~/Creative` and `~/Studio` live only on `fedora`, outside the `~/Drive` sync.
+`creative-backup` (timer `creative-backup.timer`, daily, enabled by
+`creative-deploy`) mirrors both to `Raphael:Backups/fedora/current/` and moves
+every file it replaces or deletes to `Raphael:Backups/fedora/old/<date>/`,
+kept for 30 days (`CREATIVE_BACKUP_KEEP_DAYS`). syncfast's own backup is not
+used because it refuses a destination inside the `~/Drive ↔ Raphael:` pair.
+To restore: `rclone copy Raphael:Backups/fedora/current/Creative ~/Creative`,
+and a deleted file from `old/<date>/`.

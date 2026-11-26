@@ -33,7 +33,7 @@ O que é: um ambiente quase inaudível por baixo de tudo, para o silêncio entre
 frases não soar como buraco.
 Quando usar: narração gravada ou sintética, que sem ambiente soa seca demais.
 Quando evitar: quando há música contínua; ela já preenche.
-Como fazer aqui: tom de sala da Biblioteca em loop, perto de -32 dB.
+Como fazer aqui: tom de sala da Library em loop, perto de -32 dB.
 Referência: NPR Training, "Campfire tales" (som ambiente para situar a cena).
 
 ## Som que chega antes

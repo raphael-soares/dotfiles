@@ -5,7 +5,7 @@ Imagem raster: texturas, fundo, tratamento de foto, composição para miniatura.
 ## Usos
 
 - Textura do estilo (papel, grão, poeira), 1920x1080, a partir de
-  `~/Creative/Biblioteca/texturas/`; salva no estilo (`~/Creative/Estilos/<nome>/`)
+  `~/Creative/Library/textures/`; salva no estilo (`~/Creative/Styles/<nome>/`)
   ou na peça.
 - Foto ou captura tratada para entrar numa cena (recorte, cor, contraste).
 - Fundo ou elemento raster da miniatura.

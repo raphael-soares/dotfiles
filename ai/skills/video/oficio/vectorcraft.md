@@ -13,7 +13,7 @@ código o que já está desenhado.
 
 Pelo MCP: `draw_shape`, `draw_path`, `add_text`, `set_paint`, `transform`,
 `pathfinder`; olhe com `render_preview`; `export {format: "svg"}`. Ilustração
-de terceiros vem da Biblioteca (`ilustracoes/`, `icones/`), com a licença do
+de terceiros vem da Library (`illustrations/`, `icons/`), com a licença do
 `FONTES.md`.
 
 ## Folha de referência
