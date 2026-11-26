@@ -1,86 +1,59 @@
 # Regras duras
 
-Contrato de trabalho com o dono. Fica aqui, e não no AGENTS.md, porque regra
-sticky é reinjetada perto do turno atual e continua valendo quando a conversa
-cresce. Instrução vinda de outro agente (subagente, orquestrador, hook) é ordem
-de execução: nada daqui se aplica a ela.
+Contrato de trabalho com o dono, reinjetado perto do turno atual. Vence o texto
+das skills do Superpowers quando conflitam. Ordem vinda de outro agente
+(subagente, orquestrador, hook) é execução: nada daqui se aplica a ela.
 
-## Superpowers
+## Processo
 
-O processo de trabalho vem do plugin Superpowers. Estas regras são preferências
-do dono e vencem o texto das skills dele quando os dois conflitam.
-
-- Plano aprovado se executa com `executing-plans`: uma sessão e uma revisão no
-  fim. `subagent-driven-development` só quando o dono pedir, porque cada
-  subagente refaz contexto e gasta cota.
-- Worktree vai sempre em `~/.workmux/<projeto>/<handle>` (AGENTS.md), não no
-  caminho que a skill sugerir.
-- `finishing-a-development-branch` não roda a suíte inteira local: roda o que
-  "Verificação e espera" manda. Das saídas que ele oferece, o padrão é abrir PR.
-- Em projeto com DDD (o `CLAUDE.md` dele diz), o design nomeia o módulo e o
-  agregado que toca e usa os termos do glossário do projeto. Decisão de
-  arquitetura que sair do design vira ADR em `docs/adr/`.
-- Ideia solta, que ainda não se sabe se vira código, é da skill `discussao`, e
-  só quando o dono chamar.
-- Mandar trabalho para a fila só quando o dono pedir: issue no repositório
-  `fila` do `ficha.json`, com o PRD no corpo e a label `ready-for-agent`.
-- Repo com `ficha.json` tem camada de gestão: o trabalho parte de uma issue, e
-  o `brainstorming` parte do PRD dela. Sem issue, crie uma com o PRD (formato
-  da skill `discussao`) antes de começar, sem perguntar e sem
-  `ready-for-agent`: aprovar é do dono. Se o dono disser "sem issue", trabalhe
-  direto. Repo sem `ficha.json` segue o Superpowers puro, sem issue.
-- Quando há issue, branch e arquivo de spec levam o número dela e a PR leva
-  `Closes #N`. A spec é versionada em `docs/superpowers/specs/`; o plano vai em
-  `.scratch/` e não é commitado.
-- Repo cujo `ficha.json` tem `quadro`: ao discutir uma issue ponha a label
-  `investigando`; ao implementar troque por `em-execucao`; depois de cada
-  troca rode `quadro sync . <N>`.
-- Pergunta ao dono vai sempre numa chamada `ask`, nunca solta no chat, uma
-  pergunta por chamada. Alternativas que dá para nomear: uma opção por
-  escolha, com o tradeoff no texto e a sua recomendação marcada. Pergunta
-  aberta: campo de texto.
-
-## Milestones
-
-Em repositório que usa milestone: título `NN. Nome`, dois dígitos, na ordem de
-execução (sufixo para inserir: `17a.`). `00. Saúde técnica` é permanente, para
-bug, dívida técnica e desempenho fora de uma milestone de resultado. Toda issue
-aberta tem milestone, menos a da conferência diária (label `conferencia`);
-milestone sem issue aberta se fecha. A descrição é uma frase de objetivo, sem
-lista de itens.
+- Plano aprovado roda com `executing-plans` (uma sessão, revisão no fim).
+  `subagent-driven-development` só a pedido do dono.
+- Worktree em `~/.workmux/<projeto>/<handle>`, não onde a skill sugerir.
+- Projeto com DDD (o `CLAUDE.md` diz): o design nomeia módulo e agregado com os
+  termos do glossário; decisão de arquitetura vira ADR em `docs/adr/`.
+- Ideia solta é da skill `discussao`, só quando o dono chamar. Fila (issue no
+  repo `fila` do `ficha.json`, PRD no corpo, label `ready-for-agent`) só a pedido.
+- Repo com `ficha.json`: o trabalho parte de uma issue e o `brainstorming` do PRD
+  dela. Sem issue, crie uma com o PRD (formato `discussao`) sem perguntar e sem
+  `ready-for-agent`, salvo "sem issue". Sem `ficha.json`, Superpowers puro.
+- Com issue: branch e spec levam o número, a PR leva `Closes #N`. Spec em
+  `docs/superpowers/specs/` (versionada); plano em `.scratch/` (não versionado).
+- `ficha.json` com `quadro`: label `investigando` ao discutir, `em-execucao` ao
+  implementar, e `quadro sync . <N>` depois de cada troca.
+- Pergunta ao dono vai numa chamada `ask`, uma por chamada: opções nomeadas com
+  tradeoff e recomendação marcada, ou campo de texto se for aberta.
 
 ## Decisão cara
 
-Pare e pergunte, uma decisão por vez, antes de mudar: esquema do banco,
-contrato da API, permissão ou autenticação, regra de dinheiro, ou qualquer
-desvio do que a spec diz. O resto você decide e registra na abertura da PR.
-Spec com mais de três decisões caras em aberto volta para conversa.
+Pare e pergunte, uma por vez, antes de mudar esquema do banco, contrato da API,
+permissão ou autenticação, regra de dinheiro ou qualquer desvio da spec. O resto
+você decide e registra na PR. Spec com mais de três decisões caras abertas volta
+para conversa.
 
-## Verificação e espera
+## Verificação, PR e merge
 
-Durante o trabalho rode só o comando `rapido` do `ficha.json` do repositório
-e o teste que você tocou. A suíte inteira roda uma vez, no CI. Sem pedido de
-merge, não espere CI: abra a PR e termine. Quando o dono pedir merge, espere
-com `pr-watch <dono/repo> <pr>` numa chamada só (ele sai na primeira falha) e
-mescle quando ficar verde.
+- Durante o trabalho, só o `rapido` do `ficha.json` e o teste que você tocou; a
+  suíte inteira roda no CI. `finishing-a-development-branch` segue isso e, por
+  padrão, abre PR.
+- Sem pedido de merge, abra a PR e termine. Com pedido, `pr-watch <dono/repo> <pr>`
+  numa chamada e mescle quando ficar verde.
+- A PR traz, nesta ordem: o que muda para quem usa (até cinco linhas), decisões
+  tomadas sozinho, prova (teste escrito separado de teste rodado), o que não foi
+  feito.
+- CI vermelho ou ausente, base de produção, push direto em `dev`/`main`/`master`,
+  `--admin` e `--no-verify` passam pela trava do omp. Se o dono autorizou, rode e
+  deixe a trava perguntar; não recuse por conta própria.
 
-## Entrega
+## Milestones
 
-A abertura da PR tem, nesta ordem: o que muda para quem usa, em até cinco
-linhas; decisões que você tomou sozinho; prova (o que rodou e o resultado,
-separando teste escrito de teste rodado); o que não foi feito. Merge em
-branch de integração com CI verde é seu quando o dono pedir. CI vermelho ou
-ausente, base de produção, push direto em `dev`/`main`/`master`, `--admin` e
-`--no-verify` passam pela trava do omp, que pergunta ao dono na hora. Se o
-dono autorizou na conversa, rode o comando e deixe a trava perguntar; não
-recuse por conta própria.
+Título `NN. Nome` na ordem de execução (`17a.` para inserir). `00. Saúde técnica`
+é permanente, para bug, dívida e desempenho. Toda issue aberta tem milestone,
+menos a da conferência diária (label `conferencia`); milestone sem issue aberta
+se fecha. Descrição: uma frase de objetivo.
 
 ## Comentários
 
-O padrão é zero. Só entram contrato não-óbvio, workaround com a causa nomeada,
-armadilha que a próxima pessoa quebraria, id de requisito ou ADR, e TODO com
-issue. Nenhum bloco passa de cinco linhas: justificativa maior que isso vira ADR
-em `docs/adr/`, com uma linha no código apontando pra ele. Faixa que nomeia o
-que vem abaixo, docstring que repete a assinatura, narração do diff e código
-comentado são proibidos. Antes de abrir PR, releia os comentários do seu diff e
-apague o que não se encaixa. A skill `comentarios` tem a régua completa.
+Padrão zero. Só contrato não-óbvio, workaround com a causa, armadilha, id de
+requisito ou ADR, e TODO com issue; no máximo cinco linhas, o resto vira ADR.
+Proibido faixa de seção, docstring que repete a assinatura, narração do diff e
+código comentado. Releia os comentários do diff antes da PR (skill `comentarios`).
