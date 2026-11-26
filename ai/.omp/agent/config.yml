@@ -1,6 +1,6 @@
 modelRoles:
   slow: anthropic/claude-opus-5-5:xhigh
-  task: anthropic/claude-sonnet-5.5:high
+  task: anthropic/claude-sonnet-5-5:high
   smol: anthropic/claude-haiku-5-5
   tiny: anthropic/claude-haiku-4-5
   commit: anthropic/claude-haiku-5-5
@@ -15,7 +15,7 @@ speechgen:
   enabled: true
 task:
   agentModelOverrides:
-    scout: anthropic/claude-sonnet-5.5:medium
+    scout: anthropic/claude-sonnet-5-5:medium
     reviewer: "@task"
     security-reviewer: "@task"
   agentCompactionThresholdOverrides:

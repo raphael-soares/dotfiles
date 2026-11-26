@@ -1,8 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(aws secretsmanager get-secret-value:*)"
-    ],
     "defaultMode": "auto"
   },
   "hooks": {
@@ -31,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/home/raphael/.claude/hooks/herdr-agent-state.sh' session",
+            "command": "f=\"$HOME/.claude/hooks/herdr-agent-state.sh\"; [ -f \"$f\" ] && bash \"$f\" session; exit 0",
             "timeout": 10
           }
         ]

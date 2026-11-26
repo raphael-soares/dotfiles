@@ -24,12 +24,13 @@ Superpowers, e as preferências do dono que vencem as skills dele ficam em
   o contrário. Procure esses termos antes de commitar ou abrir PR.
 - Sem emoji em commit, PR ou doc, salvo pedido.
 - Só commite ou faça push quando pedirem; no branch padrão, crie um branch antes.
+  Abrir a PR ao fim de um branch (`finishing-a-development-branch`) conta como
+  pedido, com o commit e o push que ela exige.
 
 ## Arquivos
 
-- Worktree vai em `~/.workmux/<projeto>/<handle>` (de preferência pelo
-  herdr-app). Mesclou a PR, remova o worktree na mesma sessão; worktree de
-  leitura se remove ao fim da tarefa.
+- Mesclou a PR, remova o worktree na mesma sessão; worktree de leitura se remove
+  ao fim da tarefa. Onde ele nasce: `RULES.md`.
 - Rascunho de agente (log, dump, saída gravada) vai em `.scratch/` na raiz do
   repo ou worktree; fora de repo, `/tmp/agents/<pasta>`. Terminou, apague. O que
   precisa durar vira arquivo versionado ou vai para o lugar certo do home.

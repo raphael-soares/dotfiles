@@ -11,8 +11,8 @@ código, **entreviste o usuário** sobre o produto e o domínio, e escreva os
 documentos que o resto do fluxo consome: o `brainstorming` do Superpowers lê
 o `CLAUDE.md`, o `CONTEXT.md` e os ADRs antes de desenhar.
 
-> Converse em **pt-BR, em prosa clara**. Isto é descoberta, não execução — não
-> comprima, não vá para o modo caveman aqui.
+> Converse em **pt-BR, em prosa clara**. Isto é descoberta, não execução: não
+> comprima.
 
 Não pule a entrevista. Ler o código diz o COMO; só o usuário sabe o QUÊ e o
 PORQUÊ — o domínio, os perfis, os invariantes, o que está fora dos limites.
@@ -124,7 +124,7 @@ Crie estes arquivos. Use a linguagem ubíqua confirmada na entrevista em todos.
 ### `CONTEXT.md` (raiz) — a linguagem do domínio
 
 Glossário ubíquo + visão de bounded contexts. É de onde o design tira os
-termos (RULES.md, seção Superpowers). Estrutura:
+termos (RULES.md, seção Processo). Estrutura:
 
 ```markdown
 # CONTEXT — <Nome do projeto>

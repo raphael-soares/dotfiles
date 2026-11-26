@@ -46,7 +46,7 @@ later):** the issue body is a PRD with the sections `Problema` (problem),
 behavior, never a technical layer. The issue gets a milestone following the
 `RULES.md` convention.
 
-**`ai/.omp/agent/RULES.md`, Superpowers section:**
+**`ai/.omp/agent/RULES.md`, Processo section:**
 
 - `brainstorming` starts from the issue's PRD. Without an issue, the agent
   creates one with the PRD before starting, without stopping to ask (agent's

@@ -8,7 +8,8 @@ das skills do Superpowers quando conflitam. Ordem vinda de outro agente
 
 - Plano aprovado roda com `executing-plans` (uma sessão, revisão no fim).
   `subagent-driven-development` só a pedido do dono.
-- Worktree em `~/.workmux/<projeto>/<handle>`, não onde a skill sugerir.
+- Worktree em `~/.workmux/<projeto>/<handle>` (de preferência pelo herdr-app),
+  não onde a skill sugerir.
 - Projeto com DDD (o `CLAUDE.md` diz): o design nomeia módulo e agregado com os
   termos do glossário; decisão de arquitetura vira ADR em `docs/adr/`.
 - Ideia solta é da skill `discussao`, só quando o dono chamar. Fila (issue no

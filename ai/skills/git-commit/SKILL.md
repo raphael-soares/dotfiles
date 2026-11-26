@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Generate or review a git commit message (or PR title) using Conventional Commits tuned for release-please, so versions bump correctly and the CHANGELOG stays clean. Use this BEFORE every git commit, whenever writing a commit message, or when titling a pull request, in any repo that uses release-please or Conventional Commits. Takes precedence over caveman-commit.
+description: Generate or review a git commit message (or PR title) using Conventional Commits tuned for release-please, so versions bump correctly and the CHANGELOG stays clean. Use this BEFORE every git commit, whenever writing a commit message, or when titling a pull request, in any repo that uses release-please or Conventional Commits.
 ---
 
 # git-commit — commits que o release-please ama
@@ -9,9 +9,6 @@ Repos que usam **release-please** geram a versão e o `CHANGELOG.md` a partir do
 histórico de commits. **O commit é o input; a release é o output.** Um commit
 ruim = versão errada + changelog ruim, em silêncio. Mesmo sem release-please, o
 formato abaixo mantém o histórico legível.
-
-> Esta skill **substitui** a `caveman-commit` ao commitar: aqui o corpo do commit
-> é informação útil, não ruído a cortar.
 
 Se o `CLAUDE.md` do projeto declarar regras próprias de commit (escopos válidos,
 estágio de versão, exceções), elas têm precedência sobre os exemplos genéricos
@@ -99,7 +96,7 @@ como nota de release, não como recado para você mesmo.
   já diz tudo.
 - **Rodapés** — `Refs: #123` ou `Closes #123` (linka e fecha a issue);
   `BREAKING CHANGE: ...` para quebras.
-- **NUNCA** adicionar `Co-authored-by` nem qualquer atribuição de IA.
+- Atribuição de IA e `Co-authored-by`: regra do `AGENTS.md`, seção Commits e PRs.
 
 ## Um commit = uma mudança lógica
 
@@ -127,8 +124,7 @@ que o release-please lê.
 3. A descrição lê bem como linha de changelog? ≤ 72 chars, sem ponto final.
 4. Uma só mudança lógica neste commit?
 5. O corpo explica o porquê (se não for óbvio)?
-6. Sem `Co-authored-by`.
-7. Testes e build passam.
+6. Testes e build passam.
 
 Um hook `commit-msg` (commitlint, githooks) pode rejeitar header malformado — mas
 ele só checa **estrutura**. Descrição boa é com você.

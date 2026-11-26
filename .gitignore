@@ -11,6 +11,7 @@
 .dotter/cache/
 
 ai/skills/synced/
+ai/skills/.trash/
 __pycache__/
 
 # syncfast keeps a copy of the config before migrating versions.

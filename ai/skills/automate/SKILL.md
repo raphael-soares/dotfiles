@@ -12,8 +12,9 @@ num terminal do hc com o omp da conta escolhida.
 ## 1. Confira o CLI
 
 Rode `herdr-automations list --json`. Se o comando falhar ou o campo `backend`
-não for `hc`, diga ao usuário para rodar `~/Code/Personal/herdr-setup/install.sh`
-(`~/.dotfiles/.dotter/missing.sh terminal` mostra o clone, se faltar) e pare aqui.
+não for `hc`, diga ao usuário para instalar o herdr-setup (o instalador fica em
+`~/Code/Personal/herdr-setup`; `~/.dotfiles/.dotter/missing.sh terminal` mostra
+o clone, se faltar) e pare aqui.
 
 ## 2. Junte o que falta numa pergunta só
 
@@ -27,8 +28,9 @@ Preencha o que a conversa já responde. "Este repo" é a raiz git atual
   (`YYYY-MM-DD`) para Once. Pedido de uma vez só ("essa madrugada às 3h",
   "amanhã às 9h", "sexta às 18h") já marca Once e preenche data e hora.
 - Repositório (radio): o repo atual, as pastas locais dos spaces
-  (`herdr-app ls`) e os repos em `~/Code/*/*` que têm `.git`
-  (`for d in "$HOME"/Code/*/*/; do [ -e "$d.git" ] && echo "${d%/}"; done`).
+  (`herdr-app ls`) e os repos de `~/Code/<Área>/[<sistema>/]<repo>` (até três
+  níveis, `docs/home.md`) que têm `.git`
+  (`find "$HOME/Code" -maxdepth 4 -name .git | sed 's|/\.git$||'`).
 - Conta (radio): Personal (`omp-personal`) ou Work (`omp-work`). Marque Work
   quando o repo estiver em `~/Code/Unimed`, Personal no resto.
 - Onde roda (radio): New worktree (padrão) ou Repo root.

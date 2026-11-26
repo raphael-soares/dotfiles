@@ -131,7 +131,7 @@ failure becomes a warning in the log and the queue carries on.
 
 ### Interactive sessions
 
-Rule in `RULES.md`, Superpowers section: when starting `discussao` or
+Rule in `RULES.md`, Processo section: when starting `discussao` or
 `brainstorming` about an issue in a repo with a board, put the `investigando`
 label; when implementing interactively, swap it for `em-execucao`; after each
 swap run `quadro sync . <N>`. The opened PR and the close follow the table on
