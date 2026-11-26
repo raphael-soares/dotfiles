@@ -49,7 +49,7 @@ the user in the `docker` group, which `missing.sh media` asks for.
 | Caches (Jellyfin transcodes, TRaSH repos) | `~/.cache/media` |
 | Downloads | `~/Media/Downloads/{Movies,Shows}` |
 | Library | `~/Media/Movies`, `~/Media/Shows` (series and anime) |
-| `.torrent` copies | `~/Documents/Personal/Media/torrents` |
+| `.torrent` copies | `~/Drive/Personal/Torrents` |
 
 `dotter deploy` runs `media/bin/media-deploy`, which:
 
@@ -68,7 +68,7 @@ the user in the `docker` group, which `missing.sh media` asks for.
   (WebUI on, starts hidden in the tray, monochrome tray icon, Breeze style
   with system icons, no status bar, no "torrent added" notification), starts
   qBittorrent if needed and applies `media/qbittorrent/preferences.json`
-  (`.torrent` copies to `~/Documents/Personal/Media/torrents`, category paths also in manual
+  (`.torrent` copies to `~/Drive/Personal/Torrents`, category paths also in manual
   mode) and `categories.json` (categories not in the file are removed);
 - renders Bazarr's config from `media/bazarr/config.yaml.tmpl` (subtitle
   timing fixed with subsync when the match score is low, Whisper as the last

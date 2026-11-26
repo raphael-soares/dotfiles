@@ -70,67 +70,76 @@ tarefa que o criou.
 ## Onde as coisas ficam no home
 
 Dois PCs com a mesma convenção: o notebook (trabalho, programação, startup,
-faculdade) e o PC de casa (jogos, design, música). O primeiro nível do home é
-tipo de coisa (o padrão XDG); o domínio vem um nível abaixo, como em
-`~/Code/<Área>`. Nome em inglês capitalizado. Cada área tem um alcance:
-compartilhada (existe nos dois PCs, em `~/Documents/<Área>`, que o syncfast
-sincroniza inteiro num par só com `Raphael:Documents`) ou local (existe só no
-PC onde é usada, fora de `~/Documents`). Área nova: crie a pasta no tipo certo,
-escolha o alcance e acrescente uma linha aqui; área compartilhada sincroniza
-sem mexer no syncfast.
+faculdade) e o PC de casa (jogos, design, música). A home de cada PC é local e
+segue o XDG; nada nela sincroniza. O que precisa existir nos dois PCs ou no
+celular mora em `~/Drive`, espelho completo e offline da raiz do Google Drive
+(`Raphael:`), num par só do syncfast. A fronteira do sync está no caminho:
+dentro de `~/Drive` sincroniza, fora não. Spec:
+`docs/superpowers/specs/2026-11-26-drive-and-home-layout-design.md`.
 
-Dentro de `~/Documents`, cada área tem categorias de nome em inglês
-capitalizado (`Personal/Finance`), e dentro delas tudo é em inglês, minúsculo
-com hífen (`invoices-and-receipts/`). Uma coisa de um arquivo só fica solta
-na categoria; pasta só quando junta mais de um arquivo. Nome próprio e nome de
-sistema não se traduzem (`auditoria-centralizada-architecture/`,
-`junta-medica.md`).
+Onde salvar: vai precisar no outro PC ou no celular? `~/Drive/<Área>`. Não? A
+pasta XDG local.
 
-| Área | Conteúdo | Alcance |
+### `~/Drive` (os dois PCs)
+
+|Pasta|Conteúdo|
+|---|---|
+|`Personal`|`Identity`, `Finance`, `Career` (currículo), `Photos`, `Wallpaper`, `Torrents`, `Archive`|
+|`Udesc`|uma pasta por disciplina cursando agora (`SOP-sistemas-operacionais`), `University` (calendário, matrícula), `Archive/<ano>-<semestre>/<disciplina>`; padrão em `Udesc/README.md`|
+|`Unimed`|`Projects/<projeto>`, `Admin` (crachá), `Brand`, `Technical` (arquitetura geral, notas), `Archive`|
+|`TEAjudo`|`Projects/<projeto>`, `Legal`, `Commercial`, `Brand`, `Archive`|
+|`Documents`|`~/Documents` é symlink para cá: documento sem área (manual, modelo, referência)|
+|`Inbox`|porta do celular e da web; a triagem diária esvazia|
+|`Backups`|só na nuvem, fora do par: `media/` (`media-backup`), `fedora/` (`creative-backup`, `~/Creative` e `~/Studio`)|
+
+- Dentro de uma área: trabalho com fim vai em `Projects/<projeto>`, com o
+  mesmo nome do worktree ou da feature; referência contínua vai numa categoria
+  (2 a 3 por área); projeto que acabou vai inteiro para `Archive/`.
+- Disciplina concluída vai para `Udesc/Archive/<semestre>/` no setup do
+  semestre novo.
+- Estrutura em inglês capitalizado (`Personal/Finance`), dentro dela inglês
+  minúsculo com hífen. Nome próprio, de sistema, de disciplina e de obra fica
+  no original (`auditoria-centralizada`, `SOP-sistemas-operacionais`). Uma coisa
+  de um arquivo só fica solta; pasta só quando junta mais de um.
+- O Drive guarda documento de projeto, nunca código nem git (o preset
+  `git_repos` do syncfast barra repo). O README da pasta do projeto aponta para
+  o repo em `~/Code`.
+- Dado pessoal de terceiro (paciente, CPF) nunca entra no Drive: fica em
+  `attachments/` do repo, ignorado pelo git. Segredo fica no sops ou no cofre.
+- Material de colega é copiado para a disciplina, nunca como atalho.
+- O par barra `*.mkv`, `*.iso`, `*.nsp`, `*.xci` e `*.nsz`, mais `/Backups`,
+  `Personal/Wallpaper/wallz` (clone de terceiro) e o `forest-4.jpg` do dotter.
+
+### Home local
+
+|Pasta|Conteúdo|Onde|
 |---|---|---|
-| `~/Documents/Personal` | `Identity`, `Finance`, `Career` (currículo), `Media` (`torrents/`) | compartilhada |
-| `~/Documents/Udesc` | `University` (calendário, matrícula), `Courses/<ano>-<semestre>/<SIGLA>-<nome-em-portugues>` (`2026-2/SOP-sistemas-operacionais`); padrão em `Udesc/README.md` | compartilhada |
-| `~/Documents/Unimed` | `Admin` (crachá), `Brand`, `Technical` (arquitetura, API, notas) | compartilhada |
-| `~/Documents/TEAjudo` | `Legal`, `Commercial`, `Brand`, `Engineering` (`environment-files/`, fora do sync) | compartilhada |
-| `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
-| `~/Creative` | projetos criativos multidisciplinares: `Projetos/<projeto>/` com uma pasta por peça (vídeo, áudio, arte e marca juntos), `Biblioteca/` de assets de terceiros, `Estilos/` de identidades próprias | só PC de casa |
-| `~/Studio` | produção musical: samples, presets, projetos | só PC de casa |
-| `~/Games` | jogos, ROMs, saves (o XDG não tem pasta para jogo) | só PC de casa |
-| `~/Media` | consumo, uma pasta por tipo: `Movies`, `Shows` (séries e anime), `Books`, e o que vier (`Mangas`); fica inteira numa árvore por causa do hardlink do Radarr e do Sonarr | só PC de casa |
+|`~/Documents`|symlink para `~/Drive/Documents`|os dois|
+|`~/Downloads`|entrada do navegador; a triagem diária esvazia|os dois|
+|`~/Pictures`|`Screenshots`, `Icons`, `Wallpaper` (symlink para `~/Drive/Personal/Wallpaper`)|os dois|
+|`~/Videos`|`Recordings` (gravação de tela)|os dois|
+|`~/Code/<Área>/[<sistema>/]<repo>`|todo repositório git; o git é o sync. Monorepo da TEAjudo em `~/Code/TEAjudo/teajudo`|os dois|
+|`~/Creative`|`Projects/<Área>/<projeto>/` (vídeo, áudio, arte e marca juntos), `Library/` de assets de terceiros, `Styles/` de identidades próprias, `Archive/`|PC de casa|
+|`~/Studio`|produção musical: samples, presets, projetos|PC de casa|
+|`~/Games`|o que se baixa por fora: `PC`, `Switch`, `ROMs/<console>`. A Steam fica em `~/.local/share/Steam`|PC de casa|
+|`~/Media`|consumo, uma pasta por tipo: `Movies`, `Shows` (séries e anime), `Books`, `Downloads`; uma árvore só por causa do hardlink do Radarr e do Sonarr|PC de casa|
 
-- Repositório git nunca fica dentro de área compartilhada: vai para
-  `~/Code/<Área>/`. As áreas da Unimed e da TEAjudo sincronizam documento e
-  marca; o código delas fica em `~/Code` e não entra no sync.
-- Marca de uma área (logo da TEAjudo) fica na área. `~/Creative` é para
-  projeto criativo próprio.
-- A raiz de `~/Documents` tem as pastas de área e, soltos, só arquivos de
-  consulta sem domínio (manual, modelo, referência). Qualquer outra coisa vai
-  para uma área. Passou de uns dez arquivos soltos, crie uma área para eles.
-- O que acabou e não se usa mais vai para `Archive/` dentro da própria área;
-  ali dentro não precisa seguir o padrão. Disciplina concluída não vai para o
-  arquivo: fica em `Courses`, com o status no README dela. Nas áreas locais o
-  arquivo é `0-Archive/`. Pasta oculta, nunca.
-- Categoria nova só quando nenhuma das existentes serve, e com uma linha aqui.
-- `~/Downloads`, `~/Pictures` (Screenshots, Wallpaper, Icons) e `~/Videos` são
-  pastas de sistema de cada PC, não áreas: o que chega nelas vai para a área
-  certa. As pastas XDG ficam em `desktop/xdg/user-dirs.dirs`.
-- Foto fica só no Drive (`Raphael:Fotos`). Livro e mangá de leitura ficam em
-  `~/Media`, no PC de casa, fora do sync.
-- `.torrent` vai sempre para `~/Documents/Personal/Media/torrents`, nunca junto do conteúdo: o
-  conteúdo não sincroniza, o ponteiro sim. O qBittorrent é o app desktop do
-  PC de casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para
-  lá e cada categoria dele cai na área certa: `Books` e `Mangas` em
-  `~/Media/<nome>`, `Games/PC` e `Games/Switch` em `~/Games/<nome>`. Filme e
-  série (anime incluso) passam pelo Radarr e pelo Sonarr: baixam em
-  `~/Media/Downloads` e entram por hardlink em `~/Media/Movies` e
-  `~/Media/Shows`. Categoria nova
-  vai em `media/qbittorrent/categories.json`.
-- Mídia pesada (jogo, ROM, filme, série, sample, gravação de tela) mora em
-  `~/Games`, `~/Media`, `~/Studio` e `~/Videos`, que não são pares do syncfast:
-  nada ali sobe pro Drive. Os pares compartilhados ainda barram `*.mkv`,
-  `*.mp4`, `*.iso`, `*.nsp`, `*.xci` e `*.nsz` por filtro.
-- Nenhuma área solta no home fora das da tabela. Não existem `~/Notes` nem
-  `~/University`. Não recrie.
+- Worktree só em `~/.workmux`. `~/.dotfiles` fica onde está (caminho do dotter).
+- O que acabou numa pasta local vai para `Archive/` dela. Pasta oculta, nunca.
+- `.torrent` vai para `~/Drive/Personal/Torrents`, nunca junto do conteúdo: o
+  ponteiro sincroniza, o conteúdo não. O qBittorrent é o app desktop do PC de
+  casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para lá e
+  cada categoria cai na pasta certa: `Books` e `Mangas` em `~/Media/<nome>`,
+  `Games/PC` e `Games/Switch` em `~/Games/<nome>`. Filme e série passam pelo
+  Radarr e pelo Sonarr: baixam em `~/Media/Downloads` e entram por hardlink em
+  `~/Media/Movies` e `~/Media/Shows`. Categoria nova vai em
+  `media/qbittorrent/categories.json`.
+- Triagem diária às 8:00 (herdr-automations, `triage` em `terminal/bin`): move
+  de `~/Downloads`, `~/Drive/Inbox` e prints soltos em `~/Pictures` o que tem
+  destino certo, nunca apaga, loga em `~/.local/state/triage/` e notifica o que
+  ficou pendente. `triage undo <data>` desfaz um dia.
+- Nenhuma área solta no home fora das da tabela. Não existem `~/Notes`,
+  `~/University` nem áreas na raiz da home. Não recrie.
 
 ---
 

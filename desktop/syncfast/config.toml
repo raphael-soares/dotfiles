@@ -9,10 +9,10 @@ theme = "dark"
 autostart = true
 
 [[pair]]
-id = "documents"
-name = "Documents"
-local = "/home/raphael/Documents"
-remote = "Raphael:Documents"
-enabled = false
-presets = ["system_junk", "dev_dirs"]
-filters = ["- /TEAjudo/Engineering/environment-files/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
+id = "drive"
+name = "Drive"
+local = "/home/raphael/Drive"
+remote = "Raphael:"
+enabled = true
+presets = ["system_junk", "dev_dirs", "git_repos"]
+filters = ["- /Backups/**", "- /Personal/Wallpaper/wallz/**", "- /Personal/Wallpaper/forest-4.jpg", "- *.mkv", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]

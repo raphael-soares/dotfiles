@@ -87,11 +87,13 @@ if have gsettings && gsettings writable org.gnome.desktop.interface font-name >/
 fi
 systemctl --user enable --now gcr-ssh-agent.socket 2>/dev/null || true
 # The "default" theme is what XCursor uses when the app asks for none.
-mkdir -p "$HOME/.icons/default"
-printf '[Icon Theme]\nInherits=Adwaita\n' >"$HOME/.icons/default/index.theme"
+mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/icons/default"
+printf '[Icon Theme]\nInherits=Adwaita\n' >"${XDG_DATA_HOME:-$HOME/.local/share}/icons/default/index.theme"
 # Flatpak does not read the host settings.ini for the cursor; icons come from the portal.
 if have flatpak; then
   flatpak override --user --unset-env=ICON_THEME --env=XCURSOR_THEME=Adwaita
+  # ~/Documents is a symlink into ~/Drive; xdg-documents alone does not reach the target.
+  flatpak override --user --filesystem="$HOME/Drive"
 fi
 if have xdg-mime; then
   xdg-mime default org.gnome.Nautilus.desktop inode/directory
