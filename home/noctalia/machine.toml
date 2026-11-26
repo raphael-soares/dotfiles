@@ -39,3 +39,28 @@ clipboard_position = "auto"
 [control_center]
 hidden_tabs = [ "media", "weather", "screen-time", "power" ]
 shortcuts = [ { type = "wifi" }, { type = "bluetooth" }, { type = "caffeine" }, { type = "nightlight" }, { type = "notification" } ]
+
+# The desktop suspends instead of powering off, so wake on LAN can bring it back (docs/wake-on-lan.md).
+[[shell.session.actions]]
+action = "lock"
+shortcut = "1"
+
+[[shell.session.actions]]
+action = "logout"
+shortcut = "2"
+
+[[shell.session.actions]]
+action = "suspend"
+shortcut = "3"
+
+[[shell.session.actions]]
+action = "reboot"
+shortcut = "4"
+
+[lockscreen_widgets.widget."lockscreen-power@DP-1".settings]
+command = "noctalia msg session suspend"
+glyph = "moon"
+
+[lockscreen_widgets.widget."lockscreen-power@FALLBACK".settings]
+command = "noctalia msg session suspend"
+glyph = "moon"

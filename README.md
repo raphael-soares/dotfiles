@@ -33,7 +33,7 @@ dotter picks `.dotter/<hostname>.toml`.
 | `laptop` | the laptop's monitors and lid, the greetd PAM file | ✓ | |
 | `work` | VPN and the work omp profile | ✓ | |
 | `sshd` | key-only SSH and mDNS, so each machine reaches the other ([remote access](docs/remote-desktop.md)) | ✓ | ✓ |
-| `home` | the desktop's monitor, EDID override, greetd PAM file and Noctalia settings | | ✓ |
+| `home` | the desktop's monitor, EDID override, greetd PAM file, Noctalia settings, and suspend with wake on LAN instead of power-off ([wake on LAN](docs/wake-on-lan.md)) | | ✓ |
 | `media` | Jellyfin, Radarr, Sonarr, Prowlarr and Bazarr as Docker containers, plus qBittorrent and Jellyfin Desktop; releases are picked in Stremio Enhanced ([media](docs/media.md)) | | ✓ |
 | `creative` | omp drives the ArtCraft apps (VectorCraft, PhotoCraft and the rest), without a window by default ([creative](docs/creative.md)) | | ✓ |
 

@@ -18,3 +18,5 @@ fi
 if have tuned-adm && [[ $(tuned-adm active 2>/dev/null) != *throughput-performance ]]; then
   step "sudo tuned-adm profile throughput-performance"
 fi
+need_file home/networkmanager/wake-on-wlan.conf /etc/NetworkManager/conf.d/wake-on-wlan.conf "sudo systemctl restart NetworkManager"
+need_file home/logind/power-key.conf /etc/systemd/logind.conf.d/power-key.conf "sudo systemctl kill -s HUP systemd-logind"
