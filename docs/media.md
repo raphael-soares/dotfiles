@@ -90,8 +90,9 @@ the user in the `docker` group, which `missing.sh media` asks for.
 - makes qBittorrent the magnet link handler;
 - enables every `media-*.timer` in `media/systemd`: `media-original-audio`
   (every 15 minutes), `media-watchdog` (every 5 minutes), `media-update`,
-  `media-cleanup`, `media-backup` and `media-drift` (daily), and
-  `media-restore-test` (weekly).
+  `media-cleanup` and `media-drift` (daily). `media-backup` (daily) and
+  `media-restore-test` (weekly) are off until backups are wanted:
+  `systemctl --user enable --now media-backup.timer media-restore-test.timer`.
 
 `media-deploy ~/.dotfiles --check` changes nothing, prints one
 `media: differs:` line for each link, timer, container (stopped, or running an

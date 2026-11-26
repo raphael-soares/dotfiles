@@ -20,7 +20,7 @@ Otherwise, the local XDG folder.
 |`TEAjudo`|`Projects/<project>`, `Legal`, `Commercial`, `Brand`, `Archive`|
 |`Documents`|`~/Documents` links here: documents with no area (manuals, templates, references)|
 |`Inbox`|the door from the phone and the web; the daily triage empties it|
-|`Backups`|cloud only, outside the pair: `media/` (`media-backup`, encrypted with age), `fedora/` (`creative-backup`, `~/Creative` and `~/Studio`, not encrypted because nothing in it is sensitive)|
+|`Backups`|cloud only, outside the pair, empty while the backup timers are off: `media/` (`media-backup`, encrypted with age), `fedora/` (`creative-backup`, `~/Creative` and `~/Studio`, not encrypted because nothing in it is sensitive)|
 
 - Inside an area: work that ends goes in `Projects/<project>`, named like the
   worktree or feature; ongoing reference goes in a category (2 or 3 per area); a

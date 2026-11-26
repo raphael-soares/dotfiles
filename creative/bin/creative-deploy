@@ -35,4 +35,3 @@ mv "$tmp" "$MCP_JSON"
 echo "creative: ${#installed[@]} ArtCraft apps registered in omp${installed[*]:+ (${installed[*]})}"
 
 systemctl --user daemon-reload
-systemctl --user enable --now creative-backup.timer

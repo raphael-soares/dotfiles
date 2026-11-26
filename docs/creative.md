@@ -134,8 +134,8 @@ Manim runs with `-s`.
 ## Backup
 
 `~/Creative` and `~/Studio` live only on `fedora`, outside the `~/Drive` sync.
-`creative-backup` (timer `creative-backup.timer`, daily, enabled by
-`creative-deploy`) mirrors both to `Raphael:Backups/fedora/current/` and moves
+`creative-backup` (timer `creative-backup.timer`, daily, off until backups are
+wanted: `systemctl --user enable --now creative-backup.timer`) mirrors both to `Raphael:Backups/fedora/current/` and moves
 every file it replaces or deletes to `Raphael:Backups/fedora/old/<date>/`,
 kept for 30 days (`CREATIVE_BACKUP_KEEP_DAYS`). syncfast's own backup is not
 used because it refuses a destination inside the `~/Drive ↔ Raphael:` pair.
