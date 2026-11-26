@@ -30,7 +30,16 @@ ghostty_template=$HOME/.config/ghostty/config.ghostty
 if [[ -f $ghostty_template ]] && ! grep -qvE '^[[:space:]]*(#|$)' "$ghostty_template"; then
   rm -f "$ghostty_template"
 fi
+"$REPO/terminal/bin/secrets" ssh || echo "==> secrets ssh failed, see above" >&2
 "$REPO/terminal/bin/secrets" check || true
+{{/if}}
+
+{{#if dotter.packages.sshd}}
+# Both machines share the personal key, so each one lets the other in after a clean deploy.
+pub=$HOME/.ssh/keys/personal.pub
+if [[ -f $pub ]] && ! grep -qxF "$(<"$pub")" "$HOME/.ssh/authorized_keys" 2>/dev/null; then
+  (umask 077 && cat "$pub" >>"$HOME/.ssh/authorized_keys")
+fi
 {{/if}}
 
 {{#if dotter.packages.desktop}}

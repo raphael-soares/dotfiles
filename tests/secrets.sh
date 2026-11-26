@@ -58,10 +58,51 @@ expect "check flags a stray .env outside Code" '[[ $out == *"~/Notes/TEAjudo/api
 expect "check does not walk into Drive" '[[ $out != *"~/Drive/"* ]]'
 rm "$HOME/.netrc" "$HOME/Notes/TEAjudo/api-prod.env" "$HOME/Drive/TEAjudo/api-prod.env"
 
+printf '  - path_regex: secrets/ssh/.+\n    age: %s\n' "$(age-keygen -y "$key")" >>"$T/repo/.sops.yaml"
+mkdir -p "$T/repo/secrets/ssh/keys" "$HOME/.ssh"
+ssh-keygen -q -t ed25519 -N '' -C test -f "$T/k"
+printf 'Host x\n  HostName 10.0.0.1\n' >"$T/cfg"
+enc() { (cd "$T/repo" && sops encrypt --input-type binary --output-type binary --filename-override "secrets/ssh/$1" "$2" >"secrets/ssh/$1"); }
+enc keys/personal "$T/k"
+enc config "$T/cfg"
+printf 'known\n' >"$HOME/.ssh/known_hosts"
+"$S" ssh >/dev/null
+expect "the repo holds no plain ssh key" '! grep -q "PRIVATE KEY" "$T/repo/secrets/ssh/keys/personal"'
+expect "ssh writes the key with mode 600" \
+  'cmp -s "$HOME/.ssh/keys/personal" "$T/k" && [[ $(stat -c %a "$HOME/.ssh/keys/personal") == 600 ]]'
+expect "ssh writes the .pub of the key" '[[ $(cut -d" " -f1,2 "$HOME/.ssh/keys/personal.pub") == $(ssh-keygen -y -f "$T/k" | cut -d" " -f1,2) ]]'
+expect "ssh writes the config" 'cmp -s "$HOME/.ssh/config" "$T/cfg"'
+expect "ssh leaves a file that is not in the repo alone" '[[ $(cat "$HOME/.ssh/known_hosts") == known ]]'
+touch -d 2020-01-01 "$HOME/.ssh/config"
+"$S" ssh >/dev/null
+expect "ssh does not rewrite an unchanged file" '[[ $(stat -c %Y "$HOME/.ssh/config") == $(date -d 2020-01-01 +%s) ]]'
+expect "check passes when ~/.ssh matches the repo" '"$S" check >/dev/null'
+printf 'Host y\n' >>"$HOME/.ssh/config"
+cp "$T/k" "$HOME/.ssh/keys/stray"
+out=$("$S" check || true)
+expect "check flags a ~/.ssh file that differs" '[[ $out == *"~/.ssh/config differs from secrets/ssh"* ]]'
+expect "check flags a key that is not in secrets/ssh" '[[ $out == *"~/.ssh/keys/stray is not in secrets/ssh"* ]]'
+"$S" ssh >/dev/null
+expect "ssh rewrites a file that changed" 'cmp -s "$HOME/.ssh/config" "$T/cfg"'
+rm "$HOME/.ssh/keys/stray"
+printf 'local\n' >"$HOME/.ssh/config"
+
 mv "$key" "$T/key.bak"
 out=$("$S" check || true)
 expect "check points to the vault when the key is missing" '[[ $out == *"age (dotfiles)"* ]]'
 expect "run fails without the key" '! "$S" run -- true 2>/dev/null'
 expect "aws fails without the key" '! "$S" aws >/dev/null 2>&1'
+expect "ssh without the key exits 0 and leaves ~/.ssh as is" \
+  '"$S" ssh >/dev/null 2>&1 && [[ $(cat "$HOME/.ssh/config") == local ]]'
+
+mkdir -p "$T/fakebin"
+printf '#!/bin/sh\nexit 1\n' >"$T/fakebin/rbw"
+chmod +x "$T/fakebin/rbw"
+expect "init fails when rbw is locked and leaves no key" '! PATH=$T/fakebin:$PATH "$S" init 2>/dev/null && [[ ! -e $key ]]'
+printf '#!/bin/sh\necho not-a-key\n' >"$T/fakebin/rbw"
+expect "init refuses a vault item that is not an age key" '! PATH=$T/fakebin:$PATH "$S" init 2>/dev/null && [[ ! -e $key ]]'
+printf '#!/bin/sh\ncat %q\n' "$T/key.bak" >"$T/fakebin/rbw"
+expect "init restores the key with mode 600" \
+  'PATH=$T/fakebin:$PATH "$S" init >/dev/null && cmp -s "$key" "$T/key.bak" && [[ $(stat -c %a "$key") == 600 ]]'
 
 exit "$fail"

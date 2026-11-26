@@ -99,15 +99,29 @@ cable does:
 
 ## Secrets
 
-The owner's environment secrets (personal tokens, the VPN, the media stack, the AWS
-key) live encrypted with sops and age in `secrets/*.env`: `personal.env` for the
-shell and the VPN, `media.env` for the media stack, `aws.env` for the AWS CLI and
-SDKs. Only values are encrypted; the key names
-stay readable. The age key is `~/.config/sops/age/keys.txt` (mode 600), the same
-on both machines, backed up in the vault item `age (dotfiles)`; `missing.sh
-terminal` prints how to restore it.
+The owner's secrets live encrypted with sops and age in `secrets/`:
+`personal.env` for the shell and the VPN, `media.env` for the media stack,
+`aws.env` for the AWS CLI and SDKs, and `secrets/ssh/` for the SSH config and
+private keys. In the `.env` files only values are encrypted and the key names stay
+readable; each file under `secrets/ssh/` is encrypted whole, because the config
+names servers and the repository is public. The age key is
+`~/.config/sops/age/keys.txt` (mode 600), the same on both machines, backed up in
+the vault item `age (dotfiles)`. It is the only thing a new machine needs: the
+Bitwarden master password unlocks it, and it unlocks the rest.
 
-- `sops edit secrets/personal.env` adds or changes a value;
+A new machine: `rbw unlock`, then `secrets init` (writes the age key from the
+vault without printing it), then `dotter deploy`. `missing.sh terminal` prints
+the first two while the key is absent.
+
+- `sops edit secrets/personal.env` adds or changes a value, and
+  `sops edit secrets/ssh/config.d/unimed.conf` a host;
+- a new SSH key goes in with
+  `sops encrypt --input-type binary --output-type binary --filename-override secrets/ssh/keys/<name> <file> > secrets/ssh/keys/<name>`;
+- `secrets ssh`, run by the deploy, decrypts `secrets/ssh/` into the same paths
+  under `~/.ssh` (mode 600), rewrites only what changed and derives each key's
+  `.pub`. `known_hosts`, `authorized_keys` and other local files are left alone;
+  the `sshd` module adds `personal.pub` to `authorized_keys`, so both machines
+  reach each other;
 - `secrets run -- <command>` runs the command with `personal.env` as variables
   (`vpn` uses it; the bashrc never decrypts at shell start);
 - `media-deploy` decrypts `media.env` to `~/.config/media/media.env` (mode 600)
@@ -115,10 +129,11 @@ terminal` prints how to restore it.
 - `secrets aws` prints `aws.env` as the JSON of `credential_process`, which
   `terminal/aws/config` uses for the default profile; the key never sits in plain
   text, never expires and works from services and scheduled jobs;
-- `secrets check` reports a missing age key, a secret file others can read and a
+- `secrets check` reports a missing age key, a secret file others can read, a
   plain-text credential left in the home (`~/.netrc`, an AWS credentials file, a
-  `.env` with a key, token or password outside `~/Code`); the deploy and
-  `media-drift` run it.
+  `.env` with a key, token or password outside `~/Code`), a `~/.ssh` file that
+  differs from `secrets/ssh/` and a key in `~/.ssh/keys` that is not there; the
+  deploy and `media-drift` run it.
 
 Code projects keep their secrets in the project's own store (TEAjudo: AWS SSM under
 `/teajudo/<env>/`) and a gitignored local `.env` made from `.env.example`, holding no

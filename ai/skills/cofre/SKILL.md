@@ -3,7 +3,7 @@ name: cofre
 description: >
   Use para o cofre Bitwarden do dono: organizar itens e pastas, achar
   duplicados, guardar senha, token ou chave nova, usar um segredo num comando,
-  e os segredos de ambiente dos dotfiles (sops, secrets run/check). Não use para
+  e os segredos dos dotfiles (sops, chaves SSH, secrets run/ssh/check). Não use para
   segredo de outra pessoa ou de outro cofre.
 ---
 
@@ -14,7 +14,7 @@ O cofre é o Bitwarden do dono. Três ferramentas, nesta ordem de preferência:
 | Ferramenta | Para quê |
 |---|---|
 | `vault` | Organizar, guardar e usar segredo. A listagem nunca mostra senha, nota, campo nem TOTP |
-| `secrets` | Segredos de ambiente do dono, criptografados com sops em `secrets/*.env` dos dotfiles |
+| `secrets` | Segredos do dono criptografados com sops em `secrets/` dos dotfiles: `*.env` e `ssh/` |
 | MCP `bitwarden` | Só o que o `vault` não faz (anexo, Send, item de cartão ou identidade) |
 
 ## Regra de ouro
@@ -35,7 +35,8 @@ modelo, fora do PC do dono.
 - `vault` e o MCP abrem uma janela pedindo a senha mestra. Só o dono digita.
   Com o cofre trancado, diga que a janela vai abrir e espere.
 - `rbw` (usado por `vault run`) fica destravado por 8 h. `secrets` não pede
-  senha: a chave age fica em `~/.config/sops/age/keys.txt`.
+  senha: a chave age fica em `~/.config/sops/age/keys.txt`. Máquina nova sem a
+  chave: o dono roda `rbw unlock` e depois `secrets init`.
 - `bw` sem login na máquina: peça ao dono para rodar `bw login` uma vez.
 
 ## Organizar
@@ -63,6 +64,10 @@ compara: pergunte ao dono qual fica.
   gerenciador do próprio projeto (TEAjudo: SSM da AWS em `/teajudo/<env>/`,
   lido com `aws ssm get-parameters-by-path --with-decryption`). O `.env` local
   sai do `.env.example` e não guarda segredo.
+- Chave SSH nova:
+  `sops encrypt --input-type binary --output-type binary --filename-override secrets/ssh/keys/<nome> <arquivo> > secrets/ssh/keys/<nome>`,
+  e o host em `sops edit secrets/ssh/config.d/<área>.conf`. O deploy (ou
+  `secrets ssh`) coloca em `~/.ssh` com modo 600.
 - Nota segura de volta para arquivo, sem imprimir: `vault env <nota> <arquivo>`.
 
 ## Usar com permissão
@@ -86,8 +91,10 @@ não rode comando assim com segredo injetado.
 - `secrets aws`: entrega a chave de `secrets/aws.env` ao `credential_process`
   do perfil default da AWS. Não rode no terminal com a saída visível; para
   conferir, `aws sts get-caller-identity`.
-- `secrets check`: acusa chave age ausente, arquivo legível por outros e
+- `secrets ssh`: decifra `secrets/ssh/` para `~/.ssh`. O deploy roda.
+- `secrets check`: acusa chave age ausente, arquivo legível por outros,
   credencial em texto puro largada na home (`~/.netrc`, credentials da AWS,
-  `.env` com chave, token ou senha fora de `~/Code`). O deploy e a conferência
-  diária da mídia (`media-drift`) rodam. Achou algo: leve para o sops ou o
-  cofre e apague o arquivo.
+  `.env` com chave, token ou senha fora de `~/Code`), arquivo do `~/.ssh` que
+  difere de `secrets/ssh/` e chave em `~/.ssh/keys` que não está lá. O deploy
+  e a conferência diária da mídia (`media-drift`) rodam. Achou algo: leve para
+  o sops ou o cofre e apague o arquivo.
