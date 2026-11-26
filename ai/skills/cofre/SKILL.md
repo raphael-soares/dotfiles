@@ -59,12 +59,11 @@ compara: pergunte ao dono qual fica.
 - Variável de ambiente do dono (token pessoal, VPN, mídia): o dono roda
   `sops edit secrets/personal.env`. Para importar de um arquivo sem ver o
   valor: `sops encrypt --filename-override secrets/personal.env --input-type dotenv --output-type dotenv arquivo`.
-- `.env` de projeto de código (TEAjudo, Unimed) não entra no sops: a fonte é
-  uma nota segura no cofre, uma por ambiente, na pasta do projeto
-  (`teajudo api-prod.env`). Guardar: `vault note TEAjudo "teajudo api-prod.env" arquivo`.
-  Recriar o `.env` local: `vault env "teajudo api-local.env" caminho/.env`
-  (grava com 600 e não imprime o valor). Pergunte ao dono antes, como em
-  qualquer uso.
+- Segredo de projeto de código não entra no sops nem no cofre: mora no
+  gerenciador do próprio projeto (TEAjudo: SSM da AWS em `/teajudo/<env>/`,
+  lido com `aws ssm get-parameters-by-path --with-decryption`). O `.env` local
+  sai do `.env.example` e não guarda segredo.
+- Nota segura de volta para arquivo, sem imprimir: `vault env <nota> <arquivo>`.
 
 ## Usar com permissão
 

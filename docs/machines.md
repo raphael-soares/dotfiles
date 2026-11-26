@@ -100,7 +100,7 @@ terminal` prints how to restore it.
 
 - `sops edit secrets/personal.env` adds or changes a value;
 - `secrets run -- <command>` runs the command with `personal.env` as variables
-  (`vpn` and the `gemini` alias use it; the bashrc never decrypts at shell start);
+  (`vpn` uses it; the bashrc never decrypts at shell start);
 - `media-deploy` decrypts `media.env` to `~/.config/media/media.env` (mode 600)
   and, when it generates a key, encrypts it back for a commit;
 - `secrets aws` prints `aws.env` as the JSON of `credential_process`, which
@@ -111,10 +111,11 @@ terminal` prints how to restore it.
   `.env` with a key, token or password outside `~/Code`); the deploy and
   `media-drift` run it.
 
-Code projects keep their own gitignored `.env`. Its source is a secure note in the
-vault, one per environment (`teajudo api-prod.env` in the `TEAjudo` folder):
-`vault env "teajudo api-local.env" .env` writes it back, and a changed `.env` goes
-back with `vault note`. `~/.bash_profile.local` stays a local file.
+Code projects keep their secrets in the project's own store (TEAjudo: AWS SSM under
+`/teajudo/<env>/`) and a gitignored local `.env` made from `.env.example`, holding no
+secret. Neither goes through `secrets` or the vault. `vault env <note> <file>` writes
+any secure note back to a file (mode 600) without printing it.
+`~/.bash_profile.local` stays a local file.
 
 The session environment (XDG base directories and the variables that move
 dotfiles there, such as `AWS_CONFIG_FILE` and `GNUPGHOME`) lives in
