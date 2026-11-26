@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# syncfast's own backup refuses Raphael:Backups because the ~/Drive pair covers the whole
+# account, so this keeps a mirror in current/ and moves replaced or deleted files to old/<date>/.
+REMOTE=${CREATIVE_BACKUP_REMOTE:-Raphael:Backups/fedora}
+KEEP_DAYS=${CREATIVE_BACKUP_KEEP_DAYS:-30}
+day=$(date +%F)
+
+for dir in Creative Studio; do
+  [[ -d $HOME/$dir ]] || continue
+  # Library/icons alone is ~18k small files: Drive needs parallel uploads and one listing call.
+  rclone sync "$HOME/$dir" "$REMOTE/current/$dir" --fast-list --transfers 16 --checkers 16 \
+    --backup-dir "$REMOTE/old/$day/$dir" --exclude '__pycache__/**' --exclude '.scratch/**'
+done
+rclone delete --min-age "${KEEP_DAYS}d" "$REMOTE/old"
+rclone rmdirs --leave-root "$REMOTE/old"
+echo "creative-backup: $REMOTE updated"

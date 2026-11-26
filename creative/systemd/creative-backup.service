@@ -1,0 +1,6 @@
+[Unit]
+Description=Back up ~/Creative and ~/Studio to Google Drive
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/creative-backup

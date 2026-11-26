@@ -5,7 +5,7 @@ default_target_type = "symbolic"
 "terminal/bash/bashrc" = "~/.bashrc"
 "terminal/bash/bash_profile" = "~/.bash_profile"
 "terminal/bin" = "~/.local/bin"
-"terminal/git/gitconfig" = "~/.gitconfig"
+"terminal/git/gitconfig" = "~/.config/git/config"
 "terminal/git/ignore" = "~/.config/git/ignore"
 "terminal/starship/starship.toml" = "~/.config/starship.toml"
 "terminal/fzf/fzf.sh" = "~/.config/fzf/fzf.sh"
@@ -89,5 +89,6 @@ default_target_type = "symbolic"
 
 [creative.files]
 "creative/bin" = "~/.local/bin"
+"creative/systemd" = "~/.config/systemd/user"
 "creative/omp/models.yml" = "~/.omp/agent/models.yml"
 "creative/audiocpp" = { type = "symbolic", target = "~/.config/audiocpp", recurse = false }
