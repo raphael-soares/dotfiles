@@ -80,5 +80,8 @@ não rode comando assim com segredo injetado.
 - `secrets run -- comando`: roda o comando com `secrets/personal.env` como
   variáveis. Não rode `sops decrypt` nem `secrets run -- env` com a saída
   visível.
+- `secrets aws`: entrega a chave de `secrets/aws.env` ao `credential_process`
+  do perfil default da AWS. Não rode no terminal com a saída visível; para
+  conferir, `aws sts get-caller-identity`.
 - `secrets check`: acusa chave age ausente ou arquivo legível por outros. O
   deploy e a conferência diária da mídia (`media-drift`) rodam.

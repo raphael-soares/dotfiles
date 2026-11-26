@@ -1,0 +1,4 @@
+# The access key lives encrypted in secrets/aws.env; `secrets aws` decrypts it on every call.
+[default]
+region = us-east-1
+credential_process = sh -c 'exec "$HOME/.local/bin/secrets" aws'

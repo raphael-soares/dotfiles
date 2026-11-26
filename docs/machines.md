@@ -90,9 +90,10 @@ cable does:
 
 ## Secrets
 
-The owner's environment secrets (personal tokens, the VPN, the media stack) live
-encrypted with sops and age in `secrets/*.env`: `personal.env` for the shell and
-the VPN, `media.env` for the media stack. Only values are encrypted; the key names
+The owner's environment secrets (personal tokens, the VPN, the media stack, the AWS
+key) live encrypted with sops and age in `secrets/*.env`: `personal.env` for the
+shell and the VPN, `media.env` for the media stack, `aws.env` for the AWS CLI and
+SDKs. Only values are encrypted; the key names
 stay readable. The age key is `~/.config/sops/age/keys.txt` (mode 600), the same
 on both machines, backed up in the vault item `age (dotfiles)`; `missing.sh
 terminal` prints how to restore it.
@@ -102,11 +103,21 @@ terminal` prints how to restore it.
   (`vpn` and the `gemini` alias use it; the bashrc never decrypts at shell start);
 - `media-deploy` decrypts `media.env` to `~/.config/media/media.env` (mode 600)
   and, when it generates a key, encrypts it back for a commit;
+- `secrets aws` prints `aws.env` as the JSON of `credential_process`, which
+  `terminal/aws/config` uses for the default profile; the key never sits in plain
+  text, never expires and works from services and scheduled jobs;
 - `secrets check` reports a missing age key or a secret file others can read; the
   deploy and `media-drift` run it.
 
 Code projects keep their own gitignored `.env` and never go through `secrets`
 or the vault. `~/.bash_profile.local` stays a local file.
+
+The session environment (XDG base directories and the variables that move
+dotfiles there, such as `AWS_CONFIG_FILE` and `GNUPGHOME`) lives in
+`terminal/env/session.conf`. systemd reads it as `environment.d` for user services,
+`~/.profile` sources it for the graphical login and the bashrc for every shell, so
+a service or a program started from Hyprland sees the same paths as a terminal.
+A change there reaches the graphical session and the user services after a new login.
 
 `vault` (also `terminal/bin`) is the vault for people and agents: `ls`,
 `folders` and `dupes` print metadata only, `mv`/`rename`/`rm` organize, `add`

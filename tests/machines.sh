@@ -25,7 +25,8 @@ real_dir() { [[ -d $H/$1 && ! -L $H/$1 ]] || fail "$1 is not a real directory"; 
 exists() { [[ -e $H/$1 || -L $H/$1 ]] || fail "$1 does not exist"; }
 absent() { [[ ! -e $H/$1 && ! -L $H/$1 ]] || fail "$1 exists and should not"; }
 
-for f in .bashrc .bash_profile .config/git/config .config/git/ignore .config/starship.toml \
+for f in .bashrc .bash_profile .profile .config/environment.d/10-session.conf .config/aws/config \
+  .config/git/config .config/git/ignore .config/starship.toml \
   .config/fzf/fzf.sh .config/mise/config.toml .config/nvim .config/ghostty/base \
   .config/fastfetch/config.jsonc \
   .claude/CLAUDE.md .claude/settings.json .claude/skills .claude/hooks/rtk-rewrite.sh \
