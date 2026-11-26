@@ -15,4 +15,4 @@ local = "/home/raphael/Documents"
 remote = "Raphael:Documents"
 enabled = true
 presets = ["system_junk", "dev_dirs"]
-filters = ["- /TEAjudo/Env/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]
+filters = ["- /TEAjudo/Engineering/environment-files/**", "- *.mkv", "- *.mp4", "- *.iso", "- *.nsp", "- *.xci", "- *.nsz"]

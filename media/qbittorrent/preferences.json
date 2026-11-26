@@ -10,7 +10,7 @@
   "excluded_file_names": "*.scr\n*.lnk\n*.vbs\n*.pif\n*.cmd\n*.js\n*.jse\n*.wsf\n*.hta",
   "bypass_local_auth": true,
   "bypass_auth_subnet_whitelist_enabled": false,
-  "export_dir": "~/Documents/Personal/Torrents",
+  "export_dir": "~/Documents/Personal/Media/torrents",
   "use_category_paths_in_manual_mode": true,
   "auto_delete_mode": 0,
   "web_ui_username": "media",

@@ -67,7 +67,7 @@ ensure_dirs() {
   mkdir -p "$STATE"/{jellyfin,radarr,sonarr,prowlarr,bazarr} \
     "$HOME"/.cache/media/{jellyfin,configarr,whisper-cpp} \
     "$HOME"/Media/{Movies,Shows,Downloads/Movies,Downloads/Shows} \
-    "$HOME"/Games "$HOME"/Documents/Personal/Torrents
+    "$HOME"/Games "$HOME"/Documents/Personal/Media/torrents
   grep -qsx Downloads "$HOME/Media/.hidden" || echo Downloads >>"$HOME/Media/.hidden"
 }
 

@@ -79,12 +79,17 @@ PC onde é usada, fora de `~/Documents`). Área nova: crie a pasta no tipo certo
 escolha o alcance e acrescente uma linha aqui; área compartilhada sincroniza
 sem mexer no syncfast.
 
+Dentro de `~/Documents`, cada área tem categorias de nome em inglês
+capitalizado (`Personal/Finance`), e dentro delas tudo é em inglês, minúsculo
+com hífen (`invoices-and-receipts/`). Uma coisa de um arquivo só fica solta
+na categoria; pasta só quando junta mais de um arquivo.
+
 | Área | Conteúdo | Alcance |
 |---|---|---|
-| `~/Documents/Personal` | documentos, currículo, finanças, identidade, arquivo de `.torrent` | compartilhada |
-| `~/Documents/Udesc` | faculdade: disciplinas em `Courses/`, o que é da universidade na raiz; padrão em `~/Documents/Udesc/README.md` | compartilhada |
-| `~/Documents/Unimed` | trabalho: docs, marca, identidade | compartilhada |
-| `~/Documents/TEAjudo` | startup: jurídico, comercial, marca, gravações; `Env/` fica fora do sync | compartilhada |
+| `~/Documents/Personal` | `Identity`, `Finance`, `Career` (currículo), `Media` (`torrents/`) | compartilhada |
+| `~/Documents/Udesc` | `University` (calendário, matrícula), `Courses` (uma pasta por disciplina); padrão em `Udesc/README.md` | compartilhada |
+| `~/Documents/Unimed` | `Admin` (crachá), `Brand`, `Technical` (arquitetura, API, notas) | compartilhada |
+| `~/Documents/TEAjudo` | `Legal`, `Commercial`, `Brand`, `Engineering` (`environment-files/`, fora do sync) | compartilhada |
 | `~/Code/<Área>/<repo>` | todo repositório git | só notebook (o git é o sync) |
 | `~/Creative` | projetos criativos multidisciplinares: `Projetos/<projeto>/` com uma pasta por peça (vídeo, áudio, arte e marca juntos), `Biblioteca/` de assets de terceiros, `Estilos/` de identidades próprias | só PC de casa |
 | `~/Studio` | produção musical: samples, presets, projetos | só PC de casa |
@@ -92,21 +97,24 @@ sem mexer no syncfast.
 | `~/Media` | consumo, uma pasta por tipo: `Movies`, `Shows` (séries e anime), `Books`, e o que vier (`Mangas`); fica inteira numa árvore por causa do hardlink do Radarr e do Sonarr | só PC de casa |
 
 - Repositório git nunca fica dentro de área compartilhada: vai para
-  `~/Code/<Área>/`. `~/Documents/TEAjudo` e `~/Documents/Unimed` sincronizam
-  documento e marca; o código delas fica em `~/Code` e não entra no sync.
+  `~/Code/<Área>/`. As áreas da Unimed e da TEAjudo sincronizam documento e
+  marca; o código delas fica em `~/Code` e não entra no sync.
 - Marca de uma área (logo da TEAjudo) fica na área. `~/Creative` é para
   projeto criativo próprio.
 - A raiz de `~/Documents` tem as pastas de área e, soltos, só arquivos de
   consulta sem domínio (manual, modelo, referência). Qualquer outra coisa vai
   para uma área. Passou de uns dez arquivos soltos, crie uma área para eles.
-- O que acabou vai para `0-Archive/` dentro da própria área (o número faz ela
-  aparecer primeiro no Nautilus, que ignora `_` ao ordenar). Pasta oculta, nunca.
+- O que acabou e não se usa mais vai para `Archive/` dentro da própria área;
+  ali dentro não precisa seguir o padrão. Disciplina concluída não vai para o
+  arquivo: fica em `Courses`, com o status no README dela. Nas áreas locais o
+  arquivo é `0-Archive/`. Pasta oculta, nunca.
+- Categoria nova só quando nenhuma das existentes serve, e com uma linha aqui.
 - `~/Downloads`, `~/Pictures` (Screenshots, Wallpaper, Icons) e `~/Videos` são
   pastas de sistema de cada PC, não áreas: o que chega nelas vai para a área
   certa. As pastas XDG ficam em `desktop/xdg/user-dirs.dirs`.
 - Foto fica só no Drive (`Raphael:Fotos`). Livro e mangá de leitura ficam em
   `~/Media`, no PC de casa, fora do sync.
-- `.torrent` vai sempre para `~/Documents/Personal/Torrents`, nunca junto do conteúdo: o
+- `.torrent` vai sempre para `~/Documents/Personal/Media/torrents`, nunca junto do conteúdo: o
   conteúdo não sincroniza, o ponteiro sim. O qBittorrent é o app desktop do
   PC de casa (módulo `media`, `docs/media.md`), copia o `.torrent` direto para
   lá e cada categoria dele cai na área certa: `Books` e `Mangas` em
