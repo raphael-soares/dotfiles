@@ -93,4 +93,13 @@ _osc133_prompt() { printf '\e]133;A\e\\'; }
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_osc133_prompt"
 PS0="${PS0-}"$'\e]133;C\e\\'
 
+# herdr-core restores its panes at boot (linger), before any graphical login, so their
+# shells have no display and omp cannot read a clipboard image. The prompt picks it up
+# once the session exports it.
+_session_display() {
+  [ -n "${WAYLAND_DISPLAY:-}" ] && return
+  eval "$(systemctl --user show-environment 2>/dev/null | sed -n 's/^\(WAYLAND_DISPLAY\|DISPLAY\)=/export &/p')"
+}
+[ -n "${SSH_CONNECTION:-}" ] || PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_session_display"
+
 alias ompp=omp
