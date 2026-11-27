@@ -54,7 +54,6 @@ statusLine:
     - git
     - pr
   rightSegments:
-    - usage
     - status
     - context_pct
   segmentOptions:
