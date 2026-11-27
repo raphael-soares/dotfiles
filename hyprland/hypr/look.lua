@@ -33,6 +33,8 @@ hl.config({
     disable_splash_rendering = true,
     disable_hyprland_logo = true,
     focus_on_activate = true,
+    -- A new window opens behind a fullscreen one; the default (2) drops Moonlight out of fullscreen.
+    on_focus_under_fullscreen = 0,
     anr_missed_pings = 3,
     middle_click_paste = false,
     -- Noctalia is the lockscreen; if it crashes while locked, restarting it recovers the session.
