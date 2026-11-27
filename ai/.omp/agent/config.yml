@@ -39,7 +39,7 @@ composer:
   shape: field
   tokenRate: false
 statusLine:
-  preset: minimal
+  preset: custom
   separator: block
   contextLine: percentage
   sessionAccent: false
